@@ -28,101 +28,62 @@ public class ChunkGenerator {
 				x *= -1;
 				y *= -1;
 				
-				double BASE = height.getSmoothVoronoiAt(x / 2, y / 2, 32, 15);
+				double BASE = height.getSmoothVoronoiAt(x, 0, 30, 30);
 				
-				double H1 = height.getVoronoiAt(x / 2, y, 25, 20.0);
-				double H2 = height.getVoronoiAt(x / 2, y, 8, 30.0);
+				double BUMP = -height.getSmoothVoronoiAt(x, y, 30, 15);
 				
-				double H3 = height.getVoronoiAt(x, y, 4, 2.0);
+				double OVERHANG = height.getVoronoiAt(x, y, 15, 15);
 				
-				
-				double HEIGHT = BASE + (H1 + H2) * 0.7 + H3;
+				double HEIGHT = BASE + BUMP + OVERHANG;
 				int ground_height = (int)(getGroundLevel() + HEIGHT);
-				
-				int STONEHEIGHT = (int)(getCaveLevel() + HEIGHT);
 				
 				if (y <= ground_height) {
 					chunk.setTile(x1, y1, Tiles.DIRT);
+					if (y == ground_height) {
+						chunk.setTile(x1, y1, Tiles.GRASS);						
+						chunk.setTile(x1, y1-1, Tiles.GRASS);
+						chunk.setDistortion(x1, y1, random.nextDouble());
+						chunk.setDistortion(x1, y1-1, random.nextDouble());
+					}
 					
-					
-					if (y <= STONEHEIGHT) {
+					if ((int)HEIGHT == 19) {
 						chunk.setTile(x1, y1, Tiles.STONE);
-						if ((int)HEIGHT == 19) {
+					}
+					
+					if ((int)HEIGHT == 30) {
+						chunk.setTile(x1, y1, Tiles.AIR);
+					}
+					
+					if (y <= getCaveLevel() + HEIGHT) {
+						chunk.setTile(x1, y1, Tiles.STONE);
+						
+						if ((int)HEIGHT == 5) {
 							chunk.setTile(x1, y1, Tiles.DIRT);
 						}
 						
-						
-					} else {
-						if ((int)HEIGHT == 19) {
-							chunk.setTile(x1, y1, Tiles.STONE);
+						if (HEIGHT >= 21) {
+							chunk.setTile(x1, y1, Tiles.AIR);
 						}
 						
-						
-					}
-					
-					
-					
-					if (y <= ground_height - 30) {
-						
-						
-						if (y <= this.getCaveLevel()) {
-							if ((int)HEIGHT >= 30) {
-								chunk.setTile(x1, y1, Tiles.AIR);
-							}
-						} else {
-							if ((int)HEIGHT >= 40) {
-								chunk.setTile(x1, y1, Tiles.AIR);
-							}
-						}
 					} else {
-						if (y <= ground_height - 15)
-						if ((int)HEIGHT == 30) {
+						if (y <= getGroundLevel() + HEIGHT - 10)
+						if (HEIGHT >= 23) {
 							chunk.setTile(x1, y1, Tiles.AIR);
 						}
 					}
+					
+					
+					
+					chunk.setLight(x1, y1, new double[] {0, 0, 0, 1});
 				} else {
 					chunk.setTile(x1, y1, Tiles.AIR);
+					chunk.setLight(x1, y1, new double[] {1, 1, 1, 1});
 				}
-			}
-		}
-		for (int x1 = 0; x1 < Chunk.SIZE; x1++) {
-			for (int y1 = 0; y1 < Chunk.SIZE; y1++) {
-				
-				int x = x1 + chunk.getX() * Chunk.SIZE;
-				int y = y1 + chunk.getY() * Chunk.SIZE;
-				x *= -1;
-				y *= -1;
-				
-				int airCount = 0;
-				A:
-				for (int xx = -1; xx < 2; xx++) {
-					for (int yy = -1; yy < 2; yy++) {
-						int X = x1 + xx;
-						int Y = y1 + yy;
-						if (X >= 0 && Y >= 0 && X <= Chunk.SIZE - 1 && Y <= Chunk.SIZE - 1) {
-							if (chunk.getTile(X, Y) == Tiles.AIR) {
-								airCount++;
-								if (airCount > 5) {
-									break A;
-								}
-							}
-						}
-					}
-				}
-				
-				if (airCount > 1 && y1 > 0 && chunk.getTile(x1, y1) == Tiles.DIRT && y >= getGroundLevel()) {
-					chunk.setTile(x1, y1, Tiles.GRASS);
-				}
-				if (airCount > 5) {
-					chunk.setTile(x1, y1, Tiles.AIR);
-				}
-				
-				
-				
 			}
 		}
 		
 		
+		chunk.reshape();
 		chunk.markForRerender();
 	}
 	

@@ -3,7 +3,7 @@ package kelvin.pixelinventor.game.world.generator.noise;
 import java.awt.Point;
 import java.util.Random;
 
-import kelvin.pixelinventor.util.MathFunc;
+import kelvin.pixelinventor.util.math.MathFunc;
 
 public class VoronoiNoise {
 	
@@ -25,6 +25,7 @@ public class VoronoiNoise {
 			int h = 3;
 			
 			Point[] ps = new Point[w * h];
+			double[] heights = new double[w * h];
 			for (int X = 0; X < w; X++) {
 				for (int Y = 0; Y < h; Y++) {
 					Point p2 = getVoronoiPoint(x + (X - w / 2) * size, y + (Y - h / 2) * size, size);
@@ -39,15 +40,22 @@ public class VoronoiNoise {
 					height = getVoronoiHeight(p.x, p.y, size, m);
 				}
 			}
+			for (int X = 0; X < w; X++) {
+				for (int Y = 0; Y < h; Y++) {
+					Point center = ps[X + Y * h];
+					
+					setRandom(x, y);
+					double dist1 = Point.distance(x + random.nextDouble() * 10, y + random.nextDouble() * 10, center.x, center.y);
+					
+					double height2 = getVoronoiHeight(center.x, center.y, size, m);
+					if (dist1 == 0) dist1 = 1;
+					height = MathFunc.lerp(height, height2, (dist / dist1) * 0.75);
+				}
+			}
 			
-			Point center = getVoronoiPoint(x, y, size);
+			return height;
 			
-			setRandom(x, y);
-			double dist1 = Point.distance(x + random.nextDouble() * 10, y + random.nextDouble() * 10, center.x, center.y);
 			
-			double height2 = getVoronoiHeight(center.x, center.y, size, m);
-			if (dist1 == 0) dist1 = 1;
-			return MathFunc.lerp(height, height2, dist / dist1);
 	   }
 	
 	public double getVoronoiAt(int x, int y, int size, double m) {

@@ -17,10 +17,10 @@ public class Tiles extends RegisterTileEvent {
 	@Override
 	public void run(Registry<Tile> registry) {
 		registerAll(registry, 
-				DIRT = new Tile("pixelinventor:dirt"),
-				AIR = new Tile("pixelinventor:air"),
-				STONE = new Tile("pixelinventor:stone"),
-				GRASS = new Tile("pixelinventor:grass")
+				DIRT = new GroundTile("pixelinventor:dirt"),
+				AIR = new Tile("pixelinventor:air").setLightValue(1.0, 1.0, 1.0, 1.0),
+				STONE = new GroundTile("pixelinventor:stone"),
+				GRASS = new GrassTile("pixelinventor:grass").setLightValue(0.0, 0.5, 0.0, 1.0)
 				);
 	}
 	
