@@ -21,7 +21,9 @@ public class Mouse {
 	}
 	
 	public static int getBlockX() {
-		return (int) ((int)((Mouse.getX() + Camera.X) / 16) * 16 - Camera.X);
+		int offsX = 0;
+		
+		return (int) ((int)((Mouse.getX() + Camera.X) / 16) * 16 - Camera.X) + offsX;
 	}
 	
 	public static int getBlockY() {

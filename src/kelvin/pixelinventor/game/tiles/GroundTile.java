@@ -54,6 +54,22 @@ public class GroundTile extends Tile {
 		if (state == 14 && chunk.getTile(x + 1, y + 1) == Tiles.AIR) {
 			state = 4;
 		}
+
+		if (state == 2 && chunk.getTile(x, y - 1) == Tiles.AIR) {
+			state = 16;
+		}
+
+		if (state == 4 && chunk.getTile(x - 1, y) == Tiles.AIR) {
+			state = 17;
+		}
+
+		if (state == 8 && chunk.getTile(x, y - 1) == Tiles.AIR) {
+			state = 18;
+		}
+
+		if (state == 1 && chunk.getTile(x - 1, y) == Tiles.AIR) {
+			state = 19;
+		}
 		
 		return state;
 	}

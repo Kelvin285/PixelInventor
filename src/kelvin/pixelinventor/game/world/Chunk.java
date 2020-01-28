@@ -10,6 +10,7 @@ import kelvin.pixelinventor.game.client.renderer.ChunkRenderer;
 import kelvin.pixelinventor.game.tiles.Tile;
 import kelvin.pixelinventor.game.tiles.Tiles;
 import kelvin.pixelinventor.util.Constants;
+import kelvin.pixelinventor.util.math.MathFunc;
 
 public class Chunk {
 	public static final int SIZE = 4;
@@ -89,9 +90,13 @@ public class Chunk {
 		return lights;
 	}
 	
-	public void recalculateLights() {
+	public double[][][] getRenderLights() {
+		return renderLights;
+	}
+	
+	public void recalculateNextLights() {
 		int step = 3;
-		double density = 1;
+		double density = (1.0 / 9.0) * 0.5;
 		
 		for (int x = 0; x < Chunk.SIZE; x++) {
 			for (int y = 0; y < Chunk.SIZE; y++) {
@@ -109,24 +114,31 @@ public class Chunk {
 				double G = light[1];
 				double B = light[2];
 				double A = light[3];
-				int i = 0;
+				
+				
+				
+				
 				for (int xx = -step; xx < step + 1; xx++) {
 					for (int yy = -step; yy < step + 1; yy++) {
 						double[] l2 = getLight(x + xx, y + yy);
-
-						R += l2[0] * density;
-						G += l2[1] * density;
-						B += l2[2] * density;
-						A += l2[3] * density;
-						i++;
 						
+						if (l2[0] > R) {
+							R = MathFunc.lerp(R, l2[0], density);
+						}
+						
+						if (l2[1] > G) {
+							G = MathFunc.lerp(G, l2[1], density);
+						}
+						
+						if (l2[2] > B) {
+							B = MathFunc.lerp(R, l2[2], density);
+						}
+						
+						if (l2[3] > A) {
+							A = MathFunc.lerp(A, l2[3], density);
+						}
 					}
-					i++;
 				}
-				R /= i;
-				G /= i;
-				B /= i;
-				A /= i;
 				
 				
 				
@@ -139,6 +151,57 @@ public class Chunk {
 		}
 	}
 	
+	public void recalculateLights() {
+		int step = 2;
+		for (int x = getX() - step; x < getX() + step + 1; x++) {
+			for (int y = getY() - step; y < getY() + step + 1; y++) {
+				if (x != getX() && y != getY()) {
+					Chunk chunk = world.getChunk(x, y);
+					if (chunk != null) {
+						chunk.recalculateNextLights();
+					}
+				} else {
+					recalculateNextLights();
+				}
+			}
+		}
+		
+	}
+	public double[] getRenderLight(int x, int y) {
+		int X = 0;
+		int Y = 0;
+		if (x < 0) {
+			x += Chunk.SIZE;
+			X = -1;
+		}
+		if (x > Chunk.SIZE - 1) {
+			x -= Chunk.SIZE;
+			X = 1;
+		}
+		
+		if (y < 0) {
+			y += Chunk.SIZE;
+			Y = -1;
+		}
+		if (y > Chunk.SIZE - 1) {
+			y -= Chunk.SIZE;
+			Y = 1;
+		}
+		
+		if (X != 0 || Y != 0) {
+			Chunk c2 = world.getChunk(getX() + X, getY() + Y);
+			if (c2 != null) {
+				return c2.getRenderLight(x, y);
+			}
+		}
+		
+		if (x < 0 || y < 0 || x > Chunk.SIZE - 1 || y > Chunk.SIZE - 1) {
+			return Constants.NO_LIGHT;
+		}
+		
+		return renderLights[x][y];
+	}
+
 	public double[] getLight(int x, int y) {
 		int X = 0;
 		int Y = 0;
@@ -355,6 +418,7 @@ public class Chunk {
 		}
 		states[x][y][0] = sx;
 		states[x][y][1] = sy;
+		markForRerender();
 	}
 	
 	public Tile getTile(int x, int y) {
@@ -427,10 +491,9 @@ public class Chunk {
 		
 		tiles[x][y] = tile;
 		fluidDistortion[x][y] = tile.getDistortionFactor(random);
-		lights[x][y] = tile.getLightValue();
+		lights[x][y] = tiles[x][y].getLightValue();
 		reshape();
 		markForRerender();
-		
 		
 	}
 
@@ -447,4 +510,7 @@ public class Chunk {
 			}
 		}
 	}
+
+	
+	
 }

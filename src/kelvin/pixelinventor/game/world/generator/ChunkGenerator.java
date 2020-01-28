@@ -42,8 +42,6 @@ public class ChunkGenerator {
 					if (y == ground_height) {
 						chunk.setTile(x1, y1, Tiles.GRASS);						
 						chunk.setTile(x1, y1-1, Tiles.GRASS);
-						chunk.setDistortion(x1, y1, random.nextDouble());
-						chunk.setDistortion(x1, y1-1, random.nextDouble());
 					}
 					
 					if ((int)HEIGHT == 19) {
@@ -64,20 +62,14 @@ public class ChunkGenerator {
 						if (HEIGHT >= 21) {
 							chunk.setTile(x1, y1, Tiles.AIR);
 						}
-						
 					} else {
 						if (y <= getGroundLevel() + HEIGHT - 10)
 						if (HEIGHT >= 23) {
 							chunk.setTile(x1, y1, Tiles.AIR);
 						}
 					}
-					
-					
-					
-					chunk.setLight(x1, y1, new double[] {0, 0, 0, 1});
 				} else {
 					chunk.setTile(x1, y1, Tiles.AIR);
-					chunk.setLight(x1, y1, new double[] {1, 1, 1, 1});
 				}
 			}
 		}
@@ -85,6 +77,7 @@ public class ChunkGenerator {
 		
 		chunk.reshape();
 		chunk.markForRerender();
+		chunk.recalculateLights();
 	}
 	
 

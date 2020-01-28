@@ -19,44 +19,63 @@ public class World {
 		random = new Random();
 	}
 	
+	private int i = 0;
 	public void update() {
+		if (loadedChunks.size() > 800) loadedChunks.clear();
 		for (Point p : loadedChunks.keySet()) {
 			if (loadedChunks.containsKey(p) == false) continue;
 			loadedChunks.get(p).update();
 		}
-		int X = (int) (Camera.X / (Chunk.SIZE * Constants.TILESIZE)) + 6;
-		int Y = (int) (Camera.Y / (Chunk.SIZE * Constants.TILESIZE)) + 2;
-		
-		
-		for (int x = X + -Camera.VIEW_DISTANCE; x < X + Camera.VIEW_DISTANCE + 4; x++) {
-			for (int y = Y + -Camera.VIEW_DISTANCE; y < Y + Camera.VIEW_DISTANCE + 4; y++) {
-				if (!chunkExists(x, y)) {
-					addChunk(x, y);
-					for (int xx = -1; xx < 2; xx++) {
-						for (int yy = -1; yy < 2; yy++) {
-							reshapeChunk(x + xx, y + yy);
+		i++;
+		if (i > 10) {
+			i = 0;
+			int X = (int) (Camera.X / (Chunk.SIZE * Constants.TILESIZE)) + 7;
+			int Y = (int) (Camera.Y / (Chunk.SIZE * Constants.TILESIZE)) + 4;
+			
+			Point pt = new Point(0, 0);
+			A:
+			{
+				for (int x = X + -Camera.VIEW_X * 2; x < X + Camera.VIEW_X * 2 + 1; x++) {
+					for (int y = Y + -Camera.VIEW_Y * 2; y < Y + Camera.VIEW_Y * 2 + 1; y++) {
+						pt.setLocation(x, y);
+						if (Math.abs(x - X) <= Camera.VIEW_X && Math.abs(y - Y) <= Camera.VIEW_Y + 3) {
+							if (!loadedChunks.containsKey(pt)) {
+								addChunk(x, y);
+								for (int xx = -1; xx < 2; xx++) {
+									for (int yy = -1; yy < 2; yy++) {
+										reshapeChunk(x + xx, y + yy);
+									}
+								}
+							}
+						} 
+						else {
+							if (loadedChunks.containsKey(pt)) {
+								loadedChunks.remove(pt);
+							}
 						}
+						
 					}
 				}
 			}
 		}
+			
 		
-		for (Point p : loadedChunks.keySet()) {
-			if (loadedChunks.containsKey(p) == false) continue;
-			Chunk chunk = loadedChunks.get(p);
-			double dist = MathFunc.distance(chunk.getX(), chunk.getY(), X, Y);
-			if (dist > Camera.VIEW_DISTANCE * 2) {
-				loadedChunks.remove(p, chunk);
-				break;
-			}
-		}
 		
 	}
 	
 	public void render(Graphics g) {
-		for (Point p : loadedChunks.keySet()) {
-			if (loadedChunks.containsKey(p) == false) continue;
-			loadedChunks.get(p).render(g);
+		Point pt = new Point(0, 0);
+		int X = (int) (Camera.X / (Chunk.SIZE * Constants.TILESIZE)) + 7;
+		int Y = (int) (Camera.Y / (Chunk.SIZE * Constants.TILESIZE)) + 4;
+		A:
+		for (int x = X + -Camera.VIEW_X * 3; x < X + Camera.VIEW_X * 3 + 1; x++) {
+			for (int y = Y + -Camera.VIEW_Y * 3; y < Y + Camera.VIEW_Y * 3 + 1; y++) {
+				pt.setLocation(x, y);
+				if (Math.abs(x - X) <= Camera.VIEW_X && Math.abs(y - Y) <= Camera.VIEW_Y) {
+					if (loadedChunks.containsKey(pt) == false) continue;
+					loadedChunks.get(pt).render(g);
+				}
+			}
 		}
 	}
 	
@@ -84,12 +103,7 @@ public class World {
 		if (c1 != null) {
 			return c1;
 		}
-		for (Point p : loadedChunks.keySet()) {
-			if (loadedChunks.containsKey(p) == false) continue;
-			if (p.x == x && p.y == y) {
-				return loadedChunks.get(p);
-			}
-		}
+		
 		return null;
 	}
 	
@@ -97,10 +111,6 @@ public class World {
 		Chunk c1 = loadedChunks.get(new Point(x, y));
 		if (c1 != null) {
 			return true;
-		}
-		for (Point p : loadedChunks.keySet()) {
-			if (loadedChunks.containsKey(p) == false) continue;
-			if (p.x == x && p.y == y) return true;
 		}
 		return false;
 	}

@@ -1,6 +1,8 @@
 package kelvin.pixelinventor.util.math;
 
+import kelvin.pixelinventor.game.PixelInventor;
 import kelvin.pixelinventor.game.client.renderer.Camera;
+import kelvin.pixelinventor.game.client.renderer.Mouse;
 import kelvin.pixelinventor.game.world.Chunk;
 import kelvin.pixelinventor.util.Constants;
 
@@ -24,5 +26,19 @@ public class MathFunc {
 	
 	public static int getTilePosFor(double x) {
 		return (int) (x / Constants.TILESIZE);
+	}
+	
+	public static int toZoomedCoordsY(int x) {
+		double mx = x - PixelInventor.GAME.getFrameHeight() / 2;
+		mx /= (Camera.zoom + 1);
+		mx += PixelInventor.GAME.getFrameHeight() / 2;
+		return (int)mx;
+	}
+	
+	public static int toZoomedCoordsX(int x) {
+		double mx = x - PixelInventor.GAME.getFrameWidth() / 2;
+		mx /= (Camera.zoom + 1);
+		mx += PixelInventor.GAME.getFrameWidth() / 2;
+		return (int)mx;
 	}
 }

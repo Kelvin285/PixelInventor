@@ -31,14 +31,11 @@ public class Tile {
 	}
 	
 	public double[] getLightValue() {
-		return light_value;
+		return this.light_value;
 	}
 	
 	public Tile setLightValue(double r, double g, double b, double a) {
-		light_value[0] = r;
-		light_value[1] = g;
-		light_value[2] = b;
-		light_value[3] = a;
+		this.light_value = new double[] {r, g, b, a};
 		return this;
 	}
 	
