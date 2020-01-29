@@ -23,7 +23,7 @@ public class GrassTile extends GroundTile {
 			for (int xx = -1; xx < 2; xx++) {
 				for (int yy = -1; yy < 2; yy++) {
 					if (chunk.getTile(x + xx, y + yy) == Tiles.DIRT) {
-						chunk.setTile(x + xx, y + yy, Tiles.GRASS);
+						chunk.setTile(x + xx, y + yy, this);
 						return;
 					}
 				}

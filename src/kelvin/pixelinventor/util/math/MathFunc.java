@@ -21,11 +21,16 @@ public class MathFunc {
 	}
 	
 	public static int getChunkPosFor(double x) {
-		return (int) (x / (Chunk.SIZE * Constants.TILESIZE));
+		return (int) Math.floor(x / (Chunk.SIZE * Constants.TILESIZE));
 	}
 	
 	public static int getTilePosFor(double x) {
-		return (int) (x / Constants.TILESIZE);
+		return (int) Math.floor(x / Constants.TILESIZE);
+	}
+	
+	public static double abs(double x) {
+		if (x < 0) return -x;
+		return x;
 	}
 	
 	public static int toZoomedCoordsY(int x) {

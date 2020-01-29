@@ -20,13 +20,13 @@ public class Settings {
 	public static boolean[] buttons = new boolean[10];
 	public static boolean[] mouseDown = new boolean[10];
 	
-	public static int frameSkip = 5;
-	public static boolean distortion = false;
+	public static int frameSkip = 1;
+	public static boolean distortion = true;
 	
 	public static boolean smoothLights = true;
-	public static boolean dynamicLights = true;
+	public static int lightCelValues = 255;
 	
-	public static boolean clouds = false;
+	public static boolean clouds = true;
 
 	public static boolean isMouseButtonDown(int button) {
 		return buttons[button];

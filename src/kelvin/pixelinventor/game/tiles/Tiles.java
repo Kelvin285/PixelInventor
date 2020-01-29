@@ -12,6 +12,8 @@ public class Tiles extends RegisterTileEvent {
 	public static Tile AIR;
 	public static Tile STONE;
 	public static Tile GRASS;
+	public static Tile ANTIMATTER;
+	public static Tile PURPLE_GRASS;
 	
 	
 	@Override
@@ -20,7 +22,9 @@ public class Tiles extends RegisterTileEvent {
 				DIRT = new GroundTile("pixelinventor:dirt"),
 				AIR = new Tile("pixelinventor:air").setLightValue(1.0, 1.0, 1.0, 1.0),
 				STONE = new GroundTile("pixelinventor:stone"),
-				GRASS = new GrassTile("pixelinventor:grass").setLightValue(0.0, 0.5, 0.0, 1.0)
+				GRASS = new GrassTile("pixelinventor:grass").setLightValue(0.0, 0.5, 0.0, 1.0),
+				ANTIMATTER = new DistortingTile("pixelinventor:antimatter", 0.5).setLightValue(0.0, 0.0, 1.0, 1.0),
+				PURPLE_GRASS = new GrassTile("pixelinventor:purple_grass").setLightValue(0.0, 0.0, 0.5, 1.0)
 				);
 	}
 	

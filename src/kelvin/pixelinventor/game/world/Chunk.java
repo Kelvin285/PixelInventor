@@ -17,6 +17,7 @@ public class Chunk {
 	private int X, Y;
 	
 	private BufferedImage image;
+	private BufferedImage lightImage;
 	
 	private Tile[][] tiles;
 	private int[][][] states;
@@ -39,6 +40,7 @@ public class Chunk {
 		lights = new double[Chunk.SIZE][Chunk.SIZE][4];
 		renderLights = new double[Chunk.SIZE][Chunk.SIZE][4];
 		image = (BufferedImage)PixelInventor.GAME.getFrame().createImage(Constants.TILESIZE * Chunk.SIZE, Constants.TILESIZE * Chunk.SIZE);
+		lightImage = (BufferedImage)PixelInventor.GAME.getFrame().createImage(Constants.TILESIZE * Chunk.SIZE, Constants.TILESIZE * Chunk.SIZE);
 		this.random = random;
 	}
 	
@@ -61,9 +63,18 @@ public class Chunk {
 		if (rerender) {
 			recalculateLights();
 			rerender = false;
-			ChunkRenderer.render(tiles, states, renderLights, world.getSkyColor(), this, image);
+			ChunkRenderer.render(tiles, states, renderLights, world.getSkyColor(), this, image, lightImage);
 		}
-		g.drawImage(image, X * Chunk.SIZE * Constants.TILESIZE - (int)Camera.X, Y * Chunk.SIZE * Constants.TILESIZE - (int)Camera.Y, Chunk.SIZE * Constants.TILESIZE, Chunk.SIZE * Constants.TILESIZE, null);
+		int xx = X * Chunk.SIZE * Constants.TILESIZE - (int)Camera.X;
+		int yy = Y * Chunk.SIZE * Constants.TILESIZE - (int)Camera.Y;
+		int size = Chunk.SIZE * Constants.TILESIZE;
+		g.drawImage(image, xx, yy, size, size, null);
+		PixelInventor.GAME.postProcessing(this, xx, yy, size, size);
+	}
+	
+	public BufferedImage getLightImage() {
+		return lightImage;
+		
 	}
 	
 	public int getX() {
@@ -95,8 +106,8 @@ public class Chunk {
 	}
 	
 	public void recalculateNextLights() {
-		int step = 3;
-		double density = (1.0 / 9.0) * 0.5;
+		int step = 4;
+		double density = 0.8;
 		
 		for (int x = 0; x < Chunk.SIZE; x++) {
 			for (int y = 0; y < Chunk.SIZE; y++) {
@@ -117,30 +128,28 @@ public class Chunk {
 				
 				
 				
-				
 				for (int xx = -step; xx < step + 1; xx++) {
 					for (int yy = -step; yy < step + 1; yy++) {
 						double[] l2 = getLight(x + xx, y + yy);
+						double dist = MathFunc.distance(x, y, x + xx, y + yy);
+						dist /= 5;
+						if (dist < 0) dist = 0;
+						if (dist > 1) dist = 1;
 						
-						if (l2[0] > R) {
-							R = MathFunc.lerp(R, l2[0], density);
+						if (l2[0] > R || l2[1] > G || l2[2] > B || l2[3] > A) {
+							R = MathFunc.lerp(R, l2[0], l2[3] * (1.0 - dist) * density);
+							G = MathFunc.lerp(G, l2[1], l2[3] * (1.0 - dist) * density);
+							B = MathFunc.lerp(B, l2[2], l2[3] * (1.0 - dist) * density);
+							A = MathFunc.lerp(A, l2[3], l2[3] * (1.0 - dist) * density);
 						}
 						
-						if (l2[1] > G) {
-							G = MathFunc.lerp(G, l2[1], density);
-						}
-						
-						if (l2[2] > B) {
-							B = MathFunc.lerp(R, l2[2], density);
-						}
-						
-						if (l2[3] > A) {
-							A = MathFunc.lerp(A, l2[3], density);
-						}
 					}
 				}
 				
-				
+				if (R > 255) R = 255;
+				if (G > 255) G = 255;
+				if (B > 255) B = 255;
+				if (A > 255) A = 255;
 				
 				renderLights[x][y][0] = R;
 				renderLights[x][y][1] = G;

@@ -23,10 +23,10 @@ public class Mouse {
 	public static int getBlockX() {
 		int offsX = 0;
 		
-		return (int) ((int)((Mouse.getX() + Camera.X) / 16) * 16 - Camera.X) + offsX;
+		return (int) Math.floor((int)Math.floor((Mouse.getX() + Camera.X) / 16) * 16 - Camera.X) + offsX;
 	}
 	
 	public static int getBlockY() {
-		return (int) ((int)((Mouse.getY() + Camera.Y) / 16) * 16 - Camera.Y);
+		return (int) Math.floor((int)Math.floor((Mouse.getY() + Camera.Y) / 16) * 16 - Camera.Y);
 	}
 }

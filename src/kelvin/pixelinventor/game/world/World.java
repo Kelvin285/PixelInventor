@@ -27,7 +27,7 @@ public class World {
 			loadedChunks.get(p).update();
 		}
 		i++;
-		if (i > 10) {
+		if (i > 2) {
 			i = 0;
 			int X = (int) (Camera.X / (Chunk.SIZE * Constants.TILESIZE)) + 7;
 			int Y = (int) (Camera.Y / (Chunk.SIZE * Constants.TILESIZE)) + 4;
@@ -41,11 +41,7 @@ public class World {
 						if (Math.abs(x - X) <= Camera.VIEW_X && Math.abs(y - Y) <= Camera.VIEW_Y + 3) {
 							if (!loadedChunks.containsKey(pt)) {
 								addChunk(x, y);
-								for (int xx = -1; xx < 2; xx++) {
-									for (int yy = -1; yy < 2; yy++) {
-										reshapeChunk(x + xx, y + yy);
-									}
-								}
+								reshapeChunk(x, y);
 							}
 						} 
 						else {
@@ -98,21 +94,14 @@ public class World {
 		chunk.markForRerender();
 	}
 	
+	private Point cpoint = new Point(0, 0);
 	public Chunk getChunk(int x, int y) {
-		Chunk c1 = loadedChunks.get(new Point(x, y));
-		if (c1 != null) {
-			return c1;
-		}
-		
-		return null;
+		cpoint.setLocation(x, y);
+		return loadedChunks.get(cpoint);
 	}
 	
 	public boolean chunkExists(int x, int y) {
-		Chunk c1 = loadedChunks.get(new Point(x, y));
-		if (c1 != null) {
-			return true;
-		}
-		return false;
+		return getChunk(x, y) != null;
 	}
 	
 	public void addChunk(int cx, int cy) {
