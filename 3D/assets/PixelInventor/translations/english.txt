@@ -1,0 +1,4 @@
+"PixelInventor:dirt" = "Dirt"
+"PixelInventor:stone" = "Stone"
+"PixelInventor:grass" = "Grass"
+"PixelInventor:purple_grass" = "Purple Grass"

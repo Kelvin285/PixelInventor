@@ -1,0 +1,29 @@
+{
+  "build": "stable",
+  "mode": "zip",
+  "selectedAddons": [
+    "steamworks4j",
+    "steamworks4j-server",
+    "joml"
+  ],
+  "platform": [
+    "windows"
+  ],
+  "descriptions": false,
+  "compact": false,
+  "hardcoded": false,
+  "javadoc": true,
+  "includeJSON": true,
+  "source": true,
+  "osgi": false,
+  "language": "groovy",
+  "contents": [
+    "lwjgl",
+    "lwjgl-glfw",
+    "lwjgl-openal",
+    "lwjgl-opencl",
+    "lwjgl-opengl",
+    "lwjgl-opengles",
+    "lwjgl-openvr"
+  ]
+}
