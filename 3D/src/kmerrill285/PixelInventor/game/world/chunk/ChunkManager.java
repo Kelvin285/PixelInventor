@@ -8,6 +8,7 @@ import org.joml.Vector3f;
 import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.settings.Settings;
+import kmerrill285.PixelInventor.game.world.World;
 
 public class ChunkManager {
 	public HashMap<String, Chunk> chunks;
@@ -25,12 +26,14 @@ public class ChunkManager {
 	private float lastRX, lastRY;
 	
 	private ChunkGenerator generator;
+	private World world;
 	
 	private boolean queueUpdate = false;
 	
 	private boolean moved = false;
 	
-	public ChunkManager(ChunkGenerator generator) {
+	public ChunkManager(World world, ChunkGenerator generator) {
+		this.world = world;
 		chunks = new HashMap<String, Chunk>();
 		setup = new ArrayList<Chunk>();
 		rebuild = new ArrayList<Chunk>();
@@ -80,8 +83,8 @@ public class ChunkManager {
 		int i = 0;
 		if (moved == true) setup.clear();
 		A:
-		for (int VIEW_X = 4; VIEW_X < Settings.VIEW_X; VIEW_X++)
-			for (int VIEW_Y = 4; VIEW_Y < Settings.VIEW_Y; VIEW_Y++)
+		for (int VIEW_X = 0; VIEW_X < Settings.VIEW_X; VIEW_X++)
+			for (int VIEW_Y = 0; VIEW_Y < Settings.VIEW_Y; VIEW_Y++)
 		for (int x = cx - VIEW_X; x < cx + VIEW_X; x++) {
 			for (int y = cy - VIEW_Y; y < cy + VIEW_Y; y++) {
 				for (int z = cz - VIEW_X; z < cz + VIEW_X; z++) {
@@ -235,6 +238,7 @@ public class ChunkManager {
 	public void dispose() {
 		try {
 			for (String str : chunks.keySet()) {
+				
 				chunks.get(str).dispose();
 			}
 		}catch (Exception e) {
@@ -264,5 +268,13 @@ public class ChunkManager {
 				break;
 			}
 		}
+	}
+
+	public World getWorld() {
+		return this.world;
+	}
+
+	public boolean canRender() {
+		return queueUpdate;
 	}
 }

@@ -3,9 +3,25 @@ package kmerrill285.PixelInventor.game.client;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import kmerrill285.PixelInventor.PixelInventor;
+import kmerrill285.PixelInventor.game.tile.Tile.TileRayTraceType;
+import kmerrill285.PixelInventor.resources.RayTraceResult;
+
 public class Camera {
 	public static Vector3f position = new Vector3f(0, 0, 0);
 	public static Vector3f rotation = new Vector3f(0, 0, 0);
+	
+	public static RayTraceResult currentTile;
+	
+	public static final float BASE_REACH = 6.0f;
+	public static float REACH_DISTANCE = BASE_REACH;
+	
+	public static void update() {
+		PixelInventor game = PixelInventor.game;
+		if (game.world != null) {
+			currentTile = game.world.rayTraceTiles(position, getForward(rotation.x * -1, rotation.y).mul(REACH_DISTANCE).add(position), TileRayTraceType.SOLID);
+		}
+	}
 	
 	public static Matrix4f getViewMatrix() {
 		Matrix4f viewMatrix = new Matrix4f();

@@ -5,12 +5,15 @@ import java.util.Random;
 import java.util.Scanner;
 
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 
 import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.events.Events;
+import kmerrill285.PixelInventor.game.client.rendering.gui.GuiRenderer;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
+import kmerrill285.PixelInventor.game.entity.player.ClientPlayerEntity;
 import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.settings.Translation;
 import kmerrill285.PixelInventor.game.tile.Tiles;
@@ -27,6 +30,8 @@ public class Utils {
 	public static Matrix4f projectionMatrix;
 	
 	public static int FRAME_WIDTH = 1920 / 2, FRAME_HEIGHT = 1080 / 2;
+	private static int P_WIDTH = 1920 / 2, P_HEIGHT = 1080 / 2;
+	
 	
 	public static String loadResource(File file) {
 		String str = "";
@@ -60,7 +65,10 @@ public class Utils {
 		sprite_shader.createVertexShader(loadResource("PixelInventor", "shaders/sprite_vertex.glsl"));
 		sprite_shader.createFragmentShader(loadResource("PixelInventor", "shaders/sprite_fragment.glsl"));
 		sprite_shader.link();
-		sprite_shader.createUniform("modelMatrix");
+		sprite_shader.createUniform("offset");
+		sprite_shader.createUniform("rotation");
+		sprite_shader.createUniform("scale");
+		sprite_shader.createUniform("color");
 		sprite_shader.createUniform("texture_sampler");
 		
 		object_shader = new ShaderProgram();
@@ -79,15 +87,16 @@ public class Utils {
 		Tiles.loadTiles();
 		Translation.loadTranslations("PixelInventor");
 		
-		PixelInventor.game.world = new World(new Random().nextLong());
+		PixelInventor.game.world = new World("World", new Random().nextLong());
 		Textures.load();
+		PixelInventor.game.guiRenderer = new GuiRenderer(sprite_shader);
+		PixelInventor.game.player = new ClientPlayerEntity(new Vector3f(0, 30, 0), PixelInventor.game.world);
 	}
 	
 	public static void setupProjection() {
-		float aspectRatio = (float)FRAME_WIDTH / (float)FRAME_HEIGHT;
+		float aspectRatio = (float)P_WIDTH / (float)P_HEIGHT;
 		projectionMatrix = new Matrix4f().perspective((float)Math.toRadians(Settings.FOV), aspectRatio, Z_NEAR, Z_FAR);
 		object_shader.setUniformMat4("projectionMatrix", projectionMatrix);
 	}
-
 	
 }

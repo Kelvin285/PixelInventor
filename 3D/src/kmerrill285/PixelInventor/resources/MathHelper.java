@@ -14,4 +14,8 @@ public class MathHelper {
 	public static float smoothLerp(float point1, float point2, float alpha) {
 		return lerp(point1, point2, cubic_S_curve(alpha));
 	}
+	
+	public static double floorDiv(double a, double b) {
+		return Math.floor(a / b);
+	}
 }

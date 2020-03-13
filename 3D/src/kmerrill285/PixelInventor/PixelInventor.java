@@ -15,6 +15,9 @@ import org.lwjgl.system.MemoryUtil;
 
 import kmerrill285.PixelInventor.events.Events;
 import kmerrill285.PixelInventor.events.Input;
+import kmerrill285.PixelInventor.game.client.Camera;
+import kmerrill285.PixelInventor.game.client.rendering.gui.GuiRenderer;
+import kmerrill285.PixelInventor.game.entity.player.ClientPlayerEntity;
 import kmerrill285.PixelInventor.game.world.World;
 import kmerrill285.PixelInventor.resources.Constants;
 import kmerrill285.PixelInventor.resources.FPSCounter;
@@ -24,6 +27,9 @@ public class PixelInventor {
 	public static PixelInventor game;
 	
 	public World world;
+	public GuiRenderer guiRenderer;
+	public ClientPlayerEntity player;
+	
 	
 	public PixelInventor() {
 		PixelInventor.game = this;
@@ -36,13 +42,14 @@ public class PixelInventor {
 		
 		init();
 		loop();
-		dispose();
+		
 		
 		Callbacks.glfwFreeCallbacks(Utils.window);
 		GLFW.glfwDestroyWindow(Utils.window);
 		
 		GLFW.glfwTerminate();
 		GLFW.glfwSetErrorCallback(null).free();
+		dispose();
 	}
 	
 	public void init() {
@@ -60,6 +67,7 @@ public class PixelInventor {
 		GLFW.glfwSetKeyCallback(Utils.window, Events::keyCallback);
 		GLFW.glfwSetCursorPosCallback(Utils.window, Events::mousePos);
 		GLFW.glfwSetMouseButtonCallback(Utils.window, Events::mouseClick);
+
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer pWidth = stack.mallocInt(1);
@@ -76,11 +84,12 @@ public class PixelInventor {
 		}
 		
 		GLFW.glfwMakeContextCurrent(Utils.window);
-		GLFW.glfwSwapInterval(1);
+		GLFW.glfwSwapInterval(2);
 		GLFW.glfwShowWindow(Utils.window);
 	}
 	private boolean stop = false;
 	Thread thread = null;
+	private boolean finished = false;
 	public void loop() {
 		GL.createCapabilities();
 				
@@ -93,32 +102,37 @@ public class PixelInventor {
 		
 		thread = new Thread() {
 			public void run() {
-				while (!stop) {
-					update();
+				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
+					updateWorld();
 					try {
 						Thread.sleep(5);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
+					
 				}
+				System.out.println("finish!");
+				finished = true;
 			}
 			
 		};
 		thread.start();
+		
+		
 		FPSCounter.start();
 		while (!GLFW.glfwWindowShouldClose(Utils.window)) {
-			
+			update();
 			Vector3f skyColor = world.getSkyColor();
 			GL11.glClearColor(skyColor.x, skyColor.y, skyColor.z, 0.0f);
+			
+			// Enable blending
+			GL11.glEnable(GL11.GL_BLEND);
+			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 			
 			GL11.glEnable(GL11.GL_DEPTH_TEST);
 			GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 			//draw stuff I guess
-			Utils.sprite_shader.bind();
 			
-//			Utils.spriteRenderer.drawSprite(new Vector3d(0, 0, 0));
-			
-			Utils.sprite_shader.unbind();
 			
 			Utils.object_shader.bind();
 			Utils.setupProjection();
@@ -126,6 +140,14 @@ public class PixelInventor {
 			world.render(Utils.object_shader);
 			
 			Utils.object_shader.unbind();
+			
+			Utils.sprite_shader.bind();
+			
+			renderGUI();
+			
+			Utils.sprite_shader.unbind();
+			
+			
 			GLFW.glfwSwapBuffers(Utils.window);
 
 			GLFW.glfwPollEvents();
@@ -135,14 +157,25 @@ public class PixelInventor {
 		stop = true;
 	}
 	
+	public void renderGUI() {
+	    
+	    guiRenderer.render();
+
+	}
+	
 	public void update() {
-		world.update();
+		Camera.update();
+		world.tick();
+	}
+	
+	public void updateWorld() {
+		world.updateChunkManager();
 	}
 	
 	public void dispose() {
-		while (!thread.isAlive()) {}
 		Utils.sprite_shader.dispose();
 		world.dispose();
+		System.exit(0);
 	}
 	
 }

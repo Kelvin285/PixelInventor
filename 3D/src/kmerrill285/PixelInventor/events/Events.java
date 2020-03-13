@@ -15,9 +15,11 @@ public class Events {
 		}
 		if (action == GLFW.GLFW_PRESS) {
 			Settings.keys.put(key, true);
+			Settings.pressedKey.put(key, true);
 		}
 		if (action == GLFW.GLFW_RELEASE) {
 			Settings.keys.put(key, false);
+			Settings.pressedKey.put(key, false);
 		}
 	}
 	
@@ -26,6 +28,8 @@ public class Events {
 		float w = height * aspect;
 		float left = (width - w) / 2;
 		GL11.glViewport((int)left, 0, (int)w, height);
+		Utils.FRAME_WIDTH = width;
+		Utils.FRAME_HEIGHT = height;
 	}
 	
 	public static void mousePos(long window, double x, double y) {
@@ -33,9 +37,11 @@ public class Events {
 		Mouse.y = (float)y;
 	}
 	
-	public static void mouseClick(long window, int button, double x, double y) {
+	public static void mouseClick(long window, int button, int press, int undefined) {
 		GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
 		Mouse.locked = true;
+		Settings.buttons.put(button, press == 1);
+		Settings.pressedButton.put(button, press == 1);
 	}
 	
 	

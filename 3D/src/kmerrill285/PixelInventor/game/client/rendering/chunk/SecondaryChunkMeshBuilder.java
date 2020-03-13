@@ -8,7 +8,7 @@ import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
 import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.world.chunk.Chunk;
 
-public class ChunkMeshBuilder {
+public class SecondaryChunkMeshBuilder {
 	
 	
 	
@@ -142,18 +142,18 @@ public class ChunkMeshBuilder {
 		}
 		texCoords = Textures.TILES.convertToUV(texCoords, tile.getTextureFor(face));
 		
-		int size = ChunkMeshBuilder.vertices.size();
+		int size = SecondaryChunkMeshBuilder.vertices.size();
 		for (float f : vertices) {
-			ChunkMeshBuilder.vertices.add(f);
+			SecondaryChunkMeshBuilder.vertices.add(f);
 		}
 		
 		for (int i : indices) {
-			ChunkMeshBuilder.indices.add(i + index);
+			SecondaryChunkMeshBuilder.indices.add(i + index);
 		}
 		index += vertices.length / 3;
 		
 		for (float f : texCoords) {
-			ChunkMeshBuilder.texCoords.add(f);
+			SecondaryChunkMeshBuilder.texCoords.add(f);
 		}
 	}
 }

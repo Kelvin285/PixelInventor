@@ -8,9 +8,16 @@ import kmerrill285.PixelInventor.game.client.rendering.BlockFace;
 import kmerrill285.PixelInventor.game.settings.Translation;
 
 public class Tile {
+	
+	public enum TileRayTraceType {
+		SOLID, LIQUID, GAS
+	};
+	
 	private String name;
 	
 	private boolean fullCube = true;
+	private boolean visible = true;
+	private boolean blocksMovement = true;
 	
 	private String texture = "";
 	private String side_texture = "";
@@ -22,6 +29,11 @@ public class Tile {
 	private String bottom_texture = "";
 	private int width = 1;
 	private int height = 1;
+	
+	private static int CURRENT_ID = 0;
+	private int ID;
+	
+	private TileRayTraceType rayTraceType = TileRayTraceType.SOLID; 
 	
 	public Tile(String name) {
 		this.name = name;
@@ -68,6 +80,15 @@ public class Tile {
 			}
 			
 		}
+		ID = CURRENT_ID++;
+	}
+	
+	public TileRayTraceType getRayTraceType() {
+		return this.rayTraceType;
+	}
+	
+	public int getID() {
+		return this.ID;
 	}
 	
 	public String getName() {
@@ -83,8 +104,31 @@ public class Tile {
 		return this;
 	}
 	
+	public Tile setBlocksMovement(boolean blocksMovement) {
+		this.blocksMovement = blocksMovement;
+		return this;
+	}
+	
+	public Tile setRayTraceType(TileRayTraceType rayTraceType) {
+		this.rayTraceType = rayTraceType;
+		return this;
+	}
+	
+	public Tile setVisible(boolean visible) {
+		this.visible = visible;
+		return this;
+	}
+	
 	public boolean isFullCube() {
 		return this.fullCube;
+	}
+	
+	public boolean blocksMovement() {
+		return this.blocksMovement;
+	}
+	
+	public boolean isVisible() {
+		return this.visible;
 	}
 	
 	public int getWidth() {
@@ -132,6 +176,5 @@ public class Tile {
 		if (side_texture.isEmpty()) return texture;
 		return side_texture;
 	}
-	
 	
 }

@@ -24,7 +24,7 @@ public class MeshRenderer {
 		shader.setUniformMat4("modelMatrix", getModelMatrix(position, rotation, scale));
 		mesh.render();
 	}
-	
+		
 	public static Matrix4f getModelMatrix(Vector3f offset, Vector3f rotation, Vector3f scale) {
 		Matrix4f modelMatrix = new Matrix4f();
 		modelMatrix.identity().translate(offset).

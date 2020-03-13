@@ -4,18 +4,22 @@ import java.util.Random;
 
 import imported.FastNoise;
 import kmerrill285.PixelInventor.game.tile.Tiles;
+import kmerrill285.PixelInventor.game.world.World;
 
 public class ChunkGenerator {
 	
 	private FastNoise noise;
 	private Random random;
+	private World world;
 	
-	public ChunkGenerator(long seed) {
+	public ChunkGenerator(World world, long seed) {
 		noise = new FastNoise((int)seed);
 		random = new Random(seed);
+		this.world = world;
 	}
 	
 	public void generateChunk(Chunk chunk) {
+		if (world.getWorldSaver().tryLoadChunk(chunk)) return;
 		for (int x = 0; x < Chunk.SIZE; x++) {
 			for (int y = 0; y < Chunk.SIZE; y++) {
 				for (int z = 0; z < Chunk.SIZE; z++) {

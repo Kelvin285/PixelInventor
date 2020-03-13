@@ -5,6 +5,7 @@ import org.joml.Vector3f;
 import kmerrill285.PixelInventor.game.client.rendering.Mesh;
 import kmerrill285.PixelInventor.game.client.rendering.MeshRenderer;
 import kmerrill285.PixelInventor.game.client.rendering.chunk.ChunkMeshBuilder;
+import kmerrill285.PixelInventor.game.client.rendering.chunk.SecondaryChunkMeshBuilder;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.tile.Tiles;
@@ -22,6 +23,8 @@ public class Chunk {
 	private ChunkManager manager;
 	
 	public int air = 0;
+	
+	private boolean needsToSave = false;
 	
 	public Chunk(int x, int y, int z, ChunkManager manager) {
 		this.x = x;
@@ -124,11 +127,32 @@ public class Chunk {
 	
 	public void markForRerender() {
 		rerender = true;
-		manager.rebuild.add(this);
+		for (int xx = -1; xx < 2; xx++) {
+			for (int yy = -1; yy < 2; yy++) {
+				for (int zz = -1; zz < 2; zz++) {
+					Chunk chunk = manager.getChunk(getX() + xx, getY() + yy, getZ() + zz);
+					if (chunk != null) {
+						chunk.rebuildNow();
+					}
+				}
+			}
+		}
+		this.needsToSave = true;
+	}
+	
+
+	public boolean needsToSave() {
+		return this.needsToSave;
 	}
 	
 	public void rebuild() {
 		mesh = ChunkMeshBuilder.buildMesh(this);
+		rerender = false;
+	}
+	
+
+	private void rebuildNow() {
+		mesh = SecondaryChunkMeshBuilder.buildMesh(this);
 		rerender = false;
 	}
 	
@@ -201,7 +225,7 @@ public class Chunk {
 	public boolean fullRight() {
 		for (int x = 0; x < SIZE; x++) {
 			for (int z = 0; z < SIZE; z++) {
-				if (getTile(SIZE - 1, z, z).isFullCube() == false) {
+				if (getTile(SIZE - 1, x, z).isFullCube() == false) {
 					return false;
 				}
 			}
@@ -212,7 +236,7 @@ public class Chunk {
 	public boolean fullLeft() {
 		for (int x = 0; x < SIZE; x++) {
 			for (int z = 0; z < SIZE; z++) {
-				if (getTile(0, z, z).isFullCube() == false) {
+				if (getTile(0, x, z).isFullCube() == false) {
 					return false;
 				}
 			}
@@ -258,6 +282,7 @@ public class Chunk {
 	}
 	
 	public void dispose() {
+		manager.getWorld().getWorldSaver().saveChunk(this);
 		if (mesh != null)
 		mesh.dispose();
 	}
