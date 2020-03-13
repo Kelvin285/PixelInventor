@@ -15,11 +15,9 @@ import org.lwjgl.system.MemoryUtil;
 
 import kmerrill285.PixelInventor.events.Events;
 import kmerrill285.PixelInventor.events.Input;
-import kmerrill285.PixelInventor.game.client.rendering.Mesh;
-import kmerrill285.PixelInventor.game.client.rendering.MeshRenderer;
-import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
 import kmerrill285.PixelInventor.game.world.World;
 import kmerrill285.PixelInventor.resources.Constants;
+import kmerrill285.PixelInventor.resources.FPSCounter;
 import kmerrill285.PixelInventor.resources.Utils;
 
 public class PixelInventor {
@@ -82,6 +80,7 @@ public class PixelInventor {
 		GLFW.glfwShowWindow(Utils.window);
 	}
 	private boolean stop = false;
+	Thread thread = null;
 	public void loop() {
 		GL.createCapabilities();
 				
@@ -92,7 +91,7 @@ public class PixelInventor {
 		}
 		
 		
-		new Thread() {
+		thread = new Thread() {
 			public void run() {
 				while (!stop) {
 					update();
@@ -104,12 +103,14 @@ public class PixelInventor {
 				}
 			}
 			
-		}.start();
-		
+		};
+		thread.start();
+		FPSCounter.start();
 		while (!GLFW.glfwWindowShouldClose(Utils.window)) {
 			
 			Vector3f skyColor = world.getSkyColor();
 			GL11.glClearColor(skyColor.x, skyColor.y, skyColor.z, 0.0f);
+			
 			GL11.glEnable(GL11.GL_DEPTH_TEST);
 			GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 			//draw stuff I guess
@@ -129,6 +130,7 @@ public class PixelInventor {
 
 			GLFW.glfwPollEvents();
 			Input.doInput();
+			FPSCounter.updateFPS();
 		}
 		stop = true;
 	}
@@ -138,6 +140,7 @@ public class PixelInventor {
 	}
 	
 	public void dispose() {
+		while (!thread.isAlive()) {}
 		Utils.sprite_shader.dispose();
 		world.dispose();
 	}

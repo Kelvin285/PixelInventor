@@ -67,6 +67,7 @@ public class Mesh {
             texBuffer = MemoryUtil.memAllocFloat(texCoords.length);
             texBuffer.put(texCoords).flip();
             
+           
             vaoID = glGenVertexArrays();
             glBindVertexArray(vaoID);
 
@@ -80,7 +81,7 @@ public class Mesh {
             glBindBuffer(GL_ARRAY_BUFFER, texID);
             glBufferData(GL_ARRAY_BUFFER, texBuffer, GL_STATIC_DRAW);
             glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0);
-            
+
             indexID = glGenBuffers();
             indicesBuffer = MemoryUtil.memAllocInt(indices.length);
             indicesBuffer.put(indices).flip();
@@ -118,6 +119,7 @@ public class Mesh {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glDeleteBuffers(vboID);
         glDeleteBuffers(texID);
+        glDeleteBuffers(indexID);
 
         glBindVertexArray(0);
         glDeleteVertexArrays(vaoID);

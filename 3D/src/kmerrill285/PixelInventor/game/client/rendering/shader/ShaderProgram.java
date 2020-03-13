@@ -5,9 +5,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.system.MemoryStack;
+
+import kmerrill285.PixelInventor.game.client.rendering.lights.DirectionalLight;
+import kmerrill285.PixelInventor.game.client.rendering.lights.PointLight;
+import kmerrill285.PixelInventor.game.client.rendering.materials.Material;
 
 public class ShaderProgram {
 	private final int programId;
@@ -78,12 +85,81 @@ public class ShaderProgram {
     	uniforms.put(uniformName, uniformLocation);
     }
     
+    public void createPointLightUniform(String uniformName) throws Exception {
+        createUniform(uniformName + ".color");
+        createUniform(uniformName + ".position");
+        createUniform(uniformName + ".intensity");
+        createUniform(uniformName + ".att.constant");
+        createUniform(uniformName + ".att.linear");
+        createUniform(uniformName + ".att.exponent");
+    }
+
+    public void createMaterialUniform(String uniformName) throws Exception {
+        createUniform(uniformName + ".ambient");
+        createUniform(uniformName + ".diffuse");
+        createUniform(uniformName + ".specular");
+        createUniform(uniformName + ".hasTexture");
+        createUniform(uniformName + ".reflectance");
+    }
+    
+
+    public void createDirectionalLightUniform(String uniformName) throws Exception {
+        createUniform(uniformName + ".color");
+        createUniform(uniformName + ".direction");
+        createUniform(uniformName + ".intensity");
+    }
+    
+
+    public void setUniformDirectionalLight(String uniformName, DirectionalLight dirLight) {
+        setUniformVec3(uniformName + ".color", dirLight.getColor());
+        setUniformVec3(uniformName + ".direction", dirLight.getDirection());
+        setUniformFloat(uniformName + ".intensity", dirLight.getIntensity());
+    }
+    
+    public void setUniformPointLight(String uniformName, PointLight pointLight) {
+        setUniformVec3(uniformName + ".color", pointLight.getColor() );
+        setUniformVec3(uniformName + ".position", pointLight.getPosition());
+        setUniformFloat(uniformName + ".intensity", pointLight.getIntensity());
+        PointLight.Attenuation att = pointLight.getAttenuation();
+        setUniformFloat(uniformName + ".att.constant", att.getConstant());
+        setUniformFloat(uniformName + ".att.linear", att.getLinear());
+        setUniformFloat(uniformName + ".att.exponent", att.getExponent());
+    }
+
+    public void setUniformMaterial(String uniformName, Material material) {
+    	setUniformVec4(uniformName + ".ambient", material.getAmbientColor());
+    	setUniformVec4(uniformName + ".diffuse", material.getDiffuseColor());
+    	setUniformVec4(uniformName + ".specular", material.getSpecularColor());
+        setUniformInt(uniformName + ".hasTexture", material.isTextured() ? 1 : 0);
+        setUniformFloat(uniformName + ".reflectance", material.getReflectance());
+    }
+    
     public void setUniformMat4(String uniformName, Matrix4f mat) {
     	try (MemoryStack stack = MemoryStack.stackPush()) {
     		FloatBuffer fb = stack.mallocFloat(16);
     		mat.get(fb);
     		GL30.glUniformMatrix4fv(uniforms.get(uniformName), false, fb);
     	}
+    }
+    
+    public void setUniformVec4(String uniformName, Vector4f mat) {
+    	GL30.glUniform4f(uniforms.get(uniformName), mat.x, mat.y, mat.z, mat.w);
+    }
+    
+    public void setUniformVec3(String uniformName, Vector3f mat) {
+    	GL30.glUniform3f(uniforms.get(uniformName), mat.x, mat.y, mat.z);
+    }
+    
+    public void setUniformVec2(String uniformName, Vector2f mat) {
+    	GL30.glUniform2f(uniforms.get(uniformName), mat.x, mat.y);
+    }
+    
+    public void setUniformBoolean(String uniformName, boolean value) {
+        GL30.glUniform1i(uniforms.get(uniformName), value ? 1 : 0);
+    }
+    
+    public void setUniformFloat(String uniformName, float value) {
+        GL30.glUniform1f(uniforms.get(uniformName), value);
     }
     
     public void setUniformInt(String uniformName, int value) {
@@ -104,4 +180,6 @@ public class ShaderProgram {
             GL20.glDeleteProgram(programId);
         }
     }
+
+	
 }

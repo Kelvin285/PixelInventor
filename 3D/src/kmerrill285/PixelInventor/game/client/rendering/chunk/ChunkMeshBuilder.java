@@ -2,16 +2,15 @@ package kmerrill285.PixelInventor.game.client.rendering.chunk;
 
 import java.util.ArrayList;
 
+import kmerrill285.PixelInventor.game.client.rendering.BlockFace;
 import kmerrill285.PixelInventor.game.client.rendering.Mesh;
-import kmerrill285.PixelInventor.game.client.rendering.textures.Texture;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
+import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.world.chunk.Chunk;
 
 public class ChunkMeshBuilder {
 	
-	private static enum Face {
-		UP, DOWN, LEFT, RIGHT, FRONT, BACK;
-	}
+	
 	
 	private static ArrayList<Float> vertices;
 	private static ArrayList<Integer> indices;
@@ -30,12 +29,13 @@ public class ChunkMeshBuilder {
 					
 					if (chunk.getTile(x, y, z).isFullCube()) {
 						String name = chunk.getTile(x, y, z).getName();
-						if (!chunk.getTile(x - 1, y, z).isFullCube()) addFace(x, y, z, Face.LEFT, name);
-						if (!chunk.getTile(x + 1, y, z).isFullCube()) addFace(x, y, z, Face.RIGHT, name);
-						if (!chunk.getTile(x, y, z + 1).isFullCube()) addFace(x, y, z, Face.BACK, name);
-						if (!chunk.getTile(x, y, z - 1).isFullCube()) addFace(x, y, z, Face.FRONT, name);
-						if (!chunk.getTile(x, y - 1, z).isFullCube()) addFace(x, y, z, Face.DOWN, name);
-						if (!chunk.getTile(x, y + 1, z).isFullCube()) addFace(x, y, z, Face.UP, name);
+						Tile tile = chunk.getTile(x, y, z);
+						if (!chunk.getTile(x - 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.LEFT, tile);
+						if (!chunk.getTile(x + 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.RIGHT, tile);
+						if (!chunk.getTile(x, y, z + 1).isFullCube()) addFace(x, y, z, BlockFace.BACK, tile);
+						if (!chunk.getTile(x, y, z - 1).isFullCube()) addFace(x, y, z, BlockFace.FRONT, tile);
+						if (!chunk.getTile(x, y - 1, z).isFullCube()) addFace(x, y, z, BlockFace.DOWN, tile);
+						if (!chunk.getTile(x, y + 1, z).isFullCube()) addFace(x, y, z, BlockFace.UP, tile);
 					}
 					
 				}
@@ -59,7 +59,7 @@ public class ChunkMeshBuilder {
 		return mesh;
 	}
 	
-	private static void addFace(int x, int y, int z, Face face, String tile) {
+	private static void addFace(int x, int y, int z, BlockFace face, Tile tile) {
 		
 		float[] vertices = new float[] {
 				x + 0.0f, y + 0.0f, z + 0.0f,
@@ -69,10 +69,10 @@ public class ChunkMeshBuilder {
 		};
 		int[] indices = {0, 1, 2, 2, 3, 0};
 		float[] texCoords = new float[] {
-				0.0f, 0.0f,
 				0.0f, 1.0f,
-				1.0f, 1.0f,
-				1.0f, 0.0f
+				0.0f, 0.0f,
+				1.0f, 0.0f,
+				1.0f, 1.0f
 		};
 		
 		int scrollX = x;
@@ -135,13 +135,12 @@ public class ChunkMeshBuilder {
 		
 		
 		for (int i = 0; i < texCoords.length; i+=2) {
-			texCoords[i] /= 2.0f;
-			texCoords[i + 1] /= 2.0f;
-			texCoords[i] += 0.5f * ((scrollX) % 2);
-			texCoords[i + 1] += 0.5f * ((scrollY) % 2);
+			texCoords[i] /= (float)tile.getWidth();
+			texCoords[i + 1] /= (float)tile.getHeight();
+			texCoords[i] += (1.0f / (float)tile.getWidth()) * ((scrollX) % tile.getWidth());
+			texCoords[i + 1] += (1.0f / (float)tile.getHeight()) * ((scrollY) % tile.getHeight());
 		}
-		
-		texCoords = Textures.TILES.convertToUV(texCoords, tile);
+		texCoords = Textures.TILES.convertToUV(texCoords, tile.getTextureFor(face));
 		
 		int size = ChunkMeshBuilder.vertices.size();
 		for (float f : vertices) {

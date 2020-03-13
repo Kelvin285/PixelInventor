@@ -70,7 +70,9 @@ public class Utils {
 		object_shader.createUniform("projectionMatrix");
 		object_shader.createUniform("modelMatrix");
 		object_shader.createUniform("texture_sampler");
-				
+		
+//		object_shader.createUniform("cameraPos");
+
 		GLFW.glfwSetWindowSizeCallback(window, Events::windowSize);
 		setupProjection();
 		

@@ -68,11 +68,12 @@ public class Chunk {
 		return Tiles.AIR;
 	}
 	
-	public void setTile(int x, int y, int z, Tile tile) {
+	public void setTile(int x, int y, int z, Tile tile, boolean rerender) {
 		if (x >= 0 && x < SIZE && y >= 0 && y < SIZE && z >= 0 && z < SIZE) {
 			if (tiles[x][y][z] == Tiles.AIR && tile != Tiles.AIR) air--;
 			if (tiles[x][y][z] != Tiles.AIR && tile == Tiles.AIR) air++;
 			tiles[x][y][z] = tile;
+			if (rerender)
 			markForRerender();
 			return;
 		}
@@ -105,7 +106,7 @@ public class Chunk {
 		}
 		Chunk chunk = manager.getChunk(getX() + X, getY() + Y, getZ() + Z);
 		if (chunk != null) {
-			chunk.setTile(x, y, z, tile);
+			chunk.setTile(x, y, z, tile, rerender);
 		}
 	}
 	

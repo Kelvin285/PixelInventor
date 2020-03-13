@@ -19,7 +19,7 @@ public class ChunkGenerator {
 		for (int x = 0; x < Chunk.SIZE; x++) {
 			for (int y = 0; y < Chunk.SIZE; y++) {
 				for (int z = 0; z < Chunk.SIZE; z++) {
-					chunk.setTile(x, y, z, Tiles.AIR);
+					chunk.setTile(x, y, z, Tiles.AIR, false);
 				}
 			}
 		}
@@ -34,25 +34,23 @@ public class ChunkGenerator {
 					
 					int Y = y + chunk.getY() * Chunk.SIZE;
 					
-					double height = noise.GetSimplex(X, 0, Z) * 10;
-					
-					double overhang = noise.GetSimplex(X * 5.0f, Y / 10.0f, Z * 5.0f) * 10;
-					
-					if (Y < (int)height && Y < (int)overhang) {
-						chunk.setTile(x, y, z, Tiles.DIRT);
-					}
-					if (Y == (int)height - 1 && chunk.getTile(x, y, z) == Tiles.DIRT) {
-						chunk.setTile(x, y, z, Tiles.GRASS);
-						if (purple > 0) {
-							chunk.setTile(x, y, z, Tiles.PURPLE_GRASS);
+					double height = noise.GetCubicFractal(X * 2, 0, Z * 2) * 45;
+										
+					if (Y < (int)height) {
+						chunk.setTile(x, y, z, Tiles.DIRT, false);
+						if (Y < (int)height - 3) {
+							chunk.setTile(x, y, z, Tiles.STONE, false);
 						}
 					}
-					if (Y < (int)height - 3) {
-						chunk.setTile(x, y, z, Tiles.STONE);
+					if (Y == (int)height - 1 && chunk.getTile(x, y, z) == Tiles.DIRT) {
+						chunk.setTile(x, y, z, Tiles.GRASS, false);
+						if (purple > 0) {
+							chunk.setTile(x, y, z, Tiles.PURPLE_GRASS, false);
+						}
 					}
+					
 				}
 			}
 		}
-		chunk.markForRerender();
 	}
 }
