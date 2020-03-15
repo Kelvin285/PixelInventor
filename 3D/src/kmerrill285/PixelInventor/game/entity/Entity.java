@@ -9,6 +9,7 @@ import kmerrill285.PixelInventor.resources.FPSCounter;
 
 public class Entity {
 	public Vector3f position;
+	public Vector3f lastPos;
 	public float pitch, yaw;
 	public Vector3f velocity;
 	public World world;
@@ -17,17 +18,137 @@ public class Entity {
 	protected boolean running;
 	public boolean isMoving;
 	public boolean isSneaking;
+	protected boolean lastOnGround;
+	
+	public Vector3f size;
 	
 	public float moveSpeed = 0.1f;
 	
-	public Entity(Vector3f position, World world) {
+	public Entity(Vector3f position, Vector3f size, World world) {
 		this.position = position;
 		this.velocity = new Vector3f(0, 0, 0);
+		this.lastPos = new Vector3f(position);
 		this.world = world;
+		this.size = size;
 	}
 	
 	public void tick() {
+		lastOnGround = onGround;
+		onGround = false;
+		float inc = 0.1f;
+		float velInc = 0.01f;
+		float offsX = 0;
+		float offsY = 0;
+		float offsZ = 0;
+		float vx = velocity.x;
+		float vy = velocity.y;
+		float vz = velocity.z;
+		if (vy > 0) vy += size.y;
+		if (vx < 0) vx -= size.x / 2.0f;
+		if (vx > 0) vx += size.x / 2.0f;
+		if (vz < 0) vz -= size.z / 2.0f;
+		if (vz > 0) vz += size.z / 2.0f;
+		if (vy > 0) offsY = -size.y;
+		if (vx > 0) offsX = -size.x / 2;
+		if (vx < 0) offsX = size.x / 2;
+		if (vz > 0) offsZ = -size.z / 2;
+		if (vz < 0) offsZ = size.z / 2;
+		int dirX = 0;
+		int dirY = 0;
+		int dirZ = 0;
+		if (vx > 0) dirX = 1;
+		if (vx < 0) dirX = -1;
+		if (vy > 0) dirY = 1;
+		if (vy < 0) dirY = -1;
+		if (vz > 0) dirZ = 1;
+		if (vz < 0) dirZ = -1;
+
+		TilePos pos = new TilePos(0, 0, 0);
+		//check for collision along the y-axis (iterate through x and z-axis)
+		Y:
+		for (float xx = -size.x / 2.0f + inc * 2; xx < size.x / 2.0f - inc * 2; xx+=inc) {
+			for (float zz = -size.x / 2.0f + inc * 2; zz < size.x / 2.0f - inc * 2; zz+=inc) {
+				for (float yy = -1; yy < Math.abs(velocity.y); yy += velInc) {
+					float nx = position.x + xx;
+					float ny = position.y + yy * dirY - offsY;
+					float nz = position.z + zz;
+					pos.setPosition(nx, ny, nz);
+					if (world.getTile(pos).blocksMovement()) {
+						velocity.y = 0;
+						int y = pos.y;
+						if (dirY > 0) {
+							position.y = lastPos.y;
+						} else {
+							position.y = y+1;
+							onGround = true;
+						}
+						break Y;
+						
+					}
+				}
+				
+			}
+		}
+		//check for collision along the z-axis (iterate through x and y-axis)
+		Z:
+		for (float xx = -size.x / 2.0f + inc * 2; xx < size.x / 2.0f - inc * 2; xx+=inc) {
+			for (float yy = 0 + inc; yy < size.y - inc; yy++) {
+				for (float zz = 0; zz < Math.abs(velocity.z); zz += velInc) {
+					float nx = position.x + xx;
+					float ny = position.y + yy;
+					float nz = position.z + zz * dirZ - offsZ;
+					pos.setPosition(nx, ny, nz);
+					if (world.getTile(pos).blocksMovement()) {
+						velocity.z = 0;
+						int z = pos.z;
+						position.z = lastPos.z;
+						break Z;
+					}
+				}
+				
+			}
+		}
+		
+		//check for collision along the x-axis (iterate through x and y-axis)
+		X:
+		for (float zz = -size.z / 2.0f + inc * 2; zz < size.z / 2.0f - inc * 2; zz+=inc) {
+			for (float yy = 0 + inc; yy < size.y - inc; yy++) {
+				for (float xx = 0; xx < Math.abs(velocity.x); xx += velInc) {
+					float nx = position.x + xx * dirX - offsX;
+					float ny = position.y + yy;
+					float nz = position.z + zz;
+					pos.setPosition(nx, ny, nz);
+					if (world.getTile(pos).blocksMovement()) {
+						velocity.x = 0;
+						int x = pos.x;
+						position.x = lastPos.x;
+						break X;
+					}
+				}
+				
+			}
+		}
+		if (onGround == false)
+		onGround = world.getTile(this.getTilePos().add(0, -1, 0)).blocksMovement();
+		
+		float terminal = 0.4f;
+		if (!onGround) {
+			if (velocity.y > -terminal) {
+				velocity.y -= 0.045f * getGravity();
+			}
+		}
+		
+		if (velocity.y < -terminal) {
+			velocity.y = -terminal;
+		}
+		
+		
+		lastPos.x = position.x;
+		lastPos.y = position.y;
+		lastPos.z = position.z;
+		
 		isMoving = (int)(velocity.x * 10) != 0 && (int)(velocity.y * 10) != 0;
+		
 		position.x += velocity.x * FPSCounter.getDelta();
 		position.y += velocity.y * FPSCounter.getDelta();
 		position.z += velocity.z * FPSCounter.getDelta();
@@ -38,7 +159,7 @@ public class Entity {
 	}
 	
 	public float getGravity() {
-		return 9.8f;
+		return 0.98f;
 	}
 	
 	public void dispose() {

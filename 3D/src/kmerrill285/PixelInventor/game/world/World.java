@@ -8,10 +8,12 @@ import org.joml.Vector3f;
 import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.rendering.Mesh;
 import kmerrill285.PixelInventor.game.client.rendering.MeshRenderer;
+import kmerrill285.PixelInventor.game.client.rendering.effects.lights.Fog;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Texture;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
 import kmerrill285.PixelInventor.game.entity.Entity;
+import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.tile.Tile.TileRayTraceType;
 import kmerrill285.PixelInventor.game.tile.Tiles;
@@ -36,6 +38,8 @@ public class World {
 	
 	public ArrayList<Entity> entities = new ArrayList<Entity>();
 	
+	private Fog fog;
+	
 	public World(String worldName, long seed) {
 		worldSaver = new WorldSaver(worldName, this);
 		worldSaver.loadWorld();
@@ -45,6 +49,11 @@ public class World {
 		
 		chunkManager = new ChunkManager(this, generator);
 		this.setSeed(seed);
+		
+		this.fog = new Fog();
+		fog.active = true;
+		fog.density = 0.1f;
+		fog.color = new Vector3f(1.0f, 1.0f, 1.0f);
 	}
 	
 	public void updateChunkManager() {
@@ -59,11 +68,19 @@ public class World {
 	}
 	
 	public void render(ShaderProgram shader) {
+		updateFog();
+		shader.setUniformFog("fog", fog);
 		chunkManager.render(shader);
 		renderTileHover(shader);
 		for (Entity e : entities) {
 			e.render(shader);
 		}
+	}
+	
+	public void updateFog() {
+		fog.active = true;
+		fog.density = 1.0f / 200.0f;
+		fog.color = getSkyColor().mul(2.0f, 2.0f, 2.0f);
 	}
 	
 	private Mesh selection = null;
@@ -190,7 +207,7 @@ public class World {
 		Vector3f slope = new Vector3f(end.x - start.x, end.y - start.y, end.z - start.z).normalize();
 		float length = end.distance(start);
 		
-		float inc = 0.25f;
+		float inc = 0.0001f;
 		for (float i = 0; i < length; i+=inc) {
 			Vector3f n = new Vector3f(start).lerp(end, i / length);
 			pos.setPosition(n.x, n.y, n.z);
@@ -199,7 +216,7 @@ public class World {
 			if (tile != null) {
 				if (tile.isVisible()) {
 					if (tile.getRayTraceType() == type) {
-						return new RayTraceResult(RayTraceType.TILE, pos, new Vector3f(start).lerp(end, (i-0.25f) / length));
+						return new RayTraceResult(RayTraceType.TILE, pos, new Vector3f(start).lerp(end, (i-inc) / length));
 					}
 				}
 			}
@@ -237,5 +254,9 @@ public class World {
 	public Chunk getChunk(int x, int y, int z) 
 	{
 		return getChunkManager().getChunk(x, y, z);
+	}
+	
+	public Fog getFog() {
+		return this.fog;
 	}
 }

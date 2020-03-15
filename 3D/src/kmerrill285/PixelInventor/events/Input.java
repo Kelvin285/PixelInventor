@@ -1,10 +1,13 @@
 package kmerrill285.PixelInventor.events;
 
-import org.lwjgl.glfw.GLFW;
+import java.awt.Rectangle;
 
 import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.Mouse;
+import kmerrill285.PixelInventor.game.client.rendering.gui.GuiRenderer;
+import kmerrill285.PixelInventor.game.client.rendering.gui.IngameMenuScreen;
+import kmerrill285.PixelInventor.game.client.rendering.gui.InventoryScreen;
 import kmerrill285.PixelInventor.game.entity.Entity;
 import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.tile.Tiles;
@@ -14,42 +17,36 @@ import kmerrill285.PixelInventor.resources.RayTraceResult.RayTraceType;
 
 public class Input {
 	public static void doInput() {
-		float speed = 0.5f;
-		float rotSpeed = 2.0f;
-		if (Settings.isKeyDown(GLFW.GLFW_KEY_D)) {
-			float yaw = 90;
-			Camera.position.x+=speed * Camera.getForward(0, Camera.rotation.y + yaw).x;
-			Camera.position.y+=speed * Camera.getForward(0, Camera.rotation.y + yaw).y;
-			Camera.position.z+=speed * Camera.getForward(0, Camera.rotation.y + yaw).z;
-		}
-		if (Settings.isKeyDown(GLFW.GLFW_KEY_A)) {
-			float yaw = -90;
-			Camera.position.x+=speed * Camera.getForward(0, Camera.rotation.y + yaw).x;
-			Camera.position.y+=speed * Camera.getForward(0, Camera.rotation.y + yaw).y;
-			Camera.position.z+=speed * Camera.getForward(0, Camera.rotation.y + yaw).z;
+		GuiRenderer renderer = PixelInventor.game.guiRenderer;
+		if (renderer.getOpenScreen() == null) {
+			doGameInput();
 		}
 		
+		if (Settings.INVENTORY.isJustPressed()) {
+			if (renderer != null) {
+				if (!(renderer.getOpenScreen() instanceof IngameMenuScreen)) {
+					if (renderer.getOpenScreen() != null) {
+						renderer.closeScreen();
+					} else {
+						renderer.openScreen(new InventoryScreen(renderer));
+					}
+				}
+			}
+		}
+		if (Settings.EXIT.isJustPressed()) {
+			if (renderer != null) {
+				if (renderer.getOpenScreen() != null) {
+					renderer.closeScreen();
+				} else {
+					renderer.openScreen(new IngameMenuScreen(renderer));
+				}
+			}
+		}
 		
-		float pitchmul = 0;
+		Mouse.update();
+	}
 
-		if (Settings.isKeyDown(GLFW.GLFW_KEY_W)) {
-			float yaw = 0;
-			Camera.position.x+=speed * Camera.getForward(Camera.rotation.x * -1 * pitchmul, Camera.rotation.y + yaw).x;
-			Camera.position.y+=speed * Camera.getForward(Camera.rotation.x * -1 * pitchmul, Camera.rotation.y + yaw).y;
-			Camera.position.z+=speed * Camera.getForward(Camera.rotation.x * -1 * pitchmul, Camera.rotation.y + yaw).z;
-		}
-		if (Settings.isKeyDown(GLFW.GLFW_KEY_S)) {
-			float yaw = 180;
-			Camera.position.x+=speed * Camera.getForward(Camera.rotation.x * pitchmul, Camera.rotation.y + yaw).x;
-			Camera.position.y+=speed * Camera.getForward(Camera.rotation.x * pitchmul, Camera.rotation.y + yaw).y;
-			Camera.position.z+=speed * Camera.getForward(Camera.rotation.x * pitchmul, Camera.rotation.y + yaw).z;
-		}
-		if (Settings.isKeyDown(GLFW.GLFW_KEY_SPACE)) {
-			Camera.position.y+=speed;
-		}
-		if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_SHIFT)) {
-			Camera.position.y-=speed;
-		}
+	private static void doGameInput() {
 		
 		if (Mouse.locked) {
 			Camera.rotation.y += (Mouse.x - Mouse.lastX) * Settings.MOUSE_SENSITIVITY;
@@ -59,16 +56,27 @@ public class Input {
 			if (Camera.rotation.x > 90) Camera.rotation.x = 90;
 		}
 		
-		if (Settings.isMouseButtonJustDown(0)) {
+		
+		if (Settings.ATTACK.isPressed()) {
 			PixelInventor game = PixelInventor.game;
 			if (Camera.currentTile != null) {
 				if (Camera.currentTile.getType() == RayTraceType.TILE) {
-					game.world.setTile(Camera.currentTile.getPosition(), Tiles.AIR);
+					if (PixelInventor.game.player != null)
+						if (Settings.ATTACK.isJustPressed()) {
+							game.world.setTile(Camera.currentTile.getPosition(), Tiles.AIR);
+							PixelInventor.game.player.setUseTime(5);
+						} else {
+							if (PixelInventor.game.player.getUseTime() == 0)
+							{
+								game.world.setTile(Camera.currentTile.getPosition(), Tiles.AIR);
+								PixelInventor.game.player.setUseTime(5);
+							}
+						}
 				}
 			}
 		}
 		
-		if (Settings.isMouseButtonJustDown(1)) {
+		if (Settings.USE.isPressed()) {
 			PixelInventor game = PixelInventor.game;
 			if (Camera.currentTile != null) {
 				if (Camera.currentTile.getType() == RayTraceType.TILE) {
@@ -80,21 +88,32 @@ public class Input {
 						pos.z += direction.z;
 						boolean stop = false;
 						for (Entity e : game.world.entities) {
-							if (pos.x == e.getTilePos().x)
-								if (pos.y == e.getTilePos().y || pos.y == e.getTilePos().y + 1)
-									if (pos.z == e.getTilePos().z) {
+							if (new Rectangle(pos.x, pos.z, 1, 1).intersects(e.position.x-e.size.x/2.0, e.position.z-e.size.z/2.0, e.size.x/2.0, e.size.z/2.0))
+								if (pos.y == e.getTilePos().y || pos.y == e.getTilePos().y + 1) {
 										stop = true;
 										break;
 									}
 						}
-						if (!stop)
-						game.world.setTile(pos, Tiles.GRASS);
+						
+						
+					if (Settings.USE.isJustPressed()) {
+						if (!stop) {
+							game.world.setTile(pos, Tiles.GRASS);
+							PixelInventor.game.player.setUseTime(5);
+						}
+					} else {
+						if (PixelInventor.game.player.getUseTime() == 0)
+						{
+							if (!stop) {
+								game.world.setTile(pos, Tiles.GRASS);
+								PixelInventor.game.player.setUseTime(5);
+							}
+						}
 					}
+				}
 					
 				}
 			}
 		}
-		
-		Mouse.update();
 	}
 }

@@ -17,6 +17,7 @@ import kmerrill285.PixelInventor.events.Events;
 import kmerrill285.PixelInventor.events.Input;
 import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.rendering.gui.GuiRenderer;
+import kmerrill285.PixelInventor.game.client.rendering.gui.IngameMenuScreen;
 import kmerrill285.PixelInventor.game.entity.player.ClientPlayerEntity;
 import kmerrill285.PixelInventor.game.world.World;
 import kmerrill285.PixelInventor.resources.Constants;
@@ -103,6 +104,7 @@ public class PixelInventor {
 		thread = new Thread() {
 			public void run() {
 				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
+					if (guiRenderer == null || guiRenderer != null && !(guiRenderer.getOpenScreen() instanceof IngameMenuScreen))
 					updateWorld();
 					try {
 						Thread.sleep(5);
@@ -121,6 +123,7 @@ public class PixelInventor {
 		
 		FPSCounter.start();
 		while (!GLFW.glfwWindowShouldClose(Utils.window)) {
+			if (guiRenderer == null || guiRenderer != null && !(guiRenderer.getOpenScreen() instanceof IngameMenuScreen))
 			update();
 			Vector3f skyColor = world.getSkyColor();
 			GL11.glClearColor(skyColor.x, skyColor.y, skyColor.z, 0.0f);

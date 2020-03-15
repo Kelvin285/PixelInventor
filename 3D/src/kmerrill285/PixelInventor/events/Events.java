@@ -3,16 +3,14 @@ package kmerrill285.PixelInventor.events;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
+import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.game.client.Mouse;
 import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.resources.Utils;
 
 public class Events {
 	public static void keyCallback(long window, int key, int scancode, int action, int mods) {
-		if (key == GLFW.GLFW_KEY_ESCAPE && action == GLFW.GLFW_RELEASE) {
-			GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
-			Mouse.locked = false;
-		}
+		
 		if (action == GLFW.GLFW_PRESS) {
 			Settings.keys.put(key, true);
 			Settings.pressedKey.put(key, true);
@@ -38,8 +36,10 @@ public class Events {
 	}
 	
 	public static void mouseClick(long window, int button, int press, int undefined) {
-		GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
-		Mouse.locked = true;
+		if (PixelInventor.game.guiRenderer.currentScreen == null) {
+			GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
+			Mouse.locked = true;
+		}
 		Settings.buttons.put(button, press == 1);
 		Settings.pressedButton.put(button, press == 1);
 	}

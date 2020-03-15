@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import org.joml.Vector3f;
 
+import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.settings.Settings;
@@ -67,11 +68,23 @@ public class ChunkManager {
 		Vector3f forward = Camera.getForward(Camera.rotation.x * -1, Camera.rotation.y);
 		
 		loaded.clear();
+		
+		cx -= forward.x * 5;
+		cy -= forward.y * 5;
+		cz -= forward.z * 5;
+		
 		loadChunks(cx, cy, cz);
+		
 		cx += forward.x * 5;
 		cy += forward.y * 5;
 		cz += forward.z * 5;
 		loadChunks(cx, cy, cz);
+		
+		cx += forward.x * 5;
+		cy += forward.y * 5;
+		cz += forward.z * 5;
+		loadChunks(cx, cy, cz);
+		
 		
 		for (String str : chunks.keySet()) {
 			unloaded.add(chunks.get(str));

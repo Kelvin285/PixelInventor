@@ -14,6 +14,7 @@ import kmerrill285.PixelInventor.resources.Utils;
 public class Texture {
 	public String fileName;
 	private int textureId;
+	private int width, height;
 	
 	public Texture(String modId, String fileName) {
 		try {
@@ -32,6 +33,9 @@ public class Texture {
 			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
 			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
 			GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
+			
+			this.width = decoder.getWidth();
+			this.height = decoder.getHeight();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -47,5 +51,13 @@ public class Texture {
 
 	public void setTextureId(int textureId) {
 		this.textureId = textureId;
+	}
+	
+	public int getWidth() {
+		return this.width;
+	}
+	
+	public int getHeight() {
+		return this.height;
 	}
 }

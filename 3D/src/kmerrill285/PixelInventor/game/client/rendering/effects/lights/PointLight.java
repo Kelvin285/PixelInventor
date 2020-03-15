@@ -1,4 +1,4 @@
-package kmerrill285.PixelInventor.game.client.rendering.lights;
+package kmerrill285.PixelInventor.game.client.rendering.effects.lights;
 
 import org.joml.Vector3f;
 

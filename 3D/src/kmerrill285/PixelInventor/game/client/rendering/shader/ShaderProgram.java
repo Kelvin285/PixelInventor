@@ -12,8 +12,9 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.system.MemoryStack;
 
-import kmerrill285.PixelInventor.game.client.rendering.lights.DirectionalLight;
-import kmerrill285.PixelInventor.game.client.rendering.lights.PointLight;
+import kmerrill285.PixelInventor.game.client.rendering.effects.lights.DirectionalLight;
+import kmerrill285.PixelInventor.game.client.rendering.effects.lights.Fog;
+import kmerrill285.PixelInventor.game.client.rendering.effects.lights.PointLight;
 import kmerrill285.PixelInventor.game.client.rendering.materials.Material;
 
 public class ShaderProgram {
@@ -109,6 +110,17 @@ public class ShaderProgram {
         createUniform(uniformName + ".intensity");
     }
     
+    public void createFogUniform(String uniformName) throws Exception {
+        createUniform(uniformName + ".activeFog");
+        createUniform(uniformName + ".color");
+        createUniform(uniformName + ".density");
+    }
+
+    public void setUniformFog(String uniformName, Fog fog) {
+        setUniformInt(uniformName + ".activeFog", fog.active ? 1 : 0);
+        setUniformVec3(uniformName + ".color", fog.color );
+        setUniformFloat(uniformName + ".density", fog.density);
+    }
 
     public void setUniformDirectionalLight(String uniformName, DirectionalLight dirLight) {
         setUniformVec3(uniformName + ".color", dirLight.getColor());

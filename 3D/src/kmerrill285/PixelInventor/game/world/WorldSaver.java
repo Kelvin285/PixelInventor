@@ -51,8 +51,8 @@ public class WorldSaver {
 					String str = scanner.nextLine().trim();
 					if (seed == -1) {
 						seed = Long.parseLong(str);
+						continue;
 					}
-					
 				}
 				world.setSeed(seed);
 				scanner.close();

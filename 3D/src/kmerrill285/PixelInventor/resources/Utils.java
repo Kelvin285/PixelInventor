@@ -66,7 +66,6 @@ public class Utils {
 		sprite_shader.createFragmentShader(loadResource("PixelInventor", "shaders/sprite_fragment.glsl"));
 		sprite_shader.link();
 		sprite_shader.createUniform("offset");
-		sprite_shader.createUniform("rotation");
 		sprite_shader.createUniform("scale");
 		sprite_shader.createUniform("color");
 		sprite_shader.createUniform("texture_sampler");
@@ -78,6 +77,7 @@ public class Utils {
 		object_shader.createUniform("projectionMatrix");
 		object_shader.createUniform("modelMatrix");
 		object_shader.createUniform("texture_sampler");
+		object_shader.createFogUniform("fog");
 		
 //		object_shader.createUniform("cameraPos");
 

@@ -22,9 +22,17 @@ public class ClientPlayerEntity extends PlayerEntity {
 	
 	private Vector3f moveVel = new Vector3f(0, 0, 0);
 	
+	private int useTimer = 0;
+	
 	@Override
 	public void tick() {
 		super.tick();
+		
+		if (useTimer > 0) {
+			useTimer--;
+		} else {
+			useTimer = 0;
+		}
 		
 		isMoving = false;
 		float bm = 1.0f;
@@ -34,11 +42,15 @@ public class ClientPlayerEntity extends PlayerEntity {
 		float bobZ = bob * (float)Math.sin(Math.toRadians(Camera.rotation.y)) * bm;
 		float bobY = (float)Math.abs(Math.sin(Math.toRadians(headBob)) * 0.15f) * bm;
 		
-		float sneakOffs = 0;
-		if (isSneaking) sneakOffs = -0.25f;
+		
+		if (isSneaking) {
+			this.size.y = 2.0f * 0.75f;
+		} else {
+			this.size.y = 2.0f;
+		}
 		Vector3f vel = new Vector3f(moveVel);
-		if (!isSneaking)vel.mul(0);
-		Camera.position = new Vector3f(position).add(bobX + vel.x * 25, 0.75f + bobY + sneakOffs, bobZ + vel.z * 25);
+		
+		Camera.position = new Vector3f(lastPos).add(bobX + vel.x * 25, bobY + this.size.y * 0.75f, bobZ + vel.z * 25);
 		Camera.update();
 		this.yaw = Camera.rotation.y;
 		
@@ -47,15 +59,15 @@ public class ClientPlayerEntity extends PlayerEntity {
 		
 		int extra = 0;
 		
-		if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL)) {
+		if (Settings.RUN.isPressed()) {
 			this.running = true;
 		} else {
 			this.running = false;
 		}
 		float bobSpeed = 0.0f;
 		float bobSpeedX = 0.0f;
-		if (Settings.isKeyDown(GLFW.GLFW_KEY_W)) {
-			if (!Settings.isKeyDown(GLFW.GLFW_KEY_S)) {
+		if (Settings.FORWARD.isPressed()) {
+			if (!Settings.BACKWARD.isPressed()) {
 				XP = (float)Math.cos(Math.toRadians(yaw - 90));
 				ZP = (float)Math.sin(Math.toRadians(yaw - 90));
 				extra = -45;
@@ -65,8 +77,8 @@ public class ClientPlayerEntity extends PlayerEntity {
 			}
 		}
 		float backMul = 1.0f;
-		if (Settings.isKeyDown(GLFW.GLFW_KEY_S)) {
-			if (!Settings.isKeyDown(GLFW.GLFW_KEY_W)) {
+		if (Settings.BACKWARD.isPressed()) {
+			if (!Settings.FORWARD.isPressed()) {
 				backMul = 0.75f;
 				XP = (float)Math.cos(Math.toRadians(yaw + 90)) * backMul;
 				ZP = (float)Math.sin(Math.toRadians(yaw + 90)) * backMul;
@@ -77,8 +89,8 @@ public class ClientPlayerEntity extends PlayerEntity {
 				isMoving = true;
 			}
 		}
-		if (Settings.isKeyDown(GLFW.GLFW_KEY_A)) {
-			if (!Settings.isKeyDown(GLFW.GLFW_KEY_D)) {
+		if (Settings.LEFT.isPressed()) {
+			if (!Settings.RIGHT.isPressed()) {
 				XP = (float)Math.cos(Math.toRadians(yaw - 180 - extra)) * backMul;
 				ZP = (float)Math.sin(Math.toRadians(yaw - 180 - extra)) * backMul;
 				isMoving = true;
@@ -86,8 +98,8 @@ public class ClientPlayerEntity extends PlayerEntity {
 			}
 		}
 		
-		if (Settings.isKeyDown(GLFW.GLFW_KEY_D)) {
-			if (!Settings.isKeyDown(GLFW.GLFW_KEY_A)) {
+		if (Settings.RIGHT.isPressed()) {
+			if (!Settings.LEFT.isPressed()) {
 				XP = (float)Math.cos(Math.toRadians(yaw + extra)) * backMul;
 				ZP = (float)Math.sin(Math.toRadians(yaw + extra)) * backMul;
 				running = false;
@@ -96,12 +108,12 @@ public class ClientPlayerEntity extends PlayerEntity {
 			}
 		}
 		
-		this.isSneaking = Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_SHIFT);
+		this.isSneaking = Settings.SNEAK.isPressed();
 		
 		if (running)
 		{
-			bobSpeed *= 1.1f;
-			bobSpeedX *= 1.1f;
+			bobSpeed *= 1.5f;
+			bobSpeedX *= 1.5f;
 		}
 		
 		if (isSneaking) {
@@ -113,6 +125,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 			bobSpeed = 0;
 			bobSpeedX = 0;
 		}
+		
 		headBob += bobSpeed;
 		headBobX += bobSpeedX;
 		if (headBob > 360) headBob -= 360;
@@ -147,27 +160,32 @@ public class ClientPlayerEntity extends PlayerEntity {
 		if (running) mul = 1.1f;
 		if (isSneaking) mul = 0.25f;
 		
+		if (isSneaking && onGround) {
+			
+			float lx = position.x;
+			if (world.getTile(getTilePos().add(0, -1, 0)).blocksMovement() == false) {
+				position.x = lastPos.x;
+			}
+			if (world.getTile(getTilePos().add(0, -1, 0)).blocksMovement() == false) {
+				position.x = lx;
+				position.z = lastPos.z;
+			}
+			if (world.getTile(getTilePos().add(0, -1, 0)).blocksMovement() == false) {
+				position.x = lastPos.x;
+				position.z = lastPos.z;
+			}
+			
+		}
+		
 		float j = 0.75f;
 		float gravMul = 0.6f * j;
 		float terminal = 0.4f;
 		
-		if (Settings.isKeyDown(GLFW.GLFW_KEY_SPACE) && onGround) {
+		if (Settings.JUMP.isPressed() && onGround && lastOnGround) {
 			velocity.y = terminal * 0.4f * j;
 			mul *= 1.1f;
 		}
 		
-		if (!onGround) {
-			if (velocity.y > -terminal) {
-				velocity.y -= 0.045f * gravMul;
-			}
-		} else {
-			if (velocity.y < 0) {
-				velocity.y = 0;
-			}
-		}
-		if (velocity.y < -terminal) {
-			velocity.y = -terminal;
-		}
 		
 		
 		float moveLerp = 0.5f;
@@ -180,41 +198,19 @@ public class ClientPlayerEntity extends PlayerEntity {
 		
 		moveVel = moveVel.lerp(velocity, 0.1f);
 		if (!isSneaking) moveVel.mul(0);
-		
-		
-		for (int i = 0; i < 2; i++) {
-			if (world.getTile(new TilePos(position.x + velocity.x * 4 + vel.x * 25, position.y + i, position.z)).blocksMovement()) {
-				position.x -= velocity.x * 0.5f;
-				velocity.x = 0;
-			}
-			
-			if (world.getTile(new TilePos(position.x, position.y + i, position.z + velocity.z * 4 + vel.z * 25)).blocksMovement()) {
-				position.z -= velocity.z * 0.5f;
-				velocity.z = 0;
-			}
-			if (isSneaking && !world.getTile(new TilePos(position.x + velocity.x * 4, position.y - 1, position.z + velocity.z)).blocksMovement() && onGround) {
-				velocity.x = 0;
-			}
-			if (isSneaking && !world.getTile(new TilePos(position.x, position.y - 1, position.z + velocity.z * 4)).blocksMovement() && onGround) {
-				velocity.z = 0;
-			}
-			if (i == 1) {
-				if (velocity.y > 0)
-				if (world.getTile(new TilePos(position.x, position.y + velocity.y * 1.5f + 0.9f, position.z)).blocksMovement()) {
-					velocity.y = 0;
-				}
-			}
-		}
-		
-//		if (world.getTile(getTilePos().add(velocity.z + 0.5f, 0, 0)).blocksMovement()) {
-//			velocity.z = -velocity.z;
-//		}
-		onGround = world.getTile(new TilePos(position.x, position.y + velocity.y * 1.5f - 1.0f, position.z)).blocksMovement();
-
+		else
+			moveVel.mul(0.9f);
+	}
+	public int getUseTime() {
+		return useTimer;
+	}
+	public void setUseTime(int useTime) {
+		useTimer = useTime;
 	}
 	
 	@Override
 	public void render(ShaderProgram shader) {
 		super.render(shader);
 	}
+	
 }
