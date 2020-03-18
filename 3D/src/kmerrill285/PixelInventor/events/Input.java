@@ -16,6 +16,7 @@ import kmerrill285.PixelInventor.resources.RayTraceResult.Direction;
 import kmerrill285.PixelInventor.resources.RayTraceResult.RayTraceType;
 
 public class Input {
+	
 	public static void doInput() {
 		GuiRenderer renderer = PixelInventor.game.guiRenderer;
 		if (renderer.getOpenScreen() == null) {
@@ -63,13 +64,11 @@ public class Input {
 				if (Camera.currentTile.getType() == RayTraceType.TILE) {
 					if (PixelInventor.game.player != null)
 						if (Settings.ATTACK.isJustPressed()) {
-							game.world.setTile(Camera.currentTile.getPosition(), Tiles.AIR);
-							PixelInventor.game.player.setUseTime(5);
+							game.world.mineTile(Camera.currentTile.getPosition(), 5.0f);
 						} else {
 							if (PixelInventor.game.player.getUseTime() == 0)
 							{
-								game.world.setTile(Camera.currentTile.getPosition(), Tiles.AIR);
-								PixelInventor.game.player.setUseTime(5);
+								game.world.mineTile(Camera.currentTile.getPosition(), 5.0f);
 							}
 						}
 				}
@@ -95,17 +94,17 @@ public class Input {
 									}
 						}
 						
-						
+					if (game.world.getTile(pos).isReplaceable())
 					if (Settings.USE.isJustPressed()) {
 						if (!stop) {
-							game.world.setTile(pos, Tiles.GRASS);
+							game.world.setTile(pos, Tiles.DIRT);
 							PixelInventor.game.player.setUseTime(5);
 						}
 					} else {
 						if (PixelInventor.game.player.getUseTime() == 0)
 						{
 							if (!stop) {
-								game.world.setTile(pos, Tiles.GRASS);
+								game.world.setTile(pos, Tiles.DIRT);
 								PixelInventor.game.player.setUseTime(5);
 							}
 						}

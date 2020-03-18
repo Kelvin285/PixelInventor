@@ -16,9 +16,13 @@ import org.lwjgl.system.MemoryUtil;
 import kmerrill285.PixelInventor.events.Events;
 import kmerrill285.PixelInventor.events.Input;
 import kmerrill285.PixelInventor.game.client.Camera;
+import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.SecondShadowRenderer;
+import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.ShadowMap;
+import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.ShadowRenderer;
 import kmerrill285.PixelInventor.game.client.rendering.gui.GuiRenderer;
 import kmerrill285.PixelInventor.game.client.rendering.gui.IngameMenuScreen;
 import kmerrill285.PixelInventor.game.entity.player.ClientPlayerEntity;
+import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.world.World;
 import kmerrill285.PixelInventor.resources.Constants;
 import kmerrill285.PixelInventor.resources.FPSCounter;
@@ -30,7 +34,8 @@ public class PixelInventor {
 	public World world;
 	public GuiRenderer guiRenderer;
 	public ClientPlayerEntity player;
-	
+	public ShadowMap shadowMap;
+	public ShadowMap secondShadowMap;
 	
 	public PixelInventor() {
 		PixelInventor.game = this;
@@ -59,6 +64,7 @@ public class PixelInventor {
 		if (!GLFW.glfwInit())
 			throw new IllegalStateException("Unable to initialize GLFW");
 		
+		System.out.println("GLFW Version: " + GLFW.glfwGetVersionString());
 		GLFW.glfwDefaultWindowHints();
 		GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
 		GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE);
@@ -85,7 +91,7 @@ public class PixelInventor {
 		}
 		
 		GLFW.glfwMakeContextCurrent(Utils.window);
-		GLFW.glfwSwapInterval(2);
+		GLFW.glfwSwapInterval(0);
 		GLFW.glfwShowWindow(Utils.window);
 	}
 	private boolean stop = false;
@@ -128,15 +134,21 @@ public class PixelInventor {
 			Vector3f skyColor = world.getSkyColor();
 			GL11.glClearColor(skyColor.x, skyColor.y, skyColor.z, 0.0f);
 			
-			// Enable blending
-			GL11.glEnable(GL11.GL_BLEND);
-			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 			
 			GL11.glEnable(GL11.GL_DEPTH_TEST);
 			GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 			//draw stuff I guess
 			
+			// Enable blending
+			GL11.glEnable(GL11.GL_BLEND);
+			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+						
 			
+			if (Events.w != 0) {
+				GL11.glViewport((int)Events.left, 0, (int)Events.w, (int)Events.height);
+			} else {
+				GL11.glViewport(0, 0, Utils.FRAME_WIDTH, Utils.FRAME_HEIGHT);
+			}
 			Utils.object_shader.bind();
 			Utils.setupProjection();
 			
@@ -150,6 +162,9 @@ public class PixelInventor {
 			
 			Utils.sprite_shader.unbind();
 			
+			GL11.glDisable(GL11.GL_BLEND);
+			
+			renderDepthMap();
 			
 			GLFW.glfwSwapBuffers(Utils.window);
 
@@ -160,10 +175,20 @@ public class PixelInventor {
 		stop = true;
 	}
 	
+	
+	
+	public void renderDepthMap() {
+		if (Settings.SHADOWS) {
+			ShadowRenderer.renderDepthMap(shadowMap, world);
+			if (Settings.CASCADED_SHADOWS);
+			SecondShadowRenderer.renderDepthMap(secondShadowMap, world);
+		}
+	}
+	
 	public void renderGUI() {
 	    
 	    guiRenderer.render();
-
+	    
 	}
 	
 	public void update() {
@@ -177,7 +202,12 @@ public class PixelInventor {
 	
 	public void dispose() {
 		Utils.sprite_shader.dispose();
+		Utils.object_shader.dispose();
+		Utils.depth_shader.dispose();
+		shadowMap.dispose();
+		secondShadowMap.dispose();
 		world.dispose();
+		System.out.println("exit!");
 		System.exit(0);
 	}
 	

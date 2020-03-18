@@ -3,24 +3,28 @@ package kmerrill285.PixelInventor.game.world;
 import java.util.ArrayList;
 import java.util.Random;
 
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.rendering.Mesh;
 import kmerrill285.PixelInventor.game.client.rendering.MeshRenderer;
+import kmerrill285.PixelInventor.game.client.rendering.chunk.SecondaryChunkMeshBuilder;
+import kmerrill285.PixelInventor.game.client.rendering.effects.lights.DirectionalLight;
 import kmerrill285.PixelInventor.game.client.rendering.effects.lights.Fog;
+import kmerrill285.PixelInventor.game.client.rendering.heightmap.Heightmap;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Texture;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
 import kmerrill285.PixelInventor.game.entity.Entity;
-import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.tile.Tile.TileRayTraceType;
 import kmerrill285.PixelInventor.game.tile.Tiles;
 import kmerrill285.PixelInventor.game.world.chunk.Chunk;
-import kmerrill285.PixelInventor.game.world.chunk.ChunkGenerator;
 import kmerrill285.PixelInventor.game.world.chunk.ChunkManager;
 import kmerrill285.PixelInventor.game.world.chunk.TilePos;
+import kmerrill285.PixelInventor.game.world.chunk.generator.ChunkGenerator;
+import kmerrill285.PixelInventor.resources.Constants;
 import kmerrill285.PixelInventor.resources.MathHelper;
 import kmerrill285.PixelInventor.resources.RayTraceResult;
 import kmerrill285.PixelInventor.resources.RayTraceResult.RayTraceType;
@@ -39,9 +43,14 @@ public class World {
 	public ArrayList<Entity> entities = new ArrayList<Entity>();
 	
 	private Fog fog;
+	private Fog shadowBlendFog;
 	
-	public World(String worldName, long seed) {
-		worldSaver = new WorldSaver(worldName, this);
+	public DirectionalLight light = new DirectionalLight(new Vector3f(1, 1, 1), new Vector3f(0, -1, 0), 1.0f);
+	
+	public Heightmap heightmap;
+	
+	public World(String worldName, long s) {
+		worldSaver = new WorldSaver(worldName, this, s);
 		worldSaver.loadWorld();
 		
 		random = new Random(seed);
@@ -54,6 +63,13 @@ public class World {
 		fog.active = true;
 		fog.density = 0.1f;
 		fog.color = new Vector3f(1.0f, 1.0f, 1.0f);
+		
+		this.shadowBlendFog = new Fog();
+		shadowBlendFog.active = true;
+		shadowBlendFog.density = 0.1f;
+		shadowBlendFog.color = new Vector3f(1.0f, 1.0f, 1.0f);
+		
+		heightmap = new Heightmap(this);
 	}
 	
 	public void updateChunkManager() {
@@ -61,26 +77,87 @@ public class World {
 	}
 	
 	public void tick() {
-		for (Entity e : entities) {
-			if (getChunk(e.getTilePos()) != null)
-			e.tick();
+		
+		for (int i = 0; i < entities.size(); i++) {
+			Entity e = entities.get(i);
+			if (getChunk(e.getTilePos()) != null) {
+				e.tick();
+				if (e.isDead) {
+					entities.remove(i);
+				}
+			}
 		}
 	}
 	
+	public boolean rebuild = false;
+	
 	public void render(ShaderProgram shader) {
+		updateLight();
 		updateFog();
 		shader.setUniformFog("fog", fog);
+		shader.setUniformFog("shadowBlendFog", shadowBlendFog);
 		chunkManager.render(shader);
 		renderTileHover(shader);
 		for (Entity e : entities) {
 			e.render(shader);
 		}
+		if (rebuild == false) {
+			rebuild = true;
+			new Thread() {
+				public void run() {
+					SecondaryChunkMeshBuilder.update();
+					rebuild = false;
+				}
+			}.start();
+		}
+		heightmap.update();
+		heightmap.render(shader);
+	}
+	
+	public void renderShadow(ShaderProgram shader, Matrix4f lightMatrix) {
+		updateLight();
+		chunkManager.renderShadow(shader, lightMatrix);
+		for (Entity e : entities) {
+			e.renderShadow(shader, lightMatrix);
+		}
+	}
+	
+	public void updateLight() {
+		this.light.setShadowPosMult(Constants.shadow_far / 4.0f);
+
+		float sun_rotation = 17;
+		
+		float dm = 1.0f;
+		
+		this.light.setDirection(new Vector3f(sun_rotation, 0, 0));
+		float py = (float)Math.asin(Math.toRadians(sun_rotation)) * light.getShadowPosMult();
+		float pz = (float)Math.acos(Math.toRadians(sun_rotation)) * light.getShadowPosMult();
+		
+		Vector3f pos = new Vector3f(Camera.position);
+		
+		float x = pos.x;
+		float y = pos.y + py;
+		float z = pos.z + pz;
+		
+		Vector3f forwards = Camera.getForward(-Camera.rotation.x, Camera.rotation.y);
+		float x2 = forwards.x * 30;
+		float z2 =  forwards.z * 30;
+		
+		
+		this.light.getPosition().lerp(new Vector3f(x, this.light.getPosition().y, z), 1f);
+		this.light.getPosition().lerp(new Vector3f(this.light.getPosition().x, y, this.light.getPosition().z), 0.01f);
+		
+//		this.light.getPosition().lerp(new Vector3f(this.light.getPosition().x + x2, this.light.getPosition().y, this.light.getPosition().z + z2), 0.1f);
 	}
 	
 	public void updateFog() {
 		fog.active = true;
-		fog.density = 1.0f / 200.0f;
+		fog.density = 1.0f / 700.0f;
 		fog.color = getSkyColor().mul(2.0f, 2.0f, 2.0f);
+		
+		shadowBlendFog.active = true;
+		shadowBlendFog.density = 1.0f / 50.0f;
+		shadowBlendFog.color = new Vector3f(1.0f, 1.0f, 1.0f);
 	}
 	
 	private Mesh selection = null;
@@ -243,7 +320,20 @@ public class World {
 		pos2.x -= chunk.getX() * Chunk.SIZE;
 		pos2.y -= chunk.getY() * Chunk.SIZE;
 		pos2.z -= chunk.getZ() * Chunk.SIZE;
-		chunk.setTile(pos2.x, pos2.y, pos2.z, tile, true);
+		chunk.setTile(pos2.x, pos2.y, pos2.z, tile, true, true);
+		chunk.setUpdateNeeded(pos2.x, pos2.y, pos2.z, true);
+	}
+	
+	public void mineTile(TilePos pos, float strength) {
+		TilePos pos2 = new TilePos(pos.x, pos.y, pos.z);
+		
+		Chunk chunk = getChunk(pos2);
+		if (chunk == null) return;
+		pos2.x -= chunk.getX() * Chunk.SIZE;
+		pos2.y -= chunk.getY() * Chunk.SIZE;
+		pos2.z -= chunk.getZ() * Chunk.SIZE;
+		chunk.mineTile(pos2.x, pos2.y, pos2.z, strength);
+		chunk.setUpdateNeeded(pos2.x, pos2.y, pos2.z, true);
 	}
 	
 	public Chunk getChunk(TilePos pos) 
@@ -258,5 +348,13 @@ public class World {
 	
 	public Fog getFog() {
 		return this.fog;
+	}
+
+	public Random getRandom() {
+		return this.random;
+	}
+
+	public ChunkGenerator getChunkGenerator() {
+		return this.generator;
 	}
 }

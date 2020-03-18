@@ -1,17 +1,21 @@
 package kmerrill285.PixelInventor.game.entity;
 
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
+import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.world.World;
 import kmerrill285.PixelInventor.game.world.chunk.TilePos;
 import kmerrill285.PixelInventor.resources.FPSCounter;
+import kmerrill285.PixelInventor.resources.RayTraceResult;
 
 public class Entity {
 	public Vector3f position;
 	public Vector3f lastPos;
 	public float pitch, yaw;
 	public Vector3f velocity;
+	
 	public World world;
 	public float width, height;
 	public boolean onGround;
@@ -19,10 +23,17 @@ public class Entity {
 	public boolean isMoving;
 	public boolean isSneaking;
 	protected boolean lastOnGround;
+	public int ticksExisted = 0;
+	public boolean headInGround = false;
+	public float eyeHeight = 0;
 	
 	public Vector3f size;
 	
 	public float moveSpeed = 0.1f;
+	
+	public boolean isDead = false;
+	
+	public float renderDistance = 200;
 	
 	public Entity(Vector3f position, Vector3f size, World world) {
 		this.position = position;
@@ -30,11 +41,84 @@ public class Entity {
 		this.lastPos = new Vector3f(position);
 		this.world = world;
 		this.size = size;
+		this.eyeHeight = this.size.y * 0.9f;
 	}
 	
 	public void tick() {
 		lastOnGround = onGround;
 		onGround = false;
+		
+		collideWithTiles();
+		
+		if (onGround == false) {
+			RayTraceResult result = world.rayTraceTiles(position, new Vector3f(position).add(0, -1, 0), Tile.TileRayTraceType.SOLID);
+			double dist = result.getHit().distance(position);
+			if (dist <= 0.1f) {
+				onGround = true;
+				if (velocity.y < 0)
+				velocity.y = 0;
+			}
+		}
+		
+		if (!onGround) {
+			if (velocity.y > -getTerminalVelocity()) {
+				velocity.y -= (getGravity() / 60.0f) * FPSCounter.getDelta();
+			}
+		}
+		
+		if (world.getTile(getTilePos().add(0, eyeHeight, 0)).blocksMovement()) {
+			velocity.x = 0;
+			velocity.y = 0;
+			velocity.z = 0;
+			this.headInGround = true;
+		}
+		
+		if (velocity.y < -getTerminalVelocity()) {
+			velocity.y = -getTerminalVelocity();
+		}
+				
+		lastPos.x = position.x;
+		lastPos.y = position.y;
+		lastPos.z = position.z;
+		
+		isMoving = (int)(velocity.x * 10) != 0 && (int)(velocity.y * 10) != 0;
+		
+		position.x += velocity.x * FPSCounter.getDelta();
+		position.y += velocity.y * FPSCounter.getDelta();
+		position.z += velocity.z * FPSCounter.getDelta();
+		ticksExisted++;
+	}
+	
+	public void render(ShaderProgram shader) {
+		
+	}
+	
+	public void renderShadow(ShaderProgram shader, Matrix4f view) {
+		
+	}
+	
+	public float getGravity() {
+		return 9.81f * 0.2f * 0.4f;
+	}
+	
+	public float getTerminalVelocity() {
+		return 53.0f * 0.2f;
+	}
+	
+	public void jump() {
+		velocity.y = 4.52f * 0.1f * 0.4f;
+	}
+	
+	public void dispose() {
+		
+	}
+	
+	public TilePos getTilePos() {
+		return new TilePos(position.x, position.y, position.z);
+	}
+	
+	public void collideWithTiles() {
+		
 		float inc = 0.1f;
 		float velInc = 0.01f;
 		float offsX = 0;
@@ -62,7 +146,7 @@ public class Entity {
 		if (vy < 0) dirY = -1;
 		if (vz > 0) dirZ = 1;
 		if (vz < 0) dirZ = -1;
-
+		
 		TilePos pos = new TilePos(0, 0, 0);
 		//check for collision along the y-axis (iterate through x and z-axis)
 		Y:
@@ -74,7 +158,6 @@ public class Entity {
 					float nz = position.z + zz;
 					pos.setPosition(nx, ny, nz);
 					if (world.getTile(pos).blocksMovement()) {
-						velocity.y = 0;
 						int y = pos.y;
 						if (dirY > 0) {
 							position.y = lastPos.y;
@@ -82,6 +165,7 @@ public class Entity {
 							position.y = y+1;
 							onGround = true;
 						}
+						velocity.y = 0;
 						break Y;
 						
 					}
@@ -128,49 +212,11 @@ public class Entity {
 				
 			}
 		}
-		if (onGround == false)
-		onGround = world.getTile(this.getTilePos().add(0, -1, 0)).blocksMovement();
 		
-		float terminal = 0.4f;
-		if (!onGround) {
-			if (velocity.y > -terminal) {
-				velocity.y -= 0.045f * getGravity();
-			}
-		}
-		
-		if (velocity.y < -terminal) {
-			velocity.y = -terminal;
-		}
-		
-		
-		lastPos.x = position.x;
-		lastPos.y = position.y;
-		lastPos.z = position.z;
-		
-		isMoving = (int)(velocity.x * 10) != 0 && (int)(velocity.y * 10) != 0;
-		
-		position.x += velocity.x * FPSCounter.getDelta();
-		position.y += velocity.y * FPSCounter.getDelta();
-		position.z += velocity.z * FPSCounter.getDelta();
-	}
-	
-	public void render(ShaderProgram shader) {
-		
-	}
-	
-	public float getGravity() {
-		return 0.98f;
-	}
-	
-	public void dispose() {
-		
-	}
-	
-	public TilePos getTilePos() {
-		return new TilePos(position.x, position.y, position.z);
 	}
 	
 	public boolean isRunning() {
 		return running;
 	}
+
 }

@@ -15,9 +15,15 @@ public class PlayerEntity extends Entity {
 	@Override
 	public void tick() {
 		super.tick();
-		this.size.x = 0.75f;
+		this.size.x = 0.5f;
 		this.size.z = this.size.x;
-		this.size.y = 2.0f;
+		
+		if (isSneaking) {
+			this.size.y = 1.5f * 0.75f;
+		} else {
+			this.size.y = 1.5f;
+		}
+		this.eyeHeight = this.size.y * 0.9f;
 	}
 	
 	@Override

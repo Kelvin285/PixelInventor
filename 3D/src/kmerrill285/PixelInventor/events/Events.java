@@ -21,11 +21,18 @@ public class Events {
 		}
 	}
 	
+	public static float w;
+	public static float left;
+	public static float height;
+	
 	public static void windowSize(long window, int width, int height) {
 		float aspect = (float)width/(float)height;
 		float w = height * aspect;
 		float left = (width - w) / 2;
 		GL11.glViewport((int)left, 0, (int)w, height);
+		Events.w = w;
+		Events.left = left;
+		Events.height = height;
 		Utils.FRAME_WIDTH = width;
 		Utils.FRAME_HEIGHT = height;
 	}

@@ -17,7 +17,7 @@ public class FPSCounter {
 	
 	public static void updateFPS() {
 		if (getTime() - lastFPS > 1000) {
-			System.out.println(fps);
+//			System.out.println(fps);
 			delta = 60.0 / (double)fps;
 			fps = 0;
 			lastFPS += 1000;

@@ -1,13 +1,12 @@
 package kmerrill285.PixelInventor.game.entity.player;
 
 import org.joml.Vector3f;
-import org.lwjgl.glfw.GLFW;
 
 import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.world.World;
-import kmerrill285.PixelInventor.game.world.chunk.TilePos;
+import kmerrill285.PixelInventor.resources.FPSCounter;
 import kmerrill285.PixelInventor.resources.MathHelper;
 
 public class ClientPlayerEntity extends PlayerEntity {
@@ -22,18 +21,20 @@ public class ClientPlayerEntity extends PlayerEntity {
 	
 	private Vector3f moveVel = new Vector3f(0, 0, 0);
 	
-	private int useTimer = 0;
+	public Vector3f getOffsVel() {
+		return moveVel;
+	}
+	
+	private float useTimer = 0;
 	
 	@Override
 	public void tick() {
 		super.tick();
-		
 		if (useTimer > 0) {
-			useTimer--;
+			useTimer-=FPSCounter.getDelta()*0.5f;
 		} else {
 			useTimer = 0;
 		}
-		
 		isMoving = false;
 		float bm = 1.0f;
 		if (isSneaking) bm = 0.25f;
@@ -43,14 +44,9 @@ public class ClientPlayerEntity extends PlayerEntity {
 		float bobY = (float)Math.abs(Math.sin(Math.toRadians(headBob)) * 0.15f) * bm;
 		
 		
-		if (isSneaking) {
-			this.size.y = 2.0f * 0.75f;
-		} else {
-			this.size.y = 2.0f;
-		}
 		Vector3f vel = new Vector3f(moveVel);
-		
-		Camera.position = new Vector3f(lastPos).add(bobX + vel.x * 25, bobY + this.size.y * 0.75f, bobZ + vel.z * 25);
+		vel.mul(1, 0, 1);
+		Camera.position = new Vector3f(lastPos).add(bobX + vel.x * 25, bobY + this.eyeHeight, bobZ + vel.z * 25);
 		Camera.update();
 		this.yaw = Camera.rotation.y;
 		
@@ -112,8 +108,8 @@ public class ClientPlayerEntity extends PlayerEntity {
 		
 		if (running)
 		{
-			bobSpeed *= 1.5f;
-			bobSpeedX *= 1.5f;
+			bobSpeed *= 1.2f;
+			bobSpeedX *= 1.2f;
 		}
 		
 		if (isSneaking) {
@@ -126,8 +122,8 @@ public class ClientPlayerEntity extends PlayerEntity {
 			bobSpeedX = 0;
 		}
 		
-		headBob += bobSpeed;
-		headBobX += bobSpeedX;
+		headBob += bobSpeed * FPSCounter.getDelta() * 0.5f;
+		headBobX += bobSpeedX * FPSCounter.getDelta() * 0.5f;
 		if (headBob > 360) headBob -= 360;
 		if (headBobX > 360) headBobX -= 360;
 		if (headBob < 0) headBob += 360;
@@ -180,10 +176,9 @@ public class ClientPlayerEntity extends PlayerEntity {
 		float j = 0.75f;
 		float gravMul = 0.6f * j;
 		float terminal = 0.4f;
-		
-		if (Settings.JUMP.isPressed() && onGround && lastOnGround) {
-			velocity.y = terminal * 0.4f * j;
-			mul *= 1.1f;
+
+		if (Settings.JUMP.isPressed() && onGround) {
+			jump();
 		}
 		
 		
@@ -200,11 +195,14 @@ public class ClientPlayerEntity extends PlayerEntity {
 		if (!isSneaking) moveVel.mul(0);
 		else
 			moveVel.mul(0.9f);
+		
+		
+		world.updateLight();
 	}
-	public int getUseTime() {
+	public float getUseTime() {
 		return useTimer;
 	}
-	public void setUseTime(int useTime) {
+	public void setUseTime(float useTime) {
 		useTimer = useTime;
 	}
 	

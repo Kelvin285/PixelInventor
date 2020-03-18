@@ -46,6 +46,9 @@ public class Mesh {
     private float[] texCoords;
     private int[] indices;
     
+    private boolean disposed = false;
+    private boolean setup = false;
+    
     public Mesh(float[] positions, float[] texCoords, int[] indices, Texture texture) {
     	
         this.positions = positions;
@@ -102,6 +105,7 @@ public class Mesh {
             	MemoryUtil.memFree(indicesBuffer);
             }
         }
+        setup = true;
     }
 
     public int getVaoID() {
@@ -113,6 +117,7 @@ public class Mesh {
     }
 
     public void dispose() {
+    	if (!setup) return;
     	if (empty) return;
         glDisableVertexAttribArray(0);
 
@@ -123,13 +128,16 @@ public class Mesh {
 
         glBindVertexArray(0);
         glDeleteVertexArrays(vaoID);
+        disposed = true;
     }
     
     public void render() {
+    	if (disposed) return;
     	if (empty) {
     		setup();
     		empty = false;
     	}
+    	if (!setup) return;
     	glActiveTexture(GL_TEXTURE0);
     	glBindTexture(GL_TEXTURE_2D, texture.getTextureId());
     	
@@ -141,4 +149,8 @@ public class Mesh {
     	glDisableVertexAttribArray(0);
     	glBindVertexArray(0);
     }
+
+	public boolean isSetup() {
+		return setup;
+	}
 }

@@ -10,9 +10,11 @@ import org.lwjgl.glfw.GLFW;
 
 import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.events.Events;
+import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.ShadowMap;
 import kmerrill285.PixelInventor.game.client.rendering.gui.GuiRenderer;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
+import kmerrill285.PixelInventor.game.entity.StaticEntities;
 import kmerrill285.PixelInventor.game.entity.player.ClientPlayerEntity;
 import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.settings.Translation;
@@ -23,6 +25,7 @@ public class Utils {
 	public static long window;
 	public static ShaderProgram sprite_shader;
 	public static ShaderProgram object_shader;
+	public static ShaderProgram depth_shader;
 	
 	public static final float Z_NEAR = 0.01f;
 	public static final float Z_FAR = 1000.0f;
@@ -78,8 +81,22 @@ public class Utils {
 		object_shader.createUniform("modelMatrix");
 		object_shader.createUniform("texture_sampler");
 		object_shader.createFogUniform("fog");
+		object_shader.createUniform("shadowMap");
+		object_shader.createUniform("secondShadowMap");
+		object_shader.createFogUniform("shadowBlendFog");
 		
-//		object_shader.createUniform("cameraPos");
+
+		object_shader.createUniform("modelLightViewMatrix");
+		object_shader.createUniform("orthoProjectionMatrix");
+		object_shader.createUniform("secondOrthoMatrix");
+
+		
+		depth_shader = new ShaderProgram();
+		depth_shader.createVertexShader(loadResource("PixelInventor", "shaders/depth_vertex.glsl"));
+		depth_shader.createFragmentShader(loadResource("PixelInventor", "shaders/depth_fragment.glsl"));
+		depth_shader.link();
+		depth_shader.createUniform("orthoProjectionMatrix");
+		depth_shader.createUniform("modelMatrix");
 
 		GLFW.glfwSetWindowSizeCallback(window, Events::windowSize);
 		setupProjection();
@@ -87,16 +104,27 @@ public class Utils {
 		Tiles.loadTiles();
 		Translation.loadTranslations("PixelInventor");
 		
-		PixelInventor.game.world = new World("World", new Random().nextLong());
+		StaticEntities.load();
+
 		Textures.load();
 		PixelInventor.game.guiRenderer = new GuiRenderer(sprite_shader);
-		PixelInventor.game.player = new ClientPlayerEntity(new Vector3f(0, 30, 0), PixelInventor.game.world);
+		PixelInventor.game.shadowMap = new ShadowMap();
+		PixelInventor.game.secondShadowMap = new ShadowMap();
+		
+		
+		PixelInventor.game.world = new World("World", new Random().nextLong());
+		PixelInventor.game.player = new ClientPlayerEntity(new Vector3f(0.5f, 30, 0.5f), PixelInventor.game.world);
 	}
 	
 	public static void setupProjection() {
 		float aspectRatio = (float)P_WIDTH / (float)P_HEIGHT;
 		projectionMatrix = new Matrix4f().perspective((float)Math.toRadians(Settings.FOV), aspectRatio, Z_NEAR, Z_FAR);
 		object_shader.setUniformMat4("projectionMatrix", projectionMatrix);
+	}
+	
+	public static Matrix4f getProjection() {
+		float aspectRatio = (float)P_WIDTH / (float)P_HEIGHT;
+		return new Matrix4f().perspective((float)Math.toRadians(Settings.FOV), aspectRatio, Z_NEAR, Z_FAR);
 	}
 	
 }

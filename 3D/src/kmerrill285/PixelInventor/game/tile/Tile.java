@@ -2,10 +2,16 @@ package kmerrill285.PixelInventor.game.tile;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Random;
 import java.util.Scanner;
 
+import org.joml.Vector3f;
+
 import kmerrill285.PixelInventor.game.client.rendering.BlockFace;
+import kmerrill285.PixelInventor.game.entity.ItemDropEntity;
 import kmerrill285.PixelInventor.game.settings.Translation;
+import kmerrill285.PixelInventor.game.world.World;
+import kmerrill285.PixelInventor.game.world.chunk.TilePos;
 
 public class Tile {
 	
@@ -18,6 +24,7 @@ public class Tile {
 	private boolean fullCube = true;
 	private boolean visible = true;
 	private boolean blocksMovement = true;
+	private boolean isReplaceable = false;
 	
 	private String texture = "";
 	private String side_texture = "";
@@ -32,6 +39,8 @@ public class Tile {
 	
 	private static int CURRENT_ID = 0;
 	private int ID;
+	
+	private float hardness;
 	
 	private TileRayTraceType rayTraceType = TileRayTraceType.SOLID; 
 	
@@ -99,9 +108,27 @@ public class Tile {
 		return Translation.translateText(getName());
 	}
 	
+	public float getHardness() {
+		return this.hardness;
+	}
+	
+	public Tile setHardness(float hardness) {
+		this.hardness = hardness;
+		return this;
+	}
+	
 	public Tile setFullCube(boolean fullCube) {
 		this.fullCube = fullCube;
 		return this;
+	}
+	
+	public Tile setReplaceable() {
+		this.isReplaceable = true;
+		return this;
+	}
+	
+	public boolean isReplaceable() {
+		return this.isReplaceable;
 	}
 	
 	public Tile setBlocksMovement(boolean blocksMovement) {
@@ -136,6 +163,11 @@ public class Tile {
 	}
 	public int getHeight() {
 		return this.height;
+	}
+	
+	public void dropAsItem(World world, int x, int y, int z) {
+		ItemDropEntity drop = new ItemDropEntity(new Vector3f(x+0.5f, y+0.5f, z+0.5f), world, this);
+		world.entities.add(drop);
 	}
 	
 	public String getTextureFor(BlockFace face) {
@@ -175,6 +207,14 @@ public class Tile {
 	public String getSideTexture() {
 		if (side_texture.isEmpty()) return texture;
 		return side_texture;
+	}
+	
+	public void tick(World world, TilePos pos, Random random) {
+		
+	}
+	
+	public double getTickPercent() {
+		return 0;
 	}
 	
 }

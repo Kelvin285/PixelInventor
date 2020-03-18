@@ -23,10 +23,10 @@ public class Tiles {
 	}
 	
 	public static void loadTiles() {
-		DIRT = new Tile("PixelInventor:dirt");
-		AIR = new Tile("PixelInventor:air").setFullCube(false).setRayTraceType(TileRayTraceType.GAS).setBlocksMovement(false);
-		GRASS = new Tile("PixelInventor:grass");
-		STONE = new Tile("PixelInventor:stone");
-		PURPLE_GRASS = new Tile("PixelInventor:purple_grass");
+		AIR = new Tile("PixelInventor:air").setFullCube(false).setRayTraceType(TileRayTraceType.GAS).setBlocksMovement(false).setReplaceable();
+		DIRT = new FallingTile("PixelInventor:dirt").setHardness(1.0f);
+		GRASS = new GrassTile("PixelInventor:grass").setHardness(1.5f);
+		STONE = new Tile("PixelInventor:stone").setHardness(3.0f);
+		PURPLE_GRASS = new GrassTile("PixelInventor:purple_grass").setHardness(GRASS.getHardness());
 	}
 }

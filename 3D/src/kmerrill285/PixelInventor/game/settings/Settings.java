@@ -12,6 +12,10 @@ public class Settings {
 	
 	public static boolean HEAD_BOB = true;
 	
+	public static boolean CASCADED_SHADOWS = false;
+	public static boolean SHADOWS = true;
+	
+	
 	public static HashMap<String, InputSetting> inputs = new HashMap<String, InputSetting>();
 	
 	public static InputSetting JUMP = new InputSetting(GLFW.GLFW_KEY_SPACE, false, "PixelInventor:input.jump");

@@ -1,15 +1,14 @@
 package kmerrill285.PixelInventor.game.client.rendering.textures;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
 
 import de.matthiasmann.twl.utils.PNGDecoder;
 import de.matthiasmann.twl.utils.PNGDecoder.Format;
-import kmerrill285.PixelInventor.resources.Utils;
 
 public class Texture {
 	public String fileName;
@@ -41,6 +40,33 @@ public class Texture {
 		}
 	}
 	
+	public Texture(int width, int height, int pixelFormat, boolean shadow) throws Exception {
+		if (!shadow) {
+			this.textureId = GL11.glGenTextures();
+		    this.width = width;
+		    this.height = height;
+		    GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.textureId);
+		    GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_DEPTH_COMPONENT, this.width, this.height, 0, pixelFormat, GL11.GL_FLOAT, (ByteBuffer) null);
+		    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+		    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+		    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL15.GL_CLAMP_TO_EDGE);
+		    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL15.GL_CLAMP_TO_EDGE);
+		} else {
+			this.textureId = GL11.glGenTextures();
+		    this.width = width;
+		    this.height = height;
+		    GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.textureId);
+		    GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL30.GL_DEPTH_COMPONENT16, this.width, this.height, 0, pixelFormat, GL11.GL_FLOAT, (ByteBuffer) null);
+		    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
+		    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+		    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL15.GL_CLAMP_TO_BORDER);
+		    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL15.GL_CLAMP_TO_BORDER);
+		}
+	    
+	}
+	
+	
+	
 	public Texture(int id) {
 		this.textureId = id;
 	}
@@ -59,5 +85,9 @@ public class Texture {
 	
 	public int getHeight() {
 		return this.height;
+	}
+
+	public void dispose() {
+		GL11.glDeleteTextures(textureId);
 	}
 }

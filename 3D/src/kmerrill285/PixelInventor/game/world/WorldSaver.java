@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
 
+import kmerrill285.PixelInventor.game.entity.StaticEntities;
+import kmerrill285.PixelInventor.game.entity.StaticEntity;
 import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.tile.Tiles;
 import kmerrill285.PixelInventor.game.world.chunk.Chunk;
@@ -15,9 +17,11 @@ import kmerrill285.PixelInventor.game.world.chunk.Chunk;
 public class WorldSaver {
 	private String worldName;
 	private World world;
-	public WorldSaver(String worldName, World world) {
+	private long seed;
+	public WorldSaver(String worldName, World world, long s) {
 		this.worldName = worldName;
 		this.world = world;
+		this.seed = s;
 		loadWorld();
 	}
 	
@@ -41,12 +45,13 @@ public class WorldSaver {
 	}
 	
 	public void loadWorld() {
+		long seed = -1;
+		
 		File file = new File("PixelInventor/saves/"+getWorldName()+"/save.data");
 		if (file.exists()) {
 			Scanner scanner;
 			try {
 				scanner = new Scanner(file);
-				long seed = -1;
 				while (scanner.hasNext()) {
 					String str = scanner.nextLine().trim();
 					if (seed == -1) {
@@ -54,12 +59,16 @@ public class WorldSaver {
 						continue;
 					}
 				}
-				world.setSeed(seed);
 				scanner.close();
 			} catch (FileNotFoundException e) {
 				file.mkdirs();
 			}
 		}
+		if (seed == -1) {
+			seed = this.seed;
+		}
+		world.setSeed(seed);
+		System.out.println("World seed: " + seed);
 	}
 	
 	public void saveChunk(Chunk chunk) {
@@ -80,9 +89,12 @@ public class WorldSaver {
 			for (int x = 0; x < Chunk.SIZE; x++) {
 				for (int y = 0; y < Chunk.SIZE; y++) {
 					for (int z = 0; z < Chunk.SIZE; z++) {
-						writer.write(chunk.getTile(x, y, z).getID() + "\n");
+						writer.write("b:"+chunk.getTile(x, y, z).getID() + "\n");
 					}
 				}
+			}
+			for (StaticEntity e : chunk.staticEntities) {
+				writer.write(e.getSaveData()+"\n");
 			}
 			writer.close();
 		} catch (IOException e) {
@@ -109,13 +121,23 @@ public class WorldSaver {
 						for (int z = 0; z < Chunk.SIZE; z++) {
 							int i = x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE;
 							if (i < lines.size()) {
-								int ID = Integer.parseInt(lines.get(i));
-								if (cache.containsKey(ID)) {
-									chunk.setTile(x, y, z, cache.get(ID), false);
+								String[] data = lines.get(i).split(":");
+								if (data[0].equals("b")) {
+									int ID = Integer.parseInt(data[1]);
+									if (cache.containsKey(ID)) {
+										chunk.setTile(x, y, z, cache.get(ID), false, false);
+									} else {
+										Tile tile = Tiles.getTile(ID);
+										chunk.setTile(x, y, z, tile, false, false);
+										cache.put(ID, tile);
+									}
 								} else {
-									Tile tile = Tiles.getTile(ID);
-									chunk.setTile(x, y, z, tile, false);
-									cache.put(ID, tile);
+									if (data[0].equals("se")) {
+										StaticEntity e = StaticEntities.staticEntities.get(Integer.parseInt(data[1].split(",")[0]));
+										e.load(data[1]);
+										e.create(chunk);
+										chunk.staticEntities.add(e);
+									}
 								}
 							}
 						}

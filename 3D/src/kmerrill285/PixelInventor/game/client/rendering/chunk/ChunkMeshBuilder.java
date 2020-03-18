@@ -30,12 +30,12 @@ public class ChunkMeshBuilder {
 					
 					if (tile.isFullCube() && tile.isVisible()) {
 						String name = chunk.getTile(x, y, z).getName();
-						if (!chunk.getTile(x - 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.LEFT, tile);
-						if (!chunk.getTile(x + 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.RIGHT, tile);
-						if (!chunk.getTile(x, y, z + 1).isFullCube()) addFace(x, y, z, BlockFace.BACK, tile);
-						if (!chunk.getTile(x, y, z - 1).isFullCube()) addFace(x, y, z, BlockFace.FRONT, tile);
-						if (!chunk.getTile(x, y - 1, z).isFullCube()) addFace(x, y, z, BlockFace.DOWN, tile);
-						if (!chunk.getTile(x, y + 1, z).isFullCube()) addFace(x, y, z, BlockFace.UP, tile);
+						if (!chunk.getTile(x - 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.LEFT, tile, chunk);
+						if (!chunk.getTile(x + 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.RIGHT, tile, chunk);
+						if (!chunk.getTile(x, y, z + 1).isFullCube()) addFace(x, y, z, BlockFace.BACK, tile, chunk);
+						if (!chunk.getTile(x, y, z - 1).isFullCube()) addFace(x, y, z, BlockFace.FRONT, tile, chunk);
+						if (!chunk.getTile(x, y - 1, z).isFullCube()) addFace(x, y, z, BlockFace.DOWN, tile, chunk);
+						if (!chunk.getTile(x, y + 1, z).isFullCube()) addFace(x, y, z, BlockFace.UP, tile, chunk);
 					}
 					
 				}
@@ -59,8 +59,11 @@ public class ChunkMeshBuilder {
 		return mesh;
 	}
 	
-	private static void addFace(int x, int y, int z, BlockFace face, Tile tile) {
-		
+	private static void addFace(int x, int y, int z, BlockFace face, Tile tile, Chunk chunk) {
+		float mining_progress = chunk.getMiningProgress(x, y, z);
+		if (mining_progress > 0) {
+			addMiningFace(x, y, z, face, mining_progress);
+		}
 		float[] vertices = new float[] {
 				x + 0.0f, y + 0.0f, z + 0.0f,
 				x + 0.0f, y + 1.0f, z + 0.0f,
@@ -141,6 +144,106 @@ public class ChunkMeshBuilder {
 			texCoords[i + 1] += (1.0f / (float)tile.getHeight()) * ((scrollY) % tile.getHeight());
 		}
 		texCoords = Textures.TILES.convertToUV(texCoords, tile.getTextureFor(face));
+		
+		int size = ChunkMeshBuilder.vertices.size();
+		for (float f : vertices) {
+			ChunkMeshBuilder.vertices.add(f);
+		}
+		
+		for (int i : indices) {
+			ChunkMeshBuilder.indices.add(i + index);
+		}
+		index += vertices.length / 3;
+		
+		for (float f : texCoords) {
+			ChunkMeshBuilder.texCoords.add(f);
+		}
+	}
+	
+	private static void addMiningFace(int x, int y, int z, BlockFace face, float progress) {
+		if (progress <= 0) return;
+		float[] vertices = new float[] {
+				x + 0.0f, y + 0.0f, z + 0.0f,
+				x + 0.0f, y + 1.0f, z + 0.0f,
+				x + 1.0f, y + 1.0f, z + 0.0f,
+				x + 1.0f, y + 0.0f, z + 0.0f
+		};
+		int[] indices = {0, 1, 2, 2, 3, 0};
+		float[] texCoords = new float[] {
+				1.0f, 1.0f,
+				1.0f, 0.0f,
+				0.0f, 0.0f,
+				0.0f, 1.0f
+		};
+		
+		int scrollX = (int)(5 * (progress / 100.0f));
+		int scrollY = 0;
+		
+		switch (face) {
+		case FRONT:
+			vertices = new float[] {
+					x + 0.0f, y + 0.0f, z + 0.0f - 0.01f,
+					x + 0.0f, y + 1.0f, z + 0.0f - 0.01f,
+					x + 1.0f, y + 1.0f, z + 0.0f - 0.01f,
+					x + 1.0f, y + 0.0f, z + 0.0f - 0.01f
+			};
+			break;
+		case BACK:
+			vertices = new float[] {
+					x + 0.0f, y + 0.0f, z + 1.01f,
+					x + 0.0f, y + 1.0f, z + 1.01f,
+					x + 1.0f, y + 1.0f, z + 1.01f,
+					x + 1.0f, y + 0.0f, z + 1.01f
+			};
+			break;
+		case LEFT:
+			vertices = new float[] {
+					x + 0.0f - 0.01f, y + 0.0f, z + 0.0f,
+					x + 0.0f - 0.01f, y + 1.0f, z + 0.0f,
+					x + 0.0f - 0.01f, y + 1.0f, z + 1.0f,
+					x + 0.0f - 0.01f, y + 0.0f, z + 1.0f
+			};
+			scrollX = z;
+			break;
+		case RIGHT:
+			vertices = new float[] {
+					x + 1.0f + 0.01f, y + 0.0f, z + 0.0f,
+					x + 1.0f + 0.01f, y + 1.0f, z + 0.0f,
+					x + 1.0f + 0.01f, y + 1.0f, z + 1.0f,
+					x + 1.0f + 0.01f, y + 0.0f, z + 1.0f
+			};
+			scrollX = z;
+			break;
+		case DOWN:
+			vertices = new float[] {
+					x + 0.0f, y + 0.0f - 0.01f, z + 0.0f,
+					x + 0.0f, y + 0.0f - 0.01f, z + 1.0f,
+					x + 1.0f, y + 0.0f - 0.01f, z + 1.0f,
+					x + 1.0f, y + 0.0f - 0.01f, z + 0.0f
+			};
+			scrollY = z;
+			break;
+		case UP:
+			vertices = new float[] {
+					x + 0.0f, y + 1.0f + 0.01f, z + 0.0f,
+					x + 0.0f, y + 1.0f + 0.01f, z + 1.0f,
+					x + 1.0f, y + 1.0f + 0.01f, z + 1.0f,
+					x + 1.0f, y + 1.0f + 0.01f, z + 0.0f
+			};
+			scrollY = z;
+			break;
+		}
+		
+		float width = 5;
+		float height = 1;
+		
+		for (int i = 0; i < texCoords.length; i+=2) {
+			texCoords[i] /= width;
+			texCoords[i + 1] /= height;
+			texCoords[i] += (1.0f / width) * ((scrollX) % width);
+			texCoords[i + 1] += (1.0f / height) * ((scrollY) % height);
+		}
+		texCoords = Textures.TILES.convertToUV(texCoords, Textures.MINING_LOCATION);
 		
 		int size = ChunkMeshBuilder.vertices.size();
 		for (float f : vertices) {

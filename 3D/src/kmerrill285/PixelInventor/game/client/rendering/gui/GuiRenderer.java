@@ -4,6 +4,7 @@ import org.joml.Vector2f;
 import org.joml.Vector4f;
 import org.lwjgl.glfw.GLFW;
 
+import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.Mouse;
 import kmerrill285.PixelInventor.game.client.rendering.Mesh;
@@ -75,8 +76,14 @@ public class GuiRenderer {
 				drawTexture(Textures.FP_CURSOR, 1920 / 2 - 25/2, 1080 / 2 - 25/2, 25, 25, 0, new Vector4f(1, 1, 1, 1));
 			}
 		}
-		
+//		drawTexture(PixelInventor.game.shadowMap.getDepthMapTexture(), 1920, 1080, -1920, -1080, 0, new Vector4f(1, 1, 1, 1));
 		drawTexture(Textures.VIGINETTE, 0, 0, 1920, 1080, 0, new Vector4f(1, 1, 1, 1));
+		
+		if (PixelInventor.game.player != null) {
+			if (PixelInventor.game.player.headInGround) {
+				drawTexture(Textures.WHITE_SQUARE, 0, 0, 1920, 1080, 0, new Vector4f(0, 0, 0, 1));
+			}
+		}
 	}
 	
 	public GuiScreen getOpenScreen() {
