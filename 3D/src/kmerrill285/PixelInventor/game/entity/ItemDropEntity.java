@@ -28,14 +28,19 @@ public class ItemDropEntity extends Entity {
 			this.mesh = BlockBuilder.buildMesh(tile, -0.5f, -0.5f, -0.5f);
 		}
 		super.tick();
-		this.yaw += 10f;
-		this.pitch += 10.0f;
-		this.offset.y = (float)Math.abs(Math.cos(Math.toRadians((System.nanoTime() * 2) / 10000000.0d)) * 0.5f);
+		if (onGround == false) {
+			this.yaw += 10f * world.getRandom().nextInt(3) - 1;
+			this.pitch += 10.0f * world.getRandom().nextInt(3) - 1;
+		} else {
+			this.offset.y = (float)Math.abs(Math.cos(Math.toRadians((System.nanoTime() * 2) / 100000000.0d) + position.x + position.y + position.z) * 0.25f);
+			this.yaw += world.getRandom().nextFloat();
+			this.pitch += world.getRandom().nextFloat();
+		}
 		size.x = 0.25f;
 		size.y = 0.25f;
 		size.z = 0.25f;
 		
-		float distance = 5;
+		float distance = 2f;
 		PlayerEntity closest = null;
 		for (Entity entity : world.entities) {
 			if (entity instanceof PlayerEntity) {
@@ -47,15 +52,15 @@ public class ItemDropEntity extends Entity {
 		}
 		if (closest != null) {
 			Vector3f a = new Vector3f(closest.position).add(0, 0.75f, 0);
-			position.lerp(a, 0.5f);
-			if (position.distance(a) <= 0.1f) {
+			position.lerp(a, 0.25f);
+			if (position.distance(a) <= 0.25f) {
 				this.isDead = true;
 			}
 		}
 	}
 	
 	public float getGravity() {
-		return 0.0f;
+		return 0.5f;
 	}
 	
 	public void dispose() {

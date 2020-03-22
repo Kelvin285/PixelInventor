@@ -10,8 +10,11 @@ import org.lwjgl.glfw.GLFW;
 
 import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.events.Events;
+import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.ShadowMap;
 import kmerrill285.PixelInventor.game.client.rendering.gui.GuiRenderer;
+import kmerrill285.PixelInventor.game.client.rendering.postprocessing.FrameBuffer;
+import kmerrill285.PixelInventor.game.client.rendering.raytracing.RayTracer;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
 import kmerrill285.PixelInventor.game.entity.StaticEntities;
@@ -34,11 +37,13 @@ public class Utils {
 	
 	public static int FRAME_WIDTH = 1920 / 2, FRAME_HEIGHT = 1080 / 2;
 	private static int P_WIDTH = 1920 / 2, P_HEIGHT = 1080 / 2;
+	public static boolean WINDOW_FOCUSED = false;
 	
 	
 	public static String loadResource(File file) {
 		String str = "";
 		try {
+			System.out.println(file + ", " + file.exists());
 			Scanner scanner = new Scanner(file);
 			while (scanner.hasNext()) {
 				str += scanner.nextLine() + "\n";
@@ -56,14 +61,19 @@ public class Utils {
 	}
 	
 	public static File getAsset(String modid, String directory) {
-		return new File("assets/" + modid + "/" + directory);
+		return new File(System.getProperty("user.dir")+"/assets/" + modid + "/" + directory).getAbsoluteFile();
 	}
 	
 	public static String getResourcePath(String modid, String directory) {
-		return "assets/"+modid+"/"+directory;
+		return System.getProperty("user.dir")+"/assets/"+modid+"/"+directory;
 	}
 	
 	public static void setupGL() throws Exception {
+		
+		if (Settings.RAYTRACING) {
+			Camera.position = new Vector3f(3, 2, 7);
+		}
+		
 		sprite_shader = new ShaderProgram();
 		sprite_shader.createVertexShader(loadResource("PixelInventor", "shaders/sprite_vertex.glsl"));
 		sprite_shader.createFragmentShader(loadResource("PixelInventor", "shaders/sprite_fragment.glsl"));
@@ -72,6 +82,7 @@ public class Utils {
 		sprite_shader.createUniform("scale");
 		sprite_shader.createUniform("color");
 		sprite_shader.createUniform("texture_sampler");
+		sprite_shader.createUniform("post_processing");
 		
 		object_shader = new ShaderProgram();
 		object_shader.createVertexShader(loadResource("PixelInventor", "shaders/vertex.glsl"));
@@ -84,12 +95,16 @@ public class Utils {
 		object_shader.createUniform("shadowMap");
 		object_shader.createUniform("secondShadowMap");
 		object_shader.createFogUniform("shadowBlendFog");
+		object_shader.createUniform("cameraPos");
+		object_shader.createUniform("sunPos");
+		object_shader.createUniform("sunDirection");
+		object_shader.createUniform("sunColor");
+		object_shader.createUniform("cascadedShadows");
 		
-
 		object_shader.createUniform("modelLightViewMatrix");
 		object_shader.createUniform("orthoProjectionMatrix");
 		object_shader.createUniform("secondOrthoMatrix");
-
+		object_shader.createUniform("hasShadows");
 		
 		depth_shader = new ShaderProgram();
 		depth_shader.createVertexShader(loadResource("PixelInventor", "shaders/depth_vertex.glsl"));
@@ -110,21 +125,27 @@ public class Utils {
 		PixelInventor.game.guiRenderer = new GuiRenderer(sprite_shader);
 		PixelInventor.game.shadowMap = new ShadowMap();
 		PixelInventor.game.secondShadowMap = new ShadowMap();
+		PixelInventor.game.framebuffer = new FrameBuffer();
 		
 		
 		PixelInventor.game.world = new World("World", new Random().nextLong());
 		PixelInventor.game.player = new ClientPlayerEntity(new Vector3f(0.5f, 30, 0.5f), PixelInventor.game.world);
+		
+		Settings.loadSettings();
+		
+		PixelInventor.game.raytracer = new RayTracer();
+		PixelInventor.game.raytracer.init();
 	}
 	
 	public static void setupProjection() {
 		float aspectRatio = (float)P_WIDTH / (float)P_HEIGHT;
-		projectionMatrix = new Matrix4f().perspective((float)Math.toRadians(Settings.FOV), aspectRatio, Z_NEAR, Z_FAR);
+		projectionMatrix = new Matrix4f().perspective((float)Math.toRadians(Settings.ACTUAL_FOV), aspectRatio, Z_NEAR, Z_FAR);
 		object_shader.setUniformMat4("projectionMatrix", projectionMatrix);
 	}
 	
 	public static Matrix4f getProjection() {
 		float aspectRatio = (float)P_WIDTH / (float)P_HEIGHT;
-		return new Matrix4f().perspective((float)Math.toRadians(Settings.FOV), aspectRatio, Z_NEAR, Z_FAR);
+		return new Matrix4f().perspective((float)Math.toRadians(Settings.ACTUAL_FOV), aspectRatio, Z_NEAR, Z_FAR);
 	}
 	
 }

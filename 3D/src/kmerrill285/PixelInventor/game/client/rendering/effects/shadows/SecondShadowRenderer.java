@@ -6,7 +6,6 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
 import kmerrill285.PixelInventor.PixelInventor;
-import kmerrill285.PixelInventor.game.client.rendering.effects.lights.DirectionalLight;
 import kmerrill285.PixelInventor.game.world.World;
 import kmerrill285.PixelInventor.resources.Constants;
 import kmerrill285.PixelInventor.resources.Utils;
@@ -32,6 +31,7 @@ public class SecondShadowRenderer {
 		
 		Utils.depth_shader.unbind();
 		GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, 0);
+		
 	}
 	
 	public static Matrix4f getLightViewMatrix(World world) {
@@ -41,41 +41,18 @@ public class SecondShadowRenderer {
 	public static Matrix4f getOrthoProjectionMatrix() {
 		float mul = 15f;
 		Constants.shadow_far = 100;
-		return getOrthoProjectionMatrix(-10 * mul, 10 * mul, -10 * mul, 10 * mul, -1 * mul, 20 * mul);
+		return getOrthoProjectionMatrix(-19.2f * mul, 19.2f * mul, -10.8f * mul, 10.8f * mul, -1 * mul, 20 * mul);
 	}
 	
 	private static final Matrix4f lightViewMatrix = new Matrix4f();
 	
 	 public static  Matrix4f updateLightViewMatrix(Vector3f position, Vector3f rotation) {
 
-		 	Vector3f vel = PixelInventor.game.player.velocity;
-		 	float vx = 0;
-		 	float vy = 0;
-		 	float vz = 0;
-		 	if (vel != null) {
-		 		vx = 0f;
-		 		vy = 0;
-		 		vz = 0;
-		 	}
-		 
-		 	Matrix4f viewMatrix = lightViewMatrix;
-		 	
-		    viewMatrix.identity();
-
-		    viewMatrix.rotate((float)Math.toRadians(rotation.x), new Vector3f(1, 0, 0))
-		        .rotate((float)Math.toRadians(rotation.y), new Vector3f(0, 1, 0))
-		        .rotate((float)Math.toRadians(rotation.z), new Vector3f(0, 0, 1))
-		        ;
-		    
-		    viewMatrix.translate(-(position.x + vx), -(position.y + vy), -(position.z + vz));
-		    return viewMatrix;
+		 	return ShadowRenderer.updateLightViewMatrix(position, rotation);
 
 	    }
 	
 	public static final Matrix4f getOrthoProjectionMatrix(float left, float right, float bottom, float top, float near, float far) {
-		Matrix4f orthoMatrix = new Matrix4f();
-	    orthoMatrix.identity();
-	    orthoMatrix.setOrtho(left, right, bottom, top, near, far);
-	    return orthoMatrix;
+		return ShadowRenderer.getOrthoProjectionMatrix(left, right, bottom, top, near, far);
 	}
 }

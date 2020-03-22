@@ -1,5 +1,6 @@
 package kmerrill285.PixelInventor.game.entity.player;
 
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import kmerrill285.PixelInventor.game.client.Camera;
@@ -30,25 +31,14 @@ public class ClientPlayerEntity extends PlayerEntity {
 	@Override
 	public void tick() {
 		super.tick();
+		
 		if (useTimer > 0) {
 			useTimer-=FPSCounter.getDelta()*0.5f;
 		} else {
 			useTimer = 0;
 		}
 		isMoving = false;
-		float bm = 1.0f;
-		if (isSneaking) bm = 0.25f;
-		float bob = (float)Math.sin(Math.toRadians(headBobX)) * 0.1f * bm;
-		float bobX = bob * (float)Math.cos(Math.toRadians(Camera.rotation.y)) * bm;
-		float bobZ = bob * (float)Math.sin(Math.toRadians(Camera.rotation.y)) * bm;
-		float bobY = (float)Math.abs(Math.sin(Math.toRadians(headBob)) * 0.15f) * bm;
 		
-		
-		Vector3f vel = new Vector3f(moveVel);
-		vel.mul(1, 0, 1);
-		Camera.position = new Vector3f(lastPos).add(bobX + vel.x * 25, bobY + this.eyeHeight, bobZ + vel.z * 25);
-		Camera.update();
-		this.yaw = Camera.rotation.y;
 		
 		float XP = 0;
 		float ZP = 0;
@@ -72,6 +62,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 				isMoving = true;
 			}
 		}
+		
 		float backMul = 1.0f;
 		if (Settings.BACKWARD.isPressed()) {
 			if (!Settings.FORWARD.isPressed()) {
@@ -153,7 +144,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 		}
 		
 		float mul = 0.75f;
-		if (running) mul = 1.1f;
+		if (running) mul = 1.5f;
 		if (isSneaking) mul = 0.25f;
 		
 		if (isSneaking && onGround) {
@@ -173,21 +164,14 @@ public class ClientPlayerEntity extends PlayerEntity {
 			
 		}
 		
-		float j = 0.75f;
-		float gravMul = 0.6f * j;
-		float terminal = 0.4f;
-
 		if (Settings.JUMP.isPressed() && onGround) {
 			jump();
 		}
-		
-		
 		
 		float moveLerp = 0.5f;
 		if (onGround == false) {
 			moveLerp = 0.1f;
 		}
-		
 		velocity.x = MathHelper.lerp(velocity.x, XP * this.moveSpeed * mul, moveLerp);
 		velocity.z = MathHelper.lerp(velocity.z, ZP * this.moveSpeed * mul, moveLerp);
 		
@@ -196,8 +180,6 @@ public class ClientPlayerEntity extends PlayerEntity {
 		else
 			moveVel.mul(0.9f);
 		
-		
-		world.updateLight();
 	}
 	public float getUseTime() {
 		return useTimer;
@@ -206,9 +188,27 @@ public class ClientPlayerEntity extends PlayerEntity {
 		useTimer = useTime;
 	}
 	
+	float fm = 0;
 	@Override
 	public void render(ShaderProgram shader) {
 		super.render(shader);
+		
+		float bm = 1.0f;
+		if (isSneaking) bm = 0.25f;
+		float bob = (float)Math.sin(Math.toRadians(headBobX)) * 0.1f * bm;
+		float bobX = bob * (float)Math.cos(Math.toRadians(Camera.rotation.y)) * bm;
+		float bobZ = bob * (float)Math.sin(Math.toRadians(Camera.rotation.y)) * bm;
+		float bobY = (float)Math.abs(Math.sin(Math.toRadians(headBob)) * 0.15f) * bm;
+		
+		
+		Vector3f vel = new Vector3f(moveVel);
+		vel.mul(1, 0, 1);
+		Vector2f mv = new Vector2f(velocity.x, velocity.z);
+		fm = MathHelper.lerp(fm, mv.length() * 150, 0.1f);
+		Settings.ACTUAL_FOV = Settings.FOV + (fm);
+		Camera.position = new Vector3f(lastPos).add(bobX + vel.x * 25, bobY + this.eyeHeight, bobZ + vel.z * 25);
+		Camera.update();
+		this.yaw = Camera.rotation.y;
 	}
 	
 }

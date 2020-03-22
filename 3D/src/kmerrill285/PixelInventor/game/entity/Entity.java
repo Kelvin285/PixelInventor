@@ -50,27 +50,20 @@ public class Entity {
 		
 		collideWithTiles();
 		
-		if (onGround == false) {
-			RayTraceResult result = world.rayTraceTiles(position, new Vector3f(position).add(0, -1, 0), Tile.TileRayTraceType.SOLID);
-			double dist = result.getHit().distance(position);
-			if (dist <= 0.1f) {
-				onGround = true;
-				if (velocity.y < 0)
-				velocity.y = 0;
-			}
-		}
-		
 		if (!onGround) {
 			if (velocity.y > -getTerminalVelocity()) {
 				velocity.y -= (getGravity() / 60.0f) * FPSCounter.getDelta();
 			}
 		}
 		
-		if (world.getTile(getTilePos().add(0, eyeHeight, 0)).blocksMovement()) {
-			velocity.x = 0;
-			velocity.y = 0;
-			velocity.z = 0;
-			this.headInGround = true;
+		if (onGround == false) {
+			RayTraceResult result = world.rayTraceTiles(position, new Vector3f(position).add(0, -1, 0), Tile.TileRayTraceType.SOLID);
+			double dist = result.getHit().distance(position);
+			if (dist <= 0.15f) {
+				onGround = true;
+				if (velocity.y < 0)
+				velocity.y = 0;
+			}
 		}
 		
 		if (velocity.y < -getTerminalVelocity()) {
@@ -86,6 +79,7 @@ public class Entity {
 		position.x += velocity.x * FPSCounter.getDelta();
 		position.y += velocity.y * FPSCounter.getDelta();
 		position.z += velocity.z * FPSCounter.getDelta();
+		
 		ticksExisted++;
 	}
 	
@@ -120,7 +114,7 @@ public class Entity {
 	public void collideWithTiles() {
 		
 		float inc = 0.1f;
-		float velInc = 0.01f;
+		float velInc = 0.1f;
 		float offsX = 0;
 		float offsY = 0;
 		float offsZ = 0;
@@ -184,7 +178,6 @@ public class Entity {
 					pos.setPosition(nx, ny, nz);
 					if (world.getTile(pos).blocksMovement()) {
 						velocity.z = 0;
-						int z = pos.z;
 						position.z = lastPos.z;
 						break Z;
 					}
@@ -204,7 +197,6 @@ public class Entity {
 					pos.setPosition(nx, ny, nz);
 					if (world.getTile(pos).blocksMovement()) {
 						velocity.x = 0;
-						int x = pos.x;
 						position.x = lastPos.x;
 						break X;
 					}

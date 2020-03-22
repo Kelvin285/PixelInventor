@@ -8,32 +8,33 @@ import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.rendering.BlockFace;
 import kmerrill285.PixelInventor.game.client.rendering.Mesh;
 import kmerrill285.PixelInventor.game.client.rendering.MeshRenderer;
-import kmerrill285.PixelInventor.game.client.rendering.chunk.BlockBuilder;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
+import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.world.World;
 import kmerrill285.PixelInventor.game.world.chunk.Chunk;
 
 public class Heightmap {
 	public World world;
-	
-	public int SIZE = 1000;
-	
-	public float[][] heights = new float[SIZE][SIZE];
-	
+			
 	public Vector3f position = new Vector3f(0, 0, 0);
 	public int lcx = 0;
 	public int lcz = 0;
 	
 	public Mesh mesh;
+	public Mesh newMesh;
+	
+	public float[] verts;
+	public float[] tex;
+	public int[] inds;
 	
 	public Heightmap(World world) {
 		this.world = world;
 	}
 	
 	public void update() {
-		int size = 128;
+		int size = Settings.FAR_PLANE_VIEW;
 
 		int cx = (int)(Camera.position.x / Chunk.SIZE) - (size / 2);
 		int cz = (int)(Camera.position.z / Chunk.SIZE) - (size / 2);
@@ -56,9 +57,7 @@ public class Heightmap {
 				float height2 = world.getChunkGenerator().getHeight(cx * Chunk.SIZE + x * Chunk.SIZE, cz * Chunk.SIZE + z * Chunk.SIZE + Chunk.SIZE);
 				float height3 = world.getChunkGenerator().getHeight(cx * Chunk.SIZE + x * Chunk.SIZE + Chunk.SIZE, cz * Chunk.SIZE + z * Chunk.SIZE + Chunk.SIZE);
 				float height4 = world.getChunkGenerator().getHeight(cx * Chunk.SIZE + x * Chunk.SIZE + Chunk.SIZE, cz * Chunk.SIZE + z * Chunk.SIZE);
-				
-				heights[x][z] = height;
-				
+								
 				verts.add((float) (cx * Chunk.SIZE + x * Chunk.SIZE));
 				verts.add(height);
 				verts.add((float) (cz * Chunk.SIZE + z * Chunk.SIZE));
@@ -101,8 +100,8 @@ public class Heightmap {
 		for (int x = 0; x < t.length; x++) {
 			t[x] = texCoords.get(x);
 		}
-		if (mesh != null) mesh.dispose();
-		mesh = new Mesh(v, t, in, Textures.TILES.texture);
+		
+		newMesh = new Mesh(v, t, in, Textures.TILES.texture);
 		
 		position.x = cx * Chunk.SIZE;
 		position.z = cz * Chunk.SIZE;
@@ -136,9 +135,25 @@ public class Heightmap {
 	}
 	
 	public void render(ShaderProgram shader) {
-		mesh.texture = Textures.TILES.texture;
+		Settings.FAR_PLANE_VIEW = 64;
+		
+		if (newMesh != null) {
+			if (mesh != null) mesh.dispose();
+			mesh = newMesh;
+			newMesh = null;
+		}
+		
 		if (mesh != null)
-		MeshRenderer.renderMesh(mesh, new Vector3f(0, -16, 0), shader);
+		{
+			mesh.texture = Textures.TILES.texture;
+			MeshRenderer.renderMesh(mesh, new Vector3f(0, -16, 0), shader);
+			MeshRenderer.renderMesh(mesh, new Vector3f(0, 0, 0), shader);
+		}
+	}
+	
+	public void dispose() {
+		if (newMesh != null) newMesh.dispose();
+		if (mesh != null) mesh.dispose();
 	}
 	
 	

@@ -6,6 +6,7 @@ import java.util.Random;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.rendering.Mesh;
 import kmerrill285.PixelInventor.game.client.rendering.MeshRenderer;
@@ -17,6 +18,7 @@ import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Texture;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
 import kmerrill285.PixelInventor.game.entity.Entity;
+import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.tile.Tile.TileRayTraceType;
 import kmerrill285.PixelInventor.game.tile.Tiles;
@@ -77,7 +79,7 @@ public class World {
 	}
 	
 	public void tick() {
-		
+		updateLight();
 		for (int i = 0; i < entities.size(); i++) {
 			Entity e = entities.get(i);
 			if (getChunk(e.getTilePos()) != null) {
@@ -90,64 +92,75 @@ public class World {
 	}
 	
 	public boolean rebuild = false;
-	
 	public void render(ShaderProgram shader) {
-		updateLight();
 		updateFog();
 		shader.setUniformFog("fog", fog);
 		shader.setUniformFog("shadowBlendFog", shadowBlendFog);
+		shader.setUniformInt("hasShadows", 0);
+		shader.setUniformVec3("cameraPos", Camera.shadowPosition);
+		shader.setUniformVec3("sunPos", this.light.getPosition());
+		shader.setUniformVec3("sunColor", this.light.getColor());
+		shader.setUniformInt("cascadedShadows", 0);
+		
+		Vector3f sunRotation = this.light.getDirection();
+		//y and z
+		Vector3f sunDirection = new Vector3f(0, (float)Math.sin(Math.toRadians(sunRotation.z)), (float)Math.cos(Math.toRadians(sunRotation.x)));
+		
+		shader.setUniformVec3("sunDirection", sunDirection);
+		
 		chunkManager.render(shader);
 		renderTileHover(shader);
-		for (Entity e : entities) {
-			e.render(shader);
+		for (int i = 0; i < entities.size(); i++) {
+			entities.get(i).render(shader);
 		}
 		if (rebuild == false) {
 			rebuild = true;
 			new Thread() {
 				public void run() {
 					SecondaryChunkMeshBuilder.update();
-					rebuild = false;
+					rebuild = false;						
 				}
 			}.start();
 		}
-		heightmap.update();
-		heightmap.render(shader);
+		if (Settings.FAR_PLANE_ENABLED) {
+			heightmap.update();
+			heightmap.render(shader);
+		}
 	}
 	
 	public void renderShadow(ShaderProgram shader, Matrix4f lightMatrix) {
-		updateLight();
+		
 		chunkManager.renderShadow(shader, lightMatrix);
-		for (Entity e : entities) {
+		for (int i = 0; i < entities.size(); i++) {
+			Entity e = entities.get(i);
 			e.renderShadow(shader, lightMatrix);
 		}
 	}
 	
 	public void updateLight() {
+		Camera.shadowPosition = new Vector3f(Camera.position);
+		Camera.shadowRotation = new Vector3f(Camera.rotation);
 		this.light.setShadowPosMult(Constants.shadow_far / 4.0f);
 
 		float sun_rotation = 17;
-		
-		float dm = 1.0f;
-		
+				
 		this.light.setDirection(new Vector3f(sun_rotation, 0, 0));
 		float py = (float)Math.asin(Math.toRadians(sun_rotation)) * light.getShadowPosMult();
 		float pz = (float)Math.acos(Math.toRadians(sun_rotation)) * light.getShadowPosMult();
 		
-		Vector3f pos = new Vector3f(Camera.position);
+		Vector3f pos = Camera.shadowPosition;
+		
 		
 		float x = pos.x;
 		float y = pos.y + py;
 		float z = pos.z + pz;
 		
-		Vector3f forwards = Camera.getForward(-Camera.rotation.x, Camera.rotation.y);
-		float x2 = forwards.x * 30;
-		float z2 =  forwards.z * 30;
 		
+		this.light.setPosition(new Vector3f(x, y, z));
 		
-		this.light.getPosition().lerp(new Vector3f(x, this.light.getPosition().y, z), 1f);
-		this.light.getPosition().lerp(new Vector3f(this.light.getPosition().x, y, this.light.getPosition().z), 0.01f);
-		
-//		this.light.getPosition().lerp(new Vector3f(this.light.getPosition().x + x2, this.light.getPosition().y, this.light.getPosition().z + z2), 0.1f);
+		if (Settings.RAYTRACING) {
+			this.light.setPosition(new Vector3f(0, py, pz));
+		}
 	}
 	
 	public void updateFog() {
@@ -239,18 +252,23 @@ public class World {
 			Texture tex = Textures.TILE_SELECTION;
 			selection = new Mesh(vertices, texCoords, indices, tex);
 		}
-		TilePos pos = Camera.currentTile.getPosition();
-		if (pos != null) {
-			if (Camera.currentTile.getType() == RayTraceType.TILE) {
-				MeshRenderer.renderMesh(selection, new Vector3f(pos.x - 0.005f, pos.y - 0.005f, pos.z - 0.005f), new Vector3f(1.01f, 1.01f, 1.01f), shader);
-				
+		if (Camera.currentTile != null) {
+			TilePos pos = Camera.currentTile.getPosition();
+			if (pos != null) {
+				float size = 0.05f;
+				if (Camera.currentTile.getType() == RayTraceType.TILE) {
+					MeshRenderer.renderMesh(selection, new Vector3f(pos.x - (size / 2.0f), pos.y - (size / 2.0f), pos.z - (size / 2.0f)), new Vector3f(1.0f + size, 1.0f + size, 1.0f + size), shader);
+					
+				}
 			}
 		}
+		
 	}
 	
 	public void dispose() {
 		chunkManager.dispose();
 		worldSaver.saveWorld();
+		heightmap.dispose();
 		for (Entity e : entities) {
 			e.dispose();
 		}
@@ -279,12 +297,9 @@ public class World {
 	public RayTraceResult rayTraceTiles(Vector3f start, Vector3f end, TileRayTraceType type) {
 		TilePos pos = new TilePos(start.x, start.y, start.z);
 		
-		final int sx = pos.x, sy = pos.y, sz = pos.z;
-		
-		Vector3f slope = new Vector3f(end.x - start.x, end.y - start.y, end.z - start.z).normalize();
 		float length = end.distance(start);
 		
-		float inc = 0.0001f;
+		float inc = 0.001f;
 		for (float i = 0; i < length; i+=inc) {
 			Vector3f n = new Vector3f(start).lerp(end, i / length);
 			pos.setPosition(n.x, n.y, n.z);

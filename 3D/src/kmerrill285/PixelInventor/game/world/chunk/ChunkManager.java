@@ -220,8 +220,12 @@ public class ChunkManager {
 		}
 		
 	}
+	
+	private ArrayList<Chunk> rendered = new ArrayList<Chunk>();
 
+	private boolean ticking = false;
 	public void render(ShaderProgram shader) {
+		rendered.clear();
 		moved = false;
 		if (queueUpdate == false) {
 			if (lastX != Camera.position.x ||
@@ -258,15 +262,23 @@ public class ChunkManager {
 		
 		Vector3f cp = new Vector3f(cx, cy, cz);
 		Vector3f fr = new Vector3f(frx, fry, frz);
-		ArrayList<Chunk> rendered = new ArrayList<Chunk>();
 		
-		for (int i = 0; i < rendering.size(); i++) {
-			if (rendering.get(i) != null) {
-				Vector3f pos = new Vector3f(rendering.get(i).getX(), rendering.get(i).getY(), rendering.get(i).getZ());
-				if (cp.distance(pos) <= 5) {
-					rendering.get(i).tick();
+		if (ticking == false) {
+			ticking = true;
+			new Thread() {
+				@Override
+				public void run() {
+					for (int i = 0; i < rendering.size(); i++) {
+						if (rendering.get(i) != null) {
+							Vector3f pos = new Vector3f(rendering.get(i).getX(), rendering.get(i).getY(), rendering.get(i).getZ());
+							if (cp.distance(pos) <= 5) {
+								rendering.get(i).tick();
+							}
+						}
+					}
+					ticking = false;
 				}
-			}
+			}.start();
 		}
 		
 		for (float j = 0; j < fr.length(); j+=0.1f) {
@@ -288,12 +300,9 @@ public class ChunkManager {
 	
 	
 	public void renderShadow(ShaderProgram shader, Matrix4f lightMatrix) {
-		for (int i = 0; i < rendering.size(); i++) {
-			if (rendering.get(i) != null) {
-				rendering.get(i).renderShadow(shader, lightMatrix);
-			}
+		for (int i = 0; i < rendered.size(); i++) {
+			rendered.get(i).renderShadow(shader, lightMatrix);
 		}
-		
 	}
 	
 	public void dispose() {

@@ -1,8 +1,5 @@
 package kmerrill285.PixelInventor.game.client.rendering.gui;
 
-import org.joml.Vector4f;
-
-import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 
 public class IngameMenuScreen extends GuiScreen {

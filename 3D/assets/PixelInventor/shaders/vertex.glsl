@@ -5,9 +5,12 @@ layout (location=1) in vec2 texCoord;
 
 out vec2 outTexCoord;
 out vec3 mvVertexPos;
+out vec3 vertexPos;
 
 out vec4 mlightviewVertexPos;
 out mat4 outModelViewMatrix;
+out mat4 shadowViewMatrix;
+out mat4 secondShadowViewMatrix;
 
 out vec4 secondLightVertexPos;
 
@@ -27,4 +30,7 @@ void main()
 	mlightviewVertexPos = orthoProjectionMatrix * modelLightViewMatrix * vec4(position, 1.0);
 	secondLightVertexPos = secondOrthoMatrix * modelLightViewMatrix * vec4(position, 1.0);
     outModelViewMatrix = modelMatrix;
+    shadowViewMatrix = orthoProjectionMatrix * modelLightViewMatrix;
+    secondShadowViewMatrix = secondOrthoMatrix * modelLightViewMatrix;
+    vertexPos = position;
 }

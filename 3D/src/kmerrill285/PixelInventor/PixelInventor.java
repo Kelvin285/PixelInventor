@@ -21,11 +21,14 @@ import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.ShadowMap
 import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.ShadowRenderer;
 import kmerrill285.PixelInventor.game.client.rendering.gui.GuiRenderer;
 import kmerrill285.PixelInventor.game.client.rendering.gui.IngameMenuScreen;
+import kmerrill285.PixelInventor.game.client.rendering.postprocessing.FrameBuffer;
+import kmerrill285.PixelInventor.game.client.rendering.raytracing.RayTracer;
 import kmerrill285.PixelInventor.game.entity.player.ClientPlayerEntity;
 import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.world.World;
 import kmerrill285.PixelInventor.resources.Constants;
 import kmerrill285.PixelInventor.resources.FPSCounter;
+import kmerrill285.PixelInventor.resources.TPSCounter;
 import kmerrill285.PixelInventor.resources.Utils;
 
 public class PixelInventor {
@@ -36,6 +39,10 @@ public class PixelInventor {
 	public ClientPlayerEntity player;
 	public ShadowMap shadowMap;
 	public ShadowMap secondShadowMap;
+	
+	public FrameBuffer framebuffer;
+	
+	public RayTracer raytracer;
 	
 	public PixelInventor() {
 		PixelInventor.game = this;
@@ -74,7 +81,7 @@ public class PixelInventor {
 		GLFW.glfwSetKeyCallback(Utils.window, Events::keyCallback);
 		GLFW.glfwSetCursorPosCallback(Utils.window, Events::mousePos);
 		GLFW.glfwSetMouseButtonCallback(Utils.window, Events::mouseClick);
-
+		GLFW.glfwSetWindowFocusCallback(Utils.window, Events::windowFocus);
 		
 		try (MemoryStack stack = MemoryStack.stackPush()) {
 			IntBuffer pWidth = stack.mallocInt(1);
@@ -94,8 +101,10 @@ public class PixelInventor {
 		GLFW.glfwSwapInterval(0);
 		GLFW.glfwShowWindow(Utils.window);
 	}
+	@SuppressWarnings("unused")
 	private boolean stop = false;
 	Thread thread = null;
+	@SuppressWarnings("unused")
 	private boolean finished = false;
 	public void loop() {
 		GL.createCapabilities();
@@ -119,65 +128,46 @@ public class PixelInventor {
 					}
 					
 				}
-				System.out.println("finish!");
+				System.out.println("finish chunk thread!");
 				finished = true;
 			}
 			
 		};
 		thread.start();
 		
-		
-		FPSCounter.start();
-		while (!GLFW.glfwWindowShouldClose(Utils.window)) {
-			if (guiRenderer == null || guiRenderer != null && !(guiRenderer.getOpenScreen() instanceof IngameMenuScreen))
-			update();
-			Vector3f skyColor = world.getSkyColor();
-			GL11.glClearColor(skyColor.x, skyColor.y, skyColor.z, 0.0f);
-			
-			
-			GL11.glEnable(GL11.GL_DEPTH_TEST);
-			GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-			//draw stuff I guess
-			
-			// Enable blending
-			GL11.glEnable(GL11.GL_BLEND);
-			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-						
-			
-			if (Events.w != 0) {
-				GL11.glViewport((int)Events.left, 0, (int)Events.w, (int)Events.height);
-			} else {
-				GL11.glViewport(0, 0, Utils.FRAME_WIDTH, Utils.FRAME_HEIGHT);
+		new Thread() {
+			public void run() {
+				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
+					if (guiRenderer == null || guiRenderer != null && !(guiRenderer.getOpenScreen() instanceof IngameMenuScreen))
+					update();
+					try {
+						Thread.sleep(5);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				System.out.println("finish update thread!");
 			}
-			Utils.object_shader.bind();
-			Utils.setupProjection();
-			
-			world.render(Utils.object_shader);
-			
-			Utils.object_shader.unbind();
-			
-			Utils.sprite_shader.bind();
-			
-			renderGUI();
-			
-			Utils.sprite_shader.unbind();
-			
-			GL11.glDisable(GL11.GL_BLEND);
-			
-			renderDepthMap();
-			
-			GLFW.glfwSwapBuffers(Utils.window);
-
-			GLFW.glfwPollEvents();
-			Input.doInput();
-			FPSCounter.updateFPS();
+		}.start();
+		FPSCounter.start();
+		TPSCounter.start();
+		
+		int ticks = 0;
+		
+		while (!GLFW.glfwWindowShouldClose(Utils.window)) {
+			if (ticks == 0) 
+				render();
+			if (ticks > Settings.frameSkip) {
+				ticks = 0;
+			} else {
+				ticks++;
+			}
 		}
 		stop = true;
 	}
 	
-	
-	
 	public void renderDepthMap() {
+		if (false)
 		if (Settings.SHADOWS) {
 			ShadowRenderer.renderDepthMap(shadowMap, world);
 			if (Settings.CASCADED_SHADOWS);
@@ -191,9 +181,88 @@ public class PixelInventor {
 	    
 	}
 	
+	public void render() {
+		Vector3f skyColor = world.getSkyColor();
+		GL11.glClearColor(skyColor.x, skyColor.y, skyColor.z, 0.0f);
+		
+		
+		GL11.glEnable(GL11.GL_DEPTH_TEST);
+		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+		//draw stuff I guess
+		
+		// Enable blending
+		GL11.glEnable(GL11.GL_BLEND);
+		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+					
+		if (Events.w != 0) {
+			GL11.glViewport((int)Events.left, 0, (int)Events.w, (int)Events.height);
+		} else {
+			GL11.glViewport(0, 0, Utils.FRAME_WIDTH, Utils.FRAME_HEIGHT);
+		}
+		
+		if (!Settings.RAYTRACING)
+    	if (!Settings.POST_PROCESSING) {
+			Utils.object_shader.bind();
+			
+			Utils.setupProjection();
+			
+			world.render(Utils.object_shader);
+			
+			Utils.object_shader.unbind();
+		}
+    	
+		if (Settings.RAYTRACING) {
+			this.raytracer.render();
+			if (Events.w != 0) {
+				GL11.glViewport((int)Events.left, 0, (int)Events.w, (int)Events.height);
+			} else {
+				GL11.glViewport(0, 0, Utils.FRAME_WIDTH, Utils.FRAME_HEIGHT);
+			}
+		}
+		
+		Utils.sprite_shader.bind();
+		
+		renderGUI();
+		
+		Utils.sprite_shader.unbind();
+		
+		
+		if (!Settings.RAYTRACING) {
+			if (Settings.POST_PROCESSING) {
+				framebuffer.bind();
+			
+				Utils.object_shader.bind();
+				
+				Utils.setupProjection();
+				
+				world.render(Utils.object_shader);
+				
+				Utils.object_shader.unbind();
+			}
+			framebuffer.unbind();
+			
+			GL11.glDisable(GL11.GL_BLEND);
+			renderDepthMap();
+		}
+		
+		GLFW.glfwSwapBuffers(Utils.window);
+
+		GLFW.glfwPollEvents();
+		Input.doInput();
+		FPSCounter.updateFPS();
+	}
+	
+	private boolean updateWorld = false;
+	
 	public void update() {
-		Camera.update();
-		world.tick();
+		TPSCounter.updateTPS();
+		
+		if (TPSCounter.canTick()) {
+			Camera.update();
+			world.tick();
+
+		}
+		
 	}
 	
 	public void updateWorld() {
@@ -201,9 +270,12 @@ public class PixelInventor {
 	}
 	
 	public void dispose() {
+		Settings.saveSettings();
 		Utils.sprite_shader.dispose();
 		Utils.object_shader.dispose();
 		Utils.depth_shader.dispose();
+		raytracer.dispose();
+		framebuffer.dispose();
 		shadowMap.dispose();
 		secondShadowMap.dispose();
 		world.dispose();

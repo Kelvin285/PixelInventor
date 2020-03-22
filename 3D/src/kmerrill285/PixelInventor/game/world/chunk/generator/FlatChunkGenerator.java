@@ -21,9 +21,7 @@ public class FlatChunkGenerator extends ChunkGenerator {
 		}
 		for (int x = 0; x < Chunk.SIZE; x++) {
 			for (int z = 0; z < Chunk.SIZE; z++) {
-				int X = x + chunk.getX() * Chunk.SIZE;
-				int Z = z + chunk.getZ() * Chunk.SIZE;
-				
+
 				for (int y = 0; y < Chunk.SIZE; y++) {
 					
 					int Y = y + chunk.getY() * Chunk.SIZE;

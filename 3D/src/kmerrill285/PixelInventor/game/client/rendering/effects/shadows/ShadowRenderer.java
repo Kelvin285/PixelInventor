@@ -1,12 +1,11 @@
 package kmerrill285.PixelInventor.game.client.rendering.effects.shadows;
 
 import org.joml.Matrix4f;
+import org.joml.Vector3d;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
-import kmerrill285.PixelInventor.PixelInventor;
-import kmerrill285.PixelInventor.game.client.rendering.effects.lights.DirectionalLight;
 import kmerrill285.PixelInventor.game.world.World;
 import kmerrill285.PixelInventor.resources.Constants;
 import kmerrill285.PixelInventor.resources.Utils;
@@ -41,24 +40,14 @@ public class ShadowRenderer {
 	public static Matrix4f getOrthoProjectionMatrix() {
 		float mul = 3f;
 		Constants.shadow_far = 100;
-		return getOrthoProjectionMatrix(-10 * mul, 10 * mul, -10 * mul, 10 * mul, -1 * mul, 20 * mul);
+		return getOrthoProjectionMatrix(-19.2f * mul, 19.2f * mul, -10.8f * mul, 10.8f * mul, -1 * mul, 20 * mul);
 	}
 	
-	private static final Matrix4f lightViewMatrix = new Matrix4f();
+	private static Matrix4f lightViewMatrix = new Matrix4f();
 	
 	 public static  Matrix4f updateLightViewMatrix(Vector3f position, Vector3f rotation) {
 
-		 	Vector3f vel = PixelInventor.game.player.velocity;
-		 	float vx = 0;
-		 	float vy = 0;
-		 	float vz = 0;
-		 	if (vel != null) {
-		 		vx = 0f;
-		 		vy = 0;
-		 		vz = 0;
-		 	}
-		 
-		 	Matrix4f viewMatrix = lightViewMatrix;
+		 Matrix4f viewMatrix = new Matrix4f();
 		 	
 		    viewMatrix.identity();
 
@@ -67,8 +56,9 @@ public class ShadowRenderer {
 		        .rotate((float)Math.toRadians(rotation.z), new Vector3f(0, 0, 1))
 		        ;
 		    
-		    viewMatrix.translate(-(position.x + vx), -(position.y + vy), -(position.z + vz));
-		    return viewMatrix;
+		    viewMatrix.translate(-(position.x), -(position.y), -(position.z));
+		    lightViewMatrix = viewMatrix;
+		    return lightViewMatrix;
 
 	    }
 	

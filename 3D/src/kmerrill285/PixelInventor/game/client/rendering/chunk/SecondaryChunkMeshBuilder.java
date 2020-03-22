@@ -26,10 +26,10 @@ public class SecondaryChunkMeshBuilder {
 		for (int x = 0; x < Chunk.SIZE; x++) {
 			for (int y = 0; y < Chunk.SIZE; y++) {
 				for (int z = 0; z < Chunk.SIZE; z++) {
+					while(chunk.getTile(x, y, z) == null) {}
 					Tile tile = chunk.getTile(x, y, z);
 					
 					if (tile.isFullCube() && tile.isVisible()) {
-						String name = chunk.getTile(x, y, z).getName();
 						if (!chunk.getTile(x - 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.LEFT, tile, chunk);
 						if (!chunk.getTile(x + 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.RIGHT, tile, chunk);
 						if (!chunk.getTile(x, y, z + 1).isFullCube()) addFace(x, y, z, BlockFace.BACK, tile, chunk);
@@ -145,7 +145,6 @@ public class SecondaryChunkMeshBuilder {
 		}
 		texCoords = Textures.TILES.convertToUV(texCoords, tile.getTextureFor(face));
 		
-		int size = SecondaryChunkMeshBuilder.vertices.size();
 		for (float f : vertices) {
 			SecondaryChunkMeshBuilder.vertices.add(f);
 		}
@@ -241,7 +240,6 @@ public class SecondaryChunkMeshBuilder {
 		}
 		texCoords = Textures.TILES.convertToUV(texCoords, Textures.MINING_LOCATION);
 		
-		int size = SecondaryChunkMeshBuilder.vertices.size();
 		for (float f : vertices) {
 			SecondaryChunkMeshBuilder.vertices.add(f);
 		}

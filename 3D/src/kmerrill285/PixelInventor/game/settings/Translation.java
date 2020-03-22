@@ -60,6 +60,7 @@ public class Translation {
 						translation.keys.put(a, b);
 					}
 				}
+				scanner.close();
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}

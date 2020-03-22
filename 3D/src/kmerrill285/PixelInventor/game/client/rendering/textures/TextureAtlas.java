@@ -14,7 +14,6 @@ import javax.swing.ImageIcon;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
-import org.lwjgl.opengl.GL40;
 
 public class TextureAtlas {
 	public BufferedImage image;
@@ -36,6 +35,12 @@ public class TextureAtlas {
 		convertToOpenGL();
 	}
 	
+	public TextureAtlas(Image capture) {
+		textures = new HashMap<String, int[]>();
+		addToImage(capture, "PixelInventor", "image");
+		convertToOpenGL();
+	}
+
 	private void convertToOpenGL() {
 		int[] pixels = new int[image.getWidth() * image.getHeight()];
         image.getRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0, image.getWidth());
@@ -81,7 +86,6 @@ public class TextureAtlas {
 		
 		if (texture != null) {
 			float u = texture[0] / (float)width;
-			float v = texture[1] / (float)height;
 			float w = texture[2] / (float)width;
 			float h = texture[3] / (float)height;
 

@@ -1,9 +1,7 @@
 package kmerrill285.PixelInventor.resources;
 
 import org.joml.Vector3f;
-import org.joml.Vector3i;
 
-import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.world.chunk.TilePos;
 
 public class RayTraceResult {

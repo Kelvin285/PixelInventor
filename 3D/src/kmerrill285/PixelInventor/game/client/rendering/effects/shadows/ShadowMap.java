@@ -28,13 +28,13 @@ public class ShadowMap {
     public ShadowMap() throws Exception {
         depthMapFBO = glGenFramebuffers();
 
-        depthMap = new Texture(SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT, GL_DEPTH_COMPONENT, true);
+        depthMap = new Texture(SHADOW_MAP_WIDTH, SHADOW_MAP_HEIGHT, GL_DEPTH_COMPONENT, true, false);
 
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap.getTextureId(), 0);
 
         glDrawBuffer(GL_NONE);
-//        glReadBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             throw new Exception("Could not create FrameBuffer");

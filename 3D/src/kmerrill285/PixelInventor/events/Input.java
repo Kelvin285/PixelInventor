@@ -2,6 +2,8 @@ package kmerrill285.PixelInventor.events;
 
 import java.awt.Rectangle;
 
+import org.lwjgl.glfw.GLFW;
+
 import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.Mouse;
@@ -46,7 +48,49 @@ public class Input {
 		
 		Mouse.update();
 	}
+	
+	private static void updateCamera() {
+		float speed = 0.1f;
+		float rotSpeed = 2.0f;
+		if (Settings.RIGHT.isPressed()) {
+			float yaw = 90;
+			Camera.position.x+=speed * Camera.getForward(0, Camera.rotation.y + yaw).x;
+			Camera.position.y+=speed * Camera.getForward(0, Camera.rotation.y + yaw).y;
+			Camera.position.z+=speed * Camera.getForward(0, Camera.rotation.y + yaw).z;
+		}
+		
+		if (Settings.LEFT.isPressed()) {
+			float yaw = -90;
+			Camera.position.x+=speed * Camera.getForward(0, Camera.rotation.y + yaw).x;
+			Camera.position.y+=speed * Camera.getForward(0, Camera.rotation.y + yaw).y;
+			Camera.position.z+=speed * Camera.getForward(0, Camera.rotation.y + yaw).z;
+		}
 
+		if (Settings.FORWARD.isPressed()) {
+			float yaw = 0;
+			float pitch = 0;
+			Camera.position.x+=speed * Camera.getForward(0, Camera.rotation.y + yaw).x;
+			Camera.position.z+=speed * Camera.getForward(0, Camera.rotation.y + yaw).z;
+		}
+
+		if (Settings.BACKWARD.isPressed()) {
+			float yaw = 180;
+			float pitch = 0;
+			Camera.position.x+=speed * Camera.getForward(0, Camera.rotation.y + yaw).x;
+			Camera.position.z+=speed * Camera.getForward(0, Camera.rotation.y + yaw).z;
+		}
+
+		if (Settings.JUMP.isPressed()) {
+			Camera.position.y+=speed;
+		}
+
+		if (Settings.SNEAK.isPressed()) {
+			Camera.position.y-=speed;
+		}
+
+
+	}
+	
 	private static void doGameInput() {
 		
 		if (Mouse.locked) {
@@ -57,6 +101,9 @@ public class Input {
 			if (Camera.rotation.x > 90) Camera.rotation.x = 90;
 		}
 		
+		if (Settings.RAYTRACING) {
+			updateCamera();
+		}
 		
 		if (Settings.ATTACK.isPressed()) {
 			PixelInventor game = PixelInventor.game;
@@ -97,14 +144,14 @@ public class Input {
 					if (game.world.getTile(pos).isReplaceable())
 					if (Settings.USE.isJustPressed()) {
 						if (!stop) {
-							game.world.setTile(pos, Tiles.DIRT);
+							game.world.setTile(pos, Tiles.STONE);
 							PixelInventor.game.player.setUseTime(5);
 						}
 					} else {
 						if (PixelInventor.game.player.getUseTime() == 0)
 						{
 							if (!stop) {
-								game.world.setTile(pos, Tiles.DIRT);
+								game.world.setTile(pos, Tiles.STONE);
 								PixelInventor.game.player.setUseTime(5);
 							}
 						}

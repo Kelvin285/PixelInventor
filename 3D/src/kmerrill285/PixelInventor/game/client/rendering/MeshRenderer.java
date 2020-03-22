@@ -27,6 +27,8 @@ public class MeshRenderer {
 		renderMesh(mesh, position, rotation, scale, shader);
 	}
 	
+	public static Matrix4f view = null;
+	
 	public static void renderMesh(Mesh mesh, Vector3f position, Vector3f rotation, Vector3f scale, ShaderProgram shader) {
 		shader.setUniformInt("texture_sampler", 0);
 		shader.setUniformInt("shadowMap", 1);
@@ -36,8 +38,10 @@ public class MeshRenderer {
 		
 		shader.setUniformMat4("orthoProjectionMatrix", ShadowRenderer.getOrthoProjectionMatrix());
 		shader.setUniformMat4("secondOrthoMatrix", SecondShadowRenderer.getOrthoProjectionMatrix());
-		shader.setUniformMat4("modelLightViewMatrix", getLightMatrix(position, rotation, scale, ShadowRenderer.getLightViewMatrix(PixelInventor.game.world)));
-		
+		Vector3f m = new Vector3f(PixelInventor.game.player.velocity);
+		m.y = Math.abs(m.y);
+		if (view != null)
+		shader.setUniformMat4("modelLightViewMatrix", getLightMatrix(position, rotation, new Vector3f(scale), view));
 		if (mesh.isSetup()) {
 			glActiveTexture(GL13.GL_TEXTURE1);
 	    	glBindTexture(GL_TEXTURE_2D, PixelInventor.game.shadowMap.getDepthMapTexture().getTextureId());
@@ -55,9 +59,14 @@ public class MeshRenderer {
 	public static void renderShadowMesh(Mesh mesh, Vector3f position, Vector3f scale, ShaderProgram shader, Matrix4f viewMatrix) {
 		renderShadowMesh(mesh, position, rotation, scale, shader, viewMatrix);
 	}
-		
+	
+	
 	public static void renderShadowMesh(Mesh mesh, Vector3f position, Vector3f rotation, Vector3f scale, ShaderProgram shader, Matrix4f viewMatrix) {
-		shader.setUniformMat4("modelMatrix", getLightMatrix(position, rotation, scale, viewMatrix));
+		view = ShadowRenderer.getLightViewMatrix(PixelInventor.game.world);
+		
+		Vector3f m = new Vector3f(PixelInventor.game.player.velocity);
+		m.y = Math.abs(m.y);
+		shader.setUniformMat4("modelMatrix", getLightMatrix(position.sub(m), rotation, new Vector3f(scale), view));
 		mesh.render();
 	}
 	

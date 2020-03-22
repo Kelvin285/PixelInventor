@@ -29,7 +29,6 @@ public class ChunkMeshBuilder {
 					Tile tile = chunk.getTile(x, y, z);
 					
 					if (tile.isFullCube() && tile.isVisible()) {
-						String name = chunk.getTile(x, y, z).getName();
 						if (!chunk.getTile(x - 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.LEFT, tile, chunk);
 						if (!chunk.getTile(x + 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.RIGHT, tile, chunk);
 						if (!chunk.getTile(x, y, z + 1).isFullCube()) addFace(x, y, z, BlockFace.BACK, tile, chunk);
@@ -145,7 +144,6 @@ public class ChunkMeshBuilder {
 		}
 		texCoords = Textures.TILES.convertToUV(texCoords, tile.getTextureFor(face));
 		
-		int size = ChunkMeshBuilder.vertices.size();
 		for (float f : vertices) {
 			ChunkMeshBuilder.vertices.add(f);
 		}
@@ -245,7 +243,6 @@ public class ChunkMeshBuilder {
 		}
 		texCoords = Textures.TILES.convertToUV(texCoords, Textures.MINING_LOCATION);
 		
-		int size = ChunkMeshBuilder.vertices.size();
 		for (float f : vertices) {
 			ChunkMeshBuilder.vertices.add(f);
 		}

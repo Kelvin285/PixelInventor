@@ -84,6 +84,7 @@ public class Tile {
 						if (a.equals("back")) back_texture = b;
 					}
 				}
+				scanner.close();
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}

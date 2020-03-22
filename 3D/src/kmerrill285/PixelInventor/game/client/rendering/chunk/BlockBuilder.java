@@ -6,7 +6,6 @@ import kmerrill285.PixelInventor.game.client.rendering.BlockFace;
 import kmerrill285.PixelInventor.game.client.rendering.Mesh;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
 import kmerrill285.PixelInventor.game.tile.Tile;
-import kmerrill285.PixelInventor.game.world.chunk.Chunk;
 
 public class BlockBuilder {
 	
@@ -130,7 +129,6 @@ public class BlockBuilder {
 		}
 		texCoords = Textures.TILES.convertToUV(texCoords, tile.getTextureFor(face));
 		
-		int size = BlockBuilder.vertices.size();
 		for (float f : vertices) {
 			BlockBuilder.vertices.add(f);
 		}

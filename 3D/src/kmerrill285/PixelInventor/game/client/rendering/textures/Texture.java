@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.GL32;
 
 import de.matthiasmann.twl.utils.PNGDecoder;
 import de.matthiasmann.twl.utils.PNGDecoder.Format;
@@ -40,23 +41,34 @@ public class Texture {
 		}
 	}
 	
-	public Texture(int width, int height, int pixelFormat, boolean shadow) throws Exception {
+	public Texture(int width, int height, int pixelFormat, boolean shadow, boolean raytracing) throws Exception {
+		if (raytracing) {
+			this.textureId = GL11.glGenTextures();
+			this.width = width;
+			this.height = height;
+			
+			GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureId);
+			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+		    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+			GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL30.GL_RGBA32F, width, height, 0, GL30.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (ByteBuffer)null);
+			GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+			return;
+		}
 		if (!shadow) {
 			this.textureId = GL11.glGenTextures();
 		    this.width = width;
 		    this.height = height;
-		    GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.textureId);
-		    GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_DEPTH_COMPONENT, this.width, this.height, 0, pixelFormat, GL11.GL_FLOAT, (ByteBuffer) null);
-		    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+		    GL11.glBindTexture(GL11.GL_TEXTURE_2D, textureId);
+		    GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, width, height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (ByteBuffer)null);
 		    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
-		    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL15.GL_CLAMP_TO_EDGE);
-		    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL15.GL_CLAMP_TO_EDGE);
-		} else {
+		    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+		    GL32.glFramebufferTexture(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0, textureId, 0);
+		    } else {
 			this.textureId = GL11.glGenTextures();
 		    this.width = width;
 		    this.height = height;
 		    GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.textureId);
-		    GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL30.GL_DEPTH_COMPONENT16, this.width, this.height, 0, pixelFormat, GL11.GL_FLOAT, (ByteBuffer) null);
+		    GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL30.GL_DEPTH_COMPONENT, this.width, this.height, 0, pixelFormat, GL11.GL_FLOAT, (ByteBuffer) null);
 		    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
 		    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
 		    GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL15.GL_CLAMP_TO_BORDER);
@@ -64,8 +76,6 @@ public class Texture {
 		}
 	    
 	}
-	
-	
 	
 	public Texture(int id) {
 		this.textureId = id;

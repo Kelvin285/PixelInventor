@@ -32,4 +32,15 @@ public class InputSetting {
 	public String getTranslatedName() {
 		return Translation.translateText(this.name);
 	}
+
+	public void read(String b) {
+		String[] data = b.split(",");
+		if (data.length == 2) {
+			set(Integer.parseInt(data[0].replace(" ","").trim()), Boolean.parseBoolean(data[1].replace(" ", "").trim()));
+		}
+	}
+
+	public String write() {
+		return id+","+mouse;
+	}
 }
