@@ -144,8 +144,10 @@ public class ClientPlayerEntity extends PlayerEntity {
 		}
 		
 		float mul = 0.75f;
-		if (running) mul = 1.5f;
-		if (isSneaking) mul = 0.25f;
+		if (running) mul = 1.2f;
+		if (isSneaking) mul = 0.2f;
+		
+		mul *= 0.75f;
 		
 		if (isSneaking && onGround) {
 			

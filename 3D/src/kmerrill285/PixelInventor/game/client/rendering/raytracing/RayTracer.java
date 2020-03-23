@@ -73,15 +73,15 @@ public class RayTracer {
 	private int createFramebufferTexture() {
 		int tex = glGenTextures();
 		glBindTexture(GL_TEXTURE_2D, tex);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		ByteBuffer black = null;
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, black);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		return tex;
 	}
 
-	private RayTraceWorld chunk = new RayTraceWorld();
+	private RayTraceWorld world = new RayTraceWorld();
 	
 	/**
 	 * Compute one frame by tracing the scene using our compute shader and
@@ -96,7 +96,7 @@ public class RayTracer {
 		PixelInventor.game.world.updateLight();
 		DirectionalLight sun = PixelInventor.game.world.light;
 		
-		
+		getCamera().setFrustumPerspective(Settings.ACTUAL_FOV, (float) width / height, 1f, 2f);
 		
 		/* Set viewing frustum corner rays in shader */
 		shader.setVec3("eye", getCamera().getPosition());
@@ -113,11 +113,10 @@ public class RayTracer {
 		shader.setVec3("sunPosition", sun.getPosition().x, sun.getPosition().y, sun.getPosition().z);
 		shader.setInt("shadows", Settings.SHADOWS ? 1 : 0);
 		shader.setInt("reflections", Settings.REFLECTIONS ? 1 : 0);
-
 		/* Bind level 0 of framebuffer texture as writable image in the shader. */
 		glBindImageTexture(0, tex, 0, false, 0, GL_WRITE_ONLY, GL_RGBA32F);
 		
-		chunk.build(shader);
+		getWorld().build(shader);
 		
 		GL30.glActiveTexture(GL30.GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, Textures.TILES.textureID);
@@ -147,7 +146,13 @@ public class RayTracer {
 	public void dispose() {
 		GL11.glDeleteTextures(tex);
 		shader.dispose();
-		chunk.dispose();
+		getWorld().dispose();
+	}
+
+
+
+	public RayTraceWorld getWorld() {
+		return world;
 	}
 
 }

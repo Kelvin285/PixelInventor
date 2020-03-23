@@ -8,6 +8,8 @@ import java.util.Scanner;
 import org.joml.Vector3f;
 
 import kmerrill285.PixelInventor.game.client.rendering.BlockFace;
+import kmerrill285.PixelInventor.game.client.rendering.raytracing.RayTraceWorld;
+import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
 import kmerrill285.PixelInventor.game.entity.ItemDropEntity;
 import kmerrill285.PixelInventor.game.settings.Translation;
 import kmerrill285.PixelInventor.game.world.World;
@@ -90,6 +92,27 @@ public class Tile {
 			}
 			
 		}
+		float[] top = {0.0f, 0.0f, 1.0f, 1.0f};
+		float[] bottom = {0.0f, 0.0f, 1.0f, 1.0f};
+		float[] left = {0.0f, 0.0f, 1.0f, 1.0f};
+		float[] right = {0.0f, 0.0f, 1.0f, 1.0f};
+		float[] front = {0.0f, 0.0f, 1.0f, 1.0f};
+		float[] back = {0.0f, 0.0f, 1.0f, 1.0f};
+		float[] size = {width, height, 0.0f, 0.0f};
+		top = Textures.TILES.convertToUV(top, getTextureFor(BlockFace.UP));
+		bottom = Textures.TILES.convertToUV(bottom, getTextureFor(BlockFace.DOWN));
+		left = Textures.TILES.convertToUV(left, getTextureFor(BlockFace.LEFT));
+		right = Textures.TILES.convertToUV(right, getTextureFor(BlockFace.RIGHT));
+		front = Textures.TILES.convertToUV(front, getTextureFor(BlockFace.FRONT));
+		back = Textures.TILES.convertToUV(back, getTextureFor(BlockFace.BACK));
+		for (float f : top) RayTraceWorld.TEX_COORDS.add(f);
+		for (float f : bottom) RayTraceWorld.TEX_COORDS.add(f);
+		for (float f : left) RayTraceWorld.TEX_COORDS.add(f);
+		for (float f : right) RayTraceWorld.TEX_COORDS.add(f);
+		for (float f : front) RayTraceWorld.TEX_COORDS.add(f);
+		for (float f : back) RayTraceWorld.TEX_COORDS.add(f);
+		for (float f : size) RayTraceWorld.TEX_COORDS.add(f);
+		
 		ID = CURRENT_ID++;
 	}
 	

@@ -62,6 +62,7 @@ public class FallingTileEntity extends Entity {
 	}
 	
 	public void render(ShaderProgram shader) {
+		if (shader == null) return;
 		MeshRenderer.renderMesh(mesh, position, shader);
 	}
 	

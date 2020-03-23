@@ -18,10 +18,11 @@ public class TPSCounter {
 	
 	public static void updateTPS() {
 		tick = false;
-		int TPS = 1000 / 18;
-		if (getTime() - lastTPS > TPS) {
+		int TPS = 25;
+		while (getTime() - lastTPS > TPS) {
+			delta = FPSCounter.getDelta();
+			
 			tps = 0;
-			delta = 35 / (double)tps;
 			tick = true;
 			lastTPS += TPS;
 		}

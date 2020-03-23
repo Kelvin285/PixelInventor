@@ -8,6 +8,7 @@ import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.world.World;
 import kmerrill285.PixelInventor.game.world.chunk.TilePos;
 import kmerrill285.PixelInventor.resources.FPSCounter;
+import kmerrill285.PixelInventor.resources.MathHelper;
 import kmerrill285.PixelInventor.resources.RayTraceResult;
 
 public class Entity {
@@ -45,15 +46,14 @@ public class Entity {
 	}
 	
 	public void tick() {
+		
 		lastOnGround = onGround;
 		onGround = false;
 		
 		collideWithTiles();
 		
 		if (!onGround) {
-			if (velocity.y > -getTerminalVelocity()) {
-				velocity.y -= (getGravity() / 60.0f) * FPSCounter.getDelta();
-			}
+			velocity.y = MathHelper.lerp((float)velocity.y, (float)-getTerminalVelocity(), (float)(getGravity() * FPSCounter.getDelta()) / 45.0f);
 		}
 		
 		if (onGround == false) {
@@ -96,7 +96,7 @@ public class Entity {
 	}
 	
 	public float getTerminalVelocity() {
-		return 53.0f * 0.2f;
+		return 0.65f;
 	}
 	
 	public void jump() {

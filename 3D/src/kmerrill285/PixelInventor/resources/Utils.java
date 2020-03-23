@@ -70,9 +70,6 @@ public class Utils {
 	
 	public static void setupGL() throws Exception {
 		
-		if (Settings.RAYTRACING) {
-			Camera.position = new Vector3f(3, 2, 7);
-		}
 		
 		sprite_shader = new ShaderProgram();
 		sprite_shader.createVertexShader(loadResource("PixelInventor", "shaders/sprite_vertex.glsl"));
@@ -83,7 +80,9 @@ public class Utils {
 		sprite_shader.createUniform("color");
 		sprite_shader.createUniform("texture_sampler");
 		sprite_shader.createUniform("post_processing");
-		
+		sprite_shader.createUniform("raycasting");
+		sprite_shader.createUniform("exposure");
+
 		object_shader = new ShaderProgram();
 		object_shader.createVertexShader(loadResource("PixelInventor", "shaders/vertex.glsl"));
 		object_shader.createFragmentShader(loadResource("PixelInventor", "shaders/fragment.glsl"));

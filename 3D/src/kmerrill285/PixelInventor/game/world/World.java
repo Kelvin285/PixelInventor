@@ -80,6 +80,7 @@ public class World {
 	
 	public void tick() {
 		updateLight();
+		
 		for (int i = 0; i < entities.size(); i++) {
 			Entity e = entities.get(i);
 			if (getChunk(e.getTilePos()) != null) {
@@ -108,7 +109,7 @@ public class World {
 		
 		shader.setUniformVec3("sunDirection", sunDirection);
 		
-		chunkManager.render(shader);
+		chunkManager.render(shader, false);
 		renderTileHover(shader);
 		for (int i = 0; i < entities.size(); i++) {
 			entities.get(i).render(shader);
@@ -125,6 +126,23 @@ public class World {
 		if (Settings.FAR_PLANE_ENABLED) {
 			heightmap.update();
 			heightmap.render(shader);
+		}
+	}
+	
+
+	public void renderRaytracer() {
+		chunkManager.render(null, true);
+		for (int i = 0; i < entities.size(); i++) {
+			entities.get(i).render(null);
+		}
+		if (rebuild == false) {
+			rebuild = true;
+			new Thread() {
+				public void run() {
+					SecondaryChunkMeshBuilder.update();
+					rebuild = false;						
+				}
+			}.start();
 		}
 	}
 	
@@ -372,4 +390,5 @@ public class World {
 	public ChunkGenerator getChunkGenerator() {
 		return this.generator;
 	}
+
 }

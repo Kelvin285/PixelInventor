@@ -25,6 +25,10 @@ public class Settings {
 	public static boolean REFLECTIONS = true;
 	public static boolean RAYTRACING = true;
 	
+	public static float EXPOSURE = 1.0f;
+	
+	public static int RAYTRACE_VIEW = 8;
+	
 	public static boolean POST_PROCESSING = true;
 	public static int frameSkip = 0;
 	
@@ -115,8 +119,14 @@ public class Settings {
 						if (a.contentEquals("RAYTRACING")) {
 							RAYTRACING = Boolean.parseBoolean(b);
 						}
+						if (a.contentEquals("EXPOSURE")) {
+							EXPOSURE = Float.parseFloat(b);
+						}
 						if (a.contentEquals("POST_PROCESSING")) {
 							POST_PROCESSING = Boolean.parseBoolean(b);
+						}
+						if (a.contentEquals("RAYTRACE_VIEW")) {
+							RAYTRACE_VIEW = Integer.parseInt(b);
 						}
 						if (a.contentEquals("FRAME_SKIP")) {
 							frameSkip = Integer.parseInt(b);
@@ -187,7 +197,9 @@ public class Settings {
 			str += getSaveString("SHADOWS", SHADOWS);
 			str += getSaveString("REFLECTIONS", REFLECTIONS);
 			str += getSaveString("RAYTRACING", RAYTRACING);
+			str += getSaveString("EXPOSURE", EXPOSURE);
 			str += getSaveString("POST_PROCESSING", POST_PROCESSING);
+			str += getSaveString("RAYTRACE_VIEW", RAYTRACE_VIEW);
 			str += getSaveString("FRAME_SKIP", frameSkip);
 			str += getSaveString("JUMP", JUMP.write());
 			str += getSaveString("SNEAK", SNEAK.write());

@@ -149,6 +149,22 @@ public class PixelInventor {
 				System.out.println("finish update thread!");
 			}
 		}.start();
+		
+		new Thread() {
+			public void run() {
+				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
+					if (guiRenderer == null || guiRenderer != null && !(guiRenderer.getOpenScreen() instanceof IngameMenuScreen))
+					raytracer.getWorld().updateView();
+					try {
+						Thread.sleep(5);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				System.out.println("finish update thread!");
+			}
+		}.start();
+		
 		FPSCounter.start();
 		TPSCounter.start();
 		
@@ -210,9 +226,11 @@ public class PixelInventor {
 			
 			Utils.object_shader.unbind();
 		}
-    	
+    	Settings.RAYTRACING = true;
 		if (Settings.RAYTRACING) {
 			this.raytracer.render();
+			world.renderRaytracer();
+
 			if (Events.w != 0) {
 				GL11.glViewport((int)Events.left, 0, (int)Events.w, (int)Events.height);
 			} else {
@@ -260,7 +278,7 @@ public class PixelInventor {
 		if (TPSCounter.canTick()) {
 			Camera.update();
 			world.tick();
-
+			
 		}
 		
 	}

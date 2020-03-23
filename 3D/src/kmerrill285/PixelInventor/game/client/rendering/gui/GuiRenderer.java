@@ -106,7 +106,7 @@ public class GuiRenderer {
 		if (Settings.RAYTRACING)	
 		{
 			Texture texture = new Texture(PixelInventor.game.raytracer.getTexture());
-			drawTexture(texture, 1920, 1080, -1920, -1080, 0, new Vector4f(1, 1, 1, 1), false);
+			drawTexture(texture, 1920, 1080, -1920, -1080, 0, new Vector4f(1, 1, 1, 1), false, true);
 		} else {
 			if (Settings.POST_PROCESSING)
 				drawTexture(PixelInventor.game.framebuffer.getTexture(), 1920, 1080, -1920, -1080, 0, new Vector4f(1, 1, 1, 1), true);
@@ -143,13 +143,19 @@ public class GuiRenderer {
 	}
 	
 	public void drawTexture(Texture texture, float x, float y, float width, float height, float rotation, Vector4f color, boolean postProcessing) {
+		drawTexture(texture, x, y, width, height, rotation, color, postProcessing, false);
+	}
+	
+	public void drawTexture(Texture texture, float x, float y, float width, float height, float rotation, Vector4f color, boolean postProcessing, boolean raycasting) {
 		
 		sprite.texture = texture;
+		shader.setUniformInt("raycasting", raycasting ? 1 : 0);
 		shader.setUniformInt("post_processing", postProcessing ? 1 : 0);
         shader.setUniformVec4("color", color);
 		shader.setUniformInt("texture_sampler", 0);
         shader.setUniformVec2("offset", new Vector2f(x, y));
         shader.setUniformVec2("scale", new Vector2f(width, height));
+        shader.setUniformFloat("exposure", Settings.EXPOSURE);
         sprite.render();
 		
 	}

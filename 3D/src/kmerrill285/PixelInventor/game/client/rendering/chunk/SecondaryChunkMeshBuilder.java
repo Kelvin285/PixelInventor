@@ -2,9 +2,11 @@ package kmerrill285.PixelInventor.game.client.rendering.chunk;
 
 import java.util.ArrayList;
 
+import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.game.client.rendering.BlockFace;
 import kmerrill285.PixelInventor.game.client.rendering.Mesh;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
+import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.world.chunk.Chunk;
 
@@ -263,7 +265,10 @@ public class SecondaryChunkMeshBuilder {
 		for (int i = 0; i < queue.size(); i++) {
 			if (alreadyBuilt.contains(queue.get(i)))
 				continue;
-			queue.get(i).setMesh(buildMesh(queue.get(i)));
+			if (Settings.RAYTRACING == true)
+				PixelInventor.game.raytracer.getWorld().updateChunk(queue.get(i).getX(), queue.get(i).getY(), queue.get(i).getZ());
+			else
+				queue.get(i).setMesh(buildMesh(queue.get(i)));
 			alreadyBuilt.add(queue.get(i));
 		}
 		queue.clear();

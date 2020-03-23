@@ -2,8 +2,6 @@ package kmerrill285.PixelInventor.events;
 
 import java.awt.Rectangle;
 
-import org.lwjgl.glfw.GLFW;
-
 import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.Mouse;
@@ -14,6 +12,7 @@ import kmerrill285.PixelInventor.game.entity.Entity;
 import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.tile.Tiles;
 import kmerrill285.PixelInventor.game.world.chunk.TilePos;
+import kmerrill285.PixelInventor.resources.FPSCounter;
 import kmerrill285.PixelInventor.resources.RayTraceResult.Direction;
 import kmerrill285.PixelInventor.resources.RayTraceResult.RayTraceType;
 
@@ -54,38 +53,38 @@ public class Input {
 		float rotSpeed = 2.0f;
 		if (Settings.RIGHT.isPressed()) {
 			float yaw = 90;
-			Camera.position.x+=speed * Camera.getForward(0, Camera.rotation.y + yaw).x;
-			Camera.position.y+=speed * Camera.getForward(0, Camera.rotation.y + yaw).y;
-			Camera.position.z+=speed * Camera.getForward(0, Camera.rotation.y + yaw).z;
+			Camera.position.x+=speed * Camera.getForward(0, Camera.rotation.y + yaw).x * FPSCounter.getDelta();
+			Camera.position.y+=speed * Camera.getForward(0, Camera.rotation.y + yaw).y * FPSCounter.getDelta();
+			Camera.position.z+=speed * Camera.getForward(0, Camera.rotation.y + yaw).z * FPSCounter.getDelta();
 		}
 		
 		if (Settings.LEFT.isPressed()) {
 			float yaw = -90;
-			Camera.position.x+=speed * Camera.getForward(0, Camera.rotation.y + yaw).x;
-			Camera.position.y+=speed * Camera.getForward(0, Camera.rotation.y + yaw).y;
-			Camera.position.z+=speed * Camera.getForward(0, Camera.rotation.y + yaw).z;
+			Camera.position.x+=speed * Camera.getForward(0, Camera.rotation.y + yaw).x * FPSCounter.getDelta();
+			Camera.position.y+=speed * Camera.getForward(0, Camera.rotation.y + yaw).y * FPSCounter.getDelta();
+			Camera.position.z+=speed * Camera.getForward(0, Camera.rotation.y + yaw).z * FPSCounter.getDelta();
 		}
 
 		if (Settings.FORWARD.isPressed()) {
 			float yaw = 0;
 			float pitch = 0;
-			Camera.position.x+=speed * Camera.getForward(0, Camera.rotation.y + yaw).x;
-			Camera.position.z+=speed * Camera.getForward(0, Camera.rotation.y + yaw).z;
+			Camera.position.x+=speed * Camera.getForward(0, Camera.rotation.y + yaw).x * FPSCounter.getDelta();
+			Camera.position.z+=speed * Camera.getForward(0, Camera.rotation.y + yaw).z * FPSCounter.getDelta();
 		}
 
 		if (Settings.BACKWARD.isPressed()) {
 			float yaw = 180;
 			float pitch = 0;
-			Camera.position.x+=speed * Camera.getForward(0, Camera.rotation.y + yaw).x;
-			Camera.position.z+=speed * Camera.getForward(0, Camera.rotation.y + yaw).z;
+			Camera.position.x+=speed * Camera.getForward(0, Camera.rotation.y + yaw).x * FPSCounter.getDelta();
+			Camera.position.z+=speed * Camera.getForward(0, Camera.rotation.y + yaw).z * FPSCounter.getDelta();
 		}
 
 		if (Settings.JUMP.isPressed()) {
-			Camera.position.y+=speed;
+			Camera.position.y+=speed * FPSCounter.getDelta();
 		}
 
 		if (Settings.SNEAK.isPressed()) {
-			Camera.position.y-=speed;
+			Camera.position.y-=speed * FPSCounter.getDelta();
 		}
 
 
@@ -102,7 +101,7 @@ public class Input {
 		}
 		
 		if (Settings.RAYTRACING) {
-			updateCamera();
+//			updateCamera();
 		}
 		
 		if (Settings.ATTACK.isPressed()) {

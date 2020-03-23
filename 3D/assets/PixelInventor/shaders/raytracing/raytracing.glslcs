@@ -4,7 +4,7 @@ layout(binding = 0, rgba32f) uniform image2D framebuffer;
 
 layout (binding = 0) uniform sampler2D tile_texture;
 
-layout(std430, binding = 2) readonly buffer vBuffer
+layout(std430, binding = 2) buffer vBuffer
 {
 	int voxels[];
 };
@@ -19,6 +19,20 @@ layout(std430, binding = 4) readonly buffer oBuffer
 	int octs[];
 };
 
+struct cubemap {
+	vec4 top;
+	vec4 bottom;
+	vec4 left;
+	vec4 right;
+	vec4 front;
+	vec4 back;
+	vec4 size;
+};
+
+layout(std430, binding = 5) readonly buffer tBuffer
+{
+	cubemap cube_maps[];
+};
 
 uniform int width;
 uniform int length;
@@ -38,6 +52,7 @@ uniform vec3 ray11;
 uniform vec3 skyColor;
 uniform vec3 sunColor;
 uniform vec3 sunPosition;
+uniform ivec3 world_position;
 
 struct material {
 	vec4 color;
@@ -71,6 +86,8 @@ struct hitinfo {
   vec2 lambda;
   int bi;
   box b;
+  bool hasCubemap;
+  cubemap cmap;
 };
 
 struct hitvoxel {
@@ -115,9 +132,26 @@ int getVoxel(int x, int y, int z) {
 	return 0;
 }
 
-const float voxelstep = 0.005f;
+int getChunk(int x, int y, int z) {
+    int num_chunks = width / chunk_size;
+	if (x >= 0 && y >= 0 && z >= 0 && x < num_chunks && y < num_chunks && z < num_chunks) return chunks[x + y * num_chunks + z * num_chunks * num_chunks];
+	return 0;
+}
+
+int getOct(int x, int y, int z) {
+	int num_chunks = width / chunk_size;
+  	int num_octs = width / oct_size;
+  	if (x >= 0 && y >= 0 && z >= 0 && x < num_octs && y < num_octs && z < num_octs) return octs[x + y * num_octs + z * num_octs * num_octs];
+	return 0;
+}
+
+float bias = 0.001;
+const float voxelstep = bias;
+
 
 bool intersectBoxes(vec3 origin, vec3 dir, out hitinfo info) {
+	
+	
   int maxDist = 1000;
   
   float smallest = MAX_SCENE_BOUNDS;
@@ -128,9 +162,11 @@ bool intersectBoxes(vec3 origin, vec3 dir, out hitinfo info) {
   vec3 vstep = dir * voxelstep;
 
   vec3 csize = vec3(chunk_size);
-
+  
+  
+  
   if (foundChunk == false) {
-  	 box chunk = {vec3(0, 0, 0), vec3(width, height, length), default_material};
+  	 box chunk = {vec3(0.0), vec3(width, height, length), default_material};
 	  vec2 l = intersectBox(origin, dir, chunk);
 	  if (l.x > 0.0 && l.x < l.y) {
 		  vec3 hit = origin + dir * l[0] - vstep;
@@ -148,6 +184,7 @@ bool intersectBoxes(vec3 origin, vec3 dir, out hitinfo info) {
   	int y = int(floor(currentPos.y));
   	int z = int(floor(currentPos.z));
   	
+  	
   	if (i > 0) {
   		if (x < 0 || y < 0 || z < 0 || x > width || y > height || z > length) {
   			break;
@@ -159,7 +196,7 @@ bool intersectBoxes(vec3 origin, vec3 dir, out hitinfo info) {
   		int cx = x / chunk_size;
 	  	int cy = y / chunk_size;
 	  	int cz = z / chunk_size;
-	  	if (chunks[cx + cy * num_chunks + cz * num_chunks * num_chunks] == 0) {
+	  	if (getChunk(cx, cy, cz) == 0) {
 	  		vec3 chunkstart = vec3(cx * chunk_size, cy * chunk_size, cz * chunk_size);
 		  	vec3 chunkend = chunkstart + csize;
 		  	box chunk = {chunkstart, chunkend, default_material};
@@ -173,7 +210,7 @@ bool intersectBoxes(vec3 origin, vec3 dir, out hitinfo info) {
 	  		int ox = x / oct_size;
 	  		int oy = y / oct_size;
 	  		int oz = z / oct_size;
-	  		if (octs[ox + oy * num_octs + oz * num_octs * num_octs] == 0) {
+	  		if (getOct(ox, oy, oz) == 0) {
 	  			vec3 chunkstart = vec3(ox * oct_size, oy * oct_size, oz * oct_size);
 			  	vec3 chunkend = chunkstart + osize;
 			  	box chunk = {chunkstart, chunkend, default_material};
@@ -194,6 +231,8 @@ bool intersectBoxes(vec3 origin, vec3 dir, out hitinfo info) {
 			if (hit.lambda.x > 0 && hit.lambda.x < hit.lambda.y) {
 				info.lambda = hit.lambda;
 				info.b = hit.b;
+				info.cmap = cube_maps[voxel];
+				info.hasCubemap = true;
 				return true;
 			}	
 		}
@@ -207,7 +246,6 @@ bool intersectBoxes(vec3 origin, vec3 dir, out hitinfo info) {
 }
 
 
-float bias = 0.001;
 
 vec4 traceLight(vec3 origin, vec3 dir) {
   hitinfo i;
@@ -220,16 +258,20 @@ vec4 traceLight(vec3 origin, vec3 dir) {
   return vec4(sunColor.xyz, 1.0);
 }
 
-vec4 getTexture(vec2 start, vec2 end, vec2 current, vec4 uv, sampler2D tex) {
+vec4 getTexture(vec2 start, vec2 end, vec2 current, vec4 uv, float width, float height, sampler2D tex) {
 	current -= start;
 	vec2 size = end - start;
 	vec2 normalized = vec2(current.x / size.x, current.y / size.y);
 	
-	vec2 UVpos = vec2(uv.xy) / size;
+	normalized /= vec2(width, height);
+	normalized.x += (1.0 / width) * mod(start.x, width);
+	normalized.y += (1.0 / height) * mod(start.y, height);
 	
-	normalized /= vec2(uv.zw);
+	normalized = vec2(1.0) - normalized;
+	vec2 UVpos = vec2(uv.xy);
+	UVpos += (uv.zw - uv.xy) * normalized;
 	
-	return texture(tex, vec2(1.0, 1.0) - normalized);
+	return texture(tex, UVpos);
 }
 
 vec4 traceReflection(vec3 origin, vec3 dir) {
@@ -251,56 +293,68 @@ vec4 traceReflection(vec3 origin, vec3 dir) {
     //vec2 screenNormalized = vec2(tpos.x / 1920.0, tpos.y / 1080.0);
     //vec4 img = texture(tile_texture, screenNormalized);
     
-    vec2 texStart;
-    vec2 texEnd;
-    vec2 texCurrent;
-    vec4 texUV = vec4(0, 0, 32.0, 2.0);
-        
-  	//left
-  	if (hitnear.x >= i.b.min.x - bias && hitnear.x <= i.b.min.x + bias) {
-  		normal = vec3(-1, 0, 0);
-  		texStart = vec2(i.b.min.z, i.b.min.y);
-  		texEnd = vec2(i.b.max.z, i.b.max.y);
-  		texCurrent = vec2(hitnear.z, hitnear.y);
-  	}
-  	//bottom
-  	if (hitnear.y >= i.b.min.y - bias && hitnear.y <= i.b.min.y + bias) {
-  		normal = vec3(0, -1, 0);
-  		texStart = vec2(i.b.min.x, i.b.min.z);
-  		texEnd = vec2(i.b.max.x, i.b.max.z);
-  		texCurrent = vec2(hitnear.x, hitnear.z);
-  	}
-  	//front
-  	if (hitnear.z >= i.b.min.z - bias && hitnear.z <= i.b.min.z + bias) {
-  		normal = vec3(0, 0, -1);
-  		texStart = vec2(i.b.min.x, i.b.min.y);
-  		texEnd = vec2(i.b.max.x, i.b.max.y);
-  		texCurrent = vec2(hitnear.x, hitnear.y);
-  	}
-  	//right
-  	if (hitnear.x >= i.b.max.x - bias && hitnear.x <= i.b.max.x + bias) {
-  		normal = vec3(1, 0, 0);
-  		texStart = vec2(i.b.min.z, i.b.min.y);
-  		texEnd = vec2(i.b.max.z, i.b.max.y);
-  		texCurrent = vec2(hitnear.z, hitnear.y);
-  	}
-  	//top
-  	if (hitnear.y >= i.b.max.y - bias && hitnear.y <= i.b.max.y + bias) {
-  		normal = vec3(0, 1, 0);
-  		texStart = vec2(i.b.min.x, i.b.min.z);
-  		texEnd = vec2(i.b.max.x, i.b.max.z);
-  		texCurrent = vec2(hitnear.x, hitnear.z);
-  	}
-  	//back
-  	if (hitnear.z >= i.b.max.z - bias && hitnear.z <= i.b.max.z + bias) {
-  		normal = vec3(0, 0, 1);
-  		texStart = vec2(i.b.min.x, i.b.min.y);
-  		texEnd = vec2(i.b.max.x, i.b.max.y);
-  		texCurrent = vec2(hitnear.x, hitnear.y);
-  	}
-  	
-  	
-  	tex = getTexture(texStart, texEnd, texCurrent, texUV, tile_texture);
+    if (i.hasCubemap) {
+    	cubemap cmap = i.cmap;
+    	vec2 texStart;
+	    vec2 texEnd;
+	    vec2 texCurrent;
+	    vec4 texUV = vec4(0, 0, 32.0, 2.0);
+	    
+	    //top, bottom, left, right, front, back
+	    
+	  	//left
+	  	if (hitnear.x >= i.b.min.x - bias && hitnear.x <= i.b.min.x + bias) {
+	  		normal = vec3(-1, 0, 0);
+	  		texStart = vec2(i.b.min.z, i.b.min.y);
+	  		texEnd = vec2(i.b.max.z, i.b.max.y);
+	  		texCurrent = vec2(hitnear.z, hitnear.y);
+	  		texUV = cmap.left;
+	  	}
+	  	//bottom
+	  	if (hitnear.y >= i.b.min.y - bias && hitnear.y <= i.b.min.y + bias) {
+	  		normal = vec3(0, -1, 0);
+	  		texStart = vec2(i.b.min.x, i.b.min.z);
+	  		texEnd = vec2(i.b.max.x, i.b.max.z);
+	  		texCurrent = vec2(hitnear.x, hitnear.z);
+	  		texUV = cmap.bottom;
+	  	}
+	  	//front
+	  	if (hitnear.z >= i.b.min.z - bias && hitnear.z <= i.b.min.z + bias) {
+	  		normal = vec3(0, 0, -1);
+	  		texStart = vec2(i.b.min.x, i.b.min.y);
+	  		texEnd = vec2(i.b.max.x, i.b.max.y);
+	  		texCurrent = vec2(hitnear.x, hitnear.y);
+	  		texUV = cmap.front;
+	  	}
+	  	//right
+	  	if (hitnear.x >= i.b.max.x - bias && hitnear.x <= i.b.max.x + bias) {
+	  		normal = vec3(1, 0, 0);
+	  		texStart = vec2(i.b.min.z, i.b.min.y);
+	  		texEnd = vec2(i.b.max.z, i.b.max.y);
+	  		texCurrent = vec2(hitnear.z, hitnear.y);
+	  		texUV = cmap.right;
+	  	}
+	  	//top
+	  	if (hitnear.y >= i.b.max.y - bias && hitnear.y <= i.b.max.y + bias) {
+	  		normal = vec3(0, 1, 0);
+	  		texStart = vec2(i.b.min.x, i.b.min.z);
+	  		texEnd = vec2(i.b.max.x, i.b.max.z);
+	  		texCurrent = vec2(hitnear.x, hitnear.z);
+	  		texUV = cmap.top;
+	  	}
+	  	//back
+	  	if (hitnear.z >= i.b.max.z - bias && hitnear.z <= i.b.max.z + bias) {
+	  		normal = vec3(0, 0, 1);
+	  		texStart = vec2(i.b.min.x, i.b.min.y);
+	  		texEnd = vec2(i.b.max.x, i.b.max.y);
+	  		texCurrent = vec2(hitnear.x, hitnear.y);
+	  		texUV = cmap.back;
+	  	}
+	  	
+	  	
+	  	tex = getTexture(texStart, texEnd, texCurrent, texUV, cmap.size.x, cmap.size.y, tile_texture);
+    }
+    
   	
   	hitnear -= dir * bias;
   	
@@ -326,7 +380,7 @@ vec4 traceReflection(vec3 origin, vec3 dir) {
 
 vec4 trace(vec3 origin, vec3 dir) {
   hitinfo i;
-  
+  origin -= world_position * chunk_size;
   
   if (intersectBoxes(origin, dir, i)) {
   	//check for sunlight
@@ -343,56 +397,67 @@ vec4 trace(vec3 origin, vec3 dir) {
     //vec2 screenNormalized = vec2(tpos.x / 1920.0, tpos.y / 1080.0);
     //vec4 img = texture(tile_texture, screenNormalized);
     
-    vec2 texStart;
-    vec2 texEnd;
-    vec2 texCurrent;
-    vec4 texUV = vec4(0, 0, 32.0, 2.0);
-        
-  	//left
-  	if (hitnear.x >= i.b.min.x - bias && hitnear.x <= i.b.min.x + bias) {
-  		normal = vec3(-1, 0, 0);
-  		texStart = vec2(i.b.min.z, i.b.min.y);
-  		texEnd = vec2(i.b.max.z, i.b.max.y);
-  		texCurrent = vec2(hitnear.z, hitnear.y);
-  	}
-  	//bottom
-  	if (hitnear.y >= i.b.min.y - bias && hitnear.y <= i.b.min.y + bias) {
-  		normal = vec3(0, -1, 0);
-  		texStart = vec2(i.b.min.x, i.b.min.z);
-  		texEnd = vec2(i.b.max.x, i.b.max.z);
-  		texCurrent = vec2(hitnear.x, hitnear.z);
-  	}
-  	//front
-  	if (hitnear.z >= i.b.min.z - bias && hitnear.z <= i.b.min.z + bias) {
-  		normal = vec3(0, 0, -1);
-  		texStart = vec2(i.b.min.x, i.b.min.y);
-  		texEnd = vec2(i.b.max.x, i.b.max.y);
-  		texCurrent = vec2(hitnear.x, hitnear.y);
-  	}
-  	//right
-  	if (hitnear.x >= i.b.max.x - bias && hitnear.x <= i.b.max.x + bias) {
-  		normal = vec3(1, 0, 0);
-  		texStart = vec2(i.b.min.z, i.b.min.y);
-  		texEnd = vec2(i.b.max.z, i.b.max.y);
-  		texCurrent = vec2(hitnear.z, hitnear.y);
-  	}
-  	//top
-  	if (hitnear.y >= i.b.max.y - bias && hitnear.y <= i.b.max.y + bias) {
-  		normal = vec3(0, 1, 0);
-  		texStart = vec2(i.b.min.x, i.b.min.z);
-  		texEnd = vec2(i.b.max.x, i.b.max.z);
-  		texCurrent = vec2(hitnear.x, hitnear.z);
-  	}
-  	//back
-  	if (hitnear.z >= i.b.max.z - bias && hitnear.z <= i.b.max.z + bias) {
-  		normal = vec3(0, 0, 1);
-  		texStart = vec2(i.b.min.x, i.b.min.y);
-  		texEnd = vec2(i.b.max.x, i.b.max.y);
-  		texCurrent = vec2(hitnear.x, hitnear.y);
-  	}
-  	
-  	
-  	tex = getTexture(texStart, texEnd, texCurrent, texUV, tile_texture);
+     if (i.hasCubemap) {
+    	cubemap cmap = i.cmap;
+    	vec2 texStart;
+	    vec2 texEnd;
+	    vec2 texCurrent;
+	    vec4 texUV = vec4(0, 0, 32.0, 2.0);
+	    
+	    //top, bottom, left, right, front, back
+	    
+	  	//left
+	  	if (hitnear.x >= i.b.min.x - bias && hitnear.x <= i.b.min.x + bias) {
+	  		normal = vec3(-1, 0, 0);
+	  		texStart = vec2(i.b.min.z, i.b.min.y);
+	  		texEnd = vec2(i.b.max.z, i.b.max.y);
+	  		texCurrent = vec2(hitnear.z, hitnear.y);
+	  		texUV = cmap.left;
+	  	}
+	  	//bottom
+	  	if (hitnear.y >= i.b.min.y - bias && hitnear.y <= i.b.min.y + bias) {
+	  		normal = vec3(0, -1, 0);
+	  		texStart = vec2(i.b.min.x, i.b.min.z);
+	  		texEnd = vec2(i.b.max.x, i.b.max.z);
+	  		texCurrent = vec2(hitnear.x, hitnear.z);
+	  		texUV = cmap.bottom;
+	  	}
+	  	//front
+	  	if (hitnear.z >= i.b.min.z - bias && hitnear.z <= i.b.min.z + bias) {
+	  		normal = vec3(0, 0, -1);
+	  		texStart = vec2(i.b.min.x, i.b.min.y);
+	  		texEnd = vec2(i.b.max.x, i.b.max.y);
+	  		texCurrent = vec2(hitnear.x, hitnear.y);
+	  		texUV = cmap.front;
+	  	}
+	  	//right
+	  	if (hitnear.x >= i.b.max.x - bias && hitnear.x <= i.b.max.x + bias) {
+	  		normal = vec3(1, 0, 0);
+	  		texStart = vec2(i.b.min.z, i.b.min.y);
+	  		texEnd = vec2(i.b.max.z, i.b.max.y);
+	  		texCurrent = vec2(hitnear.z, hitnear.y);
+	  		texUV = cmap.right;
+	  	}
+	  	//top
+	  	if (hitnear.y >= i.b.max.y - bias && hitnear.y <= i.b.max.y + bias) {
+	  		normal = vec3(0, 1, 0);
+	  		texStart = vec2(i.b.min.x, i.b.min.z);
+	  		texEnd = vec2(i.b.max.x, i.b.max.z);
+	  		texCurrent = vec2(hitnear.x, hitnear.z);
+	  		texUV = cmap.top;
+	  	}
+	  	//back
+	  	if (hitnear.z >= i.b.max.z - bias && hitnear.z <= i.b.max.z + bias) {
+	  		normal = vec3(0, 0, 1);
+	  		texStart = vec2(i.b.min.x, i.b.min.y);
+	  		texEnd = vec2(i.b.max.x, i.b.max.y);
+	  		texCurrent = vec2(hitnear.x, hitnear.y);
+	  		texUV = cmap.back;
+	  	}
+	  	
+	  	
+	  	tex = getTexture(texStart, texEnd, texCurrent, texUV, cmap.size.x, cmap.size.y, tile_texture);
+    }
   	
   	float reflectance = i.b.mat.reflectance;
   	vec3 newDir = dir * normal;

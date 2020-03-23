@@ -68,6 +68,7 @@ public class ItemDropEntity extends Entity {
 	}
 	
 	public void render(ShaderProgram shader) {
+		if (shader == null) return;
 		if (mesh != null)
 		if (position.distance(Camera.position) <= renderDistance)
 		MeshRenderer.renderMesh(mesh, new Vector3f(position).add(offset), new Vector3f(pitch, yaw, 0), size, shader);

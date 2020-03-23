@@ -27,6 +27,7 @@ import javax.vecmath.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.GL43;
 
 import kmerrill285.PixelInventor.resources.Utils;
 
@@ -100,12 +101,17 @@ public class RayShader {
 		createUniform("oct_size");
 		createUniform("shadows");
 		createUniform("reflections");
+		createUniform("world_position");
 
 		glUseProgram(0);
 	}
 	
 	public void createUniform(String location) {
 		uniformLocations.put(location, glGetUniformLocation(computeProgram, location));
+	}
+	
+	public void setVec3i(String location, int x, int y, int z) {
+		GL43.glUniform3i(uniformLocations.get(location), x, y, z);
 	}
 	
 	public void setVec3(String location, float x, float y, float z) {

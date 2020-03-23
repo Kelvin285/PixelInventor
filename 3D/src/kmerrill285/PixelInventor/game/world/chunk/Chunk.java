@@ -5,18 +5,22 @@ import java.util.ArrayList;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.game.client.rendering.Mesh;
 import kmerrill285.PixelInventor.game.client.rendering.MeshRenderer;
 import kmerrill285.PixelInventor.game.client.rendering.chunk.ChunkMeshBuilder;
 import kmerrill285.PixelInventor.game.client.rendering.chunk.SecondaryChunkMeshBuilder;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.entity.StaticEntity;
+import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.tile.Tiles;
 import kmerrill285.PixelInventor.resources.FPSCounter;
 
 public class Chunk {
 	public static final int SIZE = 16;
+	public static final int OCT_SIZE = SIZE / 2;
+	public static final int DOUBLE_OCT_SIZE = OCT_SIZE / 2;
 	private Tile[][][] tiles = new Tile[SIZE][SIZE][SIZE];
 	private float[][][] miningProgress = new float[SIZE][SIZE][SIZE];
 	private float[][][] lastMiningProgress = new float[SIZE][SIZE][SIZE];
@@ -29,7 +33,7 @@ public class Chunk {
 	
 	private ChunkManager manager;
 	
-	public int air = 0;
+	public int voxels = 0;
 	
 	private boolean needsToSave = false;
 	
@@ -41,6 +45,7 @@ public class Chunk {
 		this.z = z;
 		this.manager = manager;
 	}
+	
 	
 	public Tile getTile(int x, int y, int z) {
 		if (x >= 0 && x < SIZE && y >= 0 && y < SIZE && z >= 0 && z < SIZE) {
@@ -160,8 +165,17 @@ public class Chunk {
 		if (x >= 0 && x < SIZE && y >= 0 && y < SIZE && z >= 0 && z < SIZE) {
 			
 			if (tiles[x][y][z] != tile) {
-				if (tiles[x][y][z] == Tiles.AIR && tile != Tiles.AIR) air--;
-				if (tiles[x][y][z] != Tiles.AIR && tile == Tiles.AIR) air++;
+				if (tiles[x][y][z] != Tiles.AIR) {
+					if (tile == Tiles.AIR) {
+						this.voxels--;
+						}
+				}
+				if (tiles[x][y][z] == Tiles.AIR) {
+					if (tile != Tiles.AIR) {
+						this.voxels++;
+					}
+				}
+				if (voxels < 0) voxels = 0;
 				tiles[x][y][z] = tile;
 				if (updateSurroundings)
 				{
@@ -362,18 +376,23 @@ public class Chunk {
 	}
 	
 	public void rebuild() {
+//		if (Settings.RAYTRACING == true)
+//			PixelInventor.game.raytracer.getWorld().updateChunk(this);
+//		else
+		if (Settings.RAYTRACING == false)
 		mesh = ChunkMeshBuilder.buildMesh(this);
 		rerender = false;
 	}
 	
 
 	private void rebuildNow() {
+		if (Settings.RAYTRACING == false)
 		SecondaryChunkMeshBuilder.queueChunk(this);
 		rerender = false;
 	}
 	
 	public boolean isSurrounded() {
-		if (air > 0) return false;
+		if (voxels < 16 * 16 * 16) return false;
 		int x = getX();
 		int y = getY();
 		int z = getZ();
@@ -483,6 +502,10 @@ public class Chunk {
 	}
 	
 	public boolean shouldRender() {
+		if (voxels == 0) return false;
+		if (Settings.RAYTRACING == true) {
+			return PixelInventor.game.raytracer.getWorld().shouldRerender;
+		}
 		if (mesh == null) return false;
 		if (mesh.getVertexCount() == 0) return false;
 		return true;
@@ -521,7 +544,10 @@ public class Chunk {
 	}
 
 	public void tick() {
+//		PixelInventor.game.raytracer.getWorld().updateChunk(this);
+//		PixelInventor.game.raytracer.getWorld().updatePosition();
 		TilePos pos = new TilePos(0, 0, 0);
+		
 		for (int x = 0; x < SIZE; x++) {
 			for (int y = 0; y < SIZE; y++) {
 				for (int z = 0; z < SIZE; z++) {

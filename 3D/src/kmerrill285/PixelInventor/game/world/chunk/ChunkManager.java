@@ -6,6 +6,7 @@ import java.util.HashMap;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.settings.Settings;
@@ -224,9 +225,10 @@ public class ChunkManager {
 	private ArrayList<Chunk> rendered = new ArrayList<Chunk>();
 
 	private boolean ticking = false;
-	public void render(ShaderProgram shader) {
+	public void render(ShaderProgram shader, boolean raytracing) {
 		rendered.clear();
 		moved = false;
+		
 		if (queueUpdate == false) {
 			if (lastX != Camera.position.x ||
 					lastY != Camera.position.y||
@@ -262,7 +264,6 @@ public class ChunkManager {
 		
 		Vector3f cp = new Vector3f(cx, cy, cz);
 		Vector3f fr = new Vector3f(frx, fry, frz);
-		
 		if (ticking == false) {
 			ticking = true;
 			new Thread() {
@@ -281,6 +282,7 @@ public class ChunkManager {
 			}.start();
 		}
 		
+		int chunksUpdated = 0;
 		for (float j = 0; j < fr.length(); j+=0.1f) {
 			Vector3f nf = new Vector3f(fr).normalize().mul(j);
 			for (int i = 0; i < rendering.size(); i++) {
@@ -289,11 +291,21 @@ public class ChunkManager {
 					Vector3f pos = new Vector3f(rendering.get(i).getX(), rendering.get(i).getY(), rendering.get(i).getZ());
 					
 					if (pos.distance(cx + nf.x, cy + nf.y, cz + nf.z) <= dist + j * 2) {
-						rendering.get(i).render(shader);
+						
+						if (!raytracing)
+							rendering.get(i).render(shader);
+						else {
+							PixelInventor.game.raytracer.getWorld().updateChunk(rendering.get(i).getX(), rendering.get(i).getY(), rendering.get(i).getZ());
+							PixelInventor.game.raytracer.getWorld().updatePosition();
+						}
 						rendered.add(rendering.get(i));
 					}
 				}
 			}
+		}
+		if (raytracing) {
+			PixelInventor.game.raytracer.getWorld().needsRebuilding = true;
+			PixelInventor.game.raytracer.getWorld().updatePosition();
 		}
 		
 	}
@@ -347,4 +359,5 @@ public class ChunkManager {
 	public boolean canRender() {
 		return queueUpdate;
 	}
+
 }
