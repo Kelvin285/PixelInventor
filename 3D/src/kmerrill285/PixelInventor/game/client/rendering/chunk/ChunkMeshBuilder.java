@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import kmerrill285.PixelInventor.game.client.rendering.BlockFace;
 import kmerrill285.PixelInventor.game.client.rendering.Mesh;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
+import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.world.chunk.Chunk;
+import kmerrill285.PixelInventor.game.world.chunk.TileData;
 
 public class ChunkMeshBuilder {
 	
@@ -19,22 +21,36 @@ public class ChunkMeshBuilder {
 	private static int index = 0;
 	
 	public static Mesh buildMesh(Chunk chunk) {
+		if (Settings.RAYTRACING) return null;
 		vertices = new ArrayList<Float>();
 		indices = new ArrayList<Integer>();
 		texCoords = new ArrayList<Float>();
 		index = 0;
+		chunk.rayMesh.clear();
 		for (int x = 0; x < Chunk.SIZE; x++) {
 			for (int y = 0; y < Chunk.SIZE; y++) {
 				for (int z = 0; z < Chunk.SIZE; z++) {
 					Tile tile = chunk.getTile(x, y, z);
 					
 					if (tile.isFullCube() && tile.isVisible()) {
-						if (!chunk.getTile(x - 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.LEFT, tile, chunk);
-						if (!chunk.getTile(x + 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.RIGHT, tile, chunk);
-						if (!chunk.getTile(x, y, z + 1).isFullCube()) addFace(x, y, z, BlockFace.BACK, tile, chunk);
-						if (!chunk.getTile(x, y, z - 1).isFullCube()) addFace(x, y, z, BlockFace.FRONT, tile, chunk);
-						if (!chunk.getTile(x, y - 1, z).isFullCube()) addFace(x, y, z, BlockFace.DOWN, tile, chunk);
-						if (!chunk.getTile(x, y + 1, z).isFullCube()) addFace(x, y, z, BlockFace.UP, tile, chunk);
+						if (!Settings.RAYTRACING) {
+							if (!chunk.getTile(x - 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.LEFT, tile, chunk);
+							if (!chunk.getTile(x + 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.RIGHT, tile, chunk);
+							if (!chunk.getTile(x, y, z + 1).isFullCube()) addFace(x, y, z, BlockFace.BACK, tile, chunk);
+							if (!chunk.getTile(x, y, z - 1).isFullCube()) addFace(x, y, z, BlockFace.FRONT, tile, chunk);
+							if (!chunk.getTile(x, y - 1, z).isFullCube()) addFace(x, y, z, BlockFace.DOWN, tile, chunk);
+							if (!chunk.getTile(x, y + 1, z).isFullCube()) addFace(x, y, z, BlockFace.UP, tile, chunk);
+						} else {
+							TileData data = new TileData(x, y, z, tile);
+							boolean add = false;
+							if (!chunk.getTile(x - 1, y, z).isFullCube()) add = true;
+							if (!chunk.getTile(x + 1, y, z).isFullCube()) add = true;
+							if (!chunk.getTile(x, y, z + 1).isFullCube()) add = true;
+							if (!chunk.getTile(x, y, z - 1).isFullCube()) add = true;
+							if (!chunk.getTile(x, y - 1, z).isFullCube()) add = true;
+							if (!chunk.getTile(x, y + 1, z).isFullCube()) add = true;
+							if (add) chunk.rayMesh.add(data);
+						}
 					}
 					
 				}

@@ -19,13 +19,13 @@ import kmerrill285.PixelInventor.resources.FPSCounter;
 
 public class Chunk {
 	public static final int SIZE = 16;
-	public static final int OCT_SIZE = SIZE / 2;
-	public static final int DOUBLE_OCT_SIZE = OCT_SIZE / 2;
 	private Tile[][][] tiles = new Tile[SIZE][SIZE][SIZE];
 	private float[][][] miningProgress = new float[SIZE][SIZE][SIZE];
 	private float[][][] lastMiningProgress = new float[SIZE][SIZE][SIZE];
 	private boolean[][][] updateNeeded = new boolean[SIZE][SIZE][SIZE];
 	private int x, y, z;
+	
+	public ArrayList<TileData> rayMesh = new ArrayList<TileData>();
 	
 	private boolean rerender = true;
 	
@@ -49,6 +49,7 @@ public class Chunk {
 	
 	public Tile getTile(int x, int y, int z) {
 		if (x >= 0 && x < SIZE && y >= 0 && y < SIZE && z >= 0 && z < SIZE) {
+			if(tiles[x][y][z] == null) return Tiles.AIR;
 			return tiles[x][y][z];
 		}
 		int X = 0;
@@ -376,17 +377,12 @@ public class Chunk {
 	}
 	
 	public void rebuild() {
-//		if (Settings.RAYTRACING == true)
-//			PixelInventor.game.raytracer.getWorld().updateChunk(this);
-//		else
-		if (Settings.RAYTRACING == false)
 		mesh = ChunkMeshBuilder.buildMesh(this);
 		rerender = false;
 	}
 	
 
 	private void rebuildNow() {
-		if (Settings.RAYTRACING == false)
 		SecondaryChunkMeshBuilder.queueChunk(this);
 		rerender = false;
 	}
@@ -504,7 +500,7 @@ public class Chunk {
 	public boolean shouldRender() {
 		if (voxels == 0) return false;
 		if (Settings.RAYTRACING == true) {
-			return PixelInventor.game.raytracer.getWorld().shouldRerender;
+			return true;
 		}
 		if (mesh == null) return false;
 		if (mesh.getVertexCount() == 0) return false;
@@ -517,10 +513,18 @@ public class Chunk {
 	
 	public void render(ShaderProgram shader) {
 		if (shouldRender())
-		MeshRenderer.renderMesh(mesh, new Vector3f(getX() * Chunk.SIZE, getY() * Chunk.SIZE, getZ() * Chunk.SIZE), shader);
-		for (StaticEntity e : staticEntities) {
-			e.render(shader);
+		{
+			if (Settings.RAYTRACING) {
+				this.rebuildNow();
+			}
+			else {
+				MeshRenderer.renderMesh(mesh, new Vector3f(getX() * Chunk.SIZE, getY() * Chunk.SIZE, getZ() * Chunk.SIZE), shader);
+				for (StaticEntity e : staticEntities) {
+					e.render(shader);
+				}
+			}
 		}
+		
 	}
 	
 	public void renderShadow(ShaderProgram shader, Matrix4f lightMatrix) {

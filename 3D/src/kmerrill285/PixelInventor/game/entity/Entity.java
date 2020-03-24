@@ -5,11 +5,13 @@ import org.joml.Vector3f;
 
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.tile.Tile;
+import kmerrill285.PixelInventor.game.tile.Tile.TileRayTraceType;
 import kmerrill285.PixelInventor.game.world.World;
 import kmerrill285.PixelInventor.game.world.chunk.TilePos;
 import kmerrill285.PixelInventor.resources.FPSCounter;
 import kmerrill285.PixelInventor.resources.MathHelper;
 import kmerrill285.PixelInventor.resources.RayTraceResult;
+import kmerrill285.PixelInventor.resources.RayTraceResult.RayTraceType;
 
 public class Entity {
 	public Vector3f position;
@@ -19,7 +21,7 @@ public class Entity {
 	
 	public World world;
 	public float width, height;
-	public boolean onGround;
+	public boolean onGround = false;
 	protected boolean running;
 	public boolean isMoving;
 	public boolean isSneaking;
@@ -35,6 +37,7 @@ public class Entity {
 	public boolean isDead = false;
 	
 	public float renderDistance = 200;
+	public boolean touchedGround = false;
 	
 	public Entity(Vector3f position, Vector3f size, World world) {
 		this.position = position;
@@ -51,6 +54,17 @@ public class Entity {
 		onGround = false;
 		
 		collideWithTiles();
+		if (position.isFinite() == false) {
+			if (lastPos.isFinite() == false) {
+				position.x = 0;
+				position.y = 32;
+				position.z = 0;
+				velocity = new Vector3f(0, 0, 0);
+			} else {
+				position = new Vector3f(lastPos);
+				velocity = new Vector3f(0, 0, 0);
+			}
+		}
 		
 		if (!onGround) {
 			velocity.y = MathHelper.lerp((float)velocity.y, (float)-getTerminalVelocity(), (float)(getGravity() * FPSCounter.getDelta()) / 45.0f);
@@ -61,6 +75,7 @@ public class Entity {
 			double dist = result.getHit().distance(position);
 			if (dist <= 0.15f) {
 				onGround = true;
+				touchedGround = true;
 				if (velocity.y < 0)
 				velocity.y = 0;
 			}
@@ -81,6 +96,11 @@ public class Entity {
 		position.z += velocity.z * FPSCounter.getDelta();
 		
 		ticksExisted++;
+		if (touchedGround == false) {
+			if (world.rayTraceTiles(position, new Vector3f(position).add(0, -50, 0), TileRayTraceType.SOLID).getType() != RayTraceType.EMPTY) {
+				touchedGround=  true;
+			}
+		}
 	}
 	
 	public void render(ShaderProgram shader) {
@@ -195,6 +215,7 @@ public class Entity {
 					float ny = position.y + yy;
 					float nz = position.z + zz;
 					pos.setPosition(nx, ny, nz);
+					if (world.getTile(pos) != null)
 					if (world.getTile(pos).blocksMovement()) {
 						velocity.x = 0;
 						position.x = lastPos.x;

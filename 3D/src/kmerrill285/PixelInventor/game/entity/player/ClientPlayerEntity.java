@@ -202,7 +202,12 @@ public class ClientPlayerEntity extends PlayerEntity {
 		float bobZ = bob * (float)Math.sin(Math.toRadians(Camera.rotation.y)) * bm;
 		float bobY = (float)Math.abs(Math.sin(Math.toRadians(headBob)) * 0.15f) * bm;
 		
-		
+		if (Float.isFinite(bobX) == false) bobX = 0;
+		if (Float.isFinite(bobY) == false) bobY = 0;
+		if (Float.isFinite(bobZ) == false) bobZ = 0;
+		if (Float.isFinite(headBobX) == false) headBobX = 0;
+		if (Float.isFinite(headBob) == false) headBob = 0;
+		if (Float.isFinite(bob) == false) bob = 0;
 		Vector3f vel = new Vector3f(moveVel);
 		vel.mul(1, 0, 1);
 		Vector2f mv = new Vector2f(velocity.x, velocity.z);

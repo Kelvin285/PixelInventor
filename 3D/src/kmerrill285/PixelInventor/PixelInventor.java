@@ -16,6 +16,7 @@ import org.lwjgl.system.MemoryUtil;
 import kmerrill285.PixelInventor.events.Events;
 import kmerrill285.PixelInventor.events.Input;
 import kmerrill285.PixelInventor.game.client.Camera;
+import kmerrill285.PixelInventor.game.client.rendering.chunk.SecondaryChunkMeshBuilder;
 import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.SecondShadowRenderer;
 import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.ShadowMap;
 import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.ShadowRenderer;
@@ -121,6 +122,8 @@ public class PixelInventor {
 				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
 					if (guiRenderer == null || guiRenderer != null && !(guiRenderer.getOpenScreen() instanceof IngameMenuScreen))
 					updateWorld();
+					raytracer.getWorld().updateView();
+					SecondaryChunkMeshBuilder.update();
 					try {
 						Thread.sleep(5);
 					} catch (InterruptedException e) {
@@ -135,35 +138,6 @@ public class PixelInventor {
 		};
 		thread.start();
 		
-		new Thread() {
-			public void run() {
-				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
-					if (guiRenderer == null || guiRenderer != null && !(guiRenderer.getOpenScreen() instanceof IngameMenuScreen))
-					update();
-					try {
-						Thread.sleep(5);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-				System.out.println("finish update thread!");
-			}
-		}.start();
-		
-		new Thread() {
-			public void run() {
-				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
-					if (guiRenderer == null || guiRenderer != null && !(guiRenderer.getOpenScreen() instanceof IngameMenuScreen))
-					raytracer.getWorld().updateView();
-					try {
-						Thread.sleep(5);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-				System.out.println("finish update thread!");
-			}
-		}.start();
 		
 		FPSCounter.start();
 		TPSCounter.start();
@@ -171,24 +145,15 @@ public class PixelInventor {
 		int ticks = 0;
 		
 		while (!GLFW.glfwWindowShouldClose(Utils.window)) {
-			if (ticks == 0) 
+			update();
+			if (ticks == 0) {
 				render();
-			if (ticks > Settings.frameSkip) {
-				ticks = 0;
 			} else {
 				ticks++;
+				ticks %= Settings.frameSkip + 1;
 			}
 		}
 		stop = true;
-	}
-	
-	public void renderDepthMap() {
-		if (false)
-		if (Settings.SHADOWS) {
-			ShadowRenderer.renderDepthMap(shadowMap, world);
-			if (Settings.CASCADED_SHADOWS);
-			SecondShadowRenderer.renderDepthMap(secondShadowMap, world);
-		}
 	}
 	
 	public void renderGUI() {
@@ -260,7 +225,6 @@ public class PixelInventor {
 			framebuffer.unbind();
 			
 			GL11.glDisable(GL11.GL_BLEND);
-			renderDepthMap();
 		}
 		
 		GLFW.glfwSwapBuffers(Utils.window);

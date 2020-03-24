@@ -9,6 +9,7 @@ import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
 import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.world.chunk.Chunk;
+import kmerrill285.PixelInventor.game.world.chunk.TileData;
 
 public class SecondaryChunkMeshBuilder {
 	
@@ -21,23 +22,36 @@ public class SecondaryChunkMeshBuilder {
 	private static int index = 0;
 	
 	public static Mesh buildMesh(Chunk chunk) {
+		if (Settings.RAYTRACING) return null;
 		vertices = new ArrayList<Float>();
 		indices = new ArrayList<Integer>();
 		texCoords = new ArrayList<Float>();
 		index = 0;
+		chunk.rayMesh.clear();
 		for (int x = 0; x < Chunk.SIZE; x++) {
 			for (int y = 0; y < Chunk.SIZE; y++) {
 				for (int z = 0; z < Chunk.SIZE; z++) {
-					while(chunk.getTile(x, y, z) == null) {}
 					Tile tile = chunk.getTile(x, y, z);
 					
 					if (tile.isFullCube() && tile.isVisible()) {
-						if (!chunk.getTile(x - 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.LEFT, tile, chunk);
-						if (!chunk.getTile(x + 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.RIGHT, tile, chunk);
-						if (!chunk.getTile(x, y, z + 1).isFullCube()) addFace(x, y, z, BlockFace.BACK, tile, chunk);
-						if (!chunk.getTile(x, y, z - 1).isFullCube()) addFace(x, y, z, BlockFace.FRONT, tile, chunk);
-						if (!chunk.getTile(x, y - 1, z).isFullCube()) addFace(x, y, z, BlockFace.DOWN, tile, chunk);
-						if (!chunk.getTile(x, y + 1, z).isFullCube()) addFace(x, y, z, BlockFace.UP, tile, chunk);
+						if (!Settings.RAYTRACING) {
+							if (!chunk.getTile(x - 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.LEFT, tile, chunk);
+							if (!chunk.getTile(x + 1, y, z).isFullCube()) addFace(x, y, z, BlockFace.RIGHT, tile, chunk);
+							if (!chunk.getTile(x, y, z + 1).isFullCube()) addFace(x, y, z, BlockFace.BACK, tile, chunk);
+							if (!chunk.getTile(x, y, z - 1).isFullCube()) addFace(x, y, z, BlockFace.FRONT, tile, chunk);
+							if (!chunk.getTile(x, y - 1, z).isFullCube()) addFace(x, y, z, BlockFace.DOWN, tile, chunk);
+							if (!chunk.getTile(x, y + 1, z).isFullCube()) addFace(x, y, z, BlockFace.UP, tile, chunk);
+						} else {
+							TileData data = new TileData(x, y, z, tile);
+							boolean add = false;
+							if (!chunk.getTile(x - 1, y, z).isFullCube()) add = true;
+							if (!chunk.getTile(x + 1, y, z).isFullCube()) add = true;
+							if (!chunk.getTile(x, y, z + 1).isFullCube()) add = true;
+							if (!chunk.getTile(x, y, z - 1).isFullCube()) add = true;
+							if (!chunk.getTile(x, y - 1, z).isFullCube()) add = true;
+							if (!chunk.getTile(x, y + 1, z).isFullCube()) add = true;
+							if (add) chunk.rayMesh.add(data);
+						}
 					}
 					
 				}
@@ -265,10 +279,7 @@ public class SecondaryChunkMeshBuilder {
 		for (int i = 0; i < queue.size(); i++) {
 			if (alreadyBuilt.contains(queue.get(i)))
 				continue;
-			if (Settings.RAYTRACING == true)
-				PixelInventor.game.raytracer.getWorld().updateChunk(queue.get(i).getX(), queue.get(i).getY(), queue.get(i).getZ());
-			else
-				queue.get(i).setMesh(buildMesh(queue.get(i)));
+			queue.get(i).setMesh(buildMesh(queue.get(i)));
 			alreadyBuilt.add(queue.get(i));
 		}
 		queue.clear();

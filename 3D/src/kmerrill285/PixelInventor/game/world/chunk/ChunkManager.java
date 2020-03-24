@@ -223,9 +223,30 @@ public class ChunkManager {
 	}
 	
 	private ArrayList<Chunk> rendered = new ArrayList<Chunk>();
-
+	
+	public void tick() {
+		if (!ticking) return;
+		int cx = (int)(Camera.position.x / Chunk.SIZE);
+		int cy = (int)(Camera.position.y / Chunk.SIZE);
+		int cz = (int)(Camera.position.z / Chunk.SIZE);
+		Vector3f cp = new Vector3f(cx, cy, cz);
+		
+		for (int i = 0; i < rendering.size(); i++) {
+			if (rendering.get(i) != null) {
+				Vector3f pos = new Vector3f(rendering.get(i).getX(), rendering.get(i).getY(), rendering.get(i).getZ());
+				if (cp.distance(pos) <= 5) {
+					if (rendering.get(i) != null)
+					rendering.get(i).tick();
+				}
+			}
+		}
+		ticking = false;
+	}
+	
 	private boolean ticking = false;
 	public void render(ShaderProgram shader, boolean raytracing) {
+		if (ticking) return;
+		ticking = true;
 		rendered.clear();
 		moved = false;
 		
@@ -254,60 +275,34 @@ public class ChunkManager {
 		int cy = (int)(Camera.position.y / Chunk.SIZE);
 		int cz = (int)(Camera.position.z / Chunk.SIZE);
 		
-		Vector3f f = Camera.getForward(-Camera.rotation.x, Camera.rotation.y);
-		float mul = 4;
-		int frx = (int)((f.x * mul * Chunk.SIZE) / Chunk.SIZE);
-		int fry = (int)((f.y * mul * Chunk.SIZE) / Chunk.SIZE);
-		int frz = (int)((f.z * mul * Chunk.SIZE) / Chunk.SIZE);
-		
-		float dist = 2;
-		
-		Vector3f cp = new Vector3f(cx, cy, cz);
-		Vector3f fr = new Vector3f(frx, fry, frz);
-		if (ticking == false) {
-			ticking = true;
-			new Thread() {
-				@Override
-				public void run() {
-					for (int i = 0; i < rendering.size(); i++) {
-						if (rendering.get(i) != null) {
-							Vector3f pos = new Vector3f(rendering.get(i).getX(), rendering.get(i).getY(), rendering.get(i).getZ());
-							if (cp.distance(pos) <= 5) {
-								rendering.get(i).tick();
-							}
-						}
-					}
-					ticking = false;
-				}
-			}.start();
-		}
-		
-		int chunksUpdated = 0;
-		for (float j = 0; j < fr.length(); j+=0.1f) {
-			Vector3f nf = new Vector3f(fr).normalize().mul(j);
-			for (int i = 0; i < rendering.size(); i++) {
-				if (!rendered.contains(rendering.get(i)))
-				if (rendering.get(i) != null) {
-					Vector3f pos = new Vector3f(rendering.get(i).getX(), rendering.get(i).getY(), rendering.get(i).getZ());
-					
-					if (pos.distance(cx + nf.x, cy + nf.y, cz + nf.z) <= dist + j * 2) {
-						
-						if (!raytracing)
-							rendering.get(i).render(shader);
-						else {
-							PixelInventor.game.raytracer.getWorld().updateChunk(rendering.get(i).getX(), rendering.get(i).getY(), rendering.get(i).getZ());
-							PixelInventor.game.raytracer.getWorld().updatePosition();
-						}
-						rendered.add(rendering.get(i));
-					}
-				}
-			}
-		}
 		if (raytracing) {
 			PixelInventor.game.raytracer.getWorld().needsRebuilding = true;
 			PixelInventor.game.raytracer.getWorld().updatePosition();
 		}
-		
+		else {
+			Vector3f f = Camera.getForward(-Camera.rotation.x, Camera.rotation.y);
+			float mul = 4;
+			int frx = (int)((f.x * mul * Chunk.SIZE) / Chunk.SIZE);
+			int fry = (int)((f.y * mul * Chunk.SIZE) / Chunk.SIZE);
+			int frz = (int)((f.z * mul * Chunk.SIZE) / Chunk.SIZE);
+			
+			float dist = 2;
+			Vector3f fr = new Vector3f(frx, fry, frz);
+			for (float j = 0; j < fr.length(); j+=0.1f) {
+				Vector3f nf = new Vector3f(fr).normalize().mul(j);
+				for (int i = 0; i < rendering.size(); i++) {
+					if (!rendered.contains(rendering.get(i)))
+					if (rendering.get(i) != null) {
+						Vector3f pos = new Vector3f(rendering.get(i).getX(), rendering.get(i).getY(), rendering.get(i).getZ());
+						
+						if (pos.distance(cx + nf.x, cy + nf.y, cz + nf.z) <= dist + j * 2) {
+							rendering.get(i).render(shader);
+							rendered.add(rendering.get(i));
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	

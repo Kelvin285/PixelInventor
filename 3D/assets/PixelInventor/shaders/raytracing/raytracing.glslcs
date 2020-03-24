@@ -54,6 +54,8 @@ uniform vec3 sunColor;
 uniform vec3 sunPosition;
 uniform ivec3 world_position;
 
+float bias = 0.001;
+
 struct material {
 	vec4 color;
 	float reflectance;
@@ -88,6 +90,10 @@ struct hitinfo {
   box b;
   bool hasCubemap;
   cubemap cmap;
+  vec3 normal;
+  vec2 texStart;
+  vec2 texEnd;
+  vec2 texCurrent;
 };
 
 struct hitvoxel {
@@ -95,16 +101,159 @@ struct hitvoxel {
 	vec2 lambda;
 	box b;
 	int voxel;
+	vec3 normal;
+	vec2 texStart;
+	vec2 texEnd;
+	vec2 texCurrent;
 };
 
-vec2 intersectBox(vec3 origin, vec3 dir, const box b) {
+struct intersection {
+	vec2 lambda;
+	vec3 normal;
+	vec2 texStart;
+	vec2 texEnd;
+	vec2 texCurrent;
+};
+
+intersection intersectBox(vec3 origin, vec3 dir, const box b);
+
+vec3 getNormalizedRotation(vec3 rotation) {
+	float deg = 3.14 / 180.0;
+	return vec3(cos(deg * rotation.y), 1, sin(deg * rotation.y));
+}
+
+vec3 rotateAroundY(vec3 a, vec3 b, float theta) {
+	float x = cos(theta) * (a.x - b.x) + sin(theta) * (a.z - b.z) + b.x;
+	float z = sin(theta) * (a.x - b.x) - cos(theta) * (a.z - b.z) + b.z;
+	
+	return vec3(x, a.y, z);
+}
+
+vec3 rotateAroundX(vec3 a, vec3 b, float theta) {
+	float y = cos(theta) * (a.y - b.y) + sin(theta) * (a.z - b.z) + b.y;
+	float z = sin(theta) * (a.y - b.y) - cos(theta) * (a.z - b.z) + b.z;
+	
+	return vec3(a.x, y, z);
+}
+
+vec3 rotateAroundZ(vec3 a, vec3 b, float theta) {
+	float y = cos(theta) * (a.y - b.y) + sin(theta) * (a.x - b.x) + b.y;
+	float x = sin(theta) * (a.y - b.y) - cos(theta) * (a.x - b.x) + b.x;
+	
+	return vec3(x, y, a.z);
+}
+
+vec3 rotateAround(vec3 a, vec3 b, vec3 theta) {
+	vec3 r1 = rotateAroundX(a, b, theta.x);
+	vec3 r2 = rotateAroundY(r1, b, theta.y);
+	vec3 r3 = rotateAroundZ(r2, b, theta.z);
+	return r3;
+}
+
+vec3 rotateDirY(vec3 dir, float theta) {
+	return rotateAroundY(dir, vec3(0.0), theta);
+}
+
+vec3 rotateDirX(vec3 dir, float theta) {
+	return rotateAroundX(dir, vec3(0.0), theta);
+}
+
+vec3 rotateDirZ(vec3 dir, float theta) {
+	return rotateAroundZ(dir, vec3(0.0), theta);
+}
+
+vec3 rotateDir(vec3 dir, vec3 theta) {
+	return rotateAround(dir, vec3(0.0), theta);
+}
+
+intersection intersectBox(vec3 origin, vec3 dir, const box b, vec3 rotation) {
+  vec3 center = (b.min + b.max) / 2;
+  vec3 o2 = rotateAround(origin, center, rotation);
+  vec3 d2 = rotateDir(dir, rotation);
+  intersection i2 = intersectBox(o2, d2, b);
+  
+  return i2;
+}
+
+intersection intersectBox(vec3 origin, vec3 dir, const box b) {
   vec3 tMin = (b.min - origin) / dir;
   vec3 tMax = (b.max - origin) / dir;
   vec3 t1 = min(tMin, tMax);
   vec3 t2 = max(tMin, tMax);
   float tNear = max(max(t1.x, t1.y), t1.z);
   float tFar = min(min(t2.x, t2.y), t2.z);
-  return vec2(tNear, tFar);
+  
+  vec3 hitnear = origin + dir * tNear;
+  vec3 hitfar = origin + dir * tFar;
+  vec3 normal = vec3(0.0);
+	  	//left
+	  	if (hitnear.x >= b.min.x - bias && hitnear.x <= b.min.x + bias) {
+	  		normal = vec3(-1, 0, 0);
+	  	}
+	  	//bottom
+	  	if (hitnear.y >= b.min.y - bias && hitnear.y <= b.min.y + bias) {
+	  		normal = vec3(0, -1, 0);
+	  	}
+	  	//front
+	  	if (hitnear.z >= b.min.z - bias && hitnear.z <= b.min.z + bias) {
+	  		normal = vec3(0, 0, -1);
+	  	}
+	  	//right
+	  	if (hitnear.x >= b.max.x - bias && hitnear.x <= b.max.x + bias) {
+	  		normal = vec3(1, 0, 0);
+	  	}
+	  	//top
+	  	if (hitnear.y >= b.max.y - bias && hitnear.y <= b.max.y + bias) {
+	  		normal = vec3(0, 1, 0);
+	  	}
+	  	//back
+	  	if (hitnear.z >= b.max.z - bias && hitnear.z <= b.max.z + bias) {
+	  		normal = vec3(0, 0, 1);
+	  	}
+	  	
+   //top, bottom, left, right, front, back
+	    vec2 texStart;
+	    vec2 texEnd;
+	    vec2 texCurrent;
+	  	//left
+	  	if (normal.x == -1) {
+	  		texStart = vec2(b.min.z, b.min.y);
+	  		texEnd = vec2(b.max.z, b.max.y);
+	  		texCurrent = vec2(hitnear.z, hitnear.y);
+	  	}
+	  	//bottom
+	  	if (normal.y == -1) {
+	  		texStart = vec2(b.min.x, b.min.z);
+	  		texEnd = vec2(b.max.x, b.max.z);
+	  		texCurrent = vec2(hitnear.x, hitnear.z);
+	  	}
+	  	//front
+	  	if (normal.z == -1) {
+	  		texStart = vec2(b.min.x, b.min.y);
+	  		texEnd = vec2(b.max.x, b.max.y);
+	  		texCurrent = vec2(hitnear.x, hitnear.y);
+	  	}
+	  	//right
+	  	if (normal.x == 1) {
+	  		texStart = vec2(b.min.z, b.min.y);
+	  		texEnd = vec2(b.max.z, b.max.y);
+	  		texCurrent = vec2(hitnear.z, hitnear.y);
+	  	}
+	  	//top
+	  	if (normal.y == 1) {
+	  		texStart = vec2(b.min.x, b.min.z);
+	  		texEnd = vec2(b.max.x, b.max.z);
+	  		texCurrent = vec2(hitnear.x, hitnear.z);
+	  	}
+	  	//back
+	  	if (normal.z == 1) {
+	  		texStart = vec2(b.min.x, b.min.y);
+	  		texEnd = vec2(b.max.x, b.max.y);
+	  		texCurrent = vec2(hitnear.x, hitnear.y);
+	  	}
+  
+  intersection i = {vec2(tNear, tFar), normal, texStart, texEnd, texCurrent};
+  return i;
 }
 
 vec3 INTERSECT_POS = vec3(0, 0, 0);
@@ -116,10 +265,16 @@ hitvoxel intersectVoxel(vec3 origin, vec3 dir, int x, int y, int z) {
 	INTERSECT_POS.z = z;
 	hitvoxel h;
 	h.hit = false;
+	
 	box b = {INTERSECT_POS, INTERSECT_POS + ONE, default_material};
 	h.b = b;
-	h.lambda = intersectBox(origin, dir, b);
+	intersection I = intersectBox(origin, dir, b);
+	h.lambda = I.lambda;
+	h.normal = I.normal;
 	h.voxel = 0;
+	h.texStart = I.texStart;
+	h.texEnd = I.texEnd;
+	h.texCurrent = I.texCurrent;
 	if (x >= 0 && y >= 0 && z >= 0 && x < width && y < height && z < length) {
 		h.hit = true;
 		h.voxel = voxels[x + y * width + z * width * height];
@@ -145,7 +300,6 @@ int getOct(int x, int y, int z) {
 	return 0;
 }
 
-float bias = 0.001;
 const float voxelstep = bias;
 
 
@@ -167,7 +321,7 @@ bool intersectBoxes(vec3 origin, vec3 dir, out hitinfo info) {
   
   if (foundChunk == false) {
   	 box chunk = {vec3(0.0), vec3(width, height, length), default_material};
-	  vec2 l = intersectBox(origin, dir, chunk);
+	  vec2 l = intersectBox(origin, dir, chunk).lambda;
 	  if (l.x > 0.0 && l.x < l.y) {
 		  vec3 hit = origin + dir * l[0] - vstep;
 		  currentPos = hit;
@@ -200,7 +354,7 @@ bool intersectBoxes(vec3 origin, vec3 dir, out hitinfo info) {
 	  		vec3 chunkstart = vec3(cx * chunk_size, cy * chunk_size, cz * chunk_size);
 		  	vec3 chunkend = chunkstart + csize;
 		  	box chunk = {chunkstart, chunkend, default_material};
-		  	vec2 l = intersectBox(origin, dir, chunk);
+		  	vec2 l = intersectBox(origin, dir, chunk).lambda;
 		  	vec3 endpos = origin + dir * l[1];
 		  	currentPos = endpos + vstep;
 		  	ignore = true;
@@ -214,7 +368,7 @@ bool intersectBoxes(vec3 origin, vec3 dir, out hitinfo info) {
 	  			vec3 chunkstart = vec3(ox * oct_size, oy * oct_size, oz * oct_size);
 			  	vec3 chunkend = chunkstart + osize;
 			  	box chunk = {chunkstart, chunkend, default_material};
-			  	vec2 l = intersectBox(origin, dir, chunk);
+			  	vec2 l = intersectBox(origin, dir, chunk).lambda;
 			  	vec3 endpos = origin + dir * l[1];
 			  	currentPos = endpos + vstep;
 			  	ignore = true;
@@ -228,13 +382,15 @@ bool intersectBoxes(vec3 origin, vec3 dir, out hitinfo info) {
 	  	int voxel = hit.voxel;
 	  	
 		if (voxel != 0) {
-			if (hit.lambda.x > 0 && hit.lambda.x < hit.lambda.y) {
-				info.lambda = hit.lambda;
-				info.b = hit.b;
-				info.cmap = cube_maps[voxel];
-				info.hasCubemap = true;
-				return true;
-			}	
+			info.lambda = hit.lambda;
+			info.b = hit.b;
+			info.cmap = cube_maps[voxel];
+			info.hasCubemap = true;
+			info.normal = hit.normal;
+			info.texStart = hit.texStart;
+			info.texEnd = hit.texEnd;
+			info.texCurrent = hit.texCurrent;
+			return true;
 		}
 		vec3 endpos = origin + dir * hit.lambda[1];
 		currentPos = endpos + vstep;
@@ -285,72 +441,43 @@ vec4 traceReflection(vec3 origin, vec3 dir) {
   	vec3 hitfar = origin + dir * i.lambda[1];
   	
   	
-  	vec3 normal = vec3(0, 0, 0);
+  	vec3 normal = i.normal;
   	
   	vec4 tex = vec4(1.0);
-  	
-  	//ivec2 tpos = ivec2(gl_GlobalInvocationID.xy);
-    //vec2 screenNormalized = vec2(tpos.x / 1920.0, tpos.y / 1080.0);
-    //vec4 img = texture(tile_texture, screenNormalized);
-    
+
     if (i.hasCubemap) {
     	cubemap cmap = i.cmap;
-    	vec2 texStart;
-	    vec2 texEnd;
-	    vec2 texCurrent;
+    	vec2 texStart = i.texStart;
+	    vec2 texEnd = i.texEnd;
+	    vec2 texCurrent = i.texCurrent;
 	    vec4 texUV = vec4(0, 0, 32.0, 2.0);
-	    
-	    //top, bottom, left, right, front, back
+	  	
+	  	 //top, bottom, left, right, front, back
 	    
 	  	//left
-	  	if (hitnear.x >= i.b.min.x - bias && hitnear.x <= i.b.min.x + bias) {
-	  		normal = vec3(-1, 0, 0);
-	  		texStart = vec2(i.b.min.z, i.b.min.y);
-	  		texEnd = vec2(i.b.max.z, i.b.max.y);
-	  		texCurrent = vec2(hitnear.z, hitnear.y);
+	  	if (i.normal.x == -1) {
 	  		texUV = cmap.left;
 	  	}
 	  	//bottom
-	  	if (hitnear.y >= i.b.min.y - bias && hitnear.y <= i.b.min.y + bias) {
-	  		normal = vec3(0, -1, 0);
-	  		texStart = vec2(i.b.min.x, i.b.min.z);
-	  		texEnd = vec2(i.b.max.x, i.b.max.z);
-	  		texCurrent = vec2(hitnear.x, hitnear.z);
+	  	if (i.normal.y == -1) {
 	  		texUV = cmap.bottom;
 	  	}
 	  	//front
-	  	if (hitnear.z >= i.b.min.z - bias && hitnear.z <= i.b.min.z + bias) {
-	  		normal = vec3(0, 0, -1);
-	  		texStart = vec2(i.b.min.x, i.b.min.y);
-	  		texEnd = vec2(i.b.max.x, i.b.max.y);
-	  		texCurrent = vec2(hitnear.x, hitnear.y);
+	  	if (i.normal.z == -1) {
 	  		texUV = cmap.front;
 	  	}
 	  	//right
-	  	if (hitnear.x >= i.b.max.x - bias && hitnear.x <= i.b.max.x + bias) {
-	  		normal = vec3(1, 0, 0);
-	  		texStart = vec2(i.b.min.z, i.b.min.y);
-	  		texEnd = vec2(i.b.max.z, i.b.max.y);
-	  		texCurrent = vec2(hitnear.z, hitnear.y);
+	  	if (i.normal.x == 1) {
 	  		texUV = cmap.right;
 	  	}
 	  	//top
-	  	if (hitnear.y >= i.b.max.y - bias && hitnear.y <= i.b.max.y + bias) {
-	  		normal = vec3(0, 1, 0);
-	  		texStart = vec2(i.b.min.x, i.b.min.z);
-	  		texEnd = vec2(i.b.max.x, i.b.max.z);
-	  		texCurrent = vec2(hitnear.x, hitnear.z);
+	  	if (i.normal.y == 1) {
 	  		texUV = cmap.top;
 	  	}
 	  	//back
-	  	if (hitnear.z >= i.b.max.z - bias && hitnear.z <= i.b.max.z + bias) {
-	  		normal = vec3(0, 0, 1);
-	  		texStart = vec2(i.b.min.x, i.b.min.y);
-	  		texEnd = vec2(i.b.max.x, i.b.max.y);
-	  		texCurrent = vec2(hitnear.x, hitnear.y);
+	  	if (i.normal.z == 1) {
 	  		texUV = cmap.back;
 	  	}
-	  	
 	  	
 	  	tex = getTexture(texStart, texEnd, texCurrent, texUV, cmap.size.x, cmap.size.y, tile_texture);
     }
@@ -380,6 +507,9 @@ vec4 traceReflection(vec3 origin, vec3 dir) {
 
 vec4 trace(vec3 origin, vec3 dir) {
   hitinfo i;
+  
+  
+  
   origin -= world_position * chunk_size;
   
   if (intersectBoxes(origin, dir, i)) {
@@ -389,72 +519,43 @@ vec4 trace(vec3 origin, vec3 dir) {
   	vec3 hitfar = origin + dir * i.lambda[1];
   	
   	
-  	vec3 normal = vec3(0, 0, 0);
+  	vec3 normal = i.normal;
   	
   	vec4 tex = vec4(1.0);
-  	
-  	//ivec2 tpos = ivec2(gl_GlobalInvocationID.xy);
-    //vec2 screenNormalized = vec2(tpos.x / 1920.0, tpos.y / 1080.0);
-    //vec4 img = texture(tile_texture, screenNormalized);
-    
-     if (i.hasCubemap) {
+
+    if (i.hasCubemap) {
     	cubemap cmap = i.cmap;
-    	vec2 texStart;
-	    vec2 texEnd;
-	    vec2 texCurrent;
+    	vec2 texStart = i.texStart;
+	    vec2 texEnd = i.texEnd;
+	    vec2 texCurrent = i.texCurrent;
 	    vec4 texUV = vec4(0, 0, 32.0, 2.0);
-	    
-	    //top, bottom, left, right, front, back
+	  	
+	  	 //top, bottom, left, right, front, back
 	    
 	  	//left
-	  	if (hitnear.x >= i.b.min.x - bias && hitnear.x <= i.b.min.x + bias) {
-	  		normal = vec3(-1, 0, 0);
-	  		texStart = vec2(i.b.min.z, i.b.min.y);
-	  		texEnd = vec2(i.b.max.z, i.b.max.y);
-	  		texCurrent = vec2(hitnear.z, hitnear.y);
+	  	if (i.normal.x == -1) {
 	  		texUV = cmap.left;
 	  	}
 	  	//bottom
-	  	if (hitnear.y >= i.b.min.y - bias && hitnear.y <= i.b.min.y + bias) {
-	  		normal = vec3(0, -1, 0);
-	  		texStart = vec2(i.b.min.x, i.b.min.z);
-	  		texEnd = vec2(i.b.max.x, i.b.max.z);
-	  		texCurrent = vec2(hitnear.x, hitnear.z);
+	  	if (i.normal.y == -1) {
 	  		texUV = cmap.bottom;
 	  	}
 	  	//front
-	  	if (hitnear.z >= i.b.min.z - bias && hitnear.z <= i.b.min.z + bias) {
-	  		normal = vec3(0, 0, -1);
-	  		texStart = vec2(i.b.min.x, i.b.min.y);
-	  		texEnd = vec2(i.b.max.x, i.b.max.y);
-	  		texCurrent = vec2(hitnear.x, hitnear.y);
+	  	if (i.normal.z == -1) {
 	  		texUV = cmap.front;
 	  	}
 	  	//right
-	  	if (hitnear.x >= i.b.max.x - bias && hitnear.x <= i.b.max.x + bias) {
-	  		normal = vec3(1, 0, 0);
-	  		texStart = vec2(i.b.min.z, i.b.min.y);
-	  		texEnd = vec2(i.b.max.z, i.b.max.y);
-	  		texCurrent = vec2(hitnear.z, hitnear.y);
+	  	if (i.normal.x == 1) {
 	  		texUV = cmap.right;
 	  	}
 	  	//top
-	  	if (hitnear.y >= i.b.max.y - bias && hitnear.y <= i.b.max.y + bias) {
-	  		normal = vec3(0, 1, 0);
-	  		texStart = vec2(i.b.min.x, i.b.min.z);
-	  		texEnd = vec2(i.b.max.x, i.b.max.z);
-	  		texCurrent = vec2(hitnear.x, hitnear.z);
+	  	if (i.normal.y == 1) {
 	  		texUV = cmap.top;
 	  	}
 	  	//back
-	  	if (hitnear.z >= i.b.max.z - bias && hitnear.z <= i.b.max.z + bias) {
-	  		normal = vec3(0, 0, 1);
-	  		texStart = vec2(i.b.min.x, i.b.min.y);
-	  		texEnd = vec2(i.b.max.x, i.b.max.y);
-	  		texCurrent = vec2(hitnear.x, hitnear.y);
+	  	if (i.normal.z == 1) {
 	  		texUV = cmap.back;
 	  	}
-	  	
 	  	
 	  	tex = getTexture(texStart, texEnd, texCurrent, texUV, cmap.size.x, cmap.size.y, tile_texture);
     }
@@ -492,7 +593,6 @@ vec4 trace(vec3 origin, vec3 dir) {
 }
 
 
-
 layout (local_size_x = 16, local_size_y = 8) in;
 void main(void) {
   
@@ -506,6 +606,24 @@ void main(void) {
   vec2 pos = vec2(pix) / vec2(size.x - 1, size.y - 1);
   vec3 dir = mix(mix(ray00, ray01, pos.y), mix(ray10, ray11, pos.y), pos.x);
   
+  float y = -7;
+  float deg = 3.14 / 180.0;
+  box b = {vec3(0, y, 0), vec3(1, y+1, 1), default_material};
+  
   vec4 color = trace(eye, dir);
+  vec3 spin = vec3(0.0);
+  spin.x = 45;
+  spin.z = 45;
+  spin.y = 45;
+  intersection i = intersectBox(eye, dir, b, spin * deg);
+  vec2 l = i.lambda;
+  if (l.x > 0.0 && l.x < l.y) {
+   color = vec4(1.0);
+  	if (i.normal.x == 1) color = vec4(1, 0, 0, 1);
+  	if (i.normal.x == -1) color = vec4(0, 1, 0, 1);
+  	if (i.normal.z == 1) color = vec4(1, 1, 0, 1);
+  	if (i.normal.z == -1) color = vec4(0, 0, 1, 1);
+  }
+  
   imageStore(framebuffer, pix, color);
 }

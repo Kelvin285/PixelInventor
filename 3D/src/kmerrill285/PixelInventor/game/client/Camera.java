@@ -24,6 +24,7 @@ public class Camera {
 	public static void update() {
 		if (rotation.x < -89) rotation.x = -89;
 		if (rotation.x > 89) rotation.x = 89;
+		
 		PixelInventor game = PixelInventor.game;
 		if (game.world != null) {
 			currentTile = game.world.rayTraceTiles(position, getForward(rotation.x * -1, rotation.y).mul(REACH_DISTANCE).add(position), TileRayTraceType.SOLID);
