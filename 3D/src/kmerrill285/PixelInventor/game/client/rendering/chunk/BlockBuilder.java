@@ -15,22 +15,24 @@ public class BlockBuilder {
 	private static ArrayList<Integer> indices;
 	private static ArrayList<Float> texCoords;
 	
-	private static int index = 0;
-	
 	public static Mesh buildMesh(Tile tile, float x, float y, float z) {
-		vertices = new ArrayList<Float>();
-		indices = new ArrayList<Integer>();
-		texCoords = new ArrayList<Float>();
-		index = 0;
-		
-					
+		if (vertices == null) {
+			vertices = new ArrayList<Float>();
+			indices = new ArrayList<Integer>();
+			texCoords = new ArrayList<Float>();
+		} else {
+			vertices.clear();
+			indices.clear();
+			texCoords.clear();
+		}
+		int index = 0;
 		if (tile.isFullCube() && tile.isVisible()) {
-			addFace(x, y, z, BlockFace.LEFT, tile);
-			addFace(x, y, z, BlockFace.RIGHT, tile);
-			addFace(x, y, z, BlockFace.BACK, tile);
-			addFace(x, y, z, BlockFace.FRONT, tile);
-			addFace(x, y, z, BlockFace.DOWN, tile);
-			addFace(x, y, z, BlockFace.UP, tile);
+			index = addFace(x, y, z, BlockFace.LEFT, tile, vertices, texCoords, indices, index);
+			index = addFace(x, y, z, BlockFace.RIGHT, tile, vertices, texCoords, indices, index);
+			index = addFace(x, y, z, BlockFace.BACK, tile, vertices, texCoords, indices, index);
+			index = addFace(x, y, z, BlockFace.FRONT, tile, vertices, texCoords, indices, index);
+			index = addFace(x, y, z, BlockFace.DOWN, tile, vertices, texCoords, indices, index);
+			index = addFace(x, y, z, BlockFace.UP, tile, vertices, texCoords, indices, index);
 		}
 		
 		float[] v = new float[vertices.size()];
@@ -50,16 +52,16 @@ public class BlockBuilder {
 		return mesh;
 	}
 	
-	private static void addFace(float x, float y, float z, BlockFace face, Tile tile) {
+	public static int addFace(float x, float y, float z, BlockFace face, Tile tile, ArrayList<Float> vertices, ArrayList<Float> texCoords, ArrayList<Integer> indices, int index) {
 		
-		float[] vertices = new float[] {
+		float[] vertices1 = new float[] {
 				x + 0.0f, y + 0.0f, z + 0.0f,
 				x + 0.0f, y + 1.0f, z + 0.0f,
 				x + 1.0f, y + 1.0f, z + 0.0f,
 				x + 1.0f, y + 0.0f, z + 0.0f
 		};
-		int[] indices = {0, 1, 2, 2, 3, 0};
-		float[] texCoords = new float[] {
+		int[] indices1 = {0, 1, 2, 2, 3, 0};
+		float[] texCoords1 = new float[] {
 				1.0f, 1.0f,
 				1.0f, 0.0f,
 				0.0f, 0.0f,
@@ -71,7 +73,7 @@ public class BlockBuilder {
 		
 		switch (face) {
 		case FRONT:
-			vertices = new float[] {
+			vertices1 = new float[] {
 					x + 0.0f, y + 0.0f, z + 0.0f,
 					x + 0.0f, y + 1.0f, z + 0.0f,
 					x + 1.0f, y + 1.0f, z + 0.0f,
@@ -79,7 +81,7 @@ public class BlockBuilder {
 			};
 			break;
 		case BACK:
-			vertices = new float[] {
+			vertices1 = new float[] {
 					x + 0.0f, y + 0.0f, z + 1.0f,
 					x + 0.0f, y + 1.0f, z + 1.0f,
 					x + 1.0f, y + 1.0f, z + 1.0f,
@@ -87,7 +89,7 @@ public class BlockBuilder {
 			};
 			break;
 		case LEFT:
-			vertices = new float[] {
+			vertices1 = new float[] {
 					x + 0.0f, y + 0.0f, z + 0.0f,
 					x + 0.0f, y + 1.0f, z + 0.0f,
 					x + 0.0f, y + 1.0f, z + 1.0f,
@@ -95,7 +97,7 @@ public class BlockBuilder {
 			};
 			break;
 		case RIGHT:
-			vertices = new float[] {
+			vertices1 = new float[] {
 					x + 1.0f, y + 0.0f, z + 0.0f,
 					x + 1.0f, y + 1.0f, z + 0.0f,
 					x + 1.0f, y + 1.0f, z + 1.0f,
@@ -103,7 +105,7 @@ public class BlockBuilder {
 			};
 			break;
 		case DOWN:
-			vertices = new float[] {
+			vertices1 = new float[] {
 					x + 0.0f, y + 0.0f, z + 0.0f,
 					x + 0.0f, y + 0.0f, z + 1.0f,
 					x + 1.0f, y + 0.0f, z + 1.0f,
@@ -111,7 +113,7 @@ public class BlockBuilder {
 			};
 			break;
 		case UP:
-			vertices = new float[] {
+			vertices1 = new float[] {
 					x + 0.0f, y + 1.0f, z + 0.0f,
 					x + 0.0f, y + 1.0f, z + 1.0f,
 					x + 1.0f, y + 1.0f, z + 1.0f,
@@ -121,26 +123,24 @@ public class BlockBuilder {
 		}
 		
 		
-		for (int i = 0; i < texCoords.length; i+=2) {
-			texCoords[i] /= (float)tile.getWidth();
-			texCoords[i + 1] /= (float)tile.getHeight();
-			texCoords[i] += (1.0f / (float)tile.getWidth()) * ((scrollX) % tile.getWidth());
-			texCoords[i + 1] += (1.0f / (float)tile.getHeight()) * ((scrollY) % tile.getHeight());
+		for (int i = 0; i < texCoords1.length; i+=2) {
+			texCoords1[i] /= (float)tile.getWidth();
+			texCoords1[i + 1] /= (float)tile.getHeight();
+			texCoords1[i] += (1.0f / (float)tile.getWidth()) * ((scrollX) % tile.getWidth());
+			texCoords1[i + 1] += (1.0f / (float)tile.getHeight()) * ((scrollY) % tile.getHeight());
 		}
-		texCoords = Textures.TILES.convertToUV(texCoords, tile.getTextureFor(face));
+		texCoords1 = Textures.TILES.convertToUV(texCoords1, tile.getTextureFor(face));
+		for (float f : vertices1) {
+			vertices.add(f);
+		}
+		for (int i : indices1) {
+			indices.add(i + index);
+		}
 		
-		for (float f : vertices) {
-			BlockBuilder.vertices.add(f);
+		for (float f : texCoords1) {
+			texCoords.add(f);
 		}
-		
-		for (int i : indices) {
-			BlockBuilder.indices.add(i + index);
-		}
-		index += vertices.length / 3;
-		
-		for (float f : texCoords) {
-			BlockBuilder.texCoords.add(f);
-		}
+		return index + vertices1.length / 3;
 	}
 	
 }

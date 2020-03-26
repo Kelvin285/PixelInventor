@@ -3,7 +3,6 @@ package kmerrill285.PixelInventor.game.client;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-import imported.RayCamera;
 import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.game.tile.Tile.TileRayTraceType;
 import kmerrill285.PixelInventor.resources.MathHelper;
@@ -29,11 +28,6 @@ public class Camera {
 		if (game.world != null) {
 			currentTile = game.world.rayTraceTiles(position, getForward(rotation.x * -1, rotation.y).mul(REACH_DISTANCE).add(position), TileRayTraceType.SOLID);
 		}
-		
-		RayCamera camera = PixelInventor.game.raytracer.getCamera();
-		
-		camera.setPosition(MathHelper.toJavaxVector(position));
-		camera.setLookAt(camera.getPosition(), MathHelper.toJavaxVector(getForward().add(position)), MathHelper.toJavaxVector(new Vector3f(0, 1, 0)));
 	}
 	
 	public static Matrix4f getViewMatrix() {

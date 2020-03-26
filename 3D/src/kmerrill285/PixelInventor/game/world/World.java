@@ -3,31 +3,24 @@ package kmerrill285.PixelInventor.game.world;
 import java.util.ArrayList;
 import java.util.Random;
 
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.rendering.Mesh;
 import kmerrill285.PixelInventor.game.client.rendering.MeshRenderer;
-import kmerrill285.PixelInventor.game.client.rendering.chunk.SecondaryChunkMeshBuilder;
 import kmerrill285.PixelInventor.game.client.rendering.effects.lights.DirectionalLight;
 import kmerrill285.PixelInventor.game.client.rendering.effects.lights.Fog;
-import kmerrill285.PixelInventor.game.client.rendering.heightmap.Heightmap;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Texture;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
 import kmerrill285.PixelInventor.game.entity.Entity;
-import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.tile.Tile.TileRayTraceType;
 import kmerrill285.PixelInventor.game.tile.Tiles;
-import kmerrill285.PixelInventor.game.world.chunk.Chunk;
-import kmerrill285.PixelInventor.game.world.chunk.ChunkManager;
+import kmerrill285.PixelInventor.game.world.chunk.Megachunk;
 import kmerrill285.PixelInventor.game.world.chunk.TilePos;
 import kmerrill285.PixelInventor.game.world.chunk.generator.ChunkGenerator;
 import kmerrill285.PixelInventor.resources.Constants;
-import kmerrill285.PixelInventor.resources.MathHelper;
 import kmerrill285.PixelInventor.resources.RayTraceResult;
 import kmerrill285.PixelInventor.resources.RayTraceResult.RayTraceType;
 
@@ -35,9 +28,7 @@ public class World {
 	
 	private ChunkGenerator generator;
 	private Random random;
-		
-	private ChunkManager chunkManager;
-	
+			
 	private long seed;
 	
 	private WorldSaver worldSaver;
@@ -47,10 +38,10 @@ public class World {
 	private Fog fog;
 	private Fog shadowBlendFog;
 	
+	private Megachunk[] megachunk = new Megachunk[5 * 5];
+	
 	public DirectionalLight light = new DirectionalLight(new Vector3f(1, 1, 1), new Vector3f(0, -1, 0), 1.0f);
-	
-	public Heightmap heightmap;
-	
+		
 	public World(String worldName, long s) {
 		worldSaver = new WorldSaver(worldName, this, s);
 		worldSaver.loadWorld();
@@ -58,7 +49,6 @@ public class World {
 		random = new Random(seed);
 		generator = new ChunkGenerator(this, seed);
 		
-		chunkManager = new ChunkManager(this, generator);
 		this.setSeed(seed);
 		
 		this.fog = new Fog();
@@ -71,12 +61,16 @@ public class World {
 		shadowBlendFog.density = 0.1f;
 		shadowBlendFog.color = new Vector3f(1.0f, 1.0f, 1.0f);
 		
-		heightmap = new Heightmap(this);
+		for (int x = 0; x < 5; x++) {
+			for (int z = 0; z < 5; z++) {
+				megachunk[x + z * 5] = new Megachunk(x, 0, z, this);
+			}
+		}
+		
 	}
 	
 	public void updateChunkManager() {
-		chunkManager.update();
-		chunkManager.tick();
+		
 	}
 	
 	public void tick() {
@@ -84,12 +78,9 @@ public class World {
 		
 		for (int i = 0; i < entities.size(); i++) {
 			Entity e = entities.get(i);
-			
-			if (getChunk(e.getTilePos()) != null) {
-				e.tick();
-				if (e.isDead) {
-					entities.remove(i);
-				}
+//			e.tick();
+			if (e.isDead) {
+				entities.remove(i);
 			}
 		}
 	}
@@ -100,7 +91,7 @@ public class World {
 		shader.setUniformFog("fog", fog);
 		shader.setUniformFog("shadowBlendFog", shadowBlendFog);
 		shader.setUniformInt("hasShadows", 0);
-		shader.setUniformVec3("cameraPos", Camera.shadowPosition);
+		shader.setUniformVec3("cameraPos", Camera.position);
 		shader.setUniformVec3("sunPos", this.light.getPosition());
 		shader.setUniformVec3("sunColor", this.light.getColor());
 		shader.setUniformInt("cascadedShadows", 0);
@@ -111,34 +102,19 @@ public class World {
 		
 		shader.setUniformVec3("sunDirection", sunDirection);
 		
-		chunkManager.render(shader, false);
 		renderTileHover(shader);
-		for (int i = 0; i < entities.size(); i++) {
-			entities.get(i).render(shader);
-		}
 		
-		if (Settings.FAR_PLANE_ENABLED) {
-			heightmap.update();
-			heightmap.render(shader);
+		for (int i = 0; i < entities.size(); i++) {
+//			entities.get(i).render(shader);
 		}
 	}
 	
-
-	public void renderRaytracer() {
-		chunkManager.render(null, true);
-		for (int i = 0; i < entities.size(); i++) {
-			entities.get(i).render(null);
+	public void renderMegachunks(ShaderProgram shader) {
+		for (int i = 0; i < megachunk.length; i++) {
+			megachunk[i].render(shader);
 		}
 	}
 	
-	public void renderShadow(ShaderProgram shader, Matrix4f lightMatrix) {
-		
-		chunkManager.renderShadow(shader, lightMatrix);
-		for (int i = 0; i < entities.size(); i++) {
-			Entity e = entities.get(i);
-			e.renderShadow(shader, lightMatrix);
-		}
-	}
 	
 	public void updateLight() {
 		Camera.shadowPosition = new Vector3f(Camera.position);
@@ -160,10 +136,6 @@ public class World {
 		
 		
 		this.light.setPosition(new Vector3f(x, y, z));
-		
-		if (Settings.RAYTRACING) {
-			this.light.setPosition(new Vector3f(0, py, pz));
-		}
 	}
 	
 	public void updateFog() {
@@ -269,9 +241,10 @@ public class World {
 	}
 	
 	public void dispose() {
-		chunkManager.dispose();
+		for (int i = 0; i < megachunk.length; i++) {
+			megachunk[i].dispose();
+		}
 		worldSaver.saveWorld();
-		heightmap.dispose();
 		for (Entity e : entities) {
 			e.dispose();
 		}
@@ -279,10 +252,6 @@ public class World {
 	
 	public Vector3f getSkyColor() {
 		return new Vector3f(91.0f / 255.0f, 198.0f / 255.0f, 208.0f / 255.0f);
-	}
-	
-	public ChunkManager getChunkManager() {
-		return this.chunkManager;
 	}
 
 	public long getSeed() {
@@ -321,47 +290,16 @@ public class World {
 	}
 	
 	public Tile getTile(TilePos pos) {
-		TilePos pos2 = new TilePos(pos.x, pos.y, pos.z);
-		Chunk chunk = getChunk(pos2);
-		if (chunk == null) return Tiles.AIR;
-		pos2.x -= chunk.getX() * Chunk.SIZE;
-		pos2.y -= chunk.getY() * Chunk.SIZE;
-		pos2.z -= chunk.getZ() * Chunk.SIZE;
-		return chunk.getTile(pos2.x, pos2.y, pos2.z);
+		
+		return Tiles.AIR;
 	}
 	
 	public void setTile(TilePos pos, Tile tile) {
-		TilePos pos2 = new TilePos(pos.x, pos.y, pos.z);
-
-		Chunk chunk = getChunk(pos2);
-		if (chunk == null) return;
-		pos2.x -= chunk.getX() * Chunk.SIZE;
-		pos2.y -= chunk.getY() * Chunk.SIZE;
-		pos2.z -= chunk.getZ() * Chunk.SIZE;
-		chunk.setTile(pos2.x, pos2.y, pos2.z, tile, true, true);
-		chunk.setUpdateNeeded(pos2.x, pos2.y, pos2.z, true);
+		
 	}
 	
 	public void mineTile(TilePos pos, float strength) {
-		TilePos pos2 = new TilePos(pos.x, pos.y, pos.z);
 		
-		Chunk chunk = getChunk(pos2);
-		if (chunk == null) return;
-		pos2.x -= chunk.getX() * Chunk.SIZE;
-		pos2.y -= chunk.getY() * Chunk.SIZE;
-		pos2.z -= chunk.getZ() * Chunk.SIZE;
-		chunk.mineTile(pos2.x, pos2.y, pos2.z, strength);
-		chunk.setUpdateNeeded(pos2.x, pos2.y, pos2.z, true);
-	}
-	
-	public Chunk getChunk(TilePos pos) 
-	{
-		return getChunkManager().getChunk((int)MathHelper.floorDiv(pos.x, Chunk.SIZE), (int)MathHelper.floorDiv(pos.y, Chunk.SIZE), (int)MathHelper.floorDiv(pos.z, Chunk.SIZE));
-	}
-	
-	public Chunk getChunk(int x, int y, int z) 
-	{
-		return getChunkManager().getChunk(x, y, z);
 	}
 	
 	public Fog getFog() {

@@ -10,14 +10,10 @@ import org.lwjgl.glfw.GLFW;
 
 import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.events.Events;
-import kmerrill285.PixelInventor.game.client.Camera;
-import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.ShadowMap;
 import kmerrill285.PixelInventor.game.client.rendering.gui.GuiRenderer;
 import kmerrill285.PixelInventor.game.client.rendering.postprocessing.FrameBuffer;
-import kmerrill285.PixelInventor.game.client.rendering.raytracing.RayTracer;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
-import kmerrill285.PixelInventor.game.entity.StaticEntities;
 import kmerrill285.PixelInventor.game.entity.player.ClientPlayerEntity;
 import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.settings.Translation;
@@ -99,11 +95,15 @@ public class Utils {
 		object_shader.createUniform("sunDirection");
 		object_shader.createUniform("sunColor");
 		object_shader.createUniform("cascadedShadows");
+		object_shader.createUniform("voxelRender");
+
+		
 		
 		object_shader.createUniform("modelLightViewMatrix");
 		object_shader.createUniform("orthoProjectionMatrix");
 		object_shader.createUniform("secondOrthoMatrix");
 		object_shader.createUniform("hasShadows");
+		object_shader.createUniform("renderToDepth");
 		
 		depth_shader = new ShaderProgram();
 		depth_shader.createVertexShader(loadResource("PixelInventor", "shaders/depth_vertex.glsl"));
@@ -113,33 +113,25 @@ public class Utils {
 		depth_shader.createUniform("modelMatrix");
 
 		GLFW.glfwSetWindowSizeCallback(window, Events::windowSize);
-		setupProjection();
-		
+		setupProjection(object_shader);
 		Tiles.loadTiles();
 		Translation.loadTranslations("PixelInventor");
 		
-		StaticEntities.load();
-
 		Textures.load();
 		PixelInventor.game.guiRenderer = new GuiRenderer(sprite_shader);
-		PixelInventor.game.shadowMap = new ShadowMap();
-		PixelInventor.game.secondShadowMap = new ShadowMap();
 		PixelInventor.game.framebuffer = new FrameBuffer();
-		
+
 		
 		PixelInventor.game.world = new World("World", new Random().nextLong());
 		PixelInventor.game.player = new ClientPlayerEntity(new Vector3f(0.5f, 30, 0.5f), PixelInventor.game.world);
 		
 		Settings.loadSettings();
-		
-		PixelInventor.game.raytracer = new RayTracer();
-		PixelInventor.game.raytracer.init();
 	}
 	
-	public static void setupProjection() {
+	public static void setupProjection(ShaderProgram shader) {
 		float aspectRatio = (float)P_WIDTH / (float)P_HEIGHT;
 		projectionMatrix = new Matrix4f().perspective((float)Math.toRadians(Settings.ACTUAL_FOV), aspectRatio, Z_NEAR, Z_FAR);
-		object_shader.setUniformMat4("projectionMatrix", projectionMatrix);
+		shader.setUniformMat4("projectionMatrix", projectionMatrix);
 	}
 	
 	public static Matrix4f getProjection() {

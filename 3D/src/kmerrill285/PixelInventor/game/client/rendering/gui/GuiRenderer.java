@@ -103,14 +103,10 @@ public class GuiRenderer {
 		}
 		
 		
-		if (Settings.RAYTRACING)	
-		{
-			Texture texture = new Texture(PixelInventor.game.raytracer.getTexture());
-			drawTexture(texture, 1920, 1080, -1920, -1080, 0, new Vector4f(1, 1, 1, 1), false, true);
-		} else {
-			if (Settings.POST_PROCESSING)
-				drawTexture(PixelInventor.game.framebuffer.getTexture(), 1920, 1080, -1920, -1080, 0, new Vector4f(1, 1, 1, 1), true);
-		}
+		
+		if (Settings.POST_PROCESSING)
+			drawTexture(PixelInventor.game.framebuffer.getTexture(), 1920, 1080, -1920, -1080, 0, new Vector4f(1, 1, 1, 1), true);
+		
 
 		drawTexture(Textures.VIGINETTE, 0, 0, 1920, 1080, 0, new Vector4f(1, 1, 1, 1));
 		

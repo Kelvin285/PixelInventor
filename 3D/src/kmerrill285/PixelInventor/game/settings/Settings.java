@@ -23,7 +23,6 @@ public class Settings {
 	public static boolean CASCADED_SHADOWS = true;
 	public static boolean SHADOWS = true;
 	public static boolean REFLECTIONS = true;
-	public static boolean RAYTRACING = true;
 	
 	public static float EXPOSURE = 1.0f;
 	
@@ -116,9 +115,6 @@ public class Settings {
 						if (a.contentEquals("REFLECTIONS")) {
 							REFLECTIONS = Boolean.parseBoolean(b);
 						}
-						if (a.contentEquals("RAYTRACING")) {
-							RAYTRACING = Boolean.parseBoolean(b);
-						}
 						if (a.contentEquals("EXPOSURE")) {
 							EXPOSURE = Float.parseFloat(b);
 						}
@@ -196,7 +192,6 @@ public class Settings {
 			str += getSaveString("HEAD_BOB", HEAD_BOB);
 			str += getSaveString("SHADOWS", SHADOWS);
 			str += getSaveString("REFLECTIONS", REFLECTIONS);
-			str += getSaveString("RAYTRACING", RAYTRACING);
 			str += getSaveString("EXPOSURE", EXPOSURE);
 			str += getSaveString("POST_PROCESSING", POST_PROCESSING);
 			str += getSaveString("RAYTRACE_VIEW", RAYTRACE_VIEW);

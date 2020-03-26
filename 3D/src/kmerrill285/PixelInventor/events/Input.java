@@ -91,17 +91,13 @@ public class Input {
 	}
 	
 	private static void doGameInput() {
-		
+		updateCamera();
 		if (Mouse.locked) {
 			Camera.rotation.y += (Mouse.x - Mouse.lastX) * Settings.MOUSE_SENSITIVITY;
 			Camera.rotation.x += (Mouse.y - Mouse.lastY) * Settings.MOUSE_SENSITIVITY;
 			
 			if (Camera.rotation.x < -90) Camera.rotation.x = -90;
 			if (Camera.rotation.x > 90) Camera.rotation.x = 90;
-		}
-		
-		if (Settings.RAYTRACING) {
-//			updateCamera();
 		}
 		
 		if (Settings.ATTACK.isPressed()) {

@@ -25,13 +25,9 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 import org.lwjgl.opengl.GL30;
-import org.lwjgl.opengl.GL42;
-import org.lwjgl.opengl.GL43;
 import org.lwjgl.system.MemoryUtil;
 
-import kmerrill285.PixelInventor.game.client.rendering.raytracing.RayTracer;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Texture;
-import kmerrill285.PixelInventor.resources.MathHelper;
 
 public class Mesh {
 	private int vaoID;

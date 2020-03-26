@@ -107,10 +107,6 @@ public class Entity {
 		
 	}
 	
-	public void renderShadow(ShaderProgram shader, Matrix4f view) {
-		
-	}
-	
 	public float getGravity() {
 		return 9.81f * 0.2f * 0.4f;
 	}

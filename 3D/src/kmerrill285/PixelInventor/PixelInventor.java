@@ -16,14 +16,9 @@ import org.lwjgl.system.MemoryUtil;
 import kmerrill285.PixelInventor.events.Events;
 import kmerrill285.PixelInventor.events.Input;
 import kmerrill285.PixelInventor.game.client.Camera;
-import kmerrill285.PixelInventor.game.client.rendering.chunk.SecondaryChunkMeshBuilder;
-import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.SecondShadowRenderer;
-import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.ShadowMap;
-import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.ShadowRenderer;
 import kmerrill285.PixelInventor.game.client.rendering.gui.GuiRenderer;
 import kmerrill285.PixelInventor.game.client.rendering.gui.IngameMenuScreen;
 import kmerrill285.PixelInventor.game.client.rendering.postprocessing.FrameBuffer;
-import kmerrill285.PixelInventor.game.client.rendering.raytracing.RayTracer;
 import kmerrill285.PixelInventor.game.entity.player.ClientPlayerEntity;
 import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.world.World;
@@ -38,12 +33,8 @@ public class PixelInventor {
 	public World world;
 	public GuiRenderer guiRenderer;
 	public ClientPlayerEntity player;
-	public ShadowMap shadowMap;
-	public ShadowMap secondShadowMap;
 	
 	public FrameBuffer framebuffer;
-	
-	public RayTracer raytracer;
 	
 	public PixelInventor() {
 		PixelInventor.game = this;
@@ -122,8 +113,6 @@ public class PixelInventor {
 				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
 					if (guiRenderer == null || guiRenderer != null && !(guiRenderer.getOpenScreen() instanceof IngameMenuScreen))
 					updateWorld();
-					raytracer.getWorld().updateView();
-					SecondaryChunkMeshBuilder.update();
 					try {
 						Thread.sleep(5);
 					} catch (InterruptedException e) {
@@ -181,27 +170,10 @@ public class PixelInventor {
 			GL11.glViewport(0, 0, Utils.FRAME_WIDTH, Utils.FRAME_HEIGHT);
 		}
 		
-		if (!Settings.RAYTRACING)
     	if (!Settings.POST_PROCESSING) {
-			Utils.object_shader.bind();
-			
-			Utils.setupProjection();
-			
-			world.render(Utils.object_shader);
-			
-			Utils.object_shader.unbind();
+    		renderWorld();
 		}
-    	Settings.RAYTRACING = true;
-		if (Settings.RAYTRACING) {
-			this.raytracer.render();
-			world.renderRaytracer();
-
-			if (Events.w != 0) {
-				GL11.glViewport((int)Events.left, 0, (int)Events.w, (int)Events.height);
-			} else {
-				GL11.glViewport(0, 0, Utils.FRAME_WIDTH, Utils.FRAME_HEIGHT);
-			}
-		}
+		
 		
 		Utils.sprite_shader.bind();
 		
@@ -210,28 +182,33 @@ public class PixelInventor {
 		Utils.sprite_shader.unbind();
 		
 		
-		if (!Settings.RAYTRACING) {
-			if (Settings.POST_PROCESSING) {
-				framebuffer.bind();
-			
-				Utils.object_shader.bind();
-				
-				Utils.setupProjection();
-				
-				world.render(Utils.object_shader);
-				
-				Utils.object_shader.unbind();
-			}
-			framebuffer.unbind();
-			
-			GL11.glDisable(GL11.GL_BLEND);
+		if (Settings.POST_PROCESSING) {
+			framebuffer.bind();
+			renderWorld();
 		}
+		framebuffer.unbind();
+		
+		GL11.glDisable(GL11.GL_BLEND);
 		
 		GLFW.glfwSwapBuffers(Utils.window);
 
 		GLFW.glfwPollEvents();
 		Input.doInput();
 		FPSCounter.updateFPS();
+	}
+	
+	public void renderWorld() {
+		Utils.object_shader.bind();
+		
+		Utils.setupProjection(Utils.object_shader);
+		
+		Utils.object_shader.setUniformInt("voxelRender", 0);
+		world.render(Utils.object_shader);
+		Utils.object_shader.setUniformInt("voxelRender", 1);
+		world.renderMegachunks(Utils.object_shader);
+		
+		Utils.object_shader.unbind();
+		
 	}
 	
 	private boolean updateWorld = false;
@@ -256,10 +233,7 @@ public class PixelInventor {
 		Utils.sprite_shader.dispose();
 		Utils.object_shader.dispose();
 		Utils.depth_shader.dispose();
-		raytracer.dispose();
 		framebuffer.dispose();
-		shadowMap.dispose();
-		secondShadowMap.dispose();
 		world.dispose();
 		System.out.println("exit!");
 		System.exit(0);
