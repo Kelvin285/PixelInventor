@@ -32,4 +32,8 @@ public class TilePos {
 	public TilePos add(double i, double j, double k) {
 		return new TilePos(x + i, y + j, z + k);
 	}
+	
+	public String toString() {
+		return "TilePos: ["+x+", " + y + ", " + z + "]";
+	}
 }

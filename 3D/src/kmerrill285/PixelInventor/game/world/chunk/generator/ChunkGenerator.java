@@ -8,6 +8,7 @@ import kmerrill285.PixelInventor.game.tile.Tiles;
 import kmerrill285.PixelInventor.game.world.World;
 import kmerrill285.PixelInventor.game.world.chunk.Chunk;
 import kmerrill285.PixelInventor.game.world.chunk.Megachunk;
+import kmerrill285.PixelInventor.game.world.chunk.TileData;
 
 public class ChunkGenerator {
 	
@@ -22,11 +23,28 @@ public class ChunkGenerator {
 	}
 	
 	public Chunk generateChunk(Megachunk megachunk, int cx, int cz) {
-		int nx = cx * Chunk.SIZE + megachunk.getX() * Megachunk.SIZE * Chunk.SIZE;
-		int ny = megachunk.getY() * Megachunk.SIZE * Chunk.SIZE_Y;
-		int nz = cz * Chunk.SIZE + megachunk.getZ() * Megachunk.SIZE * Chunk.SIZE;
-		int voxels = 0;
+		if (Megachunk.CHUNKS_LOADED >= Megachunk.MAX_CHUNKS) return null;
 		Chunk chunk = new Chunk(cx, cz, megachunk);
+		if (chunk.canRender()) {
+			chunk.setTiles(new TileData[Chunk.SIZE * Chunk.SIZE_Y * Chunk.SIZE]);
+			generateChunk(chunk);
+		}
+		chunk.setParent(megachunk);
+
+		return chunk;
+	}
+
+	public void generateChunk(Chunk chunk) {
+		if (chunk.load() == true) return;
+		if (chunk.voxels > 0) {
+			return;
+		}
+		if (chunk.getTiles() == null) {
+			chunk.setTiles(new TileData[Chunk.SIZE * Chunk.SIZE_Y * Chunk.SIZE]);
+		}
+		int nx = chunk.getX() * Chunk.SIZE + chunk.getParent().getX() * Megachunk.SIZE * Chunk.SIZE;
+		int ny = chunk.getParent().getY() * Megachunk.SIZE * Chunk.SIZE_Y;
+		int nz = chunk.getZ() * Chunk.SIZE + chunk.getParent().getZ() * Megachunk.SIZE * Chunk.SIZE;
 		for (int x = 0; x < Chunk.SIZE; x++) {
 			for (int z = 0; z < Chunk.SIZE; z++) {
 				int X = nx + x;
@@ -43,19 +61,17 @@ public class ChunkGenerator {
 						} else {
 							chunk.setLocalTile(x, y, z, Tiles.DIRT);
 						}
-						voxels++;
 					}
 				}
 			}
 		}
-		if (voxels > 0) {
-			return chunk;
-		}
-		return null;
 	}
 	
 	public float getHeight(float x, float z) {
-		return noise.GetCubicFractal(x * 2, 0, z * 2) * 45 + 64;
+		float height = noise.GetSimplexFractal(x * 2, 0, z * 2) * 24;
+		float mountain = noise.GetSimplex(x / 500.0f, 0.0f, z / 500.0f) * 512;
+		
+		return height + 64 + mountain;
 	}
 	
 	public Tile getTopTile(float x, float z) {
@@ -66,4 +82,5 @@ public class ChunkGenerator {
 		}
 		return topTile;
 	}
+
 }

@@ -3,21 +3,27 @@ package kmerrill285.PixelInventor.game.world;
 import java.util.ArrayList;
 import java.util.Random;
 
+import org.joml.Vector2i;
 import org.joml.Vector3f;
+import org.joml.Vector3i;
 
 import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.rendering.Mesh;
 import kmerrill285.PixelInventor.game.client.rendering.MeshRenderer;
+import kmerrill285.PixelInventor.game.client.rendering.chunk.MegachunkBuilder;
 import kmerrill285.PixelInventor.game.client.rendering.effects.lights.DirectionalLight;
 import kmerrill285.PixelInventor.game.client.rendering.effects.lights.Fog;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Texture;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
 import kmerrill285.PixelInventor.game.entity.Entity;
+import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.tile.Tile.TileRayTraceType;
 import kmerrill285.PixelInventor.game.tile.Tiles;
+import kmerrill285.PixelInventor.game.world.chunk.Chunk;
 import kmerrill285.PixelInventor.game.world.chunk.Megachunk;
+import kmerrill285.PixelInventor.game.world.chunk.TileData;
 import kmerrill285.PixelInventor.game.world.chunk.TilePos;
 import kmerrill285.PixelInventor.game.world.chunk.generator.ChunkGenerator;
 import kmerrill285.PixelInventor.resources.Constants;
@@ -38,7 +44,9 @@ public class World {
 	private Fog fog;
 	private Fog shadowBlendFog;
 	
-	private Megachunk[] megachunk = new Megachunk[5 * 5];
+	int megaview = 8;
+	int numMegachunks = 0;
+	private Megachunk[] megachunk = new Megachunk[megaview * megaview * megaview];
 	
 	public DirectionalLight light = new DirectionalLight(new Vector3f(1, 1, 1), new Vector3f(0, -1, 0), 1.0f);
 		
@@ -61,26 +69,141 @@ public class World {
 		shadowBlendFog.density = 0.1f;
 		shadowBlendFog.color = new Vector3f(1.0f, 1.0f, 1.0f);
 		
-		for (int x = 0; x < 5; x++) {
-			for (int z = 0; z < 5; z++) {
-				megachunk[x + z * 5] = new Megachunk(x, 0, z, this);
-			}
-		}
-		
 	}
 	
-	public void updateChunkManager() {
+	public Megachunk getMegachunk(int x, int y, int z) {
+		for (int i = 0; i < numMegachunks; i++) {
+			Megachunk m = megachunk[i];
+			if (m != null)
+			if (m.getX() == x && m.getY() == y && m.getZ() == z) {
+				return m;
+			}
+		}
+		return null;
+	}
+	
+	public void addMegachunk(int x, int y, int z) {
+		if (numMegachunks < megachunk.length) {
+			megachunk[numMegachunks] = new Megachunk(x, y, z, this);
+			numMegachunks++;
+		}
+	}
+	
+	public void removeMegachunk(int x, int y, int z) {
+		if (numMegachunks > 0) {
+			for (int i = 0; i < megachunk.length; i++) {
+				if (megachunk[i] != null)
+				if (megachunk[i].getX() == x && megachunk[i].getY() == y && megachunk[i].getZ() == z) {
+					megachunk[i].dispose();
+					megachunk[i] = null;
+					for (int b = i; b < megachunk.length - 1; b++) {
+						megachunk[b] = megachunk[b + 1];
+					}
+					megachunk[megachunk.length - 1] = null;
+					break;
+				}
+			}
+			numMegachunks--;
+		}
+	}
+	
+	public void buildMegachunks() {
+		double distance[] = {Double.MAX_VALUE};
+		Megachunk[] m = {null};
+		Vector2i closest = new Vector2i(0, 0);
 		
+		for (int i = 0; i < numMegachunks; i++) {
+			if (megachunk[i] != null) {
+				megachunk[i].updateAndBuild(distance, m, closest, Camera.position);
+			}
+		}
+		if (distance[0] != Double.MAX_VALUE) {
+			m[0].setLocalChunk(closest.x, closest.y, new Chunk(closest.x, closest.y, m[0]));
+			this.getChunkGenerator().generateChunk(m[0].getLocalChunk(closest.x, closest.y));
+			m[0].getLocalChunk(closest.x, closest.y).mesh = MegachunkBuilder.buildChunk(m[0].getLocalChunk(closest.x, closest.y));
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	private Vector3i mpos = new Vector3i(0);
+	
+	private Vector3i closepos = new Vector3i(0);
+	private int mv, mx, my, mz;
+	private float cy;
+	private double distance;
+	private boolean found;
+	private Megachunk m;
+	private double dist;
+	public void updateChunkManager() {
+		mx = (int)(Camera.position.x / (Megachunk.SIZE * Chunk.SIZE));
+		my = (int)(Camera.position.y / Chunk.SIZE_Y);
+		mz = (int)(Camera.position.z / (Megachunk.SIZE * Chunk.SIZE));
+
+		cy = Camera.position.y % Chunk.SIZE_Y;
+		if (cy < 0) cy += Chunk.SIZE_Y;
+		
+		
+		distance = Double.MAX_VALUE;
+		found = false;
+		
+		for (int x = -megaview / 2; x < megaview / 2 + 1; ++x) {
+			for (int z = -megaview / 2; z < megaview / 2 + 1; ++z) {
+				for (int y = -1; y < 2; y++) {
+					m = getMegachunk(mx + x, y + my, mz + z);
+					
+					mpos.x = (mx + x) * Megachunk.SIZE * Chunk.SIZE;
+					mpos.y = (y + my) * Chunk.SIZE_Y;
+					mpos.z = (mz + z) * Megachunk.SIZE * Chunk.SIZE;
+
+					if (m == null) {
+						dist = mpos.distance((int)Camera.position.x, (int)Camera.position.y, (int)Camera.position.z);
+						if (dist < distance) {
+							closepos = new Vector3i(x + mx, y + my, z + mz);
+							distance = dist;
+							found = true;
+						}
+					}
+				}
+			}
+			
+		}
+		
+		if (found) {
+			m = getMegachunk(closepos.x, closepos.y, closepos.z);
+			if (m == null) {
+				addMegachunk(closepos.x, closepos.y, closepos.z);
+			}
+		}
+	}
+	
+	public void tickMegachunks() {
+		for (int i = 0; i < megachunk.length; i++) {
+			if (megachunk[i] != null) {
+				megachunk[i].tick();
+			}
+		}
 	}
 	
 	public void tick() {
+		
 		updateLight();
 		
 		for (int i = 0; i < entities.size(); i++) {
 			Entity e = entities.get(i);
-//			e.tick();
-			if (e.isDead) {
-				entities.remove(i);
+			
+			int mx = (int)Math.floor((float)e.getTilePos().x / (Megachunk.SIZE * Chunk.SIZE));
+			int my = (int)Math.floor((float)e.getTilePos().y / Chunk.SIZE_Y);
+			int mz = (int)Math.floor((float)e.getTilePos().z / (Megachunk.SIZE * Chunk.SIZE));
+			
+			if (this.getMegachunk(mx, my, mz) != null) {
+				e.tick();
+				if (e.isDead) {
+					entities.remove(i);
+				}
 			}
 		}
 	}
@@ -105,12 +228,38 @@ public class World {
 		renderTileHover(shader);
 		
 		for (int i = 0; i < entities.size(); i++) {
-//			entities.get(i).render(shader);
+			entities.get(i).render(shader);
+		}
+		
+		removeRenderchunks();
+	}
+	
+	public void removeRenderchunks() {
+		int mx = (int)Math.floor(Camera.position.x / (Megachunk.SIZE * Chunk.SIZE));
+		int my = (int)Math.floor(Camera.position.y / Chunk.SIZE_Y);
+		int mz = (int)Math.floor(Camera.position.z / (Megachunk.SIZE * Chunk.SIZE));
+
+		float cy = Camera.position.y % Chunk.SIZE_Y;
+		if (cy < 0) cy += Chunk.SIZE_Y;
+		Vector3i mpos = new Vector3i(0);
+		
+		for (int i = 0; i < numMegachunks; i++) {
+			if (megachunk[i] != null) {
+				mpos.x = megachunk[i].getX() * Megachunk.SIZE * Chunk.SIZE;
+				mpos.y = 0;
+				mpos.z = megachunk[i].getZ() * Megachunk.SIZE * Chunk.SIZE;				
+				
+				if (mpos.distance((int)Camera.position.x, 0, (int)Camera.position.z) > (megaview * Megachunk.SIZE * Chunk.SIZE) * 0.75f) {
+					removeMegachunk(megachunk[i].getX(), megachunk[i].getY(), megachunk[i].getZ());
+					break;
+				}
+			}
 		}
 	}
 	
 	public void renderMegachunks(ShaderProgram shader) {
-		for (int i = 0; i < megachunk.length; i++) {
+		for (int i = 0; i < numMegachunks; i++) {
+			if (megachunk[i] != null)
 			megachunk[i].render(shader);
 		}
 	}
@@ -242,6 +391,7 @@ public class World {
 	
 	public void dispose() {
 		for (int i = 0; i < megachunk.length; i++) {
+			if (megachunk[i] != null)
 			megachunk[i].dispose();
 		}
 		worldSaver.saveWorld();
@@ -290,16 +440,66 @@ public class World {
 	}
 	
 	public Tile getTile(TilePos pos) {
-		
-		return Tiles.AIR;
+		int mx = (int)Math.floor((float)pos.x / (Chunk.SIZE * Megachunk.SIZE));
+		int my = (int)Math.floor((float)pos.y / Chunk.SIZE_Y);
+		int mz = (int)Math.floor((float)pos.z / (Chunk.SIZE * Megachunk.SIZE));
+		Megachunk chunk = getMegachunk(mx, my, mz);
+		int x = pos.x;
+		int y = pos.y;
+		int z = pos.z;
+		x -= mx * (Chunk.SIZE * Megachunk.SIZE);
+		y -= my * Chunk.SIZE_Y;
+		z -= mz * (Chunk.SIZE * Megachunk.SIZE);
+		if (chunk == null) return Tiles.AIR;
+		return chunk.getTileAt(x, y, z);
 	}
 	
 	public void setTile(TilePos pos, Tile tile) {
-		
+		int mx = (int)Math.floor((float)pos.x / (Chunk.SIZE * Megachunk.SIZE));
+		int my = (int)Math.floor((float)pos.y / Chunk.SIZE_Y);
+		int mz = (int)Math.floor((float)pos.z / (Chunk.SIZE * Megachunk.SIZE));
+		Megachunk chunk = getMegachunk(mx, my, mz);
+		int x = pos.x;
+		int y = pos.y;
+		int z = pos.z;
+		x -= mx * (Chunk.SIZE * Megachunk.SIZE);
+		y -= my * Chunk.SIZE_Y;
+		z -= mz * (Chunk.SIZE * Megachunk.SIZE);
+		if (chunk != null) {
+			chunk.setTileAt(x, y, z, tile);
+			if (chunk.getLocalChunk(x / Megachunk.SIZE, z / Megachunk.SIZE) != null)
+			chunk.getLocalChunk(x / Megachunk.SIZE, z / Megachunk.SIZE).markForRerender();
+		}
 	}
 	
 	public void mineTile(TilePos pos, float strength) {
-		
+		int mx = (int)Math.floor((float)pos.x / (Chunk.SIZE * Megachunk.SIZE));
+		int my = (int)Math.floor((float)pos.y / Chunk.SIZE_Y);
+		int mz = (int)Math.floor((float)pos.z / (Chunk.SIZE * Megachunk.SIZE));
+		Megachunk chunk = getMegachunk(mx, my, mz);
+		int x = pos.x;
+		int y = pos.y;
+		int z = pos.z;
+		x -= mx * (Chunk.SIZE * Megachunk.SIZE);
+		y -= my * Chunk.SIZE_Y;
+		z -= mz * (Chunk.SIZE * Megachunk.SIZE);
+		if (chunk != null) {
+			TileData data = chunk.getTileDataAt(x, y, z);
+			data.setMiningTime(data.getMiningTime() + strength / Tiles.getTile(data.getTile()).getHardness());
+			int current = (int)(data.getMiningTime() / 20);
+			int last = (int)(data.getLastMiningTime() / 20);
+			if (data.getMiningTime() > 100.0) {
+				data.setMiningTime(0.0f);
+				if (chunk.getLocalChunk(x / Megachunk.SIZE, z / Megachunk.SIZE) != null)
+					chunk.getLocalChunk(x / Megachunk.SIZE, z / Megachunk.SIZE).markForRerender();
+				chunk.setTileAt(x, y, z, Tiles.AIR);
+			}
+			else
+			if (current != last) {
+				if (chunk.getLocalChunk(x / Megachunk.SIZE, z / Megachunk.SIZE) != null)
+					chunk.getLocalChunk(x / Megachunk.SIZE, z / Megachunk.SIZE).markForRerender();
+			}
+		}
 	}
 	
 	public Fog getFog() {

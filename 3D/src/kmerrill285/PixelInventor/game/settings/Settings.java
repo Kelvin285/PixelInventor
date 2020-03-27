@@ -14,10 +14,8 @@ public class Settings {
 	public static float ACTUAL_FOV = 60.0f;
 	public static float MOUSE_SENSITIVITY = 0.1f;
 	
-	public static int VIEW_X = 6, VIEW_Y = 4; //normal = 8x8
-	public static int FAR_PLANE_VIEW = 64; //max = 128
+	public static int VIEW_DISTANCE = 32; //normal = 32
 	
-	public static boolean FAR_PLANE_ENABLED = true;
 	public static boolean HEAD_BOB = true;
 	
 	public static boolean CASCADED_SHADOWS = true;
@@ -25,9 +23,7 @@ public class Settings {
 	public static boolean REFLECTIONS = true;
 	
 	public static float EXPOSURE = 1.0f;
-	
-	public static int RAYTRACE_VIEW = 8;
-	
+		
 	public static boolean POST_PROCESSING = true;
 	public static int frameSkip = 0;
 	
@@ -94,17 +90,8 @@ public class Settings {
 						if (a.contentEquals("MOUSE_SENSITIVITY")) {
 							MOUSE_SENSITIVITY = Float.parseFloat(b);
 						}
-						if (a.contentEquals("VIEW_X")) {
-							VIEW_X = Integer.parseInt(b);
-						}
-						if (a.contentEquals("VIEW_Y")) {
-							VIEW_Y = Integer.parseInt(b);
-						}
-						if (a.contentEquals("FAR_PLANE_VIEW")) {
-							FAR_PLANE_VIEW = Integer.parseInt(b);
-						}
-						if (a.contentEquals("FAR_PLANE_ENABLED")) {
-							FAR_PLANE_ENABLED = Boolean.parseBoolean(b);
+						if (a.contentEquals("VIEW_DISTANCE")) {
+							VIEW_DISTANCE = Integer.parseInt(b);
 						}
 						if (a.contentEquals("HEAD_BOB")) {
 							HEAD_BOB = Boolean.parseBoolean(b);
@@ -120,9 +107,6 @@ public class Settings {
 						}
 						if (a.contentEquals("POST_PROCESSING")) {
 							POST_PROCESSING = Boolean.parseBoolean(b);
-						}
-						if (a.contentEquals("RAYTRACE_VIEW")) {
-							RAYTRACE_VIEW = Integer.parseInt(b);
 						}
 						if (a.contentEquals("FRAME_SKIP")) {
 							frameSkip = Integer.parseInt(b);
@@ -185,16 +169,12 @@ public class Settings {
 			String str = "";
 			str += getSaveString("FOV", FOV);
 			str += getSaveString("MOUSE_SENSITIVITY", MOUSE_SENSITIVITY);
-			str += getSaveString("VIEW_X", VIEW_X);
-			str += getSaveString("VIEW_Y", VIEW_Y);
-			str += getSaveString("FAR_PLANE_VIEW", FAR_PLANE_VIEW);
-			str += getSaveString("FAR_PLANE_ENABLED", FAR_PLANE_ENABLED);
+			str += getSaveString("VIEW_DISTANCE", VIEW_DISTANCE);
 			str += getSaveString("HEAD_BOB", HEAD_BOB);
 			str += getSaveString("SHADOWS", SHADOWS);
 			str += getSaveString("REFLECTIONS", REFLECTIONS);
 			str += getSaveString("EXPOSURE", EXPOSURE);
 			str += getSaveString("POST_PROCESSING", POST_PROCESSING);
-			str += getSaveString("RAYTRACE_VIEW", RAYTRACE_VIEW);
 			str += getSaveString("FRAME_SKIP", frameSkip);
 			str += getSaveString("JUMP", JUMP.write());
 			str += getSaveString("SNEAK", SNEAK.write());

@@ -1,0 +1,40 @@
+package kmerrill285.PixelInventor.game.world.chunk;
+
+import kmerrill285.PixelInventor.game.tile.Tile;
+
+public class TileData {
+	private int tile;
+	float miningTime;
+	int waterLevel;
+	float lastMiningTime;
+	public TileData(int tile) {
+		this.setTile(tile);
+	}
+	public int getTile() {
+		return tile;
+	}
+	public void setTile(int tile) {
+		this.tile = tile;
+	}
+	
+	public float getMiningTime() {
+		return miningTime;
+	}
+	
+	public void setMiningTime(float miningTime) {
+		this.lastMiningTime = this.miningTime;
+		this.miningTime = miningTime;
+	}
+	
+	public float getLastMiningTime() {
+		return this.lastMiningTime;
+	}
+	
+	public int getWaterLevel() {
+		return this.waterLevel;
+	}
+	
+	public void setWaterLevel(int waterLevel) {
+		this.waterLevel = waterLevel;
+	}
+}

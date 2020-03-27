@@ -123,7 +123,7 @@ public class Utils {
 
 		
 		PixelInventor.game.world = new World("World", new Random().nextLong());
-		PixelInventor.game.player = new ClientPlayerEntity(new Vector3f(0.5f, 30, 0.5f), PixelInventor.game.world);
+		PixelInventor.game.player = new ClientPlayerEntity(new Vector3f(0.5f, PixelInventor.game.world.getChunkGenerator().getHeight(0, 0), 0.5f), PixelInventor.game.world);
 		
 		Settings.loadSettings();
 	}

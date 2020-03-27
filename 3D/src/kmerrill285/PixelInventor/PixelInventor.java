@@ -16,6 +16,7 @@ import org.lwjgl.system.MemoryUtil;
 import kmerrill285.PixelInventor.events.Events;
 import kmerrill285.PixelInventor.events.Input;
 import kmerrill285.PixelInventor.game.client.Camera;
+import kmerrill285.PixelInventor.game.client.rendering.Mesh;
 import kmerrill285.PixelInventor.game.client.rendering.gui.GuiRenderer;
 import kmerrill285.PixelInventor.game.client.rendering.gui.IngameMenuScreen;
 import kmerrill285.PixelInventor.game.client.rendering.postprocessing.FrameBuffer;
@@ -48,13 +49,13 @@ public class PixelInventor {
 		init();
 		loop();
 		
-		
+		dispose();
+
 		Callbacks.glfwFreeCallbacks(Utils.window);
 		GLFW.glfwDestroyWindow(Utils.window);
 		
 		GLFW.glfwTerminate();
 		GLFW.glfwSetErrorCallback(null).free();
-		dispose();
 	}
 	
 	public void init() {
@@ -90,7 +91,7 @@ public class PixelInventor {
 		}
 		
 		GLFW.glfwMakeContextCurrent(Utils.window);
-		GLFW.glfwSwapInterval(0);
+		GLFW.glfwSwapInterval(1);
 		GLFW.glfwShowWindow(Utils.window);
 	}
 	@SuppressWarnings("unused")
@@ -111,14 +112,16 @@ public class PixelInventor {
 		thread = new Thread() {
 			public void run() {
 				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
-					if (guiRenderer == null || guiRenderer != null && !(guiRenderer.getOpenScreen() instanceof IngameMenuScreen))
-					updateWorld();
+					try {
+						updateWorld();
+					}catch (Exception e) {
+						e.printStackTrace();
+					}
 					try {
 						Thread.sleep(5);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-					
 				}
 				System.out.println("finish chunk thread!");
 				finished = true;
@@ -127,6 +130,20 @@ public class PixelInventor {
 		};
 		thread.start();
 		
+		new Thread() {
+			public void run() {
+				while (true) {
+					if (guiRenderer == null || guiRenderer != null && !(guiRenderer.getOpenScreen() instanceof IngameMenuScreen)) {
+						try {
+							world.buildMegachunks();
+						}catch (Exception e) {
+							e.printStackTrace();
+						}
+						
+					}
+				}
+			}
+		}.start();
 		
 		FPSCounter.start();
 		TPSCounter.start();
@@ -134,12 +151,16 @@ public class PixelInventor {
 		int ticks = 0;
 		
 		while (!GLFW.glfwWindowShouldClose(Utils.window)) {
-			update();
-			if (ticks == 0) {
-				render();
-			} else {
-				ticks++;
-				ticks %= Settings.frameSkip + 1;
+			try {
+				update();
+				if (ticks == 0) {
+					render();
+				} else {
+					ticks++;
+					ticks %= Settings.frameSkip + 1;
+				}
+			}catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 		stop = true;
@@ -152,6 +173,7 @@ public class PixelInventor {
 	}
 	
 	public void render() {
+		Mesh.BUILT = 0;
 		Vector3f skyColor = world.getSkyColor();
 		GL11.glClearColor(skyColor.x, skyColor.y, skyColor.z, 0.0f);
 		
@@ -226,6 +248,7 @@ public class PixelInventor {
 	
 	public void updateWorld() {
 		world.updateChunkManager();
+		world.tickMegachunks();
 	}
 	
 	public void dispose() {

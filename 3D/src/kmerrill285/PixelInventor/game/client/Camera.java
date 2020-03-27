@@ -28,6 +28,13 @@ public class Camera {
 		if (game.world != null) {
 			currentTile = game.world.rayTraceTiles(position, getForward(rotation.x * -1, rotation.y).mul(REACH_DISTANCE).add(position), TileRayTraceType.SOLID);
 		}
+		
+		if (!position.isFinite()) {
+			position = new Vector3f(0.0f);
+		}
+		if (!rotation.isFinite()) {
+			rotation = new Vector3f(0.0f);
+		}
 	}
 	
 	public static Matrix4f getViewMatrix() {
