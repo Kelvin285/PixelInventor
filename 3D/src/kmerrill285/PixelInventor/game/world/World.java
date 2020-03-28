@@ -1,11 +1,12 @@
 package kmerrill285.PixelInventor.game.world;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 
 import org.joml.Vector2i;
 import org.joml.Vector3f;
-import org.joml.Vector3i;
 
 import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.rendering.Mesh;
@@ -32,6 +33,7 @@ import kmerrill285.PixelInventor.resources.RayTraceResult.RayTraceType;
 
 public class World {
 	
+	public static ArrayDeque<Chunk> saveQueue = new ArrayDeque<Chunk>();
 	private ChunkGenerator generator;
 	private Random random;
 			
@@ -44,12 +46,16 @@ public class World {
 	private Fog fog;
 	private Fog shadowBlendFog;
 	
-	int megaview = 8;
-	int numMegachunks = 0;
-	private Megachunk[] megachunk = new Megachunk[megaview * megaview * megaview];
+	private HashMap<String, Megachunk> megachunks = new HashMap<String, Megachunk>();
 	
 	public DirectionalLight light = new DirectionalLight(new Vector3f(1, 1, 1), new Vector3f(0, -1, 0), 1.0f);
-		
+	
+	public int megaview = 5;
+	
+	public ArrayList<Megachunk> unloadedChunks = new ArrayList<Megachunk>();
+	public ArrayList<Megachunk> activeChunks = new ArrayList<Megachunk>();
+	public ArrayList<Megachunk> rendering = new ArrayList<Megachunk>();
+	
 	public World(String worldName, long s) {
 		worldSaver = new WorldSaver(worldName, this, s);
 		worldSaver.loadWorld();
@@ -72,119 +78,98 @@ public class World {
 	}
 	
 	public Megachunk getMegachunk(int x, int y, int z) {
-		for (int i = 0; i < numMegachunks; i++) {
-			Megachunk m = megachunk[i];
-			if (m != null)
-			if (m.getX() == x && m.getY() == y && m.getZ() == z) {
-				return m;
-			}
-		}
-		return null;
-	}
-	
-	public void addMegachunk(int x, int y, int z) {
-		if (numMegachunks < megachunk.length) {
-			megachunk[numMegachunks] = new Megachunk(x, y, z, this);
-			numMegachunks++;
-		}
+		return megachunks.get(x+","+y+","+z);
 	}
 	
 	public void removeMegachunk(int x, int y, int z) {
-		if (numMegachunks > 0) {
-			for (int i = 0; i < megachunk.length; i++) {
-				if (megachunk[i] != null)
-				if (megachunk[i].getX() == x && megachunk[i].getY() == y && megachunk[i].getZ() == z) {
-					megachunk[i].dispose();
-					megachunk[i] = null;
-					for (int b = i; b < megachunk.length - 1; b++) {
-						megachunk[b] = megachunk[b + 1];
-					}
-					megachunk[megachunk.length - 1] = null;
-					break;
-				}
-			}
-			numMegachunks--;
+		megachunks.remove(x+","+y+","+z);
+	}
+	
+	public void addMegachunk(int x, int y, int z) {
+		if (getMegachunk(x, y, z) == null) {
+			System.out.println("ADD: " + x + ", " + y + ", " + z);
+			megachunks.put(x+","+y+","+z,new Megachunk(x, y, z, this));
+		}
+		activeChunks.add(getMegachunk(x, y, z));
+		unloadedChunks.remove(getMegachunk(x, y, z));
+	}
+	
+	public void saveChunks() {
+		if (saveQueue.size() > 0) {
+			saveQueue.pop().save();
 		}
 	}
 	
 	public void buildMegachunks() {
+		
 		double distance[] = {Double.MAX_VALUE};
 		Megachunk[] m = {null};
 		Vector2i closest = new Vector2i(0, 0);
 		
-		for (int i = 0; i < numMegachunks; i++) {
-			if (megachunk[i] != null) {
-				megachunk[i].updateAndBuild(distance, m, closest, Camera.position);
-			}
+		for (String str : megachunks.keySet()) {
+			megachunks.get(str).updateAndBuild(distance, m, closest, Camera.position);
 		}
+		
 		if (distance[0] != Double.MAX_VALUE) {
-			m[0].setLocalChunk(closest.x, closest.y, new Chunk(closest.x, closest.y, m[0]));
-			this.getChunkGenerator().generateChunk(m[0].getLocalChunk(closest.x, closest.y));
-			m[0].getLocalChunk(closest.x, closest.y).mesh = MegachunkBuilder.buildChunk(m[0].getLocalChunk(closest.x, closest.y));
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			if (m[0] == null) {
+				return;
 			}
+			
+			Megachunk.pseudochunk.setPos(closest.x, closest.y);
+			Megachunk.pseudochunk.setParent(m[0]);
+			Megachunk.pseudochunk.setSavefile(null);
+			this.getChunkGenerator().generateChunk(Megachunk.pseudochunk);
+			Chunk c = m[0].getLocalChunk(closest.x, closest.y);
+			if (c == null) {
+				c = new Chunk(closest.x, closest.y, m[0]);
+				m[0].setLocalChunk(closest.x, closest.y, c);
+			}
+			c.mesh = MegachunkBuilder.buildChunk(Megachunk.pseudochunk);
 		}
 	}
+		
+	private int mx, my, mz;
 	
-	private Vector3i mpos = new Vector3i(0);
-	
-	private Vector3i closepos = new Vector3i(0);
-	private int mv, mx, my, mz;
-	private float cy;
-	private double distance;
-	private boolean found;
-	private Megachunk m;
-	private double dist;
 	public void updateChunkManager() {
-		mx = (int)(Camera.position.x / (Megachunk.SIZE * Chunk.SIZE));
-		my = (int)(Camera.position.y / Chunk.SIZE_Y);
-		mz = (int)(Camera.position.z / (Megachunk.SIZE * Chunk.SIZE));
+		if (!adding) return;
+		
 
-		cy = Camera.position.y % Chunk.SIZE_Y;
-		if (cy < 0) cy += Chunk.SIZE_Y;
+		for (int i = 0; i < unloadedChunks.size(); i++ ) {
+			if (!activeChunks.contains(unloadedChunks.get(i))) {
+				Megachunk m = unloadedChunks.get(i);
+				this.removeMegachunk(m.getX(), m.getY(), m.getZ());
+			}
+		}
+		unloadedChunks.clear();
+		
+		activeChunks.clear();
 		
 		
-		distance = Double.MAX_VALUE;
-		found = false;
-		
-		for (int x = -megaview / 2; x < megaview / 2 + 1; ++x) {
-			for (int z = -megaview / 2; z < megaview / 2 + 1; ++z) {
-				for (int y = -1; y < 2; y++) {
-					m = getMegachunk(mx + x, y + my, mz + z);
-					
-					mpos.x = (mx + x) * Megachunk.SIZE * Chunk.SIZE;
-					mpos.y = (y + my) * Chunk.SIZE_Y;
-					mpos.z = (mz + z) * Megachunk.SIZE * Chunk.SIZE;
-
-					if (m == null) {
-						dist = mpos.distance((int)Camera.position.x, (int)Camera.position.y, (int)Camera.position.z);
-						if (dist < distance) {
-							closepos = new Vector3i(x + mx, y + my, z + mz);
-							distance = dist;
-							found = true;
-						}
-					}
+		for (String str : megachunks.keySet()) {
+			unloadedChunks.add(megachunks.get(str));
+		}
+		if (Settings.VIEW_DISTANCE / (Chunk.SIZE * Megachunk.SIZE) > 2) {
+			megaview = Settings.VIEW_DISTANCE / (Chunk.SIZE * Megachunk.SIZE);
+		} else {
+			megaview = 2;
+		}
+		mx = (int)Math.floor(Camera.position.x / (Megachunk.SIZE * Chunk.SIZE));
+		my = (int)Math.floor(Camera.position.y / Chunk.SIZE_Y);
+		mz = (int)Math.floor(Camera.position.z / (Megachunk.SIZE * Chunk.SIZE));
+		for (int x = -megaview / 2; x < megaview / 2 + 1; x++) {
+			for (int z = -megaview / 2; z < megaview / 2 + 1; z++) {
+				for (int y = -megaview / 2; y < megaview / 2 + 1; y++) {
+					addMegachunk(x + mx, y + my, z + mz);
 				}
 			}
 			
 		}
-		
-		if (found) {
-			m = getMegachunk(closepos.x, closepos.y, closepos.z);
-			if (m == null) {
-				addMegachunk(closepos.x, closepos.y, closepos.z);
-			}
-		}
+		adding = false;
 	}
 	
 	public void tickMegachunks() {
-		for (int i = 0; i < megachunk.length; i++) {
-			if (megachunk[i] != null) {
-				megachunk[i].tick();
-			}
+		for (String str : megachunks.keySet()) {
+			megachunks.get(str).tick();
 		}
 	}
 	
@@ -228,40 +213,39 @@ public class World {
 		renderTileHover(shader);
 		
 		for (int i = 0; i < entities.size(); i++) {
-			entities.get(i).render(shader);
+//			entities.get(i).render(shader);
 		}
 		
 		removeRenderchunks();
 	}
-	
-	public void removeRenderchunks() {
-		int mx = (int)Math.floor(Camera.position.x / (Megachunk.SIZE * Chunk.SIZE));
-		int my = (int)Math.floor(Camera.position.y / Chunk.SIZE_Y);
-		int mz = (int)Math.floor(Camera.position.z / (Megachunk.SIZE * Chunk.SIZE));
-
-		float cy = Camera.position.y % Chunk.SIZE_Y;
-		if (cy < 0) cy += Chunk.SIZE_Y;
-		Vector3i mpos = new Vector3i(0);
 		
-		for (int i = 0; i < numMegachunks; i++) {
-			if (megachunk[i] != null) {
-				mpos.x = megachunk[i].getX() * Megachunk.SIZE * Chunk.SIZE;
-				mpos.y = 0;
-				mpos.z = megachunk[i].getZ() * Megachunk.SIZE * Chunk.SIZE;				
-				
-				if (mpos.distance((int)Camera.position.x, 0, (int)Camera.position.z) > (megaview * Megachunk.SIZE * Chunk.SIZE) * 0.75f) {
-					removeMegachunk(megachunk[i].getX(), megachunk[i].getY(), megachunk[i].getZ());
-					break;
-				}
+	public void removeRenderchunks() {
+		int cx = (int)Math.floor(Camera.position.x / (Megachunk.SIZE * Chunk.SIZE));
+		int cy = (int)Math.floor(Camera.position.y / (Chunk.SIZE_Y));
+		int cz = (int)Math.floor(Camera.position.z / (Megachunk.SIZE * Chunk.SIZE));
+		for (String str : megachunks.keySet()) {
+			Megachunk m = megachunks.get(str);
+			int x = m.getX();
+			int y = m.getY();
+			int z = m.getZ();
+			if (Math.abs(x - cx) > 2 || Math.abs(y - cy) > 2 || Math.abs(z - cz) > 2) {
+				m.dispose();
+				megachunks.remove(str);
 			}
 		}
 	}
-	
+	private boolean adding = false;
 	public void renderMegachunks(ShaderProgram shader) {
-		for (int i = 0; i < numMegachunks; i++) {
-			if (megachunk[i] != null)
-			megachunk[i].render(shader);
+		if (activeChunks.size() > 0) {
+			rendering.clear();
+			for (int i = 0; i < activeChunks.size(); i++) {
+				rendering.add(activeChunks.get(i));
+			}
 		}
+		for (int i = 0; i < rendering.size(); i++) {
+			rendering.get(i).render(shader);
+		}
+		adding = true;
 	}
 	
 	
@@ -390,9 +374,12 @@ public class World {
 	}
 	
 	public void dispose() {
-		for (int i = 0; i < megachunk.length; i++) {
-			if (megachunk[i] != null)
-			megachunk[i].dispose();
+		while (World.saveQueue.size() > 0) {
+			World.saveQueue.pop().save();
+			System.out.print("Saved chunk");
+			System.out.print(".");
+			System.out.print(".");
+			System.out.println(".");
 		}
 		worldSaver.saveWorld();
 		for (Entity e : entities) {
@@ -469,6 +456,7 @@ public class World {
 			chunk.setTileAt(x, y, z, tile);
 			if (chunk.getLocalChunk(x / Megachunk.SIZE, z / Megachunk.SIZE) != null)
 			chunk.getLocalChunk(x / Megachunk.SIZE, z / Megachunk.SIZE).markForRerender();
+			chunk.getLocalChunk(x / Megachunk.SIZE, z / Megachunk.SIZE).markForSave();
 		}
 	}
 	
@@ -493,6 +481,7 @@ public class World {
 				if (chunk.getLocalChunk(x / Megachunk.SIZE, z / Megachunk.SIZE) != null)
 					chunk.getLocalChunk(x / Megachunk.SIZE, z / Megachunk.SIZE).markForRerender();
 				chunk.setTileAt(x, y, z, Tiles.AIR);
+				chunk.getLocalChunk(x / Megachunk.SIZE, z / Megachunk.SIZE).markForSave();
 			}
 			else
 			if (current != last) {

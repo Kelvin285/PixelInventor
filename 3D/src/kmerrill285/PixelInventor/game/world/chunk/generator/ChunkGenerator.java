@@ -23,7 +23,6 @@ public class ChunkGenerator {
 	}
 	
 	public Chunk generateChunk(Megachunk megachunk, int cx, int cz) {
-		if (Megachunk.CHUNKS_LOADED >= Megachunk.MAX_CHUNKS) return null;
 		Chunk chunk = new Chunk(cx, cz, megachunk);
 		if (chunk.canRender()) {
 			chunk.setTiles(new TileData[Chunk.SIZE * Chunk.SIZE_Y * Chunk.SIZE]);
@@ -36,9 +35,6 @@ public class ChunkGenerator {
 
 	public void generateChunk(Chunk chunk) {
 		if (chunk.load() == true) return;
-		if (chunk.voxels > 0) {
-			return;
-		}
 		if (chunk.getTiles() == null) {
 			chunk.setTiles(new TileData[Chunk.SIZE * Chunk.SIZE_Y * Chunk.SIZE]);
 		}

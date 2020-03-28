@@ -113,7 +113,9 @@ public class PixelInventor {
 			public void run() {
 				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
 					try {
+						if (GuiRenderer.currentScreen == null)
 						updateWorld();
+						world.buildMegachunks();
 					}catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -130,16 +132,15 @@ public class PixelInventor {
 		};
 		thread.start();
 		
+		
 		new Thread() {
 			public void run() {
-				while (true) {
-					if (guiRenderer == null || guiRenderer != null && !(guiRenderer.getOpenScreen() instanceof IngameMenuScreen)) {
-						try {
-							world.buildMegachunks();
-						}catch (Exception e) {
-							e.printStackTrace();
-						}
-						
+				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
+					world.saveChunks();
+					try {
+						Thread.sleep(5);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
 					}
 				}
 			}
@@ -173,6 +174,8 @@ public class PixelInventor {
 	}
 	
 	public void render() {
+		Settings.frameSkip = 50;
+		Settings.VIEW_DISTANCE = 80;
 		Mesh.BUILT = 0;
 		Vector3f skyColor = world.getSkyColor();
 		GL11.glClearColor(skyColor.x, skyColor.y, skyColor.z, 0.0f);

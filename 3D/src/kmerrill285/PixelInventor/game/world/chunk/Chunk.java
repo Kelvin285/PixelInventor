@@ -19,6 +19,7 @@ import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.tile.Tiles;
+import kmerrill285.PixelInventor.game.world.World;
 
 public class Chunk {
 	
@@ -32,14 +33,12 @@ public class Chunk {
 	
 	private Megachunk parent;
 	
-	private final int x, z;
-	private final Vector3i pos;
+	private int x, z;
+	private Vector3i pos;
 	
 	public int voxels = 0;
 	
 	private TileData[] tiles;
-	
-	
 	
 	public Mesh mesh;
 	
@@ -55,6 +54,17 @@ public class Chunk {
 		pos = new Vector3i(X, Y, Z);
 		
 		this.setParent(parent);
+	}
+	
+	public void setPos(int x, int z) {
+		int X = x * SIZE;
+		int Y = 0;
+		int Z = z * SIZE;
+		pos.x = X;
+		pos.y = Y;
+		pos.z = Z;
+		this.x = x;
+		this.z = z;
 	}
 	
 	public int getX() {
@@ -152,12 +162,13 @@ public class Chunk {
 	}
 	private File savefile;
 	
-	private void save() {
+	public void save() {
+		if (!this.needsToSave) return;
 		if (tiles == null) return;
 		String DIR = "PixelInventor/saves/"+PixelInventor.game.world.getWorldSaver().getWorldName()+"/megachunk"+parent.getX()+"_"+parent.getY()+"_"+parent.getZ()+"/";
 		File dir = new File(DIR);
 		dir.mkdirs();
-		savefile = new File(DIR+"chunk"+getX()+","+getZ()+".chnk");
+		this.savefile = new File(DIR+"chunk"+getX()+","+getZ()+".chnk");
 		try {
 			savefile.createNewFile();
 		} catch (IOException e) {
@@ -182,11 +193,10 @@ public class Chunk {
 	public boolean load() {
 		if (savefile == null) {
 			String DIR = "PixelInventor/saves/"+PixelInventor.game.world.getWorldSaver().getWorldName()+"/megachunk"+parent.getX()+"_"+parent.getY()+"_"+parent.getZ()+"/";
-			savefile = new File(DIR+"chunk"+getX()+","+getZ()+".chnk");
+			setSavefile(new File(DIR+"chunk"+getX()+","+getZ()+".chnk"));
 		}
 		if (!savefile.exists()) return false;
 		if (tiles == null) {
-			Megachunk.CHUNKS_LOADED++;
 			tiles = new TileData[NUM_TILES];
 		}
 		if (savefile != null) {
@@ -197,9 +207,13 @@ public class Chunk {
 					String str = scanner.nextLine().trim();
 					if (!str.isEmpty()) {
 						String[] data = str.split(",");
+						if (data != null && data.length >= 1)
 						tiles[i] = new TileData(Integer.parseInt(data[0]));
+						if (data != null && data.length >= 2)
 						tiles[i].waterLevel = Integer.parseInt(data[1]);
+						if (data != null && data.length >= 3)
 						tiles[i].miningTime = Float.parseFloat(data[2]);
+						if (data != null && data.length >= 1)
 						if (tiles[i].getTile() != Tiles.AIR.getID()) voxels++;
 						i++;
 					}
@@ -217,16 +231,14 @@ public class Chunk {
 	public boolean isActive() {
 		if (voxels <= 0) return false;
 		int x = getX() * SIZE + parent.getX() * Megachunk.SIZE * SIZE + SIZE / 2;
-		int y = parent.getY() * SIZE_Y + SIZE_Y / 2;
 		int z = getZ() * SIZE + parent.getZ() * Megachunk.SIZE * SIZE + SIZE / 2;
-		return Camera.position.distance(x, y, z) <= SIZE * Megachunk.SIZE;
+		return Camera.position.distance(x, 0, z) <= SIZE * Megachunk.SIZE;
 	}
 	
 	public boolean canRender() {
 		int x = getX() * SIZE + parent.getX() * Megachunk.SIZE * SIZE + SIZE / 2;
-		int y = parent.getY() * SIZE_Y + SIZE_Y / 2;
 		int z = getZ() * SIZE + parent.getZ() * Megachunk.SIZE * SIZE + SIZE / 2;
-		return Camera.position.distance(x, y, z) <= SIZE * Settings.VIEW_DISTANCE;
+		return Camera.position.distance(x, 0, z) <= SIZE * Settings.VIEW_DISTANCE;
 	}
 
 	public void tick() {
@@ -282,16 +294,21 @@ public class Chunk {
 				MeshRenderer.renderMesh(mesh, new Vector3f(parent.getX() * Megachunk.SIZE * SIZE, parent.getY() * SIZE_Y, parent.getZ() * Megachunk.SIZE * SIZE), shader);
 			}
 		}
+		this.testForActivation();
+	}
+	
+	public void testForActivation() {
 		if (isActive()) {
 			if (tiles == null) {
-				Megachunk.CHUNKS_LOADED++;
 				parent.getWorld().getChunkGenerator().generateChunk(this);
 			}
 		} else {
 			if (mesh != null) {
-				if (needsToSave) this.save();
-				Megachunk.CHUNKS_LOADED--;
-				tiles = null;
+				if (!needsToSave)
+					tiles = null;
+				else
+					if (!World.saveQueue.contains(this))
+					World.saveQueue.add(this);
 			}
 		}
 	}
@@ -302,6 +319,10 @@ public class Chunk {
 		while (meshesToRemove.size() > 0) {
 			meshesToRemove.pop().dispose();
 		}
+		tiles = null;
+		this.mesh = null;
+		this.meshesToRemove = null;
+		this.setSavefile(null);
 	}
 
 	public void setParent(Megachunk parent) {
@@ -310,12 +331,19 @@ public class Chunk {
 
 	public void markForRerender() {
 		this.needsToRebuild = true;
+	}
+	
+	public void markForSave() {
 		this.needsToSave = true;
 	}
 	
 	private ArrayDeque<Mesh> meshesToRemove = new ArrayDeque<Mesh>();
 	public void removeMesh(final Mesh mesh) {
 		meshesToRemove.add(mesh);
+	}
+
+	public void setSavefile(File savefile) {
+		this.savefile = savefile;
 	}
 
 	

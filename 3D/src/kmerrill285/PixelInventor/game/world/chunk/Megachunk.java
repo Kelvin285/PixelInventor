@@ -22,31 +22,26 @@ public class Megachunk {
 	
 	private final World world;
 	
-	private Mesh mesh;
-	
-	private Vector3f pos;
-		
+	public static Chunk pseudochunk = new Chunk(0, 0, null);
+				
 	public Megachunk(int x, int y, int z, World world) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
-		pos = new Vector3f(x * SIZE * Chunk.SIZE, y * Chunk.SIZE_Y, z * SIZE * Chunk.SIZE);
 		this.world = world;
 		chunks = new Chunk[NUM_CHUNKS];
 	}
 	
-	public void generate() {
-		this.needsToRebuild = true;
-	}
-	
 	public void setLocalChunk(int x, int z, Chunk chunk) {
 		if (x >= 0 && z >= 0 && x < SIZE && z < SIZE) {
+			if (chunks == null) return;
 			chunks[x + z * SIZE] = chunk;
 		}
 	}
 	
 	public Chunk getLocalChunk(int x, int z) {
 		if (x >= 0 && z >= 0 && x < SIZE && z < SIZE) {
+			if (chunks == null) return null;
 			return chunks[x + z * SIZE];
 		}
 		return null;
@@ -90,37 +85,25 @@ public class Megachunk {
 		return getVoxels() <= 0;
 	}
 	
-	public static int CHUNKS_LOADED = 0;
-	public static int MAX_CHUNKS = 512;
 	
-	private boolean needsToRebuild = true;
-	private boolean generated = false;
 	public void updateAndBuild(double[] distance, Megachunk[] c, Vector2i closest, Vector3f pos) {
-		if (!needsToRebuild) return;
-		if (!generated) {
-			boolean set = false;
-			for (int x = 0; x < SIZE; x++) {
-				for (int z = 0; z < SIZE; z++) {
-					if (getLocalChunk(x, z) == null) {
-						double dist = pos.distance(getX() * SIZE * Chunk.SIZE + x * Chunk.SIZE, getY() * Chunk.SIZE_Y, getZ() * SIZE * Chunk.SIZE + z * Chunk.SIZE);
-						if (dist < Chunk.SIZE * Settings.VIEW_DISTANCE) {
-							if (dist < distance[0]) {
-								distance[0] = dist;
-								c[0] = this;
-								closest.x = x;
-								closest.y = z;
-							}
-						}
-						set = true;
+		for (int x = 0; x < SIZE; x++) {
+			for (int z = 0; z < SIZE; z++) {
+				if (getLocalChunk(x, z) == null) {
+					double dist = pos.distance(getX() * SIZE * Chunk.SIZE + x * Chunk.SIZE + Chunk.SIZE / 2, getY() * Chunk.SIZE_Y + Chunk.SIZE_Y / 2, getZ() * SIZE * Chunk.SIZE + z * Chunk.SIZE + Chunk.SIZE / 2);
+					if (dist < distance[0]) {
+						distance[0] = dist;
+						c[0] = this;
+						closest.x = x;
+						closest.y = z;
 					}
 				}
 			}
-			if (set == false)
-			generated = true;
 		}
 	}
 	
 	public void tick() {
+		if (chunks != null)
 		for (int i = 0; i < chunks.length; i++) {
 			if (chunks[i] != null) {
 				chunks[i].tick();
@@ -129,10 +112,6 @@ public class Megachunk {
 	}
 	
 	public void render(ShaderProgram shader) {
-//		
-//		if (mesh != null) {
-//			MeshRenderer.renderMesh(mesh, pos, shader);
-//		}
 		int maxUpdates = 100;
 		int updated = 0;
 		for (int i = 0; i < chunks.length; i++) {
@@ -154,10 +133,11 @@ public class Megachunk {
 	}
 	
 	public void dispose() {
-		for (int i = 0; i < chunks.length; i++)
+		for (int i = 0; i < chunks.length; i++) {
 			if (chunks[i] != null) chunks[i].dispose();
-		if (mesh != null)
-		mesh.dispose();
+			chunks[i] = null;
+		}
+		chunks = null;
 	}
 
 	public int getVoxels() {

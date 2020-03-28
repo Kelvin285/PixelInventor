@@ -50,7 +50,7 @@ public class Input {
 	
 	private static void updateCamera() {
 		if (FPSCounter.getDelta() <= 0) return;
-		float speed = 0.1f;
+		float speed = 0.5f;
 		float rotSpeed = 2.0f;
 		if (Settings.RIGHT.isPressed()) {
 			float yaw = 90;
