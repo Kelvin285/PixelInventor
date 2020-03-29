@@ -49,8 +49,7 @@ public class Input {
 	}
 	
 	private static void updateCamera() {
-		if (FPSCounter.getDelta() <= 0) return;
-		float speed = 0.5f;
+		float speed = 0.1f;
 		float rotSpeed = 2.0f;
 		if (Settings.RIGHT.isPressed()) {
 			float yaw = 90;
@@ -92,13 +91,17 @@ public class Input {
 	}
 	
 	private static void doGameInput() {
-		updateCamera();
+		
 		if (Mouse.locked) {
 			Camera.rotation.y += (Mouse.x - Mouse.lastX) * Settings.MOUSE_SENSITIVITY;
 			Camera.rotation.x += (Mouse.y - Mouse.lastY) * Settings.MOUSE_SENSITIVITY;
 			
 			if (Camera.rotation.x < -90) Camera.rotation.x = -90;
 			if (Camera.rotation.x > 90) Camera.rotation.x = 90;
+		}
+		
+		if (Settings.RAYTRACING) {
+//			updateCamera();
 		}
 		
 		if (Settings.ATTACK.isPressed()) {

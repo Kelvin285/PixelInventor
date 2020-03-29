@@ -8,6 +8,7 @@ import java.util.Scanner;
 import org.joml.Vector3f;
 
 import kmerrill285.PixelInventor.game.client.rendering.BlockFace;
+import kmerrill285.PixelInventor.game.client.rendering.raytracing.RayTraceWorld;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Textures;
 import kmerrill285.PixelInventor.game.entity.ItemDropEntity;
 import kmerrill285.PixelInventor.game.settings.Translation;
@@ -104,6 +105,13 @@ public class Tile {
 		right = Textures.TILES.convertToUV(right, getTextureFor(BlockFace.RIGHT));
 		front = Textures.TILES.convertToUV(front, getTextureFor(BlockFace.FRONT));
 		back = Textures.TILES.convertToUV(back, getTextureFor(BlockFace.BACK));
+		for (float f : top) RayTraceWorld.TEX_COORDS.add(f);
+		for (float f : bottom) RayTraceWorld.TEX_COORDS.add(f);
+		for (float f : left) RayTraceWorld.TEX_COORDS.add(f);
+		for (float f : right) RayTraceWorld.TEX_COORDS.add(f);
+		for (float f : front) RayTraceWorld.TEX_COORDS.add(f);
+		for (float f : back) RayTraceWorld.TEX_COORDS.add(f);
+		for (float f : size) RayTraceWorld.TEX_COORDS.add(f);
 		
 		ID = CURRENT_ID++;
 	}

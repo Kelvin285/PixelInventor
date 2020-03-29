@@ -25,9 +25,13 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.GL42;
+import org.lwjgl.opengl.GL43;
 import org.lwjgl.system.MemoryUtil;
 
+import kmerrill285.PixelInventor.game.client.rendering.raytracing.RayTracer;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Texture;
+import kmerrill285.PixelInventor.resources.MathHelper;
 
 public class Mesh {
 	private int vaoID;
@@ -48,9 +52,7 @@ public class Mesh {
     
     private boolean disposed = false;
     private boolean setup = false;
-    private FloatBuffer verticesBuffer = null;
-    private FloatBuffer texBuffer = null;
-    private IntBuffer indicesBuffer = null;
+    
     public Mesh(float[] positions, float[] texCoords, int[] indices, Texture texture) {
     	
         this.positions = positions;
@@ -58,48 +60,56 @@ public class Mesh {
         this.indices = indices;
         this.texture = texture;
         this.vertexCount = indices.length;
-        
-        verticesBuffer = MemoryUtil.memAllocFloat(positions.length);
-        vertexCount = indices.length;
-        verticesBuffer.put(positions).flip();
-        
-        texBuffer = MemoryUtil.memAllocFloat(texCoords.length);
-        texBuffer.put(texCoords).flip();
-        indicesBuffer = MemoryUtil.memAllocInt(indices.length);
-        indicesBuffer.put(indices).flip();
     }
     
     public void setup() {
-    	
-        
+    	FloatBuffer verticesBuffer = null;
+        FloatBuffer texBuffer = null;
+        IntBuffer indicesBuffer = null;
+        try {
+            verticesBuffer = MemoryUtil.memAllocFloat(positions.length);
+            vertexCount = indices.length;
+            verticesBuffer.put(positions).flip();
+            
+            texBuffer = MemoryUtil.memAllocFloat(texCoords.length);
+            texBuffer.put(texCoords).flip();
+            
            
-        vaoID = glGenVertexArrays();
-        glBindVertexArray(vaoID);
+            vaoID = glGenVertexArrays();
+            glBindVertexArray(vaoID);
 
-        vboID = glGenBuffers();
-        texID = glGenBuffers();
-        
-        glBindBuffer(GL_ARRAY_BUFFER, vboID);
-        glBufferData(GL_ARRAY_BUFFER, verticesBuffer, GL_STATIC_DRAW);            
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
-        
-        glBindBuffer(GL_ARRAY_BUFFER, texID);
-        glBufferData(GL_ARRAY_BUFFER, texBuffer, GL_STATIC_DRAW);
-        glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0);
+            vboID = glGenBuffers();
+            texID = glGenBuffers();
+            
+            glBindBuffer(GL_ARRAY_BUFFER, vboID);
+            glBufferData(GL_ARRAY_BUFFER, verticesBuffer, GL_STATIC_DRAW);            
+            glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+            
+            glBindBuffer(GL_ARRAY_BUFFER, texID);
+            glBufferData(GL_ARRAY_BUFFER, texBuffer, GL_STATIC_DRAW);
+            glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0);
 
-        indexID = glGenBuffers();
-        
-        glBindBuffer(GL30.GL_ELEMENT_ARRAY_BUFFER, indexID);
-        glBufferData(GL30.GL_ELEMENT_ARRAY_BUFFER, indicesBuffer, GL_STATIC_DRAW);
-        
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+            indexID = glGenBuffers();
+            indicesBuffer = MemoryUtil.memAllocInt(indices.length);
+            indicesBuffer.put(indices).flip();
+            glBindBuffer(GL30.GL_ELEMENT_ARRAY_BUFFER, indexID);
+            glBufferData(GL30.GL_ELEMENT_ARRAY_BUFFER, indicesBuffer, GL_STATIC_DRAW);
+            
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        glBindVertexArray(0);         
-        
+            glBindVertexArray(0);         
+        } finally {
+            if (verticesBuffer  != null) {
+                MemoryUtil.memFree(verticesBuffer);
+            }
+            if (texBuffer != null) {
+            	MemoryUtil.memFree(texBuffer);
+            }
+            if (indicesBuffer != null) {
+            	MemoryUtil.memFree(indicesBuffer);
+            }
+        }
         setup = true;
-        positions = null;
-        texCoords = null;
-        indices = null;
     }
 
     public int getVaoID() {
@@ -123,26 +133,12 @@ public class Mesh {
         glBindVertexArray(0);
         glDeleteVertexArrays(vaoID);
         disposed = true;
-        if (verticesBuffer  != null) {
-            MemoryUtil.memFree(verticesBuffer);
-        }
-        if (texBuffer != null) {
-        	MemoryUtil.memFree(texBuffer);
-        }
-        if (indicesBuffer != null) {
-        	MemoryUtil.memFree(indicesBuffer);
-        }
     }
-    
-    public static int BUILT;
-    public static final int MAX_BUILD = 10;
     
     public void render() {
     	if (disposed) return;
     	if (empty) {
-    		if (BUILT > MAX_BUILD) return;
     		setup();
-    		BUILT++;
     		empty = false;
     	}
     	if (!setup) return;
