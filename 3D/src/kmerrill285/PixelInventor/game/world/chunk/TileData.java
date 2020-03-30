@@ -1,17 +1,47 @@
 package kmerrill285.PixelInventor.game.world.chunk;
 
+import java.io.Serializable;
+
 import kmerrill285.PixelInventor.game.tile.Tile;
 
-public class TileData {
-	public Tile tile;
-	public int x;
-	public int y;
-	public int z;
-	public TileData(int x, int y, int z, Tile tile) 
-	{
-		this.x = x;
-		this.y = y;
-		this.z = z;
+public class TileData implements Serializable {
+	private static final long serialVersionUID = 272466692325542004L;
+	private int tile;
+	float miningTime;
+	int waterLevel;
+	float lastMiningTime;
+	public TileData(int tile) {
+		this.setTile(tile);
+	}
+	public int getTile() {
+		return tile;
+	}
+	public void setTile(int tile) {
 		this.tile = tile;
 	}
-};
+	
+	public float getMiningTime() {
+		return miningTime;
+	}
+	
+	public void setMiningTime(float miningTime) {
+		this.lastMiningTime = this.miningTime;
+		this.miningTime = miningTime;
+	}
+	
+	public float getLastMiningTime() {
+		return this.lastMiningTime;
+	}
+	
+	public int getWaterLevel() {
+		return this.waterLevel;
+	}
+	
+	public void setWaterLevel(int waterLevel) {
+		this.waterLevel = waterLevel;
+	}
+	
+	public String toString() {
+		return tile + "," + waterLevel + "," + miningTime;
+	}
+}

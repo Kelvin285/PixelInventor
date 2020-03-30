@@ -2,6 +2,8 @@
 "PixelInventor:stone" = "Stone"
 "PixelInventor:grass" = "Grass"
 "PixelInventor:purple_grass" = "Purple Grass"
+"PixelInventor:log" = "Log"
+"PixelInventor:leaves" = "Leaves"
 "PixelInventor:input.jump" = "Jump"
 "PixelInventor:input.sneak" = "Sneak"
 "PixelInventor:input.run" = "Run"

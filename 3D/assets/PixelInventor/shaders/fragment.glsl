@@ -1,6 +1,6 @@
 #version 330
 
-vec4 fragColor;
+out vec4 fragColor;
 
 struct Fog
 {
@@ -20,6 +20,8 @@ in vec4 secondLightVertexPos;
 in mat4 shadowViewMatrix;
 in mat4 secondShadowViewMatrix;
 
+in float lValue;
+
 uniform Fog fog;
 uniform Fog shadowBlendFog;
 
@@ -38,12 +40,13 @@ uniform int renderToDepth;
 
 uniform int voxelRender;
 
+
+
 void main()
 {
-	fragColor = texture(texture_sampler, outTexCoord);
+	fragColor = mix(texture(texture_sampler, outTexCoord), vec4(1.0, 1.0, 1.0, 0.0), lValue);
 	
 	if (fragColor.a == 0) discard;
 	
 	gl_FragDepth = gl_FragCoord.z;
-	gl_FragColor = fragColor;
 }

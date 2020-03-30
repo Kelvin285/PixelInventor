@@ -8,10 +8,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GL13;
 
-import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.game.client.Camera;
-import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.SecondShadowRenderer;
-import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.ShadowRenderer;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 
 public class MeshRenderer {
@@ -32,42 +29,8 @@ public class MeshRenderer {
 	public static void renderMesh(Mesh mesh, Vector3f position, Vector3f rotation, Vector3f scale, ShaderProgram shader) {
 		if (mesh == null) return;
 		shader.setUniformInt("texture_sampler", 0);
-		shader.setUniformInt("shadowMap", 1);
-		shader.setUniformInt("secondShadowMap", 2);
 		shader.setUniformMat4("modelMatrix", getModelMatrix(position, rotation, scale));
 		
-		
-		shader.setUniformMat4("orthoProjectionMatrix", ShadowRenderer.getOrthoProjectionMatrix());
-		shader.setUniformMat4("secondOrthoMatrix", SecondShadowRenderer.getOrthoProjectionMatrix());
-		Vector3f m = new Vector3f(PixelInventor.game.player.velocity);
-		m.y = Math.abs(m.y);
-		if (view != null)
-		shader.setUniformMat4("modelLightViewMatrix", getLightMatrix(position, rotation, new Vector3f(scale), view));
-		if (mesh.isSetup()) {
-			glActiveTexture(GL13.GL_TEXTURE1);
-	    	glBindTexture(GL_TEXTURE_2D, PixelInventor.game.shadowMap.getDepthMapTexture().getTextureId());
-	    	
-	    	glActiveTexture(GL13.GL_TEXTURE2);
-	    	glBindTexture(GL_TEXTURE_2D, PixelInventor.game.secondShadowMap.getDepthMapTexture().getTextureId());
-		}
-		mesh.render();
-	}
-	
-	public static void renderShadowMesh(Mesh mesh, Vector3f position, ShaderProgram shader, Matrix4f viewMatrix) {
-		renderShadowMesh(mesh, position, scale, shader, viewMatrix);
-	}
-	
-	public static void renderShadowMesh(Mesh mesh, Vector3f position, Vector3f scale, ShaderProgram shader, Matrix4f viewMatrix) {
-		renderShadowMesh(mesh, position, rotation, scale, shader, viewMatrix);
-	}
-	
-	
-	public static void renderShadowMesh(Mesh mesh, Vector3f position, Vector3f rotation, Vector3f scale, ShaderProgram shader, Matrix4f viewMatrix) {
-		view = ShadowRenderer.getLightViewMatrix(PixelInventor.game.world);
-		
-		Vector3f m = new Vector3f(PixelInventor.game.player.velocity);
-		m.y = Math.abs(m.y);
-		shader.setUniformMat4("modelMatrix", getLightMatrix(position.sub(m), rotation, new Vector3f(scale), view));
 		mesh.render();
 	}
 	

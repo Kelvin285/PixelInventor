@@ -7,6 +7,8 @@ out vec2 outTexCoord;
 out vec3 mvVertexPos;
 out vec3 vertexPos;
 
+out float lValue;
+
 out vec4 mlightviewVertexPos;
 out mat4 outModelViewMatrix;
 out mat4 shadowViewMatrix;
@@ -21,16 +23,20 @@ uniform mat4 modelLightViewMatrix;
 uniform mat4 orthoProjectionMatrix;
 uniform mat4 secondOrthoMatrix;
 
+uniform float loadValue;
+
 void main()
 {
-	gl_Position = projectionMatrix * modelMatrix * vec4(position, 1.0);
+	vec3 pos = position - vec3(0, 10, 0) * loadValue;
+	lValue = loadValue;
+	gl_Position = projectionMatrix * modelMatrix * vec4(pos, 1.0);
 	mvVertexPos = gl_Position.xyz;
 	outTexCoord = texCoord;
 	
-	mlightviewVertexPos = orthoProjectionMatrix * modelLightViewMatrix * vec4(position, 1.0);
-	secondLightVertexPos = secondOrthoMatrix * modelLightViewMatrix * vec4(position, 1.0);
+	mlightviewVertexPos = orthoProjectionMatrix * modelLightViewMatrix * vec4(pos, 1.0);
+	secondLightVertexPos = secondOrthoMatrix * modelLightViewMatrix * vec4(pos, 1.0);
     outModelViewMatrix = modelMatrix;
     shadowViewMatrix = orthoProjectionMatrix * modelLightViewMatrix;
     secondShadowViewMatrix = secondOrthoMatrix * modelLightViewMatrix;
-    vertexPos = position;
+    vertexPos = pos;
 }

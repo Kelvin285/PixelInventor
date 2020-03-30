@@ -19,9 +19,9 @@ public class TPSCounter {
 	public static void updateTPS() {
 		tick = false;
 		int TPS = 25;
-		while (getTime() - lastTPS > TPS) {
+		if (getTime() - lastTPS > TPS) {
 			delta = FPSCounter.getDelta();
-			
+//			System.out.println("TPS: " + tps);
 			tps = 0;
 			tick = true;
 			lastTPS += TPS;

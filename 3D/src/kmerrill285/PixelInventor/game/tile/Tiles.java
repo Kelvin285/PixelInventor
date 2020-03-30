@@ -13,6 +13,8 @@ public class Tiles {
 	public static Tile GRASS;
 	public static Tile STONE;
 	public static Tile PURPLE_GRASS;
+	public static Tile LOG;
+	public static Tile LEAVES;
 	
 	public static Tile getTile(int ID) {
 		for (String str : REGISTRY.keySet()) {
@@ -28,5 +30,7 @@ public class Tiles {
 		GRASS = new GrassTile("PixelInventor:grass").setHardness(1.5f);
 		STONE = new Tile("PixelInventor:stone").setHardness(3.0f);
 		PURPLE_GRASS = new GrassTile("PixelInventor:purple_grass").setHardness(GRASS.getHardness());
+		LOG = new Tile("PixelInventor:log").setHardness(2.5f);
+		LEAVES = new Tile("PixelInventor:leaves").setHardness(0.2f);
 	}
 }

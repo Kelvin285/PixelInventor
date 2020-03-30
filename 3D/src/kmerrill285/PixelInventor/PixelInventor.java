@@ -16,14 +16,10 @@ import org.lwjgl.system.MemoryUtil;
 import kmerrill285.PixelInventor.events.Events;
 import kmerrill285.PixelInventor.events.Input;
 import kmerrill285.PixelInventor.game.client.Camera;
-import kmerrill285.PixelInventor.game.client.rendering.chunk.SecondaryChunkMeshBuilder;
-import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.SecondShadowRenderer;
-import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.ShadowMap;
-import kmerrill285.PixelInventor.game.client.rendering.effects.shadows.ShadowRenderer;
+import kmerrill285.PixelInventor.game.client.rendering.Mesh;
 import kmerrill285.PixelInventor.game.client.rendering.gui.GuiRenderer;
 import kmerrill285.PixelInventor.game.client.rendering.gui.IngameMenuScreen;
 import kmerrill285.PixelInventor.game.client.rendering.postprocessing.FrameBuffer;
-import kmerrill285.PixelInventor.game.client.rendering.raytracing.RayTracer;
 import kmerrill285.PixelInventor.game.entity.player.ClientPlayerEntity;
 import kmerrill285.PixelInventor.game.settings.Settings;
 import kmerrill285.PixelInventor.game.world.World;
@@ -38,12 +34,8 @@ public class PixelInventor {
 	public World world;
 	public GuiRenderer guiRenderer;
 	public ClientPlayerEntity player;
-	public ShadowMap shadowMap;
-	public ShadowMap secondShadowMap;
 	
 	public FrameBuffer framebuffer;
-
-	public RayTracer raytracer;
 	
 	public PixelInventor() {
 		PixelInventor.game = this;
@@ -53,17 +45,20 @@ public class PixelInventor {
 	public void run() {
 		System.out.println("Started PixelInventor "+Constants.version + " with LWJGL " + Version.getVersion());
 		System.out.println("Steamworks version: " + com.codedisaster.steamworks.Version.getVersion());
-		
+		try {
 		init();
 		loop();
-		
-		
+		}catch (Exception e) {
+			e.printStackTrace();
+			System.exit(0);
+		}
+		dispose();
+
 		Callbacks.glfwFreeCallbacks(Utils.window);
 		GLFW.glfwDestroyWindow(Utils.window);
 		
 		GLFW.glfwTerminate();
 		GLFW.glfwSetErrorCallback(null).free();
-		dispose();
 	}
 	
 	public void init() {
@@ -76,6 +71,10 @@ public class PixelInventor {
 		GLFW.glfwDefaultWindowHints();
 		GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
 		GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE);
+		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
+		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
+		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
+		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GL11.GL_TRUE);
 		
 		Utils.window = GLFW.glfwCreateWindow(Utils.FRAME_WIDTH, Utils.FRAME_HEIGHT, "PixelInventor " + Constants.version, MemoryUtil.NULL, MemoryUtil.NULL);
 	
@@ -120,16 +119,19 @@ public class PixelInventor {
 		thread = new Thread() {
 			public void run() {
 				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
-					if (guiRenderer == null || guiRenderer != null && !(guiRenderer.getOpenScreen() instanceof IngameMenuScreen))
-					updateWorld();
-					raytracer.getWorld().updateView();
-					SecondaryChunkMeshBuilder.update();
+					try {
+						if (GuiRenderer.currentScreen == null)
+						updateWorld();
+						world.buildMegachunks();
+					}catch (Exception e) {
+						e.printStackTrace();
+						System.exit(0);
+					}
 					try {
 						Thread.sleep(5);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-					
 				}
 				System.out.println("finish chunk thread!");
 				finished = true;
@@ -139,19 +141,38 @@ public class PixelInventor {
 		thread.start();
 		
 		
+		new Thread() {
+			public void run() {
+				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
+					world.saveChunks();
+					try {
+						Thread.sleep(5);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+						System.exit(0);
+					}
+				}
+			}
+		}.start();
+		
 		FPSCounter.start();
 		TPSCounter.start();
 		
 		int ticks = 0;
 		
 		while (!GLFW.glfwWindowShouldClose(Utils.window)) {
-			update();
-			if (ticks == 0) {
-				if (!world.getChunkManager().isTicking())
-				render();
-			} else {
-				ticks++;
-				ticks %= Settings.frameSkip + 1;
+			try {
+				update();
+				if (ticks == 0) {
+					FPSCounter.startUpdate();
+					render();
+					FPSCounter.endUpdate();
+				} else {
+					ticks++;
+					ticks %= Settings.frameSkip + 1;
+				}
+			}catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 		stop = true;
@@ -164,6 +185,7 @@ public class PixelInventor {
 	}
 	
 	public void render() {
+		Mesh.BUILT = 0;
 		Vector3f skyColor = world.getSkyColor();
 		GL11.glClearColor(skyColor.x, skyColor.y, skyColor.z, 0.0f);
 		
@@ -182,25 +204,10 @@ public class PixelInventor {
 			GL11.glViewport(0, 0, Utils.FRAME_WIDTH, Utils.FRAME_HEIGHT);
 		}
 		
-    	if (!Settings.POST_PROCESSING && !Settings.RAYTRACING) {
-			Utils.object_shader.bind();
-			
-			Utils.setupProjection();
-			
-			world.render(Utils.object_shader);
-			
-			Utils.object_shader.unbind();
+    	if (!Settings.POST_PROCESSING) {
+    		renderWorld();
 		}
-		if (Settings.RAYTRACING) {
-			this.raytracer.render();
-			world.renderRaytracer();
-
-			if (Events.w != 0) {
-				GL11.glViewport((int)Events.left, 0, (int)Events.w, (int)Events.height);
-			} else {
-				GL11.glViewport(0, 0, Utils.FRAME_WIDTH, Utils.FRAME_HEIGHT);
-			}
-		}
+		
 		
 		Utils.sprite_shader.bind();
 		
@@ -209,16 +216,9 @@ public class PixelInventor {
 		Utils.sprite_shader.unbind();
 		
 		
-		if (Settings.POST_PROCESSING || Settings.RAYTRACING) {
+		if (Settings.POST_PROCESSING) {
 			framebuffer.bind();
-		
-			Utils.object_shader.bind();
-			
-			Utils.setupProjection();
-			
-			world.render(Utils.object_shader);
-			
-			Utils.object_shader.unbind();
+			renderWorld();
 		}
 		framebuffer.unbind();
 		
@@ -229,6 +229,20 @@ public class PixelInventor {
 		GLFW.glfwPollEvents();
 		Input.doInput();
 		FPSCounter.updateFPS();
+	}
+	
+	public void renderWorld() {
+		Utils.object_shader.bind();
+		
+		Utils.setupProjection(Utils.object_shader);
+		
+		Utils.object_shader.setUniformInt("voxelRender", 0);
+		world.render(Utils.object_shader);
+		Utils.object_shader.setUniformInt("voxelRender", 1);
+		world.renderMegachunks(Utils.object_shader);
+		
+		Utils.object_shader.unbind();
+		
 	}
 	
 	private boolean updateWorld = false;
@@ -246,6 +260,7 @@ public class PixelInventor {
 	
 	public void updateWorld() {
 		world.updateChunkManager();
+		world.tickMegachunks();
 	}
 	
 	public void dispose() {
@@ -253,10 +268,7 @@ public class PixelInventor {
 		Utils.sprite_shader.dispose();
 		Utils.object_shader.dispose();
 		Utils.depth_shader.dispose();
-		raytracer.dispose();
 		framebuffer.dispose();
-		shadowMap.dispose();
-		secondShadowMap.dispose();
 		world.dispose();
 		System.out.println("exit!");
 		System.exit(0);

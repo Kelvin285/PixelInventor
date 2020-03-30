@@ -90,10 +90,11 @@ public class Entity {
 		lastPos.z = position.z;
 		
 		isMoving = (int)(velocity.x * 10) != 0 && (int)(velocity.y * 10) != 0;
-		
-		position.x += velocity.x * FPSCounter.getDelta();
-		position.y += velocity.y * FPSCounter.getDelta();
-		position.z += velocity.z * FPSCounter.getDelta();
+		if (ticksExisted > 100) {
+			position.x += velocity.x * FPSCounter.getDelta();
+			position.y += velocity.y * FPSCounter.getDelta();
+			position.z += velocity.z * FPSCounter.getDelta();
+		}
 		
 		ticksExisted++;
 		if (touchedGround == false) {
@@ -104,10 +105,6 @@ public class Entity {
 	}
 	
 	public void render(ShaderProgram shader) {
-		
-	}
-	
-	public void renderShadow(ShaderProgram shader, Matrix4f view) {
 		
 	}
 	

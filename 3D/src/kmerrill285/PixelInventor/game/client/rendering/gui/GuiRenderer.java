@@ -1,5 +1,9 @@
 package kmerrill285.PixelInventor.game.client.rendering.gui;
 
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
+import static org.lwjgl.opengl.GL11.glBindTexture;
+import static org.lwjgl.opengl.GL13.glActiveTexture;
+
 import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.image.BufferedImage;
@@ -7,10 +11,13 @@ import java.awt.image.BufferedImage;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL15;
+
 import kmerrill285.PixelInventor.PixelInventor;
 import kmerrill285.PixelInventor.game.client.Camera;
 import kmerrill285.PixelInventor.game.client.Mouse;
 import kmerrill285.PixelInventor.game.client.rendering.Mesh;
+import kmerrill285.PixelInventor.game.client.rendering.postprocessing.FrameBuffer;
 import kmerrill285.PixelInventor.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.PixelInventor.game.client.rendering.textures.Texture;
 import kmerrill285.PixelInventor.game.client.rendering.textures.TextureAtlas;
@@ -103,15 +110,10 @@ public class GuiRenderer {
 		}
 		
 		
-		if (Settings.RAYTRACING)	
-		{
-			Texture texture = new Texture(PixelInventor.game.raytracer.getTexture());
-			drawTexture(texture, 1920, 1080, -1920, -1080, 0, new Vector4f(1, 1, 1, 1), false, true);
-			//drawTexture(PixelInventor.game.framebuffer.getDepthMapTexture(), 1920, 1080, -1920, -1080, 0, new Vector4f(1, 1, 1, 1), true);
-		} else {
-			if (Settings.POST_PROCESSING)
-				drawTexture(PixelInventor.game.framebuffer.getTexture(), 1920, 1080, -1920, -1080, 0, new Vector4f(1, 1, 1, 1), true);
-		}
+		
+		if (Settings.POST_PROCESSING)
+			drawTexture(PixelInventor.game.framebuffer, 1920, 1080, -1920, -1080, 0, new Vector4f(1, 1, 1, 1), true);
+		
 
 		drawTexture(Textures.VIGINETTE, 0, 0, 1920, 1080, 0, new Vector4f(1, 1, 1, 1));
 		
@@ -147,6 +149,14 @@ public class GuiRenderer {
 		drawTexture(texture, x, y, width, height, rotation, color, postProcessing, false);
 	}
 	
+	public void drawTexture(FrameBuffer texture, float x, float y, float width, float height, float rotation, Vector4f color) {
+		drawTexture(texture, x, y, width, height, rotation, color, false);
+	}
+	
+	public void drawTexture(FrameBuffer texture, float x, float y, float width, float height, float rotation, Vector4f color, boolean postProcessing) {
+		drawTexture(texture, x, y, width, height, rotation, color, postProcessing, false);
+	}
+	
 	public void drawTexture(Texture texture, float x, float y, float width, float height, float rotation, Vector4f color, boolean postProcessing, boolean raycasting) {
 		
 		sprite.texture = texture;
@@ -157,6 +167,22 @@ public class GuiRenderer {
         shader.setUniformVec2("offset", new Vector2f(x, y));
         shader.setUniformVec2("scale", new Vector2f(width, height));
         shader.setUniformFloat("exposure", Settings.EXPOSURE);
+        sprite.render();
+		
+	}
+	
+	public void drawTexture(FrameBuffer texture, float x, float y, float width, float height, float rotation, Vector4f color, boolean postProcessing, boolean raycasting) {
+		
+		sprite.texture = texture.getTexture();
+		shader.setUniformInt("raycasting", raycasting ? 1 : 0);
+		shader.setUniformInt("post_processing", postProcessing ? 1 : 0);
+        shader.setUniformVec4("color", color);
+		shader.setUniformInt("texture_sampler", 0);
+        shader.setUniformVec2("offset", new Vector2f(x, y));
+        shader.setUniformVec2("scale", new Vector2f(width, height));
+        shader.setUniformFloat("exposure", Settings.EXPOSURE);
+        glActiveTexture(GL15.GL_TEXTURE1);
+    	glBindTexture(GL_TEXTURE_2D, texture.getDepthMapTexture().getTextureId());
         sprite.render();
 		
 	}
