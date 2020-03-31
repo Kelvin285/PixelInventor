@@ -1,0 +1,36 @@
+package kmerrill285.Inignoto.game.tile;
+
+import java.util.HashMap;
+
+import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
+
+public class Tiles {
+	
+	public static HashMap<String, Tile> REGISTRY = new HashMap<String, Tile>();
+	
+	public static Tile AIR;
+	public static Tile DIRT;
+	public static Tile GRASS;
+	public static Tile STONE;
+	public static Tile PURPLE_GRASS;
+	public static Tile LOG;
+	public static Tile LEAVES;
+	
+	public static Tile getTile(int ID) {
+		for (String str : REGISTRY.keySet()) {
+			Tile tile = REGISTRY.get(str);
+			if (tile.getID() == ID) return tile;
+		}
+		return Tiles.AIR;
+	}
+	
+	public static void loadTiles() {
+		AIR = new Tile("Inignoto:air").setFullCube(false).setRayTraceType(TileRayTraceType.GAS).setBlocksMovement(false).setReplaceable();
+		DIRT = new FallingTile("Inignoto:dirt").setHardness(1.0f);
+		GRASS = new GrassTile("Inignoto:grass").setHardness(1.5f);
+		STONE = new Tile("Inignoto:stone").setHardness(3.0f);
+		PURPLE_GRASS = new GrassTile("Inignoto:purple_grass").setHardness(GRASS.getHardness());
+		LOG = new Tile("Inignoto:log").setHardness(2.5f);
+		LEAVES = new Tile("Inignoto:leaves").setHardness(0.2f);
+	}
+}
