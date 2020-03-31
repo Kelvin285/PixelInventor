@@ -260,7 +260,7 @@ public class PixelInventor {
 	
 	public void updateWorld() {
 		world.updateChunkManager();
-		world.tickMegachunks();
+		world.tickChunks();
 	}
 	
 	public void dispose() {

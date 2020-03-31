@@ -1,6 +1,5 @@
 package kmerrill285.PixelInventor.game.world.chunk.generator;
 
-import java.util.Arrays;
 import java.util.Random;
 
 import imported.FastNoise;
@@ -8,7 +7,6 @@ import kmerrill285.PixelInventor.game.tile.Tile;
 import kmerrill285.PixelInventor.game.tile.Tiles;
 import kmerrill285.PixelInventor.game.world.World;
 import kmerrill285.PixelInventor.game.world.chunk.Chunk;
-import kmerrill285.PixelInventor.game.world.chunk.Megachunk;
 import kmerrill285.PixelInventor.game.world.chunk.TileData;
 import kmerrill285.PixelInventor.game.world.structures.Structure;
 
@@ -36,9 +34,9 @@ public class ChunkGenerator {
 				}
 			}
 		}
-		int nx = chunk.getX() * Chunk.SIZE + chunk.getParent().getX() * Megachunk.SIZE * Chunk.SIZE;
-		int ny = chunk.getParent().getY() * Megachunk.SIZE * Chunk.SIZE_Y;
-		int nz = chunk.getZ() * Chunk.SIZE + chunk.getParent().getZ() * Megachunk.SIZE * Chunk.SIZE;
+		int nx = chunk.getX() * Chunk.SIZE;
+		int ny = chunk.getY() * Chunk.SIZE_Y;
+		int nz = chunk.getZ() * Chunk.SIZE;
 		for (int x = 0; x < Chunk.SIZE; x++) {
 			for (int z = 0; z < Chunk.SIZE; z++) {
 				int X = nx + x;

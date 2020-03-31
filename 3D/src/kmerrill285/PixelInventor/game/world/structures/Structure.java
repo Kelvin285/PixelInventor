@@ -9,11 +9,9 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Arrays;
 
-import kmerrill285.PixelInventor.game.client.rendering.chunk.MegachunkBuilder;
 import kmerrill285.PixelInventor.game.tile.Tiles;
 import kmerrill285.PixelInventor.game.world.World;
 import kmerrill285.PixelInventor.game.world.chunk.Chunk;
-import kmerrill285.PixelInventor.game.world.chunk.Megachunk;
 import kmerrill285.PixelInventor.game.world.chunk.TileData;
 import kmerrill285.PixelInventor.game.world.chunk.TilePos;
 

@@ -14,7 +14,8 @@ public class Settings {
 	public static float ACTUAL_FOV = 60.0f;
 	public static float MOUSE_SENSITIVITY = 0.1f;
 	
-	public static int VIEW_DISTANCE = 32; //normal = 32
+	public static int VIEW_DISTANCE = 8; //normal = 32
+	public static int VERTICAL_VIEW_DISTANCE = 2;
 	
 	public static boolean HEAD_BOB = true;
 	
@@ -93,6 +94,9 @@ public class Settings {
 						if (a.contentEquals("VIEW_DISTANCE")) {
 							VIEW_DISTANCE = Integer.parseInt(b);
 						}
+						if (a.contentEquals("VERTICAL_VIEW_DISTANCE")) {
+							VERTICAL_VIEW_DISTANCE = Integer.parseInt(b);
+						}
 						if (a.contentEquals("HEAD_BOB")) {
 							HEAD_BOB = Boolean.parseBoolean(b);
 						}
@@ -170,6 +174,7 @@ public class Settings {
 			str += getSaveString("FOV", FOV);
 			str += getSaveString("MOUSE_SENSITIVITY", MOUSE_SENSITIVITY);
 			str += getSaveString("VIEW_DISTANCE", VIEW_DISTANCE);
+			str += getSaveString("VERTICAL_VIEW_DISTANCE", VERTICAL_VIEW_DISTANCE);
 			str += getSaveString("HEAD_BOB", HEAD_BOB);
 			str += getSaveString("SHADOWS", SHADOWS);
 			str += getSaveString("REFLECTIONS", REFLECTIONS);
