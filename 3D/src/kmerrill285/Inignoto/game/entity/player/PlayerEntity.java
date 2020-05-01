@@ -24,7 +24,6 @@ public class PlayerEntity extends Entity {
 			this.size.y = 1.5f;
 		}
 		this.eyeHeight = this.size.y * 0.9f;
-		
 	}
 	
 	@Override

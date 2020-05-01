@@ -66,7 +66,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 		float backMul = 1.0f;
 		if (Settings.BACKWARD.isPressed()) {
 			if (!Settings.FORWARD.isPressed()) {
-				backMul = 0.75f;
+				backMul = 0.85f;
 				XP = (float)Math.cos(Math.toRadians(yaw + 90)) * backMul;
 				ZP = (float)Math.sin(Math.toRadians(yaw + 90)) * backMul;
 				extra = 45;
@@ -145,9 +145,9 @@ public class ClientPlayerEntity extends PlayerEntity {
 		
 		float mul = 0.75f;
 		if (running) mul = 1.2f;
-		if (isSneaking) mul = 0.2f;
+		if (isSneaking) mul = 0.25f;
 		
-		mul *= 0.75f;
+		mul *= 0.8f;
 		
 		if (isSneaking && onGround) {
 			
@@ -178,7 +178,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 		velocity.z = MathHelper.lerp(velocity.z, ZP * this.moveSpeed * mul, moveLerp);
 		
 		moveVel = moveVel.lerp(velocity, 0.1f);
-		if (!isSneaking) moveVel.mul(0);
+		if (!isSneaking) moveVel.mul(0.25f);
 		else
 			moveVel.mul(0.9f);
 		

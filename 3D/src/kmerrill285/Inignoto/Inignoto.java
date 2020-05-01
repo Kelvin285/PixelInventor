@@ -18,8 +18,8 @@ import kmerrill285.Inignoto.events.Input;
 import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.gui.GuiRenderer;
-import kmerrill285.Inignoto.game.client.rendering.gui.IngameMenuScreen;
 import kmerrill285.Inignoto.game.client.rendering.postprocessing.FrameBuffer;
+import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
 import kmerrill285.Inignoto.game.entity.player.ClientPlayerEntity;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.world.World;
@@ -36,6 +36,8 @@ public class Inignoto {
 	public ClientPlayerEntity player;
 	
 	public FrameBuffer framebuffer;
+	public FrameBuffer blurbuffer;
+	public ShadowRenderer shadowRenderer;
 	
 	public Inignoto() {
 		Inignoto.game = this;
@@ -71,8 +73,8 @@ public class Inignoto {
 		GLFW.glfwDefaultWindowHints();
 		GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
 		GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_TRUE);
-		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
-		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
+		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 4);
+		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 5);
 		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
 		GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GL11.GL_TRUE);
 		
@@ -122,7 +124,7 @@ public class Inignoto {
 					try {
 						if (GuiRenderer.currentScreen == null)
 						updateWorld();
-						world.buildMegachunks();
+						world.buildChunks();
 					}catch (Exception e) {
 						e.printStackTrace();
 						System.exit(0);
@@ -155,6 +157,23 @@ public class Inignoto {
 			}
 		}.start();
 		
+		new Thread() {
+			public void run() {
+				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
+					updateLight();
+					update();
+					updateLight();
+
+					try {
+						Thread.sleep(5);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+						System.exit(0);
+					}
+				}
+			}
+		}.start();
+		
 		FPSCounter.start();
 		TPSCounter.start();
 		
@@ -162,20 +181,30 @@ public class Inignoto {
 		
 		while (!GLFW.glfwWindowShouldClose(Utils.window)) {
 			try {
-				update();
 				if (ticks == 0) {
 					FPSCounter.startUpdate();
+					Camera.update();
+					updateLight();
 					render();
+					updateLight();
 					FPSCounter.endUpdate();
 				} else {
 					ticks++;
 					ticks %= Settings.frameSkip + 1;
 				}
+				updateLight();
+				
+				updateLight();
 			}catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 		stop = true;
+	}
+	
+	private void updateLight() {
+		Inignoto.game.world.updateLight();
+		shadowRenderer.update(Inignoto.game.world.light.getPosition(), Inignoto.game.world.light.getDirection());
 	}
 	
 	public void renderGUI() {
@@ -207,20 +236,61 @@ public class Inignoto {
     	if (!Settings.POST_PROCESSING) {
     		renderWorld();
 		}
-		
-		
+    	
+    	
+    	if (Settings.DISTANCE_BLUR) {
+    		if (Settings.POST_PROCESSING) {
+        		blurbuffer.bind();
+        		Utils.blur_shader.bind();
+        		
+        		guiRenderer.renderBlur();
+        		Utils.blur_shader.unbind();
+        		
+        	}
+        	blurbuffer.unbind();
+        	
+        	if (Events.w != 0) {
+    			GL11.glViewport((int)Events.left, 0, (int)Events.w, (int)Events.height);
+    		} else {
+    			GL11.glViewport(0, 0, Utils.FRAME_WIDTH, Utils.FRAME_HEIGHT);
+    		}
+    	}
+    	
+    	
 		Utils.sprite_shader.bind();
 		
 		renderGUI();
 		
 		Utils.sprite_shader.unbind();
-		
-		
+
+		if (Settings.SHADOWS) {
+			Utils.object_shader.setUniformInt("hasShadows", 1);
+			shadowRenderer.bind(0);
+			renderWorldShadows(0);
+			
+			shadowRenderer.bind(1);
+			renderWorldShadows(1);
+			
+			shadowRenderer.bind(2);
+			renderWorldShadows(2);
+			
+			shadowRenderer.bind(3);
+			renderWorldShadows(3);
+		} else {
+			Utils.object_shader.setUniformInt("hasShadows", 0);
+		}
+		shadowRenderer.unbind(0);
+		shadowRenderer.unbind(1);
+		shadowRenderer.unbind(2);
+		shadowRenderer.unbind(3);
+
 		if (Settings.POST_PROCESSING) {
 			framebuffer.bind();
 			renderWorld();
 		}
+		
 		framebuffer.unbind();
+		
 		
 		GL11.glDisable(GL11.GL_BLEND);
 		
@@ -231,6 +301,37 @@ public class Inignoto {
 		FPSCounter.updateFPS();
 	}
 	
+	public void renderWorldShadows(int cascade) {
+		Utils.shadow_shader.bind();
+		Utils.shadow_shader.setUniformMat4("projMatrix1", shadowRenderer.projectionMatrix);
+		Utils.shadow_shader.setUniformMat4("projMatrix2", shadowRenderer.projectionMatrix1);
+		Utils.shadow_shader.setUniformMat4("projMatrix3", shadowRenderer.projectionMatrix2);
+		Utils.shadow_shader.setUniformMat4("projMatrix4", shadowRenderer.projectionMatrix3);
+
+		Utils.shadow_shader.setUniformInt("cascade", cascade);
+		
+		if (cascade == 3) {
+			Utils.shadow_shader.setUniformFloat("zAdd", 0);
+			Utils.shadow_shader.setUniformFloat("cMul", 4f);
+		} else if (cascade == 2) {
+			Utils.shadow_shader.setUniformFloat("zAdd", 0);
+			Utils.shadow_shader.setUniformFloat("cMul", 3f);
+		} else {
+			if (cascade == 1) {
+				Utils.shadow_shader.setUniformFloat("zAdd", 0);
+				Utils.shadow_shader.setUniformFloat("cMul", 3f);
+			}
+			else {
+				Utils.shadow_shader.setUniformFloat("zAdd", 0);
+				Utils.shadow_shader.setUniformFloat("cMul", 1f);
+			}
+		}
+
+		world.renderShadow(Utils.shadow_shader, shadowRenderer);
+		world.renderChunksShadow(Utils.shadow_shader, shadowRenderer);
+		Utils.shadow_shader.unbind();
+	}
+	
 	public void renderWorld() {
 		Utils.object_shader.bind();
 		
@@ -239,7 +340,7 @@ public class Inignoto {
 		Utils.object_shader.setUniformInt("voxelRender", 0);
 		world.render(Utils.object_shader);
 		Utils.object_shader.setUniformInt("voxelRender", 1);
-		world.renderMegachunks(Utils.object_shader);
+		world.renderChunks(Utils.object_shader);
 		
 		Utils.object_shader.unbind();
 		
@@ -251,9 +352,7 @@ public class Inignoto {
 		TPSCounter.updateTPS();
 		
 		if (TPSCounter.canTick()) {
-			Camera.update();
 			world.tick();
-			
 		}
 		
 	}
@@ -268,6 +367,9 @@ public class Inignoto {
 		Utils.sprite_shader.dispose();
 		Utils.object_shader.dispose();
 		Utils.depth_shader.dispose();
+		Utils.blur_shader.dispose();
+		Utils.shadow_shader.dispose();
+		shadowRenderer.dispose();
 		framebuffer.dispose();
 		world.dispose();
 		System.out.println("exit!");

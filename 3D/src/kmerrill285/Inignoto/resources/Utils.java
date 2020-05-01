@@ -13,6 +13,7 @@ import kmerrill285.Inignoto.events.Events;
 import kmerrill285.Inignoto.game.client.rendering.gui.GuiRenderer;
 import kmerrill285.Inignoto.game.client.rendering.postprocessing.FrameBuffer;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
+import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
 import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
 import kmerrill285.Inignoto.game.entity.player.ClientPlayerEntity;
 import kmerrill285.Inignoto.game.settings.Settings;
@@ -26,7 +27,9 @@ public class Utils {
 	public static ShaderProgram sprite_shader;
 	public static ShaderProgram object_shader;
 	public static ShaderProgram depth_shader;
-	
+	public static ShaderProgram blur_shader;
+	public static ShaderProgram shadow_shader;
+
 	public static final float Z_NEAR = 0.01f;
 	public static final float Z_FAR = 1000.0f;
 	
@@ -79,6 +82,25 @@ public class Utils {
 		sprite_shader.createUniform("post_processing");
 		sprite_shader.createUniform("raycasting");
 		sprite_shader.createUniform("exposure");
+		sprite_shader.createUniform("depth_texture");
+		sprite_shader.createUniform("blur_texture");
+		sprite_shader.createUniform("distance_blur");
+		sprite_shader.createUniform("fogColor");
+		sprite_shader.createUniform("fogDensity");
+
+		blur_shader = new ShaderProgram();
+		blur_shader.createVertexShader(loadResource("Inignoto", "shaders/blur_vertex.glsl"));
+		blur_shader.createFragmentShader(loadResource("Inignoto", "shaders/blur_fragment.glsl"));
+		blur_shader.link();
+		blur_shader.createUniform("offset");
+		blur_shader.createUniform("scale");
+		blur_shader.createUniform("color");
+		blur_shader.createUniform("texture_sampler");
+		blur_shader.createUniform("post_processing");
+		blur_shader.createUniform("raycasting");
+		blur_shader.createUniform("exposure");
+		blur_shader.createUniform("depth_texture");
+		blur_shader.createUniform("blur_texture");
 
 		object_shader = new ShaderProgram();
 		object_shader.createVertexShader(loadResource("Inignoto", "shaders/vertex.glsl"));
@@ -89,7 +111,10 @@ public class Utils {
 		object_shader.createUniform("texture_sampler");
 		object_shader.createFogUniform("fog");
 		object_shader.createUniform("shadowMap");
-		object_shader.createUniform("secondShadowMap");
+		object_shader.createUniform("shadowMap2");
+		object_shader.createUniform("shadowMap3");
+		object_shader.createUniform("shadowMap4");
+
 		object_shader.createFogUniform("shadowBlendFog");
 		object_shader.createUniform("cameraPos");
 		object_shader.createUniform("sunPos");
@@ -103,6 +128,9 @@ public class Utils {
 		object_shader.createUniform("modelLightViewMatrix");
 		object_shader.createUniform("orthoProjectionMatrix");
 		object_shader.createUniform("secondOrthoMatrix");
+		object_shader.createUniform("thirdOrthoMatrix");
+		object_shader.createUniform("fourthOrthoMatrix");
+
 		object_shader.createUniform("hasShadows");
 		object_shader.createUniform("renderToDepth");
 		object_shader.createUniform("loadValue");
@@ -113,6 +141,24 @@ public class Utils {
 		depth_shader.link();
 		depth_shader.createUniform("orthoProjectionMatrix");
 		depth_shader.createUniform("modelMatrix");
+		
+		shadow_shader = new ShaderProgram();
+		shadow_shader.createVertexShader(loadResource("Inignoto", "shaders/shadow_vertex.glsl"));
+		shadow_shader.createFragmentShader(loadResource("Inignoto", "shaders/shadow_fragment.glsl"));
+		shadow_shader.link();
+		shadow_shader.createUniform("projMatrix1");
+		shadow_shader.createUniform("projMatrix2");
+		shadow_shader.createUniform("projMatrix3");
+		shadow_shader.createUniform("projMatrix4");
+
+		shadow_shader.createUniform("zAdd");
+		shadow_shader.createUniform("cMul");
+
+		shadow_shader.createUniform("mvMatrix");
+		shadow_shader.createUniform("texture_sampler");
+		shadow_shader.createUniform("loadValue");
+		shadow_shader.createUniform("cameraPos");
+		shadow_shader.createUniform("cascade");
 
 		GLFW.glfwSetWindowSizeCallback(window, Events::windowSize);
 		setupProjection(object_shader);
@@ -122,7 +168,8 @@ public class Utils {
 		Textures.load();
 		Inignoto.game.guiRenderer = new GuiRenderer(sprite_shader);
 		Inignoto.game.framebuffer = new FrameBuffer();
-
+		Inignoto.game.blurbuffer = new FrameBuffer();
+		Inignoto.game.shadowRenderer = new ShadowRenderer();
 		
 		Inignoto.game.world = new World("World", new Random().nextLong());
 		Inignoto.game.player = new ClientPlayerEntity(new Vector3f(0.5f, Inignoto.game.world.getChunkGenerator().getHeight(0, 0), 0.5f), Inignoto.game.world);

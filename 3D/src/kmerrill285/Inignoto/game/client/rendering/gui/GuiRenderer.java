@@ -111,8 +111,9 @@ public class GuiRenderer {
 		
 		
 		
-		if (Settings.POST_PROCESSING)
-			drawTexture(Inignoto.game.framebuffer, 1920, 1080, -1920, -1080, 0, new Vector4f(1, 1, 1, 1), true);
+		if (Settings.POST_PROCESSING) {
+			drawTexture(Inignoto.game.framebuffer, Inignoto.game.blurbuffer, 1920, 1080, -1920, -1080, 0, new Vector4f(1, 1, 1, 1), true);
+		}
 		
 
 		drawTexture(Textures.VIGINETTE, 0, 0, 1920, 1080, 0, new Vector4f(1, 1, 1, 1));
@@ -121,6 +122,14 @@ public class GuiRenderer {
 			if (Inignoto.game.player.headInGround) {
 				drawTexture(Textures.WHITE_SQUARE, 0, 0, 1920, 1080, 0, new Vector4f(0, 0, 0, 1));
 			}
+		}
+	}
+	
+
+
+	public void renderBlur() {
+		if (Settings.POST_PROCESSING) {
+			drawTexture(Inignoto.game.framebuffer, null, 1920, 1080, -1920, -1080, 0, new Vector4f(1, 1, 1, 1), true);
 		}
 	}
 	
@@ -149,12 +158,12 @@ public class GuiRenderer {
 		drawTexture(texture, x, y, width, height, rotation, color, postProcessing, false);
 	}
 	
-	public void drawTexture(FrameBuffer texture, float x, float y, float width, float height, float rotation, Vector4f color) {
-		drawTexture(texture, x, y, width, height, rotation, color, false);
+	public void drawTexture(FrameBuffer texture, FrameBuffer blur, float x, float y, float width, float height, float rotation, Vector4f color) {
+		drawTexture(texture, blur, x, y, width, height, rotation, color, false);
 	}
 	
-	public void drawTexture(FrameBuffer texture, float x, float y, float width, float height, float rotation, Vector4f color, boolean postProcessing) {
-		drawTexture(texture, x, y, width, height, rotation, color, postProcessing, false);
+	public void drawTexture(FrameBuffer texture, FrameBuffer blur, float x, float y, float width, float height, float rotation, Vector4f color, boolean postProcessing) {
+		drawTexture(texture, blur, x, y, width, height, rotation, color, postProcessing, false);
 	}
 	
 	public void drawTexture(Texture texture, float x, float y, float width, float height, float rotation, Vector4f color, boolean postProcessing, boolean raycasting) {
@@ -171,7 +180,7 @@ public class GuiRenderer {
 		
 	}
 	
-	public void drawTexture(FrameBuffer texture, float x, float y, float width, float height, float rotation, Vector4f color, boolean postProcessing, boolean raycasting) {
+	public void drawTexture(FrameBuffer texture, FrameBuffer blur, float x, float y, float width, float height, float rotation, Vector4f color, boolean postProcessing, boolean raycasting) {
 		
 		sprite.texture = texture.getTexture();
 		shader.setUniformInt("raycasting", raycasting ? 1 : 0);
@@ -183,6 +192,15 @@ public class GuiRenderer {
         shader.setUniformFloat("exposure", Settings.EXPOSURE);
         glActiveTexture(GL15.GL_TEXTURE1);
     	glBindTexture(GL_TEXTURE_2D, texture.getDepthMapTexture().getTextureId());
+		shader.setUniformInt("depth_texture", 1);
+		if (blur != null) {
+			glActiveTexture(GL15.GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, blur.getTexture().getTextureId());
+			shader.setUniformInt("blur_texture", 2);
+			shader.setUniformInt("distance_blur", Settings.DISTANCE_BLUR ? 1 : 0);
+		}
+		shader.setUniformVec3("fogColor", Inignoto.game.world.getFog().color);
+		shader.setUniformFloat("fogDensity", Inignoto.game.world.getFog().density);
         sprite.render();
 		
 	}

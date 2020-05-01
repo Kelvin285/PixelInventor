@@ -83,9 +83,9 @@ public class Structure implements Serializable {
 	
 	
 	public static void save(Structure s) {
-		File dir = new File("PixelInventor/structures/");
+		File dir = new File("Inignoto/structures/");
 		dir.mkdirs();
-		File file = new File("PixelInventor/structures/"+s.name+".structure");
+		File file = new File("Inignoto/structures/"+s.name+".structure");
 		if (!file.exists()) {
 			try {
 				file.createNewFile();
@@ -105,9 +105,9 @@ public class Structure implements Serializable {
 	
 	public static Structure load(String name) {
 		Structure s = null;
-		File dir = new File("PixelInventor/structures/");
+		File dir = new File("Inignoto/structures/");
 		dir.mkdirs();
-		File file = new File("PixelInventor/structures/"+name+".structure");
+		File file = new File("Inignoto/structures/"+name+".structure");
 		if (file.exists()) {
 			try {
 				FileInputStream fis = new FileInputStream(file);
@@ -122,7 +122,7 @@ public class Structure implements Serializable {
 	}
 	
 	public static Structure[] loadAll() {
-		File dir = new File("PixelInventor/structures/");
+		File dir = new File("Inignoto/structures/");
 		dir.mkdirs();
 		File[] files = dir.listFiles();
 		Structure[] s = new Structure[files.length];

@@ -21,7 +21,7 @@ public class FPSCounter {
 	
 	public static void updateFPS() {
 		if (System.nanoTime() / 1000000 - lastFPS > 1000) {
-//			System.out.println(fps);
+			System.out.println(fps);
 			fps = 0;
 			lastFPS = System.nanoTime() / 1000000;
 		}

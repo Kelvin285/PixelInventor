@@ -15,8 +15,9 @@ import kmerrill285.Inignoto.Inignoto;
 import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.MeshRenderer;
-import kmerrill285.Inignoto.game.client.rendering.chunk.MegachunkBuilder;
+import kmerrill285.Inignoto.game.client.rendering.chunk.ChunkBuilder;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
+import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tiles;
@@ -28,7 +29,7 @@ public class Chunk {
 	
 
 	public static final int SIZE = 16;
-	public static final int SIZE_Y = 256;
+	public static final int SIZE_Y = 16;
 		
 	private static final int NUM_TILES = Chunk.SIZE * Chunk.SIZE * Chunk.SIZE_Y;
 	
@@ -187,7 +188,7 @@ public class Chunk {
 	public void save() {
 		if (!this.needsToSave) return;
 		if (tiles == null) return;
-		String DIR = "PixelInventor/saves/"+Inignoto.game.world.getWorldSaver().getWorldName()+"/";
+		String DIR = "Inignoto/saves/"+Inignoto.game.world.getWorldSaver().getWorldName()+"/";
 		File dir = new File(DIR);
 		dir.mkdirs();
 		this.savefile = new File(DIR+"chunk"+getX()+","+getY()+","+getZ()+".chnk");
@@ -216,7 +217,7 @@ public class Chunk {
 	
 	public boolean load() {
 		if (savefile == null) {
-			String DIR = "PixelInventor/saves/"+Inignoto.game.world.getWorldSaver().getWorldName()+"/";
+			String DIR = "Inignoto/saves/"+Inignoto.game.world.getWorldSaver().getWorldName()+"/";
 			setSavefile(new File(DIR+"chunk"+getX()+","+getY()+","+getZ()+".chnk"));
 		}
 		if (!savefile.exists()) {return false;}
@@ -248,9 +249,8 @@ public class Chunk {
 	public boolean canTick() {
 		if (voxels <= 0) return false;
 		int x = getX() * SIZE + SIZE / 2;
-		int y = getY() * SIZE_Y + SIZE_Y / 2;
 		int z = getZ() * SIZE + SIZE / 2;
-		return Camera.position.distance(x, 0, z) <= SIZE * Constants.ACTIVE_CHUNK_DISTANCE && Camera.position.distance(0, y, 0) <= Settings.VERTICAL_VIEW_DISTANCE * SIZE_Y * 1.5;
+		return Camera.position.distance(x, 0, z) <= SIZE * Constants.ACTIVE_CHUNK_DISTANCE;
 	}
 	
 	public boolean isActive() {
@@ -263,16 +263,16 @@ public class Chunk {
 	
 	public boolean isWithinViewingRange() {
 		int x = getX() * SIZE + SIZE / 2;
-		int y = getY() * SIZE_Y + SIZE_Y / 2;
 		int z = getZ() * SIZE + SIZE / 2;
-		return Camera.position.distance(x, 0, z) <= SIZE * Settings.VIEW_DISTANCE && Camera.position.distance(0, y, 0) <= Settings.VERTICAL_VIEW_DISTANCE * SIZE_Y * 1.5;
+		return Camera.position.distance(x, 0, z) <= SIZE * Settings.VIEW_DISTANCE;
 	}
 	
 	public boolean canRender() {
 		int x = getX() * SIZE + SIZE / 2;
+		int y = getY() * SIZE_Y + SIZE_Y / 2;
 		int z = getZ() * SIZE + SIZE / 2;
-		
-		return Camera.position.distance(x, 0, z) <= SIZE * Settings.VIEW_DISTANCE;
+		if (Camera.frustum.intersects(pos.x, pos.y, SIZE, SIZE) || Camera.downFrustum.intersects(pos.x, pos.y, SIZE, SIZE)) return true;
+		return Camera.position.distance(x, 0, z) <= SIZE * Settings.VIEW_DISTANCE || new Vector3f(Camera.position).mul(0, 1, 0).distance(0, y, 0) <= SIZE_Y * Settings.VERTICAL_VIEW_DISTANCE * 1.5;
 	}
 
 	public void tick() {
@@ -295,7 +295,7 @@ public class Chunk {
 							}
 							if (data.getMiningTime() > 0) {
 								if (getWorld().getRandom().nextInt(100) <= 75) {
-									data.setMiningTime(data.getMiningTime() - 1);
+									data.setMiningTime(data.getMiningTime() - 0.1f);
 									this.markForRerender();
 								}
 								if (data.getMiningTime() < 0) {
@@ -321,7 +321,7 @@ public class Chunk {
 		if (mesh != null) {
 			if (canRender()) {
 				if (loadValue > 0) {
-					loadValue -= 0.005f * FPSCounter.getDelta();
+					loadValue -= 0.02f * FPSCounter.getDelta();
 				} else {
 					loadValue = 0;
 				}
@@ -334,11 +334,20 @@ public class Chunk {
 		this.testForActivation();
 	}
 	
+
+	public void renderShadow(ShaderProgram shader, ShadowRenderer renderer) {
+		if (mesh != null) {
+			shader.setUniformFloat("loadValue", loadValue);
+			MeshRenderer.renderMesh(mesh, new Vector3f(getX() * SIZE, getY() * SIZE_Y, getZ() * SIZE), shader, renderer);
+			shader.setUniformFloat("loadValue", 0);
+		}
+	}
+	
 	public void testForActivation() {
 		if (needsToRebuild) {
 			if (this.mesh != null) this.mesh.dispose();
 			needsToRebuild = false;
-			mesh = MegachunkBuilder.buildChunk(this);
+			mesh = ChunkBuilder.buildChunk(this);
 		}
 		if (isActive()) {
 			if (tiles == null) {
@@ -347,7 +356,7 @@ public class Chunk {
 		} else {
 			if (mesh != null) {
 				if (changed) {
-					mesh = MegachunkBuilder.buildChunk(this);
+					mesh = ChunkBuilder.buildChunk(this);
 					changed = false;
 				}
 				if (!needsToSave)
@@ -398,6 +407,7 @@ public class Chunk {
 	public void setNeedsToRebuild(boolean needsToRebuild) {
 		this.needsToRebuild = needsToRebuild;
 	}
+
 
 
 	

@@ -18,7 +18,7 @@ public class TPSCounter {
 	
 	public static void updateTPS() {
 		tick = false;
-		int TPS = 25;
+		int TPS = 30;
 		if (getTime() - lastTPS > TPS) {
 			delta = FPSCounter.getDelta();
 //			System.out.println("TPS: " + tps);

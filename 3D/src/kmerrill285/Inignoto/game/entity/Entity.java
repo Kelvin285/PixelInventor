@@ -4,6 +4,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
+import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
 import kmerrill285.Inignoto.game.world.World;
@@ -105,6 +106,10 @@ public class Entity {
 	}
 	
 	public void render(ShaderProgram shader) {
+		
+	}
+	
+	public void renderShadow(ShaderProgram shader, ShadowRenderer renderer) {
 		
 	}
 	
@@ -228,5 +233,6 @@ public class Entity {
 	public boolean isRunning() {
 		return running;
 	}
+
 
 }

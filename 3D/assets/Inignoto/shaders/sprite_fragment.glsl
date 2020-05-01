@@ -5,6 +5,7 @@ in vec2 outTexCoord;
 
 uniform sampler2D texture_sampler;
 uniform sampler2D depth_texture;
+uniform sampler2D blur_texture;
 uniform vec4 color;
 
 uniform int post_processing;
@@ -12,8 +13,23 @@ uniform int raycasting;
 
 uniform float exposure;
 
+uniform int distance_blur;
+
+uniform vec3 fogColor;
+uniform float fogDensity;
+
+float blurCoords[5];
+
+const int len = 4;
+vec2 poissonDisk[len];
+
 void main()
 {
+	blurCoords[0] = 1.1;
+	blurCoords[1] = 1.2;
+	blurCoords[2] = 1.3;
+	blurCoords[3] = 1.2;
+	blurCoords[4] = 1.1;
 	if (raycasting == 1) {
 		
 		
@@ -22,26 +38,35 @@ void main()
 			fragColor = color * texture(texture_sampler, outTexCoord);
 		}
 		else {
-			float depth = texture(texture_sampler, outTexCoord).z;
+			float deg = 360 / len;
+			float rad = 180 / 3.14;
+			
+			for (int i = 0; i < len; i++) {
+				float angle = i * rad * deg;
+				poissonDisk[i] = vec2(cos(angle), sin(angle));
+			}
+		
+			float depth = texture(depth_texture, outTexCoord).z;
 		
 			fragColor = color * texture(texture_sampler, outTexCoord);
-		
-			float texelSize = 0.002f;
-			float mul = 0.5;
-			vec4 addColor = vec4(0.0);
-			float negate = 1.5f;
-			int blursize = 0;
-			int ii = 0;
-			for (int x = -blursize; x < blursize + 1; x++) {
-				for (int y = -blursize; y < blursize + 1; y++) {
-					vec4 t = color * texture(texture_sampler, outTexCoord + vec2(x * texelSize, y * texelSize));
-					addColor += t * (t - fragColor) * negate + t * mul;
+			if (distance_blur == 1) {
+				float texelSize = 0.002f;
+				vec4 addColor = vec4(0.0);
+				int ii = 0;
+				float blur = 5;
+				for (float x = 0; x < blur; x+=1) {
+					float X = x - (blur / 2);
+					vec4 t = color * texture(blur_texture, outTexCoord + vec2(0, X * texelSize));
+					addColor += t * blurCoords[int(x)];
 					ii++;
 				}
+				
+				if (ii > 0)
+				addColor /= ii;
+				
+				
+				fragColor = mix(fragColor, addColor, depth);
 			}
-			if (ii > 0)
-			addColor /= ii;
-			fragColor += addColor;
 			
 			bool outline = false;
 			
@@ -61,6 +86,31 @@ void main()
 			mapped = pow(mapped, vec3(1.0 / gamma));
 			
 			fragColor = mix(fragColor, vec4(mapped, 1.0), 0.5f);
+			
+			fragColor = mix(fragColor, vec4(fogColor, 1.0), min(depth * fogDensity + 0.5 * fogDensity, 1.0));
+			
+			vec3 depthPos = vec3(outTexCoord, depth);
+			
+			float occStep = 0.001f;
+			float occlusion = 0;
+			float ii = 0;
+			float depth_bias = 0.01f;
+			int size = 5;
+			
+			
+			occlusion = len * size;
+			
+			for (int j = 0; j < size; j++)
+			for (int i = 0; i < len; i++) {
+				float d = texture(depth_texture, depthPos.xy + poissonDisk[i] * occStep * j).z;
+				if (d > depth - depth_bias) {
+					occlusion -= 1;
+				}
+				ii++;
+			}
+			
+			occlusion /= ii;
+			fragColor *= vec4(1.0 - vec3(occlusion), 1.0f);
 		}
 	}
 	

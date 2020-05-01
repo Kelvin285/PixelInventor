@@ -10,38 +10,41 @@ import java.util.Scanner;
 import org.lwjgl.glfw.GLFW;
 
 public class Settings {
-	public static float FOV = 60.0f;
-	public static float ACTUAL_FOV = 60.0f;
+	public static float FOV = 80.0f;
+	public static float ACTUAL_FOV = 80.0f;
 	public static float MOUSE_SENSITIVITY = 0.1f;
 	
 	public static int VIEW_DISTANCE = 8; //normal = 32
-	public static int VERTICAL_VIEW_DISTANCE = 2;
+	public static int VERTICAL_VIEW_DISTANCE = 8;
 	
 	public static boolean HEAD_BOB = true;
 	
-	public static boolean CASCADED_SHADOWS = true;
-	public static boolean SHADOWS = true;
-	public static boolean REFLECTIONS = true;
+	public static boolean CASCADED_SHADOWS = false;
+	public static boolean SHADOWS = false;
+	public static boolean REFLECTIONS = false;
 	
-	public static float EXPOSURE = 1.0f;
+	public static float EXPOSURE = 1.5f;
 		
-	public static boolean POST_PROCESSING = true;
+	public static boolean POST_PROCESSING = false;
+	
+	public static boolean DISTANCE_BLUR = false;
+	
 	public static int frameSkip = 0;
 	
 	
 	public static HashMap<String, InputSetting> inputs = new HashMap<String, InputSetting>();
 	
-	public static InputSetting JUMP = new InputSetting(GLFW.GLFW_KEY_SPACE, false, "PixelInventor:input.jump");
-	public static InputSetting SNEAK = new InputSetting(GLFW.GLFW_KEY_LEFT_SHIFT, false, "PixelInventor:input.sneak");
-	public static InputSetting RUN = new InputSetting(GLFW.GLFW_KEY_LEFT_CONTROL, false, "PixelInventor:input.run");
-	public static InputSetting EXIT = new InputSetting(GLFW.GLFW_KEY_ESCAPE, false, "PixelInventor:input.exit");
-	public static InputSetting INVENTORY = new InputSetting(GLFW.GLFW_KEY_E, false, "PixelInventor:input.inventory");
-	public static InputSetting FORWARD = new InputSetting(GLFW.GLFW_KEY_W, false, "PixelInventor:input.forward");
-	public static InputSetting BACKWARD = new InputSetting(GLFW.GLFW_KEY_S, false, "PixelInventor:input.backward");
-	public static InputSetting LEFT = new InputSetting(GLFW.GLFW_KEY_A, false, "PixelInventor:input.left");
-	public static InputSetting RIGHT = new InputSetting(GLFW.GLFW_KEY_D, false, "PixelInventor:input.right");
-	public static InputSetting ATTACK = new InputSetting(0, true, "PixelInventor:input.attack");
-	public static InputSetting USE = new InputSetting(1, true, "PixelInventor:input.use");
+	public static InputSetting JUMP = new InputSetting(GLFW.GLFW_KEY_SPACE, false, "Inignoto:input.jump");
+	public static InputSetting SNEAK = new InputSetting(GLFW.GLFW_KEY_LEFT_SHIFT, false, "Inignoto:input.sneak");
+	public static InputSetting RUN = new InputSetting(GLFW.GLFW_KEY_LEFT_CONTROL, false, "Inignoto:input.run");
+	public static InputSetting EXIT = new InputSetting(GLFW.GLFW_KEY_ESCAPE, false, "Inignoto:input.exit");
+	public static InputSetting INVENTORY = new InputSetting(GLFW.GLFW_KEY_E, false, "Inignoto:input.inventory");
+	public static InputSetting FORWARD = new InputSetting(GLFW.GLFW_KEY_W, false, "Inignoto:input.forward");
+	public static InputSetting BACKWARD = new InputSetting(GLFW.GLFW_KEY_S, false, "Inignoto:input.backward");
+	public static InputSetting LEFT = new InputSetting(GLFW.GLFW_KEY_A, false, "Inignoto:input.left");
+	public static InputSetting RIGHT = new InputSetting(GLFW.GLFW_KEY_D, false, "Inignoto:input.right");
+	public static InputSetting ATTACK = new InputSetting(0, true, "Inignoto:input.attack");
+	public static InputSetting USE = new InputSetting(1, true, "Inignoto:input.use");
 	
 	public static HashMap<Integer, Boolean> keys = new HashMap<Integer, Boolean>();
 	public static HashMap<Integer, Boolean> pressedKey = new HashMap<Integer, Boolean>();
@@ -50,9 +53,9 @@ public class Settings {
 
 	
 	public static void loadSettings() {
-		File file = new File("PixelInventor/settings.txt");
+		File file = new File("Inignoto/settings.txt");
 		if (!file.exists()) {
-			File dir = new File("PixelInventor");
+			File dir = new File("Inignoto");
 			dir.mkdirs();
 			try {
 				file.createNewFile();
@@ -100,8 +103,11 @@ public class Settings {
 						if (a.contentEquals("HEAD_BOB")) {
 							HEAD_BOB = Boolean.parseBoolean(b);
 						}
-						if (a.contentEquals("SHADOWS")) {
-							SHADOWS = Boolean.parseBoolean(b);
+//						if (a.contentEquals("SHADOWS")) {
+//							SHADOWS = Boolean.parseBoolean(b);
+//						}
+						if (a.contentEquals("DISTANCE_BLUR")) {
+							DISTANCE_BLUR = Boolean.parseBoolean(b);
 						}
 						if (a.contentEquals("REFLECTIONS")) {
 							REFLECTIONS = Boolean.parseBoolean(b);
@@ -158,9 +164,9 @@ public class Settings {
 	}
 	
 	public static void saveSettings() {
-		File file = new File("PixelInventor/settings.txt");
+		File file = new File("Inignoto/settings.txt");
 		if (!file.exists()) {
-			File dir = new File("PixelInventor");
+			File dir = new File("Inignoto");
 			dir.mkdirs();
 			try {
 				file.createNewFile();
@@ -176,7 +182,8 @@ public class Settings {
 			str += getSaveString("VIEW_DISTANCE", VIEW_DISTANCE);
 			str += getSaveString("VERTICAL_VIEW_DISTANCE", VERTICAL_VIEW_DISTANCE);
 			str += getSaveString("HEAD_BOB", HEAD_BOB);
-			str += getSaveString("SHADOWS", SHADOWS);
+//			str += getSaveString("SHADOWS", SHADOWS);
+			str += getSaveString("DISTANCE_BLUR", DISTANCE_BLUR);
 			str += getSaveString("REFLECTIONS", REFLECTIONS);
 			str += getSaveString("EXPOSURE", EXPOSURE);
 			str += getSaveString("POST_PROCESSING", POST_PROCESSING);

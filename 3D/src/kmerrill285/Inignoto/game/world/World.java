@@ -7,25 +7,27 @@ import java.util.Random;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
+import kmerrill285.Inignoto.Inignoto;
 import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.MeshRenderer;
-import kmerrill285.Inignoto.game.client.rendering.chunk.MegachunkBuilder;
+import kmerrill285.Inignoto.game.client.rendering.chunk.ChunkBuilder;
 import kmerrill285.Inignoto.game.client.rendering.effects.lights.DirectionalLight;
 import kmerrill285.Inignoto.game.client.rendering.effects.lights.Fog;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
+import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
 import kmerrill285.Inignoto.game.client.rendering.textures.Texture;
 import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
 import kmerrill285.Inignoto.game.entity.Entity;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tile;
-import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
+import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.world.chunk.Chunk;
 import kmerrill285.Inignoto.game.world.chunk.TileData;
 import kmerrill285.Inignoto.game.world.chunk.TilePos;
 import kmerrill285.Inignoto.game.world.chunk.generator.ChunkGenerator;
-import kmerrill285.Inignoto.resources.Constants;
+import kmerrill285.Inignoto.game.world.chunk.generator.FlatChunkGenerator;
 import kmerrill285.Inignoto.resources.RayTraceResult;
 import kmerrill285.Inignoto.resources.RayTraceResult.RayTraceType;
 
@@ -51,6 +53,7 @@ public class World {
 	public ArrayList<Chunk> unloadedChunks = new ArrayList<Chunk>();
 	public ArrayList<Chunk> activeChunks = new ArrayList<Chunk>();
 	public ArrayList<Chunk> rendering = new ArrayList<Chunk>();
+	public ArrayList<Chunk> chunksToBuild = new ArrayList<Chunk>();
 	
 	public World(String worldName, long s) {
 		worldSaver = new WorldSaver(worldName, this, s);
@@ -87,6 +90,7 @@ public class World {
 		}
 		activeChunks.add(getChunk(x, y, z));
 		unloadedChunks.remove(getChunk(x, y, z));
+		chunksToBuild.add(getChunk(x, y, z));
 	}
 	
 	public void saveChunks() {
@@ -97,7 +101,7 @@ public class World {
 	}
 	public static Chunk pseudochunk = new Chunk(0, 0, 0, null);
 	private Vector3i cp = new Vector3i(0);
-	public void buildMegachunks() {
+	public void buildChunks() {
 		
 		int cx = (int)Math.floor(Camera.position.x / Chunk.SIZE);
 		int cy = (int)Math.floor(Camera.position.y / Chunk.SIZE_Y);
@@ -107,14 +111,15 @@ public class World {
 		cp.z = cz;
 		double distance = Double.MAX_VALUE;
 		Chunk closest = null;
-		
-		for (String str : chunks.keySet()) {
-			Chunk c = chunks.get(str);
+		int index = -1;
+		for (int i = 0; i < chunksToBuild.size(); i++) {
+			Chunk c = chunksToBuild.get(i);
 			if (c.generated == false) {
 				double dist = cp.distance(c.getX(), c.getY(), c.getZ());
 				if (dist < distance) {
 					distance = dist;
-					closest = chunks.get(str);
+					closest = c;
+					index = i;
 				}
 			}
 		}
@@ -124,8 +129,9 @@ public class World {
 			World.pseudochunk.setWorld(this);
 			World.pseudochunk.setSavefile(null);
 			this.getChunkGenerator().generateChunk(World.pseudochunk, true);
-			closest.mesh = MegachunkBuilder.buildChunk(World.pseudochunk);
+			closest.mesh = ChunkBuilder.buildChunk(World.pseudochunk);
 			closest.generated = true;
+			chunksToBuild.remove(index);
 		}
 	}
 
@@ -169,9 +175,7 @@ public class World {
 	}
 	
 	public void tick() {
-		
-		updateLight();
-		
+				
 		for (int i = 0; i < entities.size(); i++) {
 			Entity e = entities.get(i);
 			
@@ -215,38 +219,55 @@ public class World {
 		for (int i = 0; i < entities.size(); i++) {
 			entities.get(i).render(shader);
 		}
-		
 	}
+	
+	public void renderShadow(ShaderProgram shader, ShadowRenderer renderer) {
+		
+		for (int i = 0; i < entities.size(); i++) {
+			entities.get(i).renderShadow(shader, renderer);
+		}
+	}
+	
 	private boolean adding = false;
-	public void renderMegachunks(ShaderProgram shader) {
-		if (!adding)
-		if (activeChunks.size() > 0) {
+	public void renderChunks(ShaderProgram shader) {
+		if (!adding) {
 			rendering.clear();
-			for (int i = 0; i < activeChunks.size(); i++) {
-				rendering.add(activeChunks.get(i));
+			for (String str : chunks.keySet()) {
+				Chunk c = chunks.get(str);
+				rendering.add(c);
 			}
 		}
+		
 		for (int i = 0; i < rendering.size(); i++) {
-			if (rendering.get(i) != null)
+			if (rendering.get(i) == null) continue;
+			rendering.get(i).tick();
 			rendering.get(i).render(shader);
 		}
+		
 		adding = true;
 		renderTileHover(shader);
 	}
 	
+	public void renderChunksShadow(ShaderProgram shader, ShadowRenderer renderer) {
+		for (int i = 0; i < rendering.size(); i++) {
+			if (rendering.get(i) != null)
+			rendering.get(i).renderShadow(shader, renderer);
+		}
+//		updateLight();
+//		Inignoto.game.shadowRenderer.update(light.getPosition(), light.getDirection());
+	}
+	
 	
 	public void updateLight() {
-		Camera.shadowPosition = new Vector3f(Camera.position);
-		Camera.shadowRotation = new Vector3f(Camera.rotation);
-		this.light.setShadowPosMult(Constants.shadow_far / 4.0f);
+		this.light.setShadowPosMult(0);
 
-		float sun_rotation = 17;
-				
-		this.light.setDirection(new Vector3f(sun_rotation, 0, 0));
-		float py = (float)Math.asin(Math.toRadians(sun_rotation)) * light.getShadowPosMult();
-		float pz = (float)Math.acos(Math.toRadians(sun_rotation)) * light.getShadowPosMult();
+		float sun_rotation = light.getDirection().x + 0.0001f;
 		
-		Vector3f pos = Camera.shadowPosition;
+		this.light.setDirection(new Vector3f(sun_rotation, 0, 0));
+		
+		float py = (float)Math.sin(Math.toRadians(sun_rotation)) * light.getShadowPosMult();
+		float pz = (float)Math.cos(Math.toRadians(sun_rotation)) * light.getShadowPosMult();
+		Vector3f pos = new Vector3f(Inignoto.game.player.lastPos).add(Camera.getForward().mul(2));
 		
 		
 		float x = pos.x;
@@ -349,7 +370,7 @@ public class World {
 		if (Camera.currentTile != null) {
 			TilePos pos = Camera.currentTile.getPosition();
 			if (pos != null) {
-				float size = 0.05f;
+				float size = 0.01f;
 				if (Camera.currentTile.getType() == RayTraceType.TILE) {
 					MeshRenderer.renderMesh(selection, new Vector3f(pos.x - (size / 2.0f), pos.y - (size / 2.0f), pos.z - (size / 2.0f)), new Vector3f(1.0f + size, 1.0f + size, 1.0f + size), shader);
 					

@@ -91,19 +91,7 @@ public class Tile {
 			}
 			
 		}
-		float[] top = {0.0f, 0.0f, 1.0f, 1.0f};
-		float[] bottom = {0.0f, 0.0f, 1.0f, 1.0f};
-		float[] left = {0.0f, 0.0f, 1.0f, 1.0f};
-		float[] right = {0.0f, 0.0f, 1.0f, 1.0f};
-		float[] front = {0.0f, 0.0f, 1.0f, 1.0f};
-		float[] back = {0.0f, 0.0f, 1.0f, 1.0f};
-		float[] size = {width, height, 0.0f, 0.0f};
-		top = Textures.TILES.convertToUV(top, getTextureFor(BlockFace.UP));
-		bottom = Textures.TILES.convertToUV(bottom, getTextureFor(BlockFace.DOWN));
-		left = Textures.TILES.convertToUV(left, getTextureFor(BlockFace.LEFT));
-		right = Textures.TILES.convertToUV(right, getTextureFor(BlockFace.RIGHT));
-		front = Textures.TILES.convertToUV(front, getTextureFor(BlockFace.FRONT));
-		back = Textures.TILES.convertToUV(back, getTextureFor(BlockFace.BACK));
+		
 		
 		ID = CURRENT_ID++;
 	}

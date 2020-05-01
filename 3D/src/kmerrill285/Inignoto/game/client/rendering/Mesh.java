@@ -35,6 +35,7 @@ public class Mesh {
     private int vboID;
     private int texID;
     private int indexID;
+    private int normalID;
 
     private int vertexCount;
     
@@ -42,20 +43,32 @@ public class Mesh {
     
     public boolean empty = true;
     
-    private float[] positions;
-    private float[] texCoords;
-    private int[] indices;
-    
     private boolean disposed = false;
     private boolean setup = false;
     private FloatBuffer verticesBuffer = null;
     private FloatBuffer texBuffer = null;
     private IntBuffer indicesBuffer = null;
+    private FloatBuffer normalBuffer = null;
     public Mesh(float[] positions, float[] texCoords, int[] indices, Texture texture) {
-    	
-        this.positions = positions;
-        this.texCoords = texCoords;
-        this.indices = indices;
+        this.texture = texture;
+        this.vertexCount = indices.length;
+        
+        float[] normals = {0, 1, 0};
+        
+        verticesBuffer = MemoryUtil.memAllocFloat(positions.length);
+        vertexCount = indices.length;
+        verticesBuffer.put(positions).flip();
+        
+        texBuffer = MemoryUtil.memAllocFloat(texCoords.length);
+        texBuffer.put(texCoords).flip();
+        indicesBuffer = MemoryUtil.memAllocInt(indices.length);
+        indicesBuffer.put(indices).flip();
+        
+        normalBuffer = MemoryUtil.memAllocFloat(normals.length);
+        normalBuffer.put(normals).flip();
+    }
+    
+    public Mesh(float[] positions, float[] texCoords, int[] indices, float[] normals, Texture texture) {
         this.texture = texture;
         this.vertexCount = indices.length;
         
@@ -67,6 +80,9 @@ public class Mesh {
         texBuffer.put(texCoords).flip();
         indicesBuffer = MemoryUtil.memAllocInt(indices.length);
         indicesBuffer.put(indices).flip();
+        
+        normalBuffer = MemoryUtil.memAllocFloat(normals.length);
+        normalBuffer.put(normals).flip();
     }
     
     public void setup() {
@@ -78,6 +94,7 @@ public class Mesh {
 
         vboID = glGenBuffers();
         texID = glGenBuffers();
+        normalID = glGenBuffers();
         
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
         glBufferData(GL_ARRAY_BUFFER, verticesBuffer, GL_STATIC_DRAW);            
@@ -86,6 +103,11 @@ public class Mesh {
         glBindBuffer(GL_ARRAY_BUFFER, texID);
         glBufferData(GL_ARRAY_BUFFER, texBuffer, GL_STATIC_DRAW);
         glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0);
+        
+        glBindBuffer(GL_ARRAY_BUFFER, normalID);
+        glBufferData(GL_ARRAY_BUFFER, normalBuffer, GL_STATIC_DRAW);
+        glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, 0);
+        
 
         indexID = glGenBuffers();
         
@@ -97,9 +119,6 @@ public class Mesh {
         glBindVertexArray(0);         
         
         setup = true;
-        positions = null;
-        texCoords = null;
-        indices = null;
     }
 
     public int getVaoID() {
@@ -119,6 +138,7 @@ public class Mesh {
         glDeleteBuffers(vboID);
         glDeleteBuffers(texID);
         glDeleteBuffers(indexID);
+        glDeleteBuffers(normalID);
 
         glBindVertexArray(0);
         glDeleteVertexArrays(vaoID);
@@ -131,6 +151,9 @@ public class Mesh {
         }
         if (indicesBuffer != null) {
         	MemoryUtil.memFree(indicesBuffer);
+        }
+        if (normalBuffer != null) {
+        	MemoryUtil.memFree(normalBuffer);
         }
     }
     
@@ -152,7 +175,9 @@ public class Mesh {
     	glBindVertexArray(getVaoID());
     	glEnableVertexAttribArray(0);
     	glEnableVertexAttribArray(1);
+    	glEnableVertexAttribArray(2);
         glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
+    	glEnableVertexAttribArray(2);
         glDisableVertexAttribArray(1);
     	glDisableVertexAttribArray(0);
     	glBindVertexArray(0);

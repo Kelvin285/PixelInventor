@@ -11,7 +11,7 @@ import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.world.chunk.Chunk;
 import kmerrill285.Inignoto.game.world.chunk.TileData;
 
-public class MegachunkBuilder {
+public class ChunkBuilder {
 
 	
 	public static Mesh buildChunk(Chunk chunk) {
@@ -70,7 +70,7 @@ public class MegachunkBuilder {
 		if (queue.size() <= 0) return;
 		Chunk c = queue.pop();
 		if (c != null) {
-			c.mesh = MegachunkBuilder.buildChunk(c);
+			c.mesh = ChunkBuilder.buildChunk(c);
 			c.setTiles(null);
 		}
 	}
