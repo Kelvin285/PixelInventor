@@ -7,8 +7,8 @@ import java.util.Scanner;
 
 import org.joml.Vector3f;
 
+import kmerrill285.Inignoto.game.client.audio.TileSound;
 import kmerrill285.Inignoto.game.client.rendering.BlockFace;
-import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
 import kmerrill285.Inignoto.game.entity.ItemDropEntity;
 import kmerrill285.Inignoto.game.settings.Translation;
 import kmerrill285.Inignoto.game.world.World;
@@ -45,7 +45,10 @@ public class Tile {
 	
 	private TileRayTraceType rayTraceType = TileRayTraceType.SOLID; 
 	
-	public Tile(String name) {
+	public int[] sound;
+	
+	public Tile(String name, int[] sound) {
+		this.sound = sound;
 		this.name = name;
 		Tiles.REGISTRY.put(this.name, this);
 		File file = new File("assets/"+name.split(":")[0]+"/models/tiles/"+name.split(":")[1]+".model");

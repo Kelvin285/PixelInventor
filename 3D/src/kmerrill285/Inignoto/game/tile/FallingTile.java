@@ -8,8 +8,8 @@ import kmerrill285.Inignoto.game.world.chunk.TilePos;
 
 public class FallingTile extends Tile {
 
-	public FallingTile(String name) {
-		super(name);
+	public FallingTile(String name, int[] sound) {
+		super(name, sound);
 	}
 
 	public void tick(World world, TilePos pos, Random random) {

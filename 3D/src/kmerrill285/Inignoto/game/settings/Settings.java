@@ -35,8 +35,8 @@ public class Settings {
 	public static HashMap<String, InputSetting> inputs = new HashMap<String, InputSetting>();
 	
 	public static InputSetting JUMP = new InputSetting(GLFW.GLFW_KEY_SPACE, false, "Inignoto:input.jump");
-	public static InputSetting SNEAK = new InputSetting(GLFW.GLFW_KEY_LEFT_SHIFT, false, "Inignoto:input.sneak");
-	public static InputSetting RUN = new InputSetting(GLFW.GLFW_KEY_LEFT_CONTROL, false, "Inignoto:input.run");
+	public static InputSetting SNEAK = new InputSetting(GLFW.GLFW_KEY_LEFT_CONTROL, false, "Inignoto:input.sneak");
+	public static InputSetting RUN = new InputSetting(GLFW.GLFW_KEY_LEFT_SHIFT, false, "Inignoto:input.run");
 	public static InputSetting EXIT = new InputSetting(GLFW.GLFW_KEY_ESCAPE, false, "Inignoto:input.exit");
 	public static InputSetting INVENTORY = new InputSetting(GLFW.GLFW_KEY_E, false, "Inignoto:input.inventory");
 	public static InputSetting FORWARD = new InputSetting(GLFW.GLFW_KEY_W, false, "Inignoto:input.forward");
@@ -45,7 +45,9 @@ public class Settings {
 	public static InputSetting RIGHT = new InputSetting(GLFW.GLFW_KEY_D, false, "Inignoto:input.right");
 	public static InputSetting ATTACK = new InputSetting(0, true, "Inignoto:input.attack");
 	public static InputSetting USE = new InputSetting(1, true, "Inignoto:input.use");
-	
+	public static InputSetting ALTERNATE_MOVEMENT = new InputSetting(GLFW.GLFW_KEY_LEFT_ALT, false, "Inignoto:input.alternate_movement");
+	public static InputSetting CRAWLING = new InputSetting(GLFW.GLFW_KEY_C, false, "Inignoto:input.crawling");
+
 	public static HashMap<Integer, Boolean> keys = new HashMap<Integer, Boolean>();
 	public static HashMap<Integer, Boolean> pressedKey = new HashMap<Integer, Boolean>();
 	public static HashMap<Integer, Boolean> buttons = new HashMap<Integer, Boolean>();
@@ -154,6 +156,12 @@ public class Settings {
 						if (a.contentEquals("USE")) {
 							USE.read(b);
 						}
+						if (a.contentEquals("ALTERNATE_MOVEMENT")) {
+							ALTERNATE_MOVEMENT.read(b);
+						}
+						if (a.contentEquals("CRAWLING")) {
+							CRAWLING.read(b);
+						}
 					}
 				}
 			}
@@ -199,7 +207,9 @@ public class Settings {
 			str += getSaveString("RIGHT", RIGHT.write());
 			str += getSaveString("ATTACK", ATTACK.write());
 			str += getSaveString("USE", USE.write());
-			
+			str += getSaveString("ALTERNATE_MOVEMENT", ALTERNATE_MOVEMENT.write());
+			str += getSaveString("CRAWLING", CRAWLING.write());
+
 			writer.write(str);
 			writer.close();
 		} catch (IOException e) {

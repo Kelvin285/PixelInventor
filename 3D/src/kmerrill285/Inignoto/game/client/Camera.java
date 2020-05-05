@@ -6,6 +6,8 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import kmerrill285.Inignoto.Inignoto;
+import kmerrill285.Inignoto.game.client.audio.SoundSource;
+import kmerrill285.Inignoto.game.client.audio.TileSound;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
 import kmerrill285.Inignoto.resources.RayTraceResult;
 import kmerrill285.Inignoto.resources.Utils;
@@ -25,22 +27,10 @@ public class Camera {
 	public static Polygon frustum = new Polygon();
 	public static Polygon downFrustum = new Polygon();
 	
-	public static void update() {
-//		System.out.println(position.x + ", " + position.y + ", " + position.z);
-		if (rotation.x < -89) rotation.x = -89;
-		if (rotation.x > 89) rotation.x = 89;
-		
-		Inignoto game = Inignoto.game;
-		if (game.world != null) {
-			currentTile = game.world.rayTraceTiles(position, getForward(rotation.x * -1, rotation.y).mul(REACH_DISTANCE).add(position), TileRayTraceType.SOLID);
-		}
-		
-		if (!position.isFinite()) {
-			position = new Vector3f(0.0f);
-		}
-		if (!rotation.isFinite()) {
-			rotation = new Vector3f(0.0f);
-		}
+	public static SoundSource soundSource;
+	
+	public static void updateView() {
+
 		frustum.reset();
 		downFrustum.reset();
 		Vector3f far = getForward().mul(Utils.Z_FAR);
@@ -67,6 +57,26 @@ public class Camera {
 		downFrustum.addPoint((int)position.x + (int)ur.x, (int)position.z + (int)ur.z);
 		downFrustum.addPoint((int)position.x + (int)dr.x, (int)position.z + (int)dr.z);
 		downFrustum.addPoint((int)position.x + (int)dl.x, (int)position.z + (int)dl.z);
+		
+		soundSource.setPosition(position.x, position.y, position.z);
+	}
+	
+	public static void update() {
+//		System.out.println(position.x + ", " + position.y + ", " + position.z);
+		if (rotation.x < -89) rotation.x = -89;
+		if (rotation.x > 89) rotation.x = 89;
+		
+		Inignoto game = Inignoto.game;
+		if (game.world != null) {
+			currentTile = game.world.rayTraceTiles(position, getForward(rotation.x * -1, rotation.y).mul(REACH_DISTANCE).add(position), TileRayTraceType.SOLID);
+		}
+		
+		if (!position.isFinite()) {
+			position = new Vector3f(0.0f);
+		}
+		if (!rotation.isFinite()) {
+			rotation = new Vector3f(0.0f);
+		}
 	}
 	
 	public static Matrix4f getViewMatrix() {
@@ -75,8 +85,8 @@ public class Camera {
 	    viewMatrix.identity();
 
 	    viewMatrix.rotate((float)Math.toRadians(rotation.x), new Vector3f(1, 0, 0))
+        .rotate((float)Math.toRadians(rotation.z), new Vector3f(0, 0, 1))
 	        .rotate((float)Math.toRadians(rotation.y), new Vector3f(0, 1, 0))
-	        .rotate((float)Math.toRadians(rotation.z), new Vector3f(0, 0, 1))
 	        ;
 	    
 	    viewMatrix.translate(-position.x, -position.y, -position.z);

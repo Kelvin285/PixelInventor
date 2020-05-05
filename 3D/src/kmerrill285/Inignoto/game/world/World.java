@@ -9,6 +9,7 @@ import org.joml.Vector3i;
 
 import kmerrill285.Inignoto.Inignoto;
 import kmerrill285.Inignoto.game.client.Camera;
+import kmerrill285.Inignoto.game.client.audio.SoundSource;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.MeshRenderer;
 import kmerrill285.Inignoto.game.client.rendering.chunk.ChunkBuilder;
@@ -506,6 +507,11 @@ public class World {
 			chunk.setLocalTile(x, y, z, tile);
 			chunk.markForRerender();
 			chunk.markForSave();
+			if (tile.sound != null) {
+				
+				Camera.soundSource.setPosition(x, y, z);
+				Camera.soundSource.play(tile.sound[getRandom().nextInt(tile.sound.length)]);
+			}
 			return true;
 		}
 		return false;
@@ -525,9 +531,14 @@ public class World {
 		z -= mz * Chunk.SIZE;
 		if (chunk != null) {
 			TileData data = chunk.getTileData(x, y, z, false);
+			
+			
 			data.setMiningTime(data.getMiningTime() + strength / Tiles.getTile(data.getTile()).getHardness());
 			int current = (int)(data.getMiningTime() / 20);
 			int last = (int)(data.getLastMiningTime() / 20);
+			
+			
+			
 			if (data.getMiningTime() > 100.0) {
 				data.setMiningTime(0.0f);
 				chunk.setLocalTile(x, y, z, Tiles.AIR);
@@ -537,6 +548,12 @@ public class World {
 			else
 			if (current != last) {
 				chunk.markForRerender();
+				Tile tile = Tiles.getTile(data.getTile());
+				if (tile.sound != null) {
+					
+					Camera.soundSource.setPosition(pos.x, pos.y, pos.z);
+					Camera.soundSource.play(tile.sound[getRandom().nextInt(tile.sound.length)]);
+				}
 			}
 		}
 	}

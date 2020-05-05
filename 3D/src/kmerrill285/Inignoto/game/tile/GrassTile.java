@@ -7,8 +7,8 @@ import kmerrill285.Inignoto.game.world.chunk.TilePos;
 
 public class GrassTile extends Tile {
 
-	public GrassTile(String name) {
-		super(name);
+	public GrassTile(String name, int[] sound) {
+		super(name, sound);
 	}
 
 	public void tick(World world, TilePos pos, Random random) {

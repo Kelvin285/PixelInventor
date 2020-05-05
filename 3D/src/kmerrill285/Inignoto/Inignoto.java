@@ -16,6 +16,7 @@ import org.lwjgl.system.MemoryUtil;
 import kmerrill285.Inignoto.events.Events;
 import kmerrill285.Inignoto.events.Input;
 import kmerrill285.Inignoto.game.client.Camera;
+import kmerrill285.Inignoto.game.client.audio.Sounds;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.gui.GuiRenderer;
 import kmerrill285.Inignoto.game.client.rendering.postprocessing.FrameBuffer;
@@ -160,9 +161,13 @@ public class Inignoto {
 		new Thread() {
 			public void run() {
 				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
-					updateLight();
-					update();
-					updateLight();
+					TPSCounter.updateTPS();
+
+					if (guiRenderer.getOpenScreen() == null) {
+						updateLight();
+						update();
+						updateLight();
+					}
 
 					try {
 						Thread.sleep(5);
@@ -181,9 +186,10 @@ public class Inignoto {
 		
 		while (!GLFW.glfwWindowShouldClose(Utils.window)) {
 			try {
+				Camera.update();
 				if (ticks == 0) {
 					FPSCounter.startUpdate();
-					Camera.update();
+					Camera.updateView();
 					updateLight();
 					render();
 					updateLight();
@@ -349,7 +355,6 @@ public class Inignoto {
 	private boolean updateWorld = false;
 	
 	public void update() {
-		TPSCounter.updateTPS();
 		
 		if (TPSCounter.canTick()) {
 			world.tick();
@@ -363,6 +368,8 @@ public class Inignoto {
 	}
 	
 	public void dispose() {
+		Camera.soundSource.delete();
+		Sounds.dispose();
 		Settings.saveSettings();
 		Utils.sprite_shader.dispose();
 		Utils.object_shader.dispose();

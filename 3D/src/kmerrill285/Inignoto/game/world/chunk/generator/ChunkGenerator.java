@@ -63,7 +63,7 @@ public class ChunkGenerator {
 		float height = noise.GetSimplexFractal(x * 2, 0, z * 2) * 24;
 		float mountain = noise.GetSimplex(x / 500.0f, 0.0f, z / 500.0f) * 512;
 		
-		return height + 64 + mountain;
+		return (height + 64 + mountain) / 5.0f;
 	}
 	
 	public Tile getTopTile(float x, float z) {

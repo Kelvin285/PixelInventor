@@ -20,7 +20,7 @@ uniform float fogDensity;
 
 float blurCoords[5];
 
-const int len = 4;
+const int len = 5;
 vec2 poissonDisk[len];
 
 void main()
@@ -97,17 +97,17 @@ void main()
 			float depth_bias = 0.01f;
 			int size = 5;
 			
-			
-			occlusion = len * size;
+			occlusion = 0;
 			
 			for (int j = 0; j < size; j++)
 			for (int i = 0; i < len; i++) {
 				float d = texture(depth_texture, depthPos.xy + poissonDisk[i] * occStep * j).z;
-				if (d > depth - depth_bias) {
-					occlusion -= 1;
+				if (d - depth_bias > depth) {
+					occlusion += 1;
 				}
 				ii++;
 			}
+			
 			
 			occlusion /= ii;
 			fragColor *= vec4(1.0 - vec3(occlusion), 1.0f);

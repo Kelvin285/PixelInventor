@@ -10,6 +10,9 @@ import org.lwjgl.glfw.GLFW;
 
 import kmerrill285.Inignoto.Inignoto;
 import kmerrill285.Inignoto.events.Events;
+import kmerrill285.Inignoto.game.client.Camera;
+import kmerrill285.Inignoto.game.client.audio.SoundSource;
+import kmerrill285.Inignoto.game.client.audio.Sounds;
 import kmerrill285.Inignoto.game.client.rendering.gui.GuiRenderer;
 import kmerrill285.Inignoto.game.client.rendering.postprocessing.FrameBuffer;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
@@ -69,7 +72,7 @@ public class Utils {
 	}
 	
 	public static void setupGL() throws Exception {
-		
+		Sounds.initAL();
 		
 		sprite_shader = new ShaderProgram();
 		sprite_shader.createVertexShader(loadResource("Inignoto", "shaders/sprite_vertex.glsl"));
@@ -177,6 +180,8 @@ public class Utils {
 		Settings.loadSettings();
 		
 		Structure.structures = Structure.loadAll();
+		
+		Camera.soundSource = new SoundSource();
 	}
 	
 	public static void setupProjection(ShaderProgram shader) {

@@ -130,7 +130,7 @@ public class Input {
 						pos.z += direction.z;
 						boolean stop = false;
 						for (Entity e : game.world.entities) {
-							if (new Rectangle(pos.x, pos.z, 1, 1).intersects(e.position.x-e.size.x/2.0, e.position.z-e.size.z/2.0, e.size.x/2.0, e.size.z/2.0))
+							if (new Rectangle(pos.x , pos.z, 1, 1).intersects((e.position.x), (e.position.z), (e.size.x), e.size.z))
 								if (pos.y == e.getTilePos().y || pos.y == e.getTilePos().y + 1) {
 										stop = true;
 										break;

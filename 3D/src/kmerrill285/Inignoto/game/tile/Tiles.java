@@ -2,6 +2,7 @@ package kmerrill285.Inignoto.game.tile;
 
 import java.util.HashMap;
 
+import kmerrill285.Inignoto.game.client.audio.TileSound;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
 
 public class Tiles {
@@ -25,12 +26,12 @@ public class Tiles {
 	}
 	
 	public static void loadTiles() {
-		AIR = new Tile("Inignoto:air").setFullCube(false).setRayTraceType(TileRayTraceType.GAS).setBlocksMovement(false).setReplaceable();
-		DIRT = new FallingTile("Inignoto:dirt").setHardness(1.0f);
-		GRASS = new GrassTile("Inignoto:grass").setHardness(1.5f);
-		STONE = new Tile("Inignoto:stone").setHardness(3.0f);
-		PURPLE_GRASS = new GrassTile("Inignoto:purple_grass").setHardness(GRASS.getHardness());
-		LOG = new Tile("Inignoto:log").setHardness(2.5f);
-		LEAVES = new Tile("Inignoto:leaves").setHardness(0.2f);
+		AIR = new Tile("Inignoto:air", null).setFullCube(false).setRayTraceType(TileRayTraceType.GAS).setBlocksMovement(false).setReplaceable();
+		DIRT = new FallingTile("Inignoto:dirt", TileSound.dirt).setHardness(1.0f);
+		GRASS = new GrassTile("Inignoto:grass", TileSound.grass).setHardness(1.5f);
+		STONE = new Tile("Inignoto:stone", TileSound.stone).setHardness(3.0f);
+		PURPLE_GRASS = new GrassTile("Inignoto:purple_grass", TileSound.grass).setHardness(GRASS.getHardness());
+		LOG = new Tile("Inignoto:log", TileSound.wood).setHardness(2.5f);
+		LEAVES = new Tile("Inignoto:leaves", TileSound.leaves).setHardness(0.2f);
 	}
 }
