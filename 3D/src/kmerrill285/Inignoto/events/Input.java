@@ -8,7 +8,9 @@ import kmerrill285.Inignoto.game.client.Mouse;
 import kmerrill285.Inignoto.game.client.rendering.gui.GuiRenderer;
 import kmerrill285.Inignoto.game.client.rendering.gui.IngameMenuScreen;
 import kmerrill285.Inignoto.game.client.rendering.gui.InventoryScreen;
+import kmerrill285.Inignoto.game.client.rendering.gui.MenuScreen;
 import kmerrill285.Inignoto.game.entity.Entity;
+import kmerrill285.Inignoto.game.entity.player.PlayerEntity;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.world.chunk.TilePos;
@@ -24,6 +26,7 @@ public class Input {
 			doGameInput();
 		}
 		
+		if (!(GuiRenderer.currentScreen instanceof MenuScreen))
 		if (Settings.INVENTORY.isJustPressed()) {
 			if (renderer != null) {
 				if (!(renderer.getOpenScreen() instanceof IngameMenuScreen)) {
@@ -35,6 +38,7 @@ public class Input {
 				}
 			}
 		}
+		if (!(GuiRenderer.currentScreen instanceof MenuScreen))
 		if (Settings.EXIT.isJustPressed()) {
 			if (renderer != null) {
 				if (renderer.getOpenScreen() != null) {
@@ -131,10 +135,24 @@ public class Input {
 						boolean stop = false;
 						for (Entity e : game.world.entities) {
 							if (new Rectangle(pos.x , pos.z, 1, 1).intersects((e.position.x), (e.position.z), (e.size.x), e.size.z))
-								if (pos.y == e.getTilePos().y || pos.y == e.getTilePos().y + 1) {
+								if (!(e instanceof PlayerEntity)) {
+									if (pos.y == e.getTilePos().y || pos.y == e.getTilePos().y + 1) {
 										stop = true;
 										break;
 									}
+								} else {
+									if (((PlayerEntity)e).isCrawling()) {
+										if (pos.y == e.getTilePos().y) {
+											stop = true;
+											break;
+										}
+									} else {
+										if (pos.y == e.getTilePos().y || pos.y == e.getTilePos().y + 1) {
+											stop = true;
+											break;
+										}
+									}
+								}
 						}
 						
 					if (game.world.getTile(pos).isReplaceable())

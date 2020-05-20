@@ -17,3 +17,4 @@
 "Inignoto:input.use" = "Use"
 "Inignoto:input.alternate_movement" = "Alternate Movement"
 "Inignoto:input.crawling" = "Crawling"
+"Inignoto:input.zoom_out" = "Zoom Out"

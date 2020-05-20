@@ -11,7 +11,15 @@ public class PlayerEntity extends Entity {
 	protected boolean crawling = false;
 	protected boolean rolling = false;
 	protected int rollTap = 0;
-
+	
+	public int ZOOM = 0;
+	
+	public float cameraDist = 2.0f;
+	
+	public int rotDir = 0;
+	
+	public float lastRotation = 0;
+	
 	
 	public PlayerEntity(Vector3f position, World world) {
 		super(position, new Vector3f(0.5f, 2, 0.5f), world);
@@ -50,20 +58,31 @@ public class PlayerEntity extends Entity {
 		
 		if (rollTap > 30) {
 			this.size.y = 0.7f;
-			if (running) {
-				velocity.x += (float)Math.cos(Math.toRadians(yaw - 90)) * 0.3f;
-				velocity.z += (float)Math.sin(Math.toRadians(yaw - 90)) * 0.3f;
+			if (ZOOM != 2) {
+				if (running) {
+					velocity.x += (float)Math.cos(Math.toRadians(yaw - 90)) * 0.12f;
+					velocity.z += (float)Math.sin(Math.toRadians(yaw - 90)) * 0.12f;
+				} else {
+					velocity.x += (float)Math.cos(Math.toRadians(yaw - 90)) * 0.09f;
+					velocity.z += (float)Math.sin(Math.toRadians(yaw - 90)) * 0.09f;
+				}
 			} else {
-				velocity.x += (float)Math.cos(Math.toRadians(yaw - 90)) * 0.2f;
-				velocity.z += (float)Math.sin(Math.toRadians(yaw - 90)) * 0.2f;
+				if (running) {
+					velocity.x -= (float)Math.cos(Math.toRadians(yaw - 90)) * 0.12f;
+					velocity.z -= (float)Math.sin(Math.toRadians(yaw - 90)) * 0.12f;
+				} else {
+					velocity.x -= (float)Math.cos(Math.toRadians(yaw - 90)) * 0.09f;
+					velocity.z -= (float)Math.sin(Math.toRadians(yaw - 90)) * 0.09f;
+				}
 			}
 		} else {
-			if (rollTap < 20) 
+			if (rollTap < 25) 
 			{
 				rolling = false;
 			}
-			if (rollTap < 15) rollTap = 0;
+			if (rollTap < 20) rollTap = 0;
 		}
+		
 		
 		this.eyeHeight = this.size.y * 0.9f;
 	}

@@ -19,8 +19,10 @@ import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.audio.Sounds;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.gui.GuiRenderer;
+import kmerrill285.Inignoto.game.client.rendering.gui.MenuScreen;
 import kmerrill285.Inignoto.game.client.rendering.postprocessing.FrameBuffer;
 import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
+import kmerrill285.Inignoto.game.client.rendering.textures.Fonts;
 import kmerrill285.Inignoto.game.entity.player.ClientPlayerEntity;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.world.World;
@@ -158,26 +160,6 @@ public class Inignoto {
 			}
 		}.start();
 		
-		new Thread() {
-			public void run() {
-				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
-					TPSCounter.updateTPS();
-
-					if (guiRenderer.getOpenScreen() == null) {
-						updateLight();
-						update();
-						updateLight();
-					}
-
-					try {
-						Thread.sleep(5);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-						System.exit(0);
-					}
-				}
-			}
-		}.start();
 		
 		FPSCounter.start();
 		TPSCounter.start();
@@ -186,21 +168,28 @@ public class Inignoto {
 		
 		while (!GLFW.glfwWindowShouldClose(Utils.window)) {
 			try {
+				TPSCounter.updateTPS();
+
+				if (guiRenderer.getOpenScreen() == null) {
+					updateLight();
+					update();
+					updateLight();
+				}
 				Camera.update();
 				if (ticks == 0) {
 					FPSCounter.startUpdate();
 					Camera.updateView();
-					updateLight();
+//					updateLight();
 					render();
-					updateLight();
+//					updateLight();
 					FPSCounter.endUpdate();
 				} else {
 					ticks++;
 					ticks %= Settings.frameSkip + 1;
 				}
-				updateLight();
-				
-				updateLight();
+//				updateLight();
+//				
+//				updateLight();
 			}catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -209,20 +198,27 @@ public class Inignoto {
 	}
 	
 	private void updateLight() {
+		if (world == null) return;
 		Inignoto.game.world.updateLight();
 		shadowRenderer.update(Inignoto.game.world.light.getPosition(), Inignoto.game.world.light.getDirection());
 	}
 	
 	public void renderGUI() {
-	    
+	    if (this.guiRenderer != null)
 	    guiRenderer.render();
 	    
 	}
 	
 	public void render() {
 		Mesh.BUILT = 0;
-		Vector3f skyColor = world.getSkyColor();
-		GL11.glClearColor(skyColor.x, skyColor.y, skyColor.z, 0.0f);
+		
+		if (world != null) {
+			Vector3f skyColor = world.getSkyColor();
+			GL11.glClearColor(skyColor.x, skyColor.y, skyColor.z, 0.0f);
+		} else {
+			GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		}
+		
 		
 		
 		GL11.glEnable(GL11.GL_DEPTH_TEST);
@@ -339,16 +335,20 @@ public class Inignoto {
 	}
 	
 	public void renderWorld() {
-		Utils.object_shader.bind();
+		if (this.guiRenderer != null)
+		if (this.guiRenderer.getOpenScreen() instanceof MenuScreen == false) {
+			Utils.object_shader.bind();
+			
+			Utils.setupProjection(Utils.object_shader);
+			
+			Utils.object_shader.setUniformInt("voxelRender", 0);
+			world.render(Utils.object_shader);
+			Utils.object_shader.setUniformInt("voxelRender", 1);
+			world.renderChunks(Utils.object_shader);
+			
+			Utils.object_shader.unbind();
+		}
 		
-		Utils.setupProjection(Utils.object_shader);
-		
-		Utils.object_shader.setUniformInt("voxelRender", 0);
-		world.render(Utils.object_shader);
-		Utils.object_shader.setUniformInt("voxelRender", 1);
-		world.renderChunks(Utils.object_shader);
-		
-		Utils.object_shader.unbind();
 		
 	}
 	
@@ -356,6 +356,7 @@ public class Inignoto {
 	
 	public void update() {
 		
+		if (this.guiRenderer.getOpenScreen() instanceof MenuScreen == false)
 		if (TPSCounter.canTick()) {
 			world.tick();
 		}
@@ -368,6 +369,7 @@ public class Inignoto {
 	}
 	
 	public void dispose() {
+		Fonts.dispose();
 		Camera.soundSource.delete();
 		Sounds.dispose();
 		Settings.saveSettings();

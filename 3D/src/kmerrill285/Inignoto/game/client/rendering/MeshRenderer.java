@@ -94,10 +94,8 @@ public class MeshRenderer {
 	
 	public static Matrix4f getModelMatrix(Vector3f offset, Vector3f rotation, Vector3f scale) {
 		Matrix4f modelMatrix = new Matrix4f();
-		modelMatrix.identity().translate(offset).
-                rotateX((float)Math.toRadians(rotation.x)).
-                rotateY((float)Math.toRadians(rotation.y)).
-                rotateZ((float)Math.toRadians(rotation.z)).
+		modelMatrix.identity().translate(offset)
+		.rotateYXZ((float)Math.toRadians(rotation.y), (float)Math.toRadians(rotation.x), (float)Math.toRadians(rotation.z)).
                 scale(scale.x, scale.y, scale.z);
 		Matrix4f view = new Matrix4f(Camera.getViewMatrix());
         return view.mul(modelMatrix);

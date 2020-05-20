@@ -9,6 +9,8 @@ out vec2 outTexCoord;
 uniform vec2 offset;
 uniform vec2 scale;
 
+uniform float zv;
+
 void main()
 {
 	vec2 offs = offset;
@@ -21,6 +23,7 @@ void main()
 	
 	pos *= scale * 2;
 	
+	
 	pos.x *= mul;
 	pos.y *= mul2;
 	offs.x *= mul;
@@ -29,6 +32,6 @@ void main()
 	pos.y += offs.y * 2;
 	
 	
-    gl_Position = vec4(pos.xy - vec2(1, 1), 0, 1.0);
+    gl_Position = vec4(pos.xy - vec2(1, 1), zv, 1.0);
     outTexCoord = texCoord;
 }

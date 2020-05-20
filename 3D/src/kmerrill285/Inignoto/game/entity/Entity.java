@@ -44,6 +44,10 @@ public class Entity {
 	
 	private int jumpDelay = 0;
 	
+	public float rotY;
+	public float headPitch;
+	public float headYaw;
+	
 	
 	public Entity(Vector3f position, Vector3f size, World world) {
 		this.position = position;
@@ -232,8 +236,8 @@ public class Entity {
 	public void jump() {
 		if (jumpDelay > 0) return;
 		velocity.y = 0.15f * 1.25f;
-		velocity.x *= 2f;
-		velocity.z *= 2f;
+		velocity.x *= 1.5f;
+		velocity.z *= 1.5f;
 	}
 	
 	public void dispose() {

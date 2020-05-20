@@ -47,6 +47,7 @@ public class Settings {
 	public static InputSetting USE = new InputSetting(1, true, "Inignoto:input.use");
 	public static InputSetting ALTERNATE_MOVEMENT = new InputSetting(GLFW.GLFW_KEY_LEFT_ALT, false, "Inignoto:input.alternate_movement");
 	public static InputSetting CRAWLING = new InputSetting(GLFW.GLFW_KEY_C, false, "Inignoto:input.crawling");
+	public static InputSetting ZOOM_OUT = new InputSetting(GLFW.GLFW_KEY_F5, false, "Inignoto:input.zoom_out");
 
 	public static HashMap<Integer, Boolean> keys = new HashMap<Integer, Boolean>();
 	public static HashMap<Integer, Boolean> pressedKey = new HashMap<Integer, Boolean>();
@@ -162,6 +163,9 @@ public class Settings {
 						if (a.contentEquals("CRAWLING")) {
 							CRAWLING.read(b);
 						}
+						if (a.contentEquals("ZOOM_OUT")) {
+							ZOOM_OUT.read(b);
+						}
 					}
 				}
 			}
@@ -209,6 +213,7 @@ public class Settings {
 			str += getSaveString("USE", USE.write());
 			str += getSaveString("ALTERNATE_MOVEMENT", ALTERNATE_MOVEMENT.write());
 			str += getSaveString("CRAWLING", CRAWLING.write());
+			str += getSaveString("ZOOM_OUT", ZOOM_OUT.write());
 
 			writer.write(str);
 			writer.close();

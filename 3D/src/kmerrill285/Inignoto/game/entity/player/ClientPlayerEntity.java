@@ -4,22 +4,30 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import kmerrill285.Inignoto.game.client.Camera;
-import kmerrill285.Inignoto.game.client.audio.SoundSource;
+import kmerrill285.Inignoto.game.client.rendering.entity.PlayerRenderer;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tile;
+import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.resources.FPSCounter;
 import kmerrill285.Inignoto.resources.MathHelper;
+import kmerrill285.Inignoto.resources.RayTraceResult;
+import kmerrill285.Inignoto.resources.RayTraceResult.RayTraceType;
 
 public class ClientPlayerEntity extends PlayerEntity {
 	
 	private int crawlTap = 0;
 	private int hopTap = 0;
 	
+	
+
+	private PlayerRenderer renderer;
+	
 	public ClientPlayerEntity(Vector3f position, World world) {
 		super(position, world);
 		world.entities.add(this);
+		renderer = new PlayerRenderer();
 	}
 	
 	
@@ -55,7 +63,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 		
 		int extra = 0;
 		
-		if (rollTap < 30)
+		if (!rolling)
 		if (Settings.RUN.isPressed()) {
 			this.running = true;
 		} else {
@@ -93,7 +101,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 						if (Settings.RIGHT.isPressed()) {
 							mdir = 1f;
 						}
-						float move = 0.2f;
+						float move = 0.3f;
 						
 						if (hopTap == 0) {
 							velocity.y = 0.12f;
@@ -106,7 +114,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 								velocity.x += (float)Math.cos(Math.toRadians(yaw + 90)) * move * 0.75f;
 								velocity.z += (float)Math.sin(Math.toRadians(yaw + 90)) * move * 0.75f;
 							}
-							hopTap = 30;
+							hopTap = 20;
 						}
 					} else 
 					if (Settings.LEFT.isPressed() || Settings.RIGHT.isPressed()){
@@ -118,7 +126,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 							mdir = 1f;
 						}
 						if (hopTap == 0) {
-							float move = 0.3f;
+							float move = 0.15f;
 							velocity.y = 0.12f;
 							velocity.x += (float)Math.cos(Math.toRadians(yaw)) * mdir * move;
 							velocity.z += (float)Math.sin(Math.toRadians(yaw)) * mdir * move;
@@ -204,11 +212,19 @@ public class ClientPlayerEntity extends PlayerEntity {
 		moveDir.lerp(dir, 0.5f);
 		
 		if (rollTap < 30) {
-			XP = (float)Math.cos(Math.toRadians(yaw - 90)) * moveDir.y * backMul;
-			ZP = (float)Math.sin(Math.toRadians(yaw - 90)) * moveDir.y * backMul;
-			
-			XP += (float)Math.cos(Math.toRadians(yaw)) * moveDir.x * backMul;
-			ZP += (float)Math.sin(Math.toRadians(yaw)) * moveDir.x * backMul;
+			if (ZOOM != 2) {
+				XP = (float)Math.cos(Math.toRadians(yaw - 90)) * moveDir.y * backMul;
+				ZP = (float)Math.sin(Math.toRadians(yaw - 90)) * moveDir.y * backMul;
+				
+				XP += (float)Math.cos(Math.toRadians(yaw)) * moveDir.x * backMul;
+				ZP += (float)Math.sin(Math.toRadians(yaw)) * moveDir.x * backMul;
+			} else {
+				XP = -(float)Math.cos(Math.toRadians(yaw - 90)) * moveDir.y * backMul;
+				ZP = -(float)Math.sin(Math.toRadians(yaw - 90)) * moveDir.y * backMul;
+				
+				XP -= (float)Math.cos(Math.toRadians(yaw)) * moveDir.x * backMul;
+				ZP -= (float)Math.sin(Math.toRadians(yaw)) * moveDir.x * backMul;
+			}
 		}
 		
 		
@@ -337,8 +353,8 @@ public class ClientPlayerEntity extends PlayerEntity {
 			moveLerp = 0.1f;
 		}
 		if (onGround) {
-			velocity.x = MathHelper.lerp(velocity.x, XP * this.moveSpeed * mul, 0.5f);
-			velocity.z = MathHelper.lerp(velocity.z, ZP * this.moveSpeed * mul, 0.5f);
+			velocity.x = MathHelper.lerp(velocity.x, XP * this.moveSpeed * mul, 0.45f);
+			velocity.z = MathHelper.lerp(velocity.z, ZP * this.moveSpeed * mul, 0.45f);
 		} else {
 			velocity.x = MathHelper.lerp(velocity.x, XP * this.moveSpeed * mul, 0.05f);
 			velocity.z = MathHelper.lerp(velocity.z, ZP * this.moveSpeed * mul, 0.05f);
@@ -435,16 +451,15 @@ public class ClientPlayerEntity extends PlayerEntity {
 	}
 	
 	float fm = 0;
-	int rotDir = 0;
-	
-	private float lastRotation = 0;
 	
 	private int soundCounter = 0;
-	
+	private float zoom_dist = 0;
+
 	@Override
 	public void render(ShaderProgram shader) {
 		super.render(shader);
 		
+
 		if (Camera.rotation.y > lastRotation) {
 			rotDir = 1;
 		}
@@ -464,13 +479,14 @@ public class ClientPlayerEntity extends PlayerEntity {
 		if (soundCounter > 0) soundCounter--;
 
 		if (this.onGround) {
-			if ((moved && Math.abs((int)(bobY * 100)) <= 1) || lastOnGround == false && moved) {
+			if ((moved && this.renderer.step) || lastOnGround == false && moved) {
 				if (soundCounter == 0 && !isSneaking && !crawling && !rolling && lastOnGround == true || lastOnGround == false && moved) {
 					Tile tile = world.getTile(getTilePos().add(0, -1, 0));
 					if (tile.sound != null) {
 						Camera.soundSource.play(tile.sound[world.getRandom().nextInt(tile.sound.length)]);
 					}
 					soundCounter = 5;
+					this.renderer.step = false;
 				}
 			}
 		}
@@ -483,11 +499,58 @@ public class ClientPlayerEntity extends PlayerEntity {
 		if (Float.isFinite(bob) == false) bob = 0;
 		Vector3f vel = new Vector3f(moveVel);
 		vel.mul(0);
-//		Vector2f mv = new Vector2f(velocity.x, velocity.z);
-//		fm = MathHelper.lerp(fm, mv.length() * 150, 0.1f);
-//		Settings.ACTUAL_FOV = Settings.FOV + (fm);
 		
-		Camera.position = new Vector3f(lastPos).add(bobX + vel.x * 25, bobY + this.eyeHeight, bobZ + vel.z * 25).add(size.x / 2.0f, 0, size.z / 2.0f);
+		double zoomDist = 4;
+		float dist = 0;
+
+		if (ZOOM == 1) {
+			
+			Vector3f vec = Camera.getForward().mul(dist);
+			Vector3f position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, this.eyeHeight, 0);
+			int i = 0;
+			while (!this.doesCollisionOccur(position.x, position.y, position.z)) {
+				if (dist < zoomDist) {
+					dist += 0.001f;
+				}
+				vec = Camera.getForward().mul(dist);
+				position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, this.eyeHeight, 0);
+				i++;
+				if (i > 10000) {
+					break;
+				}
+			}
+			dist -= 0.1f;
+			vec = Camera.getForward().mul(dist);
+			position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, this.eyeHeight, 0);
+			cameraDist = dist;
+			
+		} else
+			if (ZOOM == 2) {
+				Vector3f vec = Camera.getForward().mul(dist);
+				Vector3f position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, this.eyeHeight, 0);
+				int i = 0;
+				while (!this.doesCollisionOccur(position.x, position.y, position.z)) {
+					if (dist < zoomDist) {
+						dist += 0.001f;
+					}
+					vec = Camera.getForward().mul(dist);
+					position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, this.eyeHeight, 0);
+					i++;
+					if (i > 10000) {
+						break;
+					}
+				}
+				dist -= 0.1f;
+				vec = Camera.getForward().mul(dist);
+				position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, this.eyeHeight, 0);
+				cameraDist = dist;
+				
+			
+		}
+		
+		zoom_dist = MathHelper.lerp(zoom_dist, dist, 0.7f);
+		Vector3f vec = Camera.getForward().mul(zoom_dist);
+		Camera.position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, this.eyeHeight, 0);
 		
 		if (rollTap > 30) {
 		
@@ -500,10 +563,45 @@ public class ClientPlayerEntity extends PlayerEntity {
 		} else {
 			Camera.rotation.z = MathHelper.lerp(Camera.rotation.z, 0, 0.2f);
 		}
+		
+		
 		Camera.update();
+		
+		float fRot = -Camera.rotation.y + 180;
+		if (Math.abs(rotY - fRot) > 30) {
+			rotY = MathHelper.lerp(rotY, fRot, 0.1f);
+		}
+		if (this.isMoving) {
+			rotY = MathHelper.lerp(rotY, fRot, 0.15f);
+		}
+		this.headYaw = fRot - rotY;
+		
+		if (ZOOM != 2) {
+			this.headPitch = Camera.rotation.x;
+		} else {
+			this.headPitch = -Camera.rotation.x;
+		}
+		
+		renderer.render(this, shader);
+
+		
 		this.yaw = Camera.rotation.y;
 		
 		lastRotation = Camera.rotation.y;
+		
+		if (Settings.ZOOM_OUT.isJustPressed()) {
+			ZOOM++;
+			if (ZOOM == 2) {
+				Camera.rotation.y += 180;
+				Camera.rotation.x *= -1;
+			}
+			if (ZOOM > 2) {
+				ZOOM = 0;
+				Camera.rotation.y += 180;
+				Camera.rotation.x *= -1;
+			}
+		}
+		
 	}
 	
 }

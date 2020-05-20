@@ -10,6 +10,18 @@ public class Textures {
 	public static Texture HOTBAR_SELECTED = loadTexture("Inignoto", "gui/hotbar_selected");
 	public static Texture INVENTORY_SELECTED = loadTexture("Inignoto", "gui/inventory_selected");
 	public static Texture WHITE_SQUARE = loadTexture("Inignoto", "gui/white_square");
+	public static Texture HEALTHBAR = loadTexture("Inignoto", "gui/healthbar");
+	public static Texture HEALTHBAR_BACK = loadTexture("Inignoto", "gui/healthbar_back");
+	public static Texture HEALTH_ICON = loadTexture("Inignoto", "gui/health_icon");
+	public static Texture[] TITLE_BACKGROUND = new Texture[] {
+			loadTexture("Inignoto", "gui/title_background/sprite_0"),
+			loadTexture("Inignoto", "gui/title_background/sprite_1"),
+			loadTexture("Inignoto", "gui/title_background/sprite_2"),
+			loadTexture("Inignoto", "gui/title_background/sprite_3")
+	};
+	public static Texture INIGNOTO = loadTexture("Inignoto", "gui/title_background/inignoto");
+	public static Texture MOON = loadTexture("Inignoto", "gui/title_background/moon");
+	public static Texture MOON_CLIP = loadTexture("Inignoto", "gui/title_background/moon_clip");
 
 	
 	public static TextureAtlas TILES = new TextureAtlas("Inignoto", "tiles");

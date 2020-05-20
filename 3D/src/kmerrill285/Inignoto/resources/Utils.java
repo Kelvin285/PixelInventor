@@ -14,9 +14,11 @@ import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.audio.SoundSource;
 import kmerrill285.Inignoto.game.client.audio.Sounds;
 import kmerrill285.Inignoto.game.client.rendering.gui.GuiRenderer;
+import kmerrill285.Inignoto.game.client.rendering.gui.MenuScreen;
 import kmerrill285.Inignoto.game.client.rendering.postprocessing.FrameBuffer;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
+import kmerrill285.Inignoto.game.client.rendering.textures.Fonts;
 import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
 import kmerrill285.Inignoto.game.entity.player.ClientPlayerEntity;
 import kmerrill285.Inignoto.game.settings.Settings;
@@ -90,7 +92,9 @@ public class Utils {
 		sprite_shader.createUniform("distance_blur");
 		sprite_shader.createUniform("fogColor");
 		sprite_shader.createUniform("fogDensity");
+		sprite_shader.createUniform("zv");
 
+		
 		blur_shader = new ShaderProgram();
 		blur_shader.createVertexShader(loadResource("Inignoto", "shaders/blur_vertex.glsl"));
 		blur_shader.createFragmentShader(loadResource("Inignoto", "shaders/blur_fragment.glsl"));
@@ -182,6 +186,10 @@ public class Utils {
 		Structure.structures = Structure.loadAll();
 		
 		Camera.soundSource = new SoundSource();
+		
+		Fonts.loadFonts();
+		
+		Inignoto.game.guiRenderer.openScreen(new MenuScreen(Inignoto.game.guiRenderer));
 	}
 	
 	public static void setupProjection(ShaderProgram shader) {

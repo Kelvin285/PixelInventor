@@ -10,15 +10,15 @@ import kmerrill285.Inignoto.resources.Utils;
 
 public class Events {
 	public static void keyCallback(long window, int key, int scancode, int action, int mods) {
-		
 		if (action == GLFW.GLFW_PRESS) {
 			Settings.keys.put(key, true);
 			Settings.pressedKey.put(key, true);
 		}
-		if (action == GLFW.GLFW_RELEASE) {
+		else if (action == GLFW.GLFW_RELEASE) {
 			Settings.keys.put(key, false);
 			Settings.pressedKey.put(key, false);
 		}
+		
 	}
 	
 	public static float w;

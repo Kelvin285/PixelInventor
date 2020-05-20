@@ -19,13 +19,14 @@ import kmerrill285.Inignoto.game.client.Mouse;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.postprocessing.FrameBuffer;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
+import kmerrill285.Inignoto.game.client.rendering.textures.Fonts;
 import kmerrill285.Inignoto.game.client.rendering.textures.Texture;
 import kmerrill285.Inignoto.game.client.rendering.textures.TextureAtlas;
 import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.resources.RayTraceResult;
-import kmerrill285.Inignoto.resources.Utils;
 import kmerrill285.Inignoto.resources.RayTraceResult.RayTraceType;
+import kmerrill285.Inignoto.resources.Utils;
 
 public class GuiRenderer {
 	private static Mesh sprite;
@@ -75,6 +76,8 @@ public class GuiRenderer {
 		
 	public void render() {
 		
+		
+		
 		if (currentScreen != null) {
 			GLFW.glfwSetInputMode(Utils.window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
 			Mouse.locked = false;
@@ -94,14 +97,26 @@ public class GuiRenderer {
 			}
 		}
 		
+		if (!(currentScreen instanceof MenuScreen)) {
+
+			drawTexture(Textures.HOTBAR, 1920 / 2 - (382 * 3) / 2, 0, 382 * 3, 35 * 3, 0, new Vector4f(1, 1, 1, 1));
+			
+			for (int i = 0; i < 10; i++) {
+				drawTexture(Textures.HEALTH_ICON, 7 * 5 + 1920 - 10 - 77 * 5 + 3 * 5 + i * 7 * 5, 10 + 3 * 5, -7 * 5, 7 * 5, 0, new Vector4f(52.0f / 255.0f, 224.0f / 255.0f, 81.0f / 255.0f, 1));
+			}
+			
+			drawTexture(Textures.HEALTHBAR, 1920 - 10, 10, -77 * 5, 13 * 5, 0, new Vector4f(1, 1, 1, 1));
+			
+		}
 		
 		
-		drawTexture(Textures.HOTBAR, 1920 / 2 - (382 * 3) / 2, 0, 382 * 3, 35 * 3, 0, new Vector4f(1, 1, 1, 1));
 		
 		if (currentScreen != null) {
 			currentScreen.tick();
 			currentScreen.render(shader);
 		} else {
+			if (Inignoto.game.player == null ||
+					Inignoto.game.player != null && Inignoto.game.player.ZOOM == 0)
 			if (hover == false) {
 				drawTexture(Textures.FP_CURSOR, 1920 / 2 - 25/2, 1080 / 2 - 25/2, 25, 25, 0, new Vector4f(0.5f, 0.5f, 0.5f, 1));
 			} else {
@@ -110,17 +125,19 @@ public class GuiRenderer {
 		}
 		
 		
-		
-		if (Settings.POST_PROCESSING) {
-			drawTexture(Inignoto.game.framebuffer, Inignoto.game.blurbuffer, 1920, 1080, -1920, -1080, 0, new Vector4f(1, 1, 1, 1), true);
-		}
-		
-
-		drawTexture(Textures.VIGINETTE, 0, 0, 1920, 1080, 0, new Vector4f(1, 1, 1, 1));
-		
-		if (Inignoto.game.player != null) {
-			if (Inignoto.game.player.headInGround) {
-				drawTexture(Textures.WHITE_SQUARE, 0, 0, 1920, 1080, 0, new Vector4f(0, 0, 0, 1));
+		if (!(currentScreen instanceof MenuScreen)) {
+			if (Settings.POST_PROCESSING) {
+				drawTexture(Inignoto.game.framebuffer, Inignoto.game.blurbuffer, 1920, 1080, -1920, -1080, 0, new Vector4f(1, 1, 1, 1), true);
+			}
+			
+	
+			drawTexture(Textures.VIGINETTE, 0, 0, 1920, 1080, 0, new Vector4f(1, 1, 1, 1));
+			
+			
+			if (Inignoto.game.player != null) {
+				if (Inignoto.game.player.headInGround) {
+					drawTexture(Textures.WHITE_SQUARE, 0, 0, 1920, 1080, 0, new Vector4f(0, 0, 0, 1));
+				}
 			}
 		}
 	}
@@ -203,6 +220,20 @@ public class GuiRenderer {
 		shader.setUniformFloat("fogDensity", Inignoto.game.world.getFog().density);
         sprite.render();
 		
+	}
+	
+	public void drawString (String str, float x, float y, float scale, Vector4f color, boolean bold) {
+		for (int i = 0; i < str.length(); i++) {
+			char c = str.toCharArray()[i];
+			if (!bold) {
+				Texture texture = Fonts.chars.get(c);
+				drawTexture(texture, x + i * 15 * scale, y, -15 * scale, 30 * scale, 0, color);
+			} else {
+				Texture texture = Fonts.bold.get(c);
+				drawTexture(texture, x + i * 15 * scale, y, -15 * scale, 30 * scale, 0, color);
+			}
+			
+		}
 	}
     
    

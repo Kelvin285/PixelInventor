@@ -58,17 +58,24 @@ public class Camera {
 		downFrustum.addPoint((int)position.x + (int)dr.x, (int)position.z + (int)dr.z);
 		downFrustum.addPoint((int)position.x + (int)dl.x, (int)position.z + (int)dl.z);
 		
+		if (soundSource != null)
 		soundSource.setPosition(position.x, position.y, position.z);
 	}
 	
 	public static void update() {
-//		System.out.println(position.x + ", " + position.y + ", " + position.z);
 		if (rotation.x < -89) rotation.x = -89;
 		if (rotation.x > 89) rotation.x = 89;
 		
 		Inignoto game = Inignoto.game;
 		if (game.world != null) {
-			currentTile = game.world.rayTraceTiles(position, getForward(rotation.x * -1, rotation.y).mul(REACH_DISTANCE).add(position), TileRayTraceType.SOLID);
+			if (game.player != null) {
+				Vector3f eyePos = new Vector3f(game.player.position).add(0, game.player.eyeHeight, 0).add(game.player.size.x / 2.0f, 0, game.player.size.z / 2.0f);
+				if (game.player.ZOOM != 2) {
+					currentTile = game.world.rayTraceTiles(eyePos, getForward(rotation.x * -1, rotation.y).mul(REACH_DISTANCE).add(eyePos), TileRayTraceType.SOLID);
+				} else {
+					currentTile = game.world.rayTraceTiles(eyePos, getForward(rotation.x * -1, rotation.y).mul(REACH_DISTANCE).mul(-1, -1, -1).add(eyePos), TileRayTraceType.SOLID);
+				}
+			}
 		}
 		
 		if (!position.isFinite()) {
