@@ -45,6 +45,10 @@ public class PlayerRenderer extends EntityRenderer<PlayerEntity> {
 	private Animation SNEAK_IDLE;
 	private Animation SNEAK_WALK;
 	private Animation MINING;
+	private Animation SIDE_HOP;
+	private Animation BACK_HOP;
+	private Animation LEDGE_GRAB;
+	private Animation ROLL;
 
 	
 	public boolean step = false;
@@ -72,7 +76,11 @@ public class PlayerRenderer extends EntityRenderer<PlayerEntity> {
 			SNEAK_WALK = ModelLoader.loadAnimationFromFile("Inignoto", "player/Sneak_Walk");
 			IDLE = ModelLoader.loadAnimationFromFile("Inignoto", "player/Idle");
 			MINING = ModelLoader.loadAnimationFromFile("Inignoto", "player/Mining");
-			
+			LEDGE_GRAB = ModelLoader.loadAnimationFromFile("Inignoto", "player/Ledge_Grab");
+			SIDE_HOP = ModelLoader.loadAnimationFromFile("Inignoto", "player/Side_Hop");
+			BACK_HOP = ModelLoader.loadAnimationFromFile("Inignoto", "player/Back_Hop");
+			ROLL = ModelLoader.loadAnimationFromFile("Inignoto", "player/Roll");
+
 			
 			body_model = new CustomModel(body, skin_texture);
 			eyes_model = new CustomModel(eyes, eyes_texture);
@@ -88,6 +96,10 @@ public class PlayerRenderer extends EntityRenderer<PlayerEntity> {
 		}
 	}
 	
+	boolean righthop = false;
+	
+	int roll = 0;
+	
 	@Override
 	public void render(PlayerEntity entity, ShaderProgram shader) {
 
@@ -102,10 +114,10 @@ public class PlayerRenderer extends EntityRenderer<PlayerEntity> {
 		if (entity.isMoving) {
 			if (entity.isRunning()) {
 				currentAnimation = RUNNING;
-				animationSpeed = 0.5f;
+				animationSpeed = 0.8f;
 			} else {
 				currentAnimation = WALKING;
-				animationSpeed = 0.4f;
+				animationSpeed = 0.6f;
 				if (entity.isSneaking) {
 					currentAnimation = SNEAK_WALK;
 					animationSpeed = 0.2f;
@@ -121,16 +133,58 @@ public class PlayerRenderer extends EntityRenderer<PlayerEntity> {
 				animationSpeed *= -1;
 			}
 		} else {
-			currentAnimation = IDLE;
+			currentAnimation = this.IDLE;
 			if (entity.isSneaking) {
 				currentAnimation = SNEAK_IDLE;
 			}
 			animationSpeed = 0.1f;
 		}
+		
 		if (!entity.onGround) {
 			currentAnimation = JUMP;
 		}
 		
+		
+		if (entity.rightHop) {
+			if (entity.onGround) {
+				SIDE_HOP.currentFrame = 0;
+			}
+			currentAnimation = SIDE_HOP;
+			animationSpeed = 0.5f;
+			if (SIDE_HOP.currentFrame > 42.0f) {
+				SIDE_HOP.currentFrame = 42.0f;
+			}
+		}
+		if (entity.leftHop) {
+			if (entity.onGround) {
+				SIDE_HOP.currentFrame = 42;
+			}
+			currentAnimation = SIDE_HOP;
+			animationSpeed = -0.5f;
+			if (SIDE_HOP.currentFrame < 2) {
+				SIDE_HOP.currentFrame = 2;
+			}
+		}
+		if (entity.backHop) {
+			if (entity.onGround) {
+				BACK_HOP.currentFrame = 0;
+			}
+			currentAnimation = BACK_HOP;
+			animationSpeed = 2f;
+			if (BACK_HOP.currentFrame > 30) {
+				BACK_HOP.currentFrame = 30;
+			}
+		}
+		
+		
+		if (entity.isRolling()) {
+			currentAnimation = ROLL;
+			animationSpeed = 0.5f;
+			roll+=30;
+		} else {
+			roll = 0;
+		}
+
 		renderModel(body_model, currentAnimation, animationSpeed * (float)FPSCounter.getDelta(), -1, entity, shader);
 		renderModel(eyes_model, currentAnimation, 0, body_model.controller.time, entity, shader);
 		renderModel(hair_model, currentAnimation, 0, body_model.controller.time, entity, shader);
@@ -155,8 +209,11 @@ public class PlayerRenderer extends EntityRenderer<PlayerEntity> {
 	public void renderModel(CustomModel model, Animation animation, float updateSpeed, float frame, PlayerEntity entity, ShaderProgram shader) {
 		model.controller.currentAnimation = animation;
 		model.controller.update(updateSpeed);
+
 		if (frame != -1) {
 			model.controller.time = frame;
+
+//			model.controller.currentAnimation.currentFrame = frame;
 		}
 		
 		if (entity.isRunning()) {
@@ -185,11 +242,18 @@ public class PlayerRenderer extends EntityRenderer<PlayerEntity> {
 			slant = MathHelper.lerp(slant, Camera.rotation.y - entity.lastRotation, 0.01f);
 		}
 		
+		if (slant > 15) slant = 15;
+		if (slant < -15) slant = -15;
+		
+		float offsetY = 0;
+		if (entity.isRolling() || entity.backHop) {
+			offsetY = 0.5f;
+		}
 		if (entity.ZOOM != 2) 
 		{
-			model.render(new Vector3f(entity.lastPos).add(entity.size.x / 2.0f, 0, entity.size.z / 2.0f), new Vector3f(1, 1, 1), new Vector3f(runAdd, entity.rotY, slant), shader);
+			model.render(new Vector3f(entity.lastPos).add(entity.size.x / 2.0f, offsetY, entity.size.z / 2.0f), new Vector3f(1, 1, 1), new Vector3f(runAdd + roll, entity.rotY, slant), shader);
 		} else {
-			model.render(new Vector3f(entity.lastPos).add(entity.size.x / 2.0f, 0, entity.size.z / 2.0f), new Vector3f(1, 1, 1), new Vector3f(-runAdd, entity.rotY + 180, slant), shader);
+			model.render(new Vector3f(entity.lastPos).add(entity.size.x / 2.0f, offsetY, entity.size.z / 2.0f), new Vector3f(1, 1, 1), new Vector3f(-runAdd + roll, entity.rotY + 180, slant), shader);
 		}
 
 	}

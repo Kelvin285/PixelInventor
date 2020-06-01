@@ -84,22 +84,40 @@ public class ClientPlayerEntity extends PlayerEntity {
 		else
 			rolling = false;
 		
+		if (onGround) {
+			rightHop = false;
+			leftHop = false;
+			backHop = false;
+		}
+		
 		if (onGround && !isSneaking && !crawling) {
+			
 			if (Settings.ALTERNATE_MOVEMENT.isJustPressed() || moved == false && Settings.ALTERNATE_MOVEMENT.isPressed()) {
 				
 				if (Settings.FORWARD.isPressed() && rolling == false &&
-						!Settings.LEFT.isPressed() && !Settings.RIGHT.isPressed()) {
+						!Settings.LEFT.isPressed() && !Settings.RIGHT.isPressed() && this.isRunning()) {
 					rolling = true;
 					rollTap = 40;
 				}
 				else if (rolling == false) {
 					if (Settings.BACKWARD.isPressed()) {
 						float mdir = 0;
+						backHop = true;
 						if (Settings.LEFT.isPressed()) {
 							mdir = -1f;
+							
+							leftHop = true;
+							rightHop = false;
+							backHop = false;
 						} 
 						if (Settings.RIGHT.isPressed()) {
 							mdir = 1f;
+							rightHop = true;
+							leftHop = false;
+							backHop = false;
+						}
+						if (ZOOM == 2) {
+							mdir *= -1;
 						}
 						float move = 0.3f;
 						
@@ -107,6 +125,9 @@ public class ClientPlayerEntity extends PlayerEntity {
 							velocity.y = 0.12f;
 							velocity.x += (float)Math.cos(Math.toRadians(yaw)) * mdir * move * 0.75f;
 							velocity.z += (float)Math.sin(Math.toRadians(yaw)) * mdir * move * 0.75f;
+							if (ZOOM == 2) {
+								move *= -1;
+							}
 							if (mdir == 0) {
 								velocity.x += (float)Math.cos(Math.toRadians(yaw + 90)) * move;
 								velocity.z += (float)Math.sin(Math.toRadians(yaw + 90)) * move;
@@ -121,9 +142,18 @@ public class ClientPlayerEntity extends PlayerEntity {
 						float mdir = 0;
 						if (Settings.LEFT.isPressed()) {
 							mdir = -1f;
+							leftHop = true;
+							rightHop = false;
+							backHop = false;
 						} 
 						if (Settings.RIGHT.isPressed()) {
 							mdir = 1f;
+							rightHop = true;
+							leftHop = false;
+							backHop = false;
+						}
+						if (ZOOM == 2) {
+							mdir *= -1;
 						}
 						if (hopTap == 0) {
 							float move = 0.15f;
@@ -289,8 +319,8 @@ public class ClientPlayerEntity extends PlayerEntity {
 			}
 		}
 		
-		float mul = 0.75f;
-		if (running && onGround) mul = 1.7f;
+		float mul = 0.8f;
+		if (running && onGround) mul = 1.55f;
 		if (isSneaking && onGround) mul = 0.3f;
 		if (crawling && onGround) mul = 0.3f;
 		
@@ -506,14 +536,14 @@ public class ClientPlayerEntity extends PlayerEntity {
 		if (ZOOM == 1) {
 			
 			Vector3f vec = Camera.getForward().mul(dist);
-			Vector3f position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, this.eyeHeight, 0);
+			Vector3f position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, 2 * 0.75f, 0);
 			int i = 0;
 			while (!this.doesCollisionOccur(position.x, position.y, position.z)) {
 				if (dist < zoomDist) {
 					dist += 0.001f;
 				}
 				vec = Camera.getForward().mul(dist);
-				position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, this.eyeHeight, 0);
+				position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, 2 * 0.75f, 0);
 				i++;
 				if (i > 10000) {
 					break;
@@ -521,20 +551,20 @@ public class ClientPlayerEntity extends PlayerEntity {
 			}
 			dist -= 0.1f;
 			vec = Camera.getForward().mul(dist);
-			position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, this.eyeHeight, 0);
+			position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, 2 * 0.75f, 0);
 			cameraDist = dist;
 			
 		} else
 			if (ZOOM == 2) {
 				Vector3f vec = Camera.getForward().mul(dist);
-				Vector3f position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, this.eyeHeight, 0);
+				Vector3f position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, 2 * 0.75f, 0);
 				int i = 0;
 				while (!this.doesCollisionOccur(position.x, position.y, position.z)) {
 					if (dist < zoomDist) {
 						dist += 0.001f;
 					}
 					vec = Camera.getForward().mul(dist);
-					position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, this.eyeHeight, 0);
+					position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, 2 * 0.75f, 0);
 					i++;
 					if (i > 10000) {
 						break;
@@ -542,17 +572,25 @@ public class ClientPlayerEntity extends PlayerEntity {
 				}
 				dist -= 0.1f;
 				vec = Camera.getForward().mul(dist);
-				position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, this.eyeHeight, 0);
+				position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, 2 * 0.75f, 0);
 				cameraDist = dist;
 				
 			
 		}
 		
-		zoom_dist = MathHelper.lerp(zoom_dist, dist, 0.7f);
-		Vector3f vec = Camera.getForward().mul(zoom_dist);
-		Camera.position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, this.eyeHeight, 0);
+		if (ZOOM == 0) {
+			zoom_dist = MathHelper.lerp(zoom_dist, dist, 0.7f);
+			Vector3f vec = Camera.getForward().mul(zoom_dist);
+			Camera.position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, this.eyeHeight, 0);
+		} else {
+			zoom_dist = MathHelper.lerp(zoom_dist, dist, 0.7f);
+			Vector3f vec = Camera.getForward().mul(zoom_dist);
+			Camera.position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, 2 * 0.75f, 0);
+		}
 		
-		if (rollTap > 30) {
+		
+		
+		if (rollTap > 30 && ZOOM == 0) {
 		
 			if (rotDir > 0) {
 				Camera.rotation.z = MathHelper.lerp(Camera.rotation.z, 10, 0.2f);

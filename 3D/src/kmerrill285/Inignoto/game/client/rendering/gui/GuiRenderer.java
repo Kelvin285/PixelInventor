@@ -167,16 +167,34 @@ public class GuiRenderer {
 		Mouse.locked = true;
 	}
 	
+	
+	public void drawNormalTexture(Texture texture, float x, float y, float width, float height, float rotation, Vector4f color) {
+		drawTexture(texture, x + width, y, -width, height, rotation, color, false);
+	}
+	
+	
 	public void drawTexture(Texture texture, float x, float y, float width, float height, float rotation, Vector4f color) {
 		drawTexture(texture, x, y, width, height, rotation, color, false);
+	}
+	
+	public void drawNormalTexture(Texture texture, float x, float y, float width, float height, float rotation, Vector4f color, boolean postProcessing) {
+		drawTexture(texture, x + width, y, -width, height, rotation, color, postProcessing, false);
 	}
 	
 	public void drawTexture(Texture texture, float x, float y, float width, float height, float rotation, Vector4f color, boolean postProcessing) {
 		drawTexture(texture, x, y, width, height, rotation, color, postProcessing, false);
 	}
 	
+	public void drawNormalTexture(FrameBuffer texture, FrameBuffer blur, float x, float y, float width, float height, float rotation, Vector4f color) {
+		drawTexture(texture, blur, x + width, y, -width, height, rotation, color, false);
+	}
+	
 	public void drawTexture(FrameBuffer texture, FrameBuffer blur, float x, float y, float width, float height, float rotation, Vector4f color) {
 		drawTexture(texture, blur, x, y, width, height, rotation, color, false);
+	}
+	
+	public void drawNormalTexture(FrameBuffer texture, FrameBuffer blur, float x, float y, float width, float height, float rotation, Vector4f color, boolean postProcessing) {
+		drawTexture(texture, blur, x + width, y, -width, height, rotation, color, postProcessing, false);
 	}
 	
 	public void drawTexture(FrameBuffer texture, FrameBuffer blur, float x, float y, float width, float height, float rotation, Vector4f color, boolean postProcessing) {

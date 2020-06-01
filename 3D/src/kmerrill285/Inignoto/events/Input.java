@@ -49,7 +49,7 @@ public class Input {
 			}
 		}
 		
-		Mouse.update();
+		
 	}
 	
 	private static void updateCamera() {

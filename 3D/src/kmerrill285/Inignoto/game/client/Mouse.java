@@ -10,7 +10,7 @@ public class Mouse {
 	public static boolean locked = false;
 	
 	public static void update() {
-		lastX = x;
-		lastY = y;
+		Mouse.lastX = Mouse.x;
+		Mouse.lastY = Mouse.y;
 	}
 }

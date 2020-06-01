@@ -20,12 +20,15 @@ import kmerrill285.Inignoto.resources.MathHelper;
 
 public class CustomModel {
 	public AnimationController controller;
-	private AnimModel model;
+	public AnimModel model;
 	
 	private HashMap<String, Mesh> meshes = new HashMap<String, Mesh>();
 	public HashMap<String, Vector3f> extraRotations = new HashMap<String, Vector3f>();
 	
-	private Texture texture;
+	public HashMap<String, ArrayList<Mesh>> extraMeshes = new HashMap<String, ArrayList<Mesh>>();
+	public HashMap<Mesh, Float> extraScale = new HashMap<Mesh, Float>();
+
+	public Texture texture;
 	
 	public CustomModel(AnimModel model, Texture texture) {
 		this.model = model;
@@ -40,75 +43,102 @@ public class CustomModel {
 		
 		for (String str : model.parts.keySet()) {
 			ModelPart part = model.parts.get(str);
-			ArrayList<Vertex> vertexCoords = part.vertexCoords;
-			float U = part.transformation.U;
-			float V = part.transformation.V;
-			float size_x = part.transformation.size_x;
-			float size_y = part.transformation.size_y;
-			float size_z = part.transformation.size_z;
-			float offsX = part.transformation.offsX;
-			float offsY = part.transformation.offsY;
-			float offsZ = part.transformation.offsZ;
 			
-			boolean multV = false;
+			meshes.put(str, buildMesh(part, texture));
 			
-			if (vertexCoords.size() == 0) {
-				
-				vertexCoords.add(new Vertex(0, size_y, 0));
-				vertexCoords.add(new Vertex(size_x, size_y, 0));
-				vertexCoords.add(new Vertex(size_x, 0, 0));
-				vertexCoords.add(new Vertex(0, 0, 0));
-				
-				vertexCoords.add(new Vertex(0, size_y, size_z));
-				vertexCoords.add(new Vertex(size_x, size_y, size_z));
-				vertexCoords.add(new Vertex(size_x, 0, size_z));
-				vertexCoords.add(new Vertex(0, 0, size_z));
-			} else {
-				multV = true;
+			this.extraMeshes.put(str, new ArrayList<Mesh>());
+
+		}
+	}
+	
+	public void render(Vector3f position, Vector3f scale, Vector3f rotation, ShaderProgram shader) {
+		
+		for (String str : meshes.keySet()) {
+			ModelPart part = model.parts.get(str);
+			Matrix4f first = new Matrix4f();
+//			first.rotateZ((float)Math.toRadians(rotation.z));
+//			first.rotateY((float)Math.toRadians(rotation.y));
+//			first.rotateX((float)Math.toRadians(rotation.x));
+			first.rotateYXZ(
+					(float)Math.toRadians(rotation.y),
+					(float)Math.toRadians(rotation.x),
+					(float)Math.toRadians(rotation.z)
+					);
+			if (part.parent == null) {
+				//renderMesh(part, position, scale, new Vector3f(0, 0, 0), shader, rotation, position);
+				renderMesh(part, new Matrix4f(first), shader, new Vector3f(position), new Vector3f(rotation), new Vector3f(0, 0, 0));
 			}
 			
-			ArrayList<Vertex> verts = new ArrayList<Vertex>();
-			
-			verts.add(new Vertex(0, 0, 0));
-			verts.add(new Vertex(0, 1, 0));
-			verts.add(new Vertex(1, 1, 0));
-			verts.add(new Vertex(1, 0, 0));
-			
-			verts.add(new Vertex(0, 0, 1));
-			verts.add(new Vertex(0, 1, 1));
-			verts.add(new Vertex(1, 1, 1));
-			verts.add(new Vertex(1, 0, 1));
-			
-			verts.add(new Vertex(0, 0, 1));
-			verts.add(new Vertex(0, 1, 1));
-			verts.add(new Vertex(0, 1, 0));
-			verts.add(new Vertex(0, 0, 0));
-			
-			verts.add(new Vertex(1, 0, 0));
-			verts.add(new Vertex(1, 1, 0));
-			verts.add(new Vertex(1, 1, 1));
-			verts.add(new Vertex(1, 0, 1));
-			
-			verts.add(new Vertex(0, 1, 0));
-			verts.add(new Vertex(0, 1, 1));
-			verts.add(new Vertex(1, 1, 1));
-			verts.add(new Vertex(1, 1, 0));
-			
-			verts.add(new Vertex(0, 0, 1));
-			verts.add(new Vertex(0, 0, 0));
-			verts.add(new Vertex(1, 0, 0));
-			verts.add(new Vertex(1, 0, 1));
-			
-			int[] indices = {
-				0, 1, 2, 2, 3, 0,
-				4, 5, 6, 6, 7, 4,
-				8, 9, 10, 10, 11, 8,
-				12, 13, 14, 14, 15, 12,
-				16, 17, 18, 18, 19, 16,
-				20, 21, 22, 22, 23, 20
-			};
-			
-			float[] texCoords = {
+		}
+	}
+	
+
+	public void renderMesh(ModelPart part, Matrix4f matrix, ShaderProgram shader, Vector3f truePos, Vector3f trueRot, Vector3f renderRot) {
+		Mesh mesh = meshes.get(part.name);
+		ModelTransformation transform = part.transformation;
+		
+		Vertex framePos = getPositionForFrame(part, controller.currentAnimation);
+		Vertex frameRot = getRotationForFrame(part, controller.currentAnimation);
+		
+		float scale = 0.055f;
+		
+
+		Vector3f pos = new Vector3f(transform.x, transform.y, transform.z);
+
+		Vector3f offset = new Vector3f(transform.offsX, transform.offsY, transform.offsZ);
+		
+		pos.add(offset.x, offset.y, offset.z);
+		
+		
+		Vector3f r = new Vector3f(0, 0, 0);
+		if (extraRotations.get(part.name) != null)
+		r.add(extraRotations.get(part.name));
+		
+		matrix.translate(pos.x + framePos.x, pos.y + framePos.y, pos.z + framePos.z);
+		matrix.rotateYXZ(
+				(float)Math.toRadians(transform.rotY + frameRot.y + r.y),
+				(float)Math.toRadians(transform.rotX + frameRot.x + r.x),
+				(float)Math.toRadians(transform.rotZ + frameRot.z + r.z)
+				);
+		
+		renderRot.add(transform.rotX + frameRot.x + r.x, transform.rotY + frameRot.y + r.y, transform.rotZ + frameRot.z + r.z);
+		
+		Vector3f translationDest = new Vector3f(0, 0, 0);
+		
+		Vector3f rotationDest = new Vector3f(0, 0, 0);
+		
+		new Matrix4f(matrix).getTranslation(translationDest);
+		new Matrix4f(matrix).getEulerAnglesZYX(rotationDest);
+		rotationDest.x = (float)Math.toDegrees(rotationDest.x);
+		rotationDest.y = (float)Math.toDegrees(rotationDest.y);
+		rotationDest.z = (float)Math.toDegrees(rotationDest.z);
+		
+		MeshRenderer.renderMesh(mesh, new Vector3f(truePos).add(new Vector3f(translationDest).mul(scale)), new Vector3f(renderRot).add(trueRot), new Vector3f(1, 1, -1).mul(scale), shader);
+		
+		ArrayList<Mesh> meshes = extraMeshes.get(part.name);
+		for (int i = 0; i < meshes.size(); i++) {
+			if (extraScale.containsKey(meshes.get(i))) {
+				MeshRenderer.renderMesh(meshes.get(i), new Vector3f(truePos).add(new Vector3f(translationDest).mul(scale)), new Vector3f(renderRot).add(trueRot), new Vector3f(1, 1, -1).mul(scale).mul((float)extraScale.get(meshes.get(i))), shader);
+			} else {
+				MeshRenderer.renderMesh(meshes.get(i), new Vector3f(truePos).add(new Vector3f(translationDest).mul(scale)), new Vector3f(renderRot).add(trueRot), new Vector3f(1, 1, -1).mul(scale), shader);
+			}
+		}
+		
+		for (ModelPart child : part.children) {
+			renderMesh(child, new Matrix4f(matrix), shader, new Vector3f(truePos), new Vector3f(trueRot), new Vector3f(renderRot));
+		}
+	}
+	
+	public static Mesh buildMesh(ModelPart part, Texture texture) {
+		float U = part.transformation.U;
+		float V = part.transformation.V;
+		float size_x = part.transformation.size_x;
+		float size_y = part.transformation.size_y;
+		float size_z = part.transformation.size_z;
+		float offsX = part.transformation.offsX;
+		float offsY = part.transformation.offsY;
+		float offsZ = part.transformation.offsZ;
+		float[] texCoords = {
 				//front
 				U + size_z, V + size_z + size_y,
 				U + size_z, V + size_z,
@@ -147,190 +177,107 @@ public class CustomModel {
 				i++;
 				texCoords[i] /= (float)texture.getHeight();
 			}
-			
-			float[] vertices = new float[verts.size() * 3];
-
-			//5
-			for (int i = 0; i < verts.size(); i++) {
-				int J = i * 3;
-				if (!multV) {
-					Vector3f v = new Vector3f(verts.get(i).x, verts.get(i).y, verts.get(i).z).sub(0.5f, 0.5f, 0.5f).mul(size_x, size_y, size_z);
-					vertices[J] = v.x;
-					vertices[J + 1] = v.y;
-					vertices[J + 2] = v.z;
-				} else {
-					Vertex p5 = vertexCoords.get(5);
-					Vector3f v = new Vector3f(verts.get(i).x, verts.get(i).y, verts.get(i).z).sub(0.5f, 0.5f, 0.5f).mul(p5.x * 2, p5.y * 2, p5.z * 2);
-					vertices[J] = v.x;
-					vertices[J + 1] = v.y;
-					vertices[J + 2] = v.z;
-				}
-			}
-			
-			Mesh mesh = new Mesh(vertices, texCoords, indices, texture);
-			meshes.put(str, mesh);
-		}
+			return buildMesh(part, texture, texCoords, 1.0f);
 	}
 	
-	public void render(Vector3f position, Vector3f scale, Vector3f rotation, ShaderProgram shader) {
+	public static Mesh buildMesh(ModelPart part, Texture texture, float[] texCoords, float scale) {
+		ArrayList<Vertex> vertexCoords = part.vertexCoords;
+		float size_x = part.transformation.size_x;
+		float size_y = part.transformation.size_y;
+		float size_z = part.transformation.size_z;
 		
-		for (String str : meshes.keySet()) {
-			ModelPart part = model.parts.get(str);
-			Matrix4f first = new Matrix4f();
-//			first.rotateZ((float)Math.toRadians(rotation.z));
-//			first.rotateY((float)Math.toRadians(rotation.y));
-//			first.rotateX((float)Math.toRadians(rotation.x));
-			first.rotateYXZ(
-					(float)Math.toRadians(rotation.y),
-					(float)Math.toRadians(rotation.x),
-					(float)Math.toRadians(rotation.z)
-					);
-			if (part.parent == null) {
-				//renderMesh(part, position, scale, new Vector3f(0, 0, 0), shader, rotation, position);
-				renderMesh(part, new Matrix4f(first), shader, new Vector3f(position), new Vector3f(rotation), new Vector3f(0, 0, 0));
-			}
+		boolean multV = false;
+		
+		if (vertexCoords.size() == 0) {
+			vertexCoords = new ArrayList<Vertex>();
 			
+			vertexCoords.add(new Vertex(0, size_y, 0));
+			vertexCoords.add(new Vertex(size_x, size_y, 0));
+			vertexCoords.add(new Vertex(size_x, 0, 0));
+			vertexCoords.add(new Vertex(0, 0, 0));
+			
+			vertexCoords.add(new Vertex(0, size_y, size_z));
+			vertexCoords.add(new Vertex(size_x, size_y, size_z));
+			vertexCoords.add(new Vertex(size_x, 0, size_z));
+			vertexCoords.add(new Vertex(0, 0, size_z));
+		} else {
+			multV = true;
 		}
-	}
-	
+		
+		ArrayList<Vertex> verts = new ArrayList<Vertex>();
+		
+		verts.add(new Vertex(0, 0, 0));
+		verts.add(new Vertex(0, 1, 0));
+		verts.add(new Vertex(1, 1, 0));
+		verts.add(new Vertex(1, 0, 0));
+		
+		verts.add(new Vertex(0, 0, 1));
+		verts.add(new Vertex(0, 1, 1));
+		verts.add(new Vertex(1, 1, 1));
+		verts.add(new Vertex(1, 0, 1));
+		
+		verts.add(new Vertex(0, 0, 1));
+		verts.add(new Vertex(0, 1, 1));
+		verts.add(new Vertex(0, 1, 0));
+		verts.add(new Vertex(0, 0, 0));
+		
+		verts.add(new Vertex(1, 0, 0));
+		verts.add(new Vertex(1, 1, 0));
+		verts.add(new Vertex(1, 1, 1));
+		verts.add(new Vertex(1, 0, 1));
+		
+		verts.add(new Vertex(0, 1, 0));
+		verts.add(new Vertex(0, 1, 1));
+		verts.add(new Vertex(1, 1, 1));
+		verts.add(new Vertex(1, 1, 0));
+		
+		verts.add(new Vertex(0, 0, 1));
+		verts.add(new Vertex(0, 0, 0));
+		verts.add(new Vertex(1, 0, 0));
+		verts.add(new Vertex(1, 0, 1));
+		
+		int[] indices = {
+			0, 1, 2, 2, 3, 0,
+			4, 5, 6, 6, 7, 4,
+			8, 9, 10, 10, 11, 8,
+			12, 13, 14, 14, 15, 12,
+			16, 17, 18, 18, 19, 16,
+			20, 21, 22, 22, 23, 20
+		};
+		
+		float[] vertices = new float[verts.size() * 3];
 
-	public void renderMesh(ModelPart part, Matrix4f matrix, ShaderProgram shader, Vector3f truePos, Vector3f trueRot, Vector3f renderRot) {
-		Mesh mesh = meshes.get(part.name);
-		ModelTransformation transform = part.transformation;
-		
-		Vertex framePos = getPositionForFrame(part, controller.currentAnimation);
-		Vertex frameRot = getRotationForFrame(part, controller.currentAnimation);
-		
-		
-		float scale = 0.055f;
-		
-
-		Vector3f pos = new Vector3f(transform.x, transform.y, transform.z);
-
-		Vector3f offset = new Vector3f(transform.offsX, transform.offsY, transform.offsZ);
-		
-		pos.add(offset.x, offset.y, offset.z);
+		//5
+		for (int i = 0; i < verts.size(); i++) {
+			int J = i * 3;
+			if (!multV) {
+				Vector3f v = new Vector3f(verts.get(i).x, verts.get(i).y, verts.get(i).z).sub(0.5f, 0.5f, 0.5f).mul(size_x, size_y, size_z);
+				vertices[J] = v.x;
+				vertices[J + 1] = v.y;
+				vertices[J + 2] = v.z;
+			} else {
 				
-		Vector3f r = new Vector3f(0, 0, 0);
-		if (extraRotations.get(part.name) != null)
-		r.add(extraRotations.get(part.name));
-		
-		matrix.translate(pos.x + framePos.x, pos.y + framePos.y, pos.z + framePos.z);
-		matrix.rotateYXZ(
-				(float)Math.toRadians(transform.rotY + frameRot.y + r.y),
-				(float)Math.toRadians(transform.rotX + frameRot.x + r.x),
-				(float)Math.toRadians(transform.rotZ + frameRot.z + r.z)
-				);
-		
-		renderRot.add(transform.rotX + frameRot.x + r.x, transform.rotY + frameRot.y + r.y, transform.rotZ + frameRot.z + r.z);
-		
-		Vector3f translationDest = new Vector3f(0, 0, 0);
-		
-		Vector3f rotationDest = new Vector3f(0, 0, 0);
-		
-		new Matrix4f(matrix).getTranslation(translationDest);
-		new Matrix4f(matrix).getEulerAnglesZYX(rotationDest);
-		rotationDest.x = (float)Math.toDegrees(rotationDest.x);
-		rotationDest.y = (float)Math.toDegrees(rotationDest.y);
-		rotationDest.z = (float)Math.toDegrees(rotationDest.z);
-		
-		MeshRenderer.renderMesh(mesh, new Vector3f(truePos).add(translationDest.mul(scale)), new Vector3f(renderRot).add(trueRot), new Vector3f(1, 1, -1).mul(scale), shader);
-		
-		
-		for (ModelPart child : part.children) {
-			renderMesh(child, new Matrix4f(matrix), shader, new Vector3f(truePos), new Vector3f(trueRot), new Vector3f(renderRot));
+				Vertex p5 = vertexCoords.get(5);
+				
+				
+				Vector3f v = new Vector3f(verts.get(i).x, verts.get(i).y, verts.get(i).z).sub(0.5f, 0.5f, 0.5f).mul(p5.x * 2, p5.y * 2, p5.z * 2).mul(scale);
+				vertices[J] = v.x;
+				vertices[J + 1] = v.y;
+				vertices[J + 2] = v.z;
+				
+
+			}
+			
 		}
+		
+		
+		
+		Mesh mesh = new Mesh(vertices, texCoords, indices, texture);
+		return mesh;
 	}
 	
 	public void renderMesh(ModelPart part, Vector3f lastPos, Vector3f lastScale, Vector3f lastRotation, ShaderProgram shader, Vector3f mainRot, Vector3f mainPos) {
-		Mesh mesh = meshes.get(part.name);
-		ModelTransformation transform = part.transformation;
 		
-		float scale = 0.055f;
-		
-		Vertex framePos = getPositionForFrame(part, controller.currentAnimation);
-		Vertex frameRot = getRotationForFrame(part, controller.currentAnimation);
-		
-		Vector3f pos = new Vector3f(transform.x, transform.y, transform.z);
-
-		Vector3f offset = new Vector3f(transform.offsX, transform.offsY, transform.offsZ);
-		
-		Vector3f rot = new Vector3f(transform.rotX, transform.rotY, transform.rotZ);
-		
-		
-		if (framePos != null) {
-			float mul = 1f;
-			pos.add(framePos.x * mul, framePos.y * mul, framePos.z * mul);
-		}
-		if (frameRot != null) {
-			float mul = 1f;
-			rot.add(frameRot.x * mul, frameRot.y * mul, frameRot.z * mul);
-		}
-		
-		
-		pos.add(offset.x, offset.y, offset.z);
-		
-		rot.add(lastRotation);		
-		if (part.parent != null) {
-			float X = pos.x;
-			float Y = pos.y;
-			float Z = pos.z;
-			
-			
-
-			
-			//rotate X
-			{
-				final float z = Z;
-				final float y = Y;
-				Z = (float)(z * Math.cos(Math.toRadians(lastRotation.x)) + y * Math.sin(Math.toRadians(lastRotation.x)));
-				Y = (float)(y * Math.cos(Math.toRadians(lastRotation.x)) - z * Math.sin(Math.toRadians(lastRotation.x)));
-			}
-
-
-			//rotate Y
-			{
-				final float x = X;
-				final float z = Z;
-				X = (float)(x * Math.cos(Math.toRadians(lastRotation.y)) + z * Math.sin(Math.toRadians(lastRotation.y)));
-				Z = (float)(z * Math.cos(Math.toRadians(lastRotation.y)) - x * Math.sin(Math.toRadians(lastRotation.y)));
-			}
-
-			
-			//rotate Z
-			{
-				final float x = X;
-				final float y = Y;
-				X = (float)(x * Math.cos(Math.toRadians(lastRotation.z)) - y * Math.sin(Math.toRadians(lastRotation.z)));
-				Y = (float)(y * Math.cos(Math.toRadians(lastRotation.z)) + x * Math.sin(Math.toRadians(lastRotation.z)));
-			}
-			
-			pos.x = X;
-			pos.y = Y;
-			pos.z = Z;
-		}
-		pos.mul(scale);
-		pos.add(lastPos);
-		
-		Vector3f newPos = new Vector3f(pos);
-//		
-//		newPos.sub(mainPos);
-//		final double x = newPos.x;
-//		final double z = newPos.z;
-//		final double X = x * Math.cos(Math.toRadians(mainRot.y)) + z * Math.sin(Math.toRadians(mainRot.y));
-//		final double Z = z * Math.cos(Math.toRadians(mainRot.y)) - x * Math.sin(Math.toRadians(mainRot.y));
-//		newPos.x = (float)X;
-//		newPos.z = (float)Z;
-//		newPos.x += mainPos.x;
-//		newPos.y += mainPos.y;
-//		newPos.z += mainPos.z;
-		
-
-		MeshRenderer.renderMesh(mesh, newPos, rot, new Vector3f(1, 1, -1).mul(scale), shader);
-		
-		for (ModelPart child : part.children) {
-			renderMesh(child, new Vector3f(pos), lastScale, rot, shader, mainRot, mainPos);
-		}
 	}
 
 	public void dispose() {
@@ -407,6 +354,29 @@ public class CustomModel {
 				float frameLerp = controller.currentAnimation.getFrameLerp(endTime - startTime, endTime - time);
 				
 				if (endTime - startTime > 0) {
+					if (animRot.x > 180 && nextRot.x < 90) {
+						animRot.x -= 360;
+					}
+					if (animRot.x < 90 && nextRot.x > 180) {
+						animRot.x += 360;
+					}
+					
+					if (animRot.y > 180 && nextRot.y < 90) {
+						animRot.y -= 360;
+					}
+					if (animRot.y < 90 && nextRot.y > 180) {
+						animRot.y += 360;
+					}
+					
+					if (animRot.z > 180 && nextRot.z < 90) {
+						animRot.z -= 360;
+					}
+					if (animRot.z < 90 && nextRot.z > 180) {
+						animRot.z += 360;
+					}
+					
+					
+					
 					animRot.x = (float)MathHelper.lerp(animRot.x, nextRot.x, frameLerp);
 					animRot.y = (float)MathHelper.lerp(animRot.y, nextRot.y, frameLerp);
 					animRot.z = (float)MathHelper.lerp(animRot.z, nextRot.z, frameLerp);

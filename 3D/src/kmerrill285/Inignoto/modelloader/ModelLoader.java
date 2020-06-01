@@ -14,6 +14,22 @@ import kmerrill285.Inignoto.modelloader.animation.AnimationFrameData;
 
 public class ModelLoader {
 	public static boolean DEBUG_LOADING = false;
+	
+	public static AnimModel loadModelFromFile(File file) {
+		String str = "";
+		try {
+			Scanner scanner = new Scanner(file);
+			while (scanner.hasNext()) {
+				str += scanner.nextLine()+"\n";
+			}
+			scanner.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			System.exit(0);
+		}
+		return loadModel(str);
+	}
+	
 	public static AnimModel loadModelFromFile(String modid, String modelname) {
 		
 		File file = null;
@@ -32,6 +48,21 @@ public class ModelLoader {
 			System.exit(0);
 		}
 		return loadModel(str);
+	}
+	
+	public static Animation loadAnimationFromFile(File file) {
+		String str = "";
+		try {
+			Scanner scanner = new Scanner(file);
+			while (scanner.hasNext()) {
+				str += scanner.nextLine()+"\n";
+			}
+			scanner.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			System.exit(0);
+		}
+		return loadAnimation(str);
 	}
 	
 	public static Animation loadAnimationFromFile(String modid, String animname) {

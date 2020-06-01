@@ -10,7 +10,7 @@ public class PlayerEntity extends Entity {
 
 	protected boolean crawling = false;
 	protected boolean rolling = false;
-	protected int rollTap = 0;
+	public int rollTap = 0;
 	
 	public int ZOOM = 0;
 	
@@ -19,6 +19,10 @@ public class PlayerEntity extends Entity {
 	public int rotDir = 0;
 	
 	public float lastRotation = 0;
+	
+	public boolean rightHop = false;
+	public boolean leftHop = false;
+	public boolean backHop = false;
 	
 	
 	public PlayerEntity(Vector3f position, World world) {
@@ -60,19 +64,19 @@ public class PlayerEntity extends Entity {
 			this.size.y = 0.7f;
 			if (ZOOM != 2) {
 				if (running) {
+					velocity.x += (float)Math.cos(Math.toRadians(yaw - 90)) * 0.17f;
+					velocity.z += (float)Math.sin(Math.toRadians(yaw - 90)) * 0.17f;
+				} else {
 					velocity.x += (float)Math.cos(Math.toRadians(yaw - 90)) * 0.12f;
 					velocity.z += (float)Math.sin(Math.toRadians(yaw - 90)) * 0.12f;
-				} else {
-					velocity.x += (float)Math.cos(Math.toRadians(yaw - 90)) * 0.09f;
-					velocity.z += (float)Math.sin(Math.toRadians(yaw - 90)) * 0.09f;
 				}
 			} else {
 				if (running) {
+					velocity.x -= (float)Math.cos(Math.toRadians(yaw - 90)) * 0.17f;
+					velocity.z -= (float)Math.sin(Math.toRadians(yaw - 90)) * 0.17f;
+				} else {
 					velocity.x -= (float)Math.cos(Math.toRadians(yaw - 90)) * 0.12f;
 					velocity.z -= (float)Math.sin(Math.toRadians(yaw - 90)) * 0.12f;
-				} else {
-					velocity.x -= (float)Math.cos(Math.toRadians(yaw - 90)) * 0.09f;
-					velocity.z -= (float)Math.sin(Math.toRadians(yaw - 90)) * 0.09f;
 				}
 			}
 		} else {

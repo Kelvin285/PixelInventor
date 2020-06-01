@@ -23,6 +23,19 @@ public class Textures {
 	public static Texture MOON = loadTexture("Inignoto", "gui/title_background/moon");
 	public static Texture MOON_CLIP = loadTexture("Inignoto", "gui/title_background/moon_clip");
 
+	public static Texture MODELER = loadTexture("Inignoto", "gui/modeler");
+	public static Texture BACK_ARROW = loadTexture("Inignoto", "gui/back_arrow");
+	public static Texture COLOR_PICKER = loadTexture("Inignoto", "modelmaker/color_picker");
+	public static Texture DUPLICATE = loadTexture("Inignoto", "modelmaker/duplicate");
+	public static Texture FILL = loadTexture("Inignoto", "modelmaker/fill");
+	public static Texture GRID = loadTexture("Inignoto", "modelmaker/grid");
+	public static Texture MOVE = loadTexture("Inignoto", "modelmaker/move");
+	public static Texture PAINTBRUSH = loadTexture("Inignoto", "modelmaker/paintbrush");
+	public static Texture POINTER = loadTexture("Inignoto", "modelmaker/pointer");
+	public static Texture ROTATE = loadTexture("Inignoto", "modelmaker/rotate");
+	public static Texture SCALE = loadTexture("Inignoto", "modelmaker/scale");
+	public static Texture TRASH = loadTexture("Inignoto", "modelmaker/trash");
+
 	
 	public static TextureAtlas TILES = new TextureAtlas("Inignoto", "tiles");
 	

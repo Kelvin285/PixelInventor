@@ -1,5 +1,7 @@
 package kmerrill285.Inignoto.game.client.rendering.textures;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -15,6 +17,31 @@ public class Texture {
 	public String fileName;
 	private int textureId;
 	private int width, height;
+	
+	public Texture(File file) {
+		try {
+			PNGDecoder decoder = new PNGDecoder(new FileInputStream(file));
+			ByteBuffer buf = ByteBuffer.allocateDirect(
+				    4 * decoder.getWidth() * decoder.getHeight());
+				decoder.decode(buf, decoder.getWidth() * 4, Format.RGBA);
+			buf.flip();
+			
+			setTextureId(GL11.glGenTextures());
+			
+			GL11.glBindTexture(GL11.GL_TEXTURE_2D, getTextureId());
+			GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
+			GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, decoder.getWidth(),
+				    decoder.getHeight(), 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buf);
+			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+			GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+			GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
+			
+			this.width = decoder.getWidth();
+			this.height = decoder.getHeight();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 	
 	public Texture(String modId, String fileName) {
 		try {

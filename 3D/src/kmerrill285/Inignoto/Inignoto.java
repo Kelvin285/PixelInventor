@@ -16,10 +16,12 @@ import org.lwjgl.system.MemoryUtil;
 import kmerrill285.Inignoto.events.Events;
 import kmerrill285.Inignoto.events.Input;
 import kmerrill285.Inignoto.game.client.Camera;
+import kmerrill285.Inignoto.game.client.Mouse;
 import kmerrill285.Inignoto.game.client.audio.Sounds;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.gui.GuiRenderer;
 import kmerrill285.Inignoto.game.client.rendering.gui.MenuScreen;
+import kmerrill285.Inignoto.game.client.rendering.gui.ModelerScreen;
 import kmerrill285.Inignoto.game.client.rendering.postprocessing.FrameBuffer;
 import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
 import kmerrill285.Inignoto.game.client.rendering.textures.Fonts;
@@ -183,10 +185,17 @@ public class Inignoto {
 					render();
 //					updateLight();
 					FPSCounter.endUpdate();
+					
 				} else {
 					ticks++;
 					ticks %= Settings.frameSkip + 1;
 				}
+				boolean updateMouse = true;
+				if (guiRenderer.getOpenScreen() instanceof ModelerScreen) {
+					updateMouse = false;
+				}
+				if (updateMouse)
+				Mouse.update();
 //				updateLight();
 //				
 //				updateLight();
@@ -347,6 +356,15 @@ public class Inignoto {
 			world.renderChunks(Utils.object_shader);
 			
 			Utils.object_shader.unbind();
+		} else {
+			if (this.guiRenderer.getOpenScreen() instanceof ModelerScreen) {
+				Utils.object_shader.bind();
+				Utils.setupProjection(Utils.object_shader);
+				
+				((ModelerScreen)this.guiRenderer.getOpenScreen()).render3D(Utils.object_shader);
+				
+				Utils.object_shader.unbind();
+			}
 		}
 		
 		
