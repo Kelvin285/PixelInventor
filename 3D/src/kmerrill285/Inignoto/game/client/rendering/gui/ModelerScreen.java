@@ -234,28 +234,44 @@ public class ModelerScreen extends MenuScreen {
 			
 			switch (selectedAttribute) {
 			case 0:
-				transform.x += change;
-				transform.x *= 100;
-				transform.x = (int)transform.x;
-				transform.x *= 0.01;
+				if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT)) {
+					transform.x += dragDir;
+					transform.x = (int)transform.x;
+				} else {
+					transform.x += change;
+					transform.x *= 100;
+					transform.x = (int)transform.x;
+					transform.x *= 0.01;
+				}
 				if (delete) {
 					transform.x = 0;
 				}
 				break;
 			case 1:
-				transform.y += change;
-				transform.y *= 100;
-				transform.y = (int)transform.y;
-				transform.y *= 0.01;
+				if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT)) {
+					transform.y += dragDir;
+					transform.y = (int)transform.y;
+				} else {
+					transform.y += change;
+					transform.y *= 100;
+					transform.y = (int)transform.y;
+					transform.y *= 0.01;
+				}
 				if (delete) {
 					transform.y = 0;
 				}
 				break;
 			case 2:
-				transform.z += change;
-				transform.z *= 100;
-				transform.z = (int)transform.z;
-				transform.z *= 0.01;
+				if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT)) {
+					transform.z += dragDir;
+					transform.z = (int)transform.z;
+				} else {
+					transform.z += change;
+					transform.z *= 100;
+					transform.z = (int)transform.z;
+					transform.z *= 0.01;
+				}
+				
 				if (delete) {
 					transform.z = 0;
 				}
@@ -434,9 +450,8 @@ public class ModelerScreen extends MenuScreen {
 					try {
 						this.texture = new Texture(selectedFile);
 						if (this.model != null) {
-							AnimModel model = ModelLoader.loadModelFromFile(modelDir);
-
-							this.model = new CustomModel(model, texture);
+							this.model.texture = this.texture;
+							this.model.rebuild();
 						}
 					} catch (Exception e) {
 						JOptionPane.showMessageDialog(null, Translation.translateText("Inignoto:gui.not_valid_texture"));
@@ -480,6 +495,183 @@ public class ModelerScreen extends MenuScreen {
 			}
 		}
 		
+		
+		if (mx >= 10 && my >= 10 && mx <= 58 && my <= 58) {
+			this.renderer.drawString(Translation.translateText("Inignoto:gui.new_cube"), (float)mx, (float)my, 1.5f, new Vector4f(1, 1, 1, 1), true);
+
+			this.renderer.drawNormalTexture(Textures.MODELER, 10, 10, 48, 48, 0, new Vector4f(0, 1, 0, 1));
+			if (Settings.isMouseButtonJustDown(0)) {
+				if (model == null) {
+					AnimModel anim = new AnimModel();
+					
+					String name = JOptionPane.showInputDialog("Input a name for the new part\n(no duplicate names)");
+					
+					while (name.isEmpty()) {
+						name = JOptionPane.showInputDialog("You cannot input an empty name!");
+					}
+					
+					ModelPart cube = new ModelPart(name);
+					cube.transformation = new ModelTransformation();
+					cube.transformation.size_x = 18.0f;
+					cube.transformation.size_y = 18.0f;
+					cube.transformation.size_z = 18.0f;
+					cube.transformation.y = 9.0f;
+					anim.parts.put(name, cube);
+					
+					model = new CustomModel(anim, Textures.WHITE_SQUARE);
+				} else {
+					String name = JOptionPane.showInputDialog("Input a name for the new part\n(no duplicate names)");
+					while(model.model.parts.containsKey(name)) {
+						name = JOptionPane.showInputDialog("This part name already exists!");
+					}
+					while (name.isEmpty()) {
+						name = JOptionPane.showInputDialog("You cannot input an empty name!");
+					}
+					ModelPart cube = new ModelPart(name);
+					cube.transformation = new ModelTransformation();
+					cube.transformation.size_x = 18.0f;
+					cube.transformation.size_y = 18.0f;
+					cube.transformation.size_z = 18.0f;
+					cube.transformation.y = 9.0f;
+					model.model.parts.put(name, cube);
+					this.model.rebuild();
+					
+				}
+				
+			}
+		} else {
+			this.renderer.drawNormalTexture(Textures.MODELER, 10, 10, 48, 48, 0, new Vector4f(1, 1, 1, 1));
+		}
+		
+		if (mx >= 10 && my >= 68 && mx <= 58 && my <= 68 + 48) {
+			this.renderer.drawString(Translation.translateText("Inignoto:gui.trash"), (float)mx, (float)my, 1.5f, new Vector4f(1, 1, 1, 1), true);
+			this.renderer.drawNormalTexture(Textures.TRASH, 10, 68, 48, 48, 0, new Vector4f(0, 1, 0, 1));
+			if (Settings.isMouseButtonJustDown(0)) {
+				if (this.model != null) {
+					if (this.model.model.parts.containsKey(this.selectedPart)) {
+						int confirm = JOptionPane.showConfirmDialog(null, "You are about to delete the part: \"" + this.selectedPart + "\", and all of its children.\n"
+								+ "This cannot be undone.  Are you sure you want to delete this part?");
+						if (confirm == 0) {
+							ModelPart part = this.model.model.parts.get(this.selectedPart);
+							deletePart(part);
+							this.model.rebuild();
+						}
+					}
+				}
+			}
+		} else {
+			this.renderer.drawNormalTexture(Textures.TRASH, 10, 68, 48, 48, 0, new Vector4f(1, 1, 1, 1));
+		}
+		if (mx >= 68 && my >= 10 && mx <= 68 + 48 && my <= 58) {
+			this.renderer.drawString(Translation.translateText("Inignoto:gui.duplicate"), (float)mx, (float)my, 1.5f, new Vector4f(1, 1, 1, 1), true);
+			this.renderer.drawNormalTexture(Textures.DUPLICATE, 68, 10, 48, 48, 0, new Vector4f(0, 1, 0, 1));
+
+			if (Settings.isMouseButtonJustDown(0)) {
+				if (this.model != null) {
+					if (this.model.model.parts.containsKey(this.selectedPart)) {
+						ModelPart part = this.model.model.parts.get(this.selectedPart);
+						String name = part.name;
+						int i = 1;
+						while (this.model.model.parts.containsKey(name)) {
+							i++;
+							name = part.name + "("+i+")";
+						}
+						ModelPart part2 = new ModelPart(name);
+						part2.transformation = new ModelTransformation(part.transformation);
+						this.model.model.parts.put(name, part2);
+						this.model.rebuild();
+					}
+				}
+			}
+			
+		} else {
+			this.renderer.drawNormalTexture(Textures.DUPLICATE, 68, 10, 48, 48, 0, new Vector4f(1, 1, 1, 1));
+		}
+		this.renderer.drawNormalTexture(Textures.POINTER, 68, 68, 48, 48, 0, new Vector4f(1, 1, 1, 1));
+
+		if (this.selectableString(Translation.translateText("Inignoto:gui.rename"), 48 * 3 + 10, 68, 1.5f, new Vector4f(1, 1, 1, 1), new Vector4f(0, 1, 0, 1), true)) {
+			if (Settings.isMouseButtonJustDown(0))
+			if (this.model != null) {
+				if (this.model.model.parts.containsKey(this.selectedPart)) {
+					ModelPart part = this.model.model.parts.get(this.selectedPart);
+					String name = JOptionPane.showInputDialog("Input a new name for the part");
+					while (this.model.model.parts.containsKey(name)) {
+						name = JOptionPane.showInputDialog("This name already exists!");
+					}
+					while (name.isEmpty()) {
+						name = JOptionPane.showInputDialog("You cannot input an empty name!");
+					}
+					this.model.model.parts.remove(part.name);
+					part.name = name;
+					this.selectedPart = name;
+					this.model.model.parts.put(part.name, part);
+					this.model.rebuild();
+					
+				}
+			}
+		}
+		
+		if (this.selectableString(Translation.translateText("Inignoto:gui.set_parent"), 48 * 3 + 10, 10, 1.5f, new Vector4f(1, 1, 1, 1), new Vector4f(0, 1, 0, 1), true)) {
+			if (Settings.isMouseButtonJustDown(0)) {
+				if (this.model != null) {
+					if (this.model.model.parts.containsKey(this.selectedPart)) {
+						ModelPart selected = this.model.model.parts.get(this.selectedPart);
+						
+						ArrayList<String> names = new ArrayList<String>();
+						names.add("\nNO PARENT\n");
+						for (String str : this.model.model.parts.keySet()) {
+							ModelPart part = this.model.model.parts.get(str);
+							if (part == selected) continue;
+							boolean canAdd = true;
+							ModelPart next = part.parent;
+							if (next != null) {
+								while (next != null) {
+									if (next == selected) {
+										canAdd = false;
+										break;
+									}
+									next = next.parent;
+								}
+							}
+							if (canAdd) {
+								names.add(part.name);
+							}
+						}
+						String input = (String)JOptionPane.showInputDialog(null, "Choose a new parent for the part.\nYou can not choose a part that is already a child object under the current part.\nSelecting a new parent for a part will reset the position and rotation for that part.", "Model Parent", JOptionPane.QUESTION_MESSAGE, null, names.toArray(), "NO PARENT\n=========");
+						if (input.equals("\nNO PARENT\n")) {
+							if (selected.parent != null) {
+								selected.parent.children.remove(selected);
+								selected.parent = null;
+								selected.transformation.x = 0;
+								selected.transformation.y = 0;
+								selected.transformation.z = 0;
+								
+								selected.transformation.rotX = 0;
+								selected.transformation.rotY = 0;
+								selected.transformation.rotZ = 0;
+							}
+						} else {
+							ModelPart newParent = this.model.model.parts.get(input);
+							if (selected.parent != null) {
+								selected.parent.children.remove(selected);
+								selected.parent = null;
+							}
+							selected.parent = newParent;
+							newParent.children.add(selected);
+							selected.transformation.x = 0;
+							selected.transformation.y = 0;
+							selected.transformation.z = 0;
+							
+							selected.transformation.rotX = 0;
+							selected.transformation.rotY = 0;
+							selected.transformation.rotZ = 0;
+						}
+					}
+					
+				}
+			}
+		}
+
 		if (!hovered) {
 			this.renderer.drawTexture(Textures.BACK_ARROW, 1920 - 48, 32, -64, 64, 0, new Vector4f(1, 1, 1, 1));
 		} else {
@@ -743,6 +935,18 @@ public class ModelerScreen extends MenuScreen {
 					}
 				}
 			}
+		}
+		
+		if (Settings.EXIT.isJustPressed()) {
+			if (this.model.extraMeshes.get(selectedPart) != null) {
+				this.model.extraMeshes.get(selectedPart).remove(this.selectionMesh);
+			}
+			if (this.selectionMesh != null) {
+				this.model.extraScale.remove(this.selectionMesh);
+			}
+			this.selectionMesh = null;
+			selectedPart = "";
+			
 		}
 	}
 	

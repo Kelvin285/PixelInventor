@@ -189,7 +189,7 @@ public class Utils {
 		
 		Fonts.loadFonts();
 		
-		Inignoto.game.guiRenderer.openScreen(new MenuScreen(Inignoto.game.guiRenderer));
+//		Inignoto.game.guiRenderer.openScreen(new MenuScreen(Inignoto.game.guiRenderer));
 	}
 	
 	public static void setupProjection(ShaderProgram shader) {

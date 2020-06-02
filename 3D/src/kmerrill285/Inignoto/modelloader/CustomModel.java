@@ -29,6 +29,7 @@ public class CustomModel {
 	public HashMap<Mesh, Float> extraScale = new HashMap<Mesh, Float>();
 
 	public Texture texture;
+	private boolean needsToRebuild;
 	
 	public CustomModel(AnimModel model, Texture texture) {
 		this.model = model;
@@ -54,7 +55,9 @@ public class CustomModel {
 	}
 	
 	public void render(Vector3f position, Vector3f scale, Vector3f rotation, ShaderProgram shader) {
-		
+		if (needsToRebuild) {
+			rebuild();
+		}
 		for (String str : meshes.keySet()) {
 			ModelPart part = model.parts.get(str);
 			Matrix4f first = new Matrix4f();
@@ -118,6 +121,9 @@ public class CustomModel {
 		MeshRenderer.renderMesh(mesh, new Vector3f(truePos).add(new Vector3f(translationDest).mul(scale)), new Vector3f(renderRot).add(trueRot), new Vector3f(1, 1, -1).mul(scale), shader);
 		
 		ArrayList<Mesh> meshes = extraMeshes.get(part.name);
+		if (meshes == null) {
+			extraMeshes.put(part.name, meshes = new ArrayList<Mesh>());
+		}
 		for (int i = 0; i < meshes.size(); i++) {
 			if (extraScale.containsKey(meshes.get(i))) {
 				MeshRenderer.renderMesh(meshes.get(i), new Vector3f(truePos).add(new Vector3f(translationDest).mul(scale)), new Vector3f(renderRot).add(trueRot), new Vector3f(1, 1, -1).mul(scale).mul((float)extraScale.get(meshes.get(i))), shader);
@@ -473,5 +479,9 @@ public class CustomModel {
 			pos.z += animPos.z;
 		}
 		return pos;
+	}
+
+	public void setNeedsToRebuild() {
+		needsToRebuild = true;
 	}
 }

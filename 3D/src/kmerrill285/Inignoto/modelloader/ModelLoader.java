@@ -195,7 +195,6 @@ public class ModelLoader {
 	}
 	
 	public static AnimModel loadModel(String model_data) {
-		DEBUG_LOADING = true;
 		String[] lines = model_data.split("\n");
 		String title = "";
 		
