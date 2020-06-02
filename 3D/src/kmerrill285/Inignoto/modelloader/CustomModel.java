@@ -36,17 +36,19 @@ public class CustomModel {
 		
 		this.texture = texture;
 		
-		/*
-		 * Front: 
-		 * U + size_x, V + size_y (top left)
-		 */
-		
+		for (String str : model.parts.keySet()) {
+			this.extraMeshes.put(str, new ArrayList<Mesh>());
+		}
+		rebuild();
+	}
+	
+	public void rebuild() {
+		meshes.clear();
 		for (String str : model.parts.keySet()) {
 			ModelPart part = model.parts.get(str);
 			
 			meshes.put(str, buildMesh(part, texture));
 			
-			this.extraMeshes.put(str, new ArrayList<Mesh>());
 
 		}
 	}

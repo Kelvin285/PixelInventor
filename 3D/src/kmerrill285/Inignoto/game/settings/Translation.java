@@ -70,7 +70,7 @@ public class Translation {
 	}
 	
 	public static void setTranslation(String translation) {
-
+		
 		for (String str : translations.keySet()) {
 			if (str.contentEquals(translation)) {
 				currentTranslation = translations.get(str);
@@ -78,6 +78,7 @@ public class Translation {
 				return;
 			}
 		}
+		if (currentTranslation != null) return;
 		for (String str : translations.keySet()) {
 			currentTranslation = translations.get(str);
 			if (translation.contentEquals("")) {

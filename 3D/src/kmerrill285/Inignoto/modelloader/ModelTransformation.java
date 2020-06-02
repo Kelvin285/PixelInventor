@@ -23,5 +23,23 @@ public class ModelTransformation {
 		this.U = U;
 		this.V = V;
 	}
+	
+	public ModelTransformation(ModelTransformation last) {
+		this.x = last.x;
+		this.y = last.y;
+		this.z = last.z;
+		this.size_x = last.size_x;
+		this.size_y = last.size_y;
+		this.size_z = last.size_z;
+		this.offsX = last.offsX;
+		this.offsY = last.offsY;
+		this.offsZ = last.offsZ;
+		this.rotX = last.rotX;
+		this.rotY = last.rotY;
+		this.rotZ = last.rotZ;
+		this.U = last.U;
+		this.V = last.V;
+	}
+	
 	public ModelTransformation() {}
 }

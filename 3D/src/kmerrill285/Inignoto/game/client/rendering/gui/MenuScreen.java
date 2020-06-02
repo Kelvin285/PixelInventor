@@ -7,6 +7,7 @@ import kmerrill285.Inignoto.game.client.Mouse;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
 import kmerrill285.Inignoto.game.settings.Settings;
+import kmerrill285.Inignoto.game.settings.Translation;
 import kmerrill285.Inignoto.resources.Utils;
 
 public class MenuScreen extends GuiScreen {
@@ -42,10 +43,10 @@ public class MenuScreen extends GuiScreen {
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		
 		shader.setUniformFloat("zv", -0.3f);
-		this.renderer.drawString("Singleplayer", 1920 / 2 - 15 * "Singleplayer".length() - 450 + 25, 410, 2, new Vector4f(0, 0, 0, 1), true);
-		this.renderer.drawString("Multiplayer", 1920 / 2 - 15 * "Multiplayer".length() + 25, 410, 2, new Vector4f(0, 0, 0, 1), true);
-		this.renderer.drawString("Settings", 1920 / 2 - 15 * "Settings".length() + 450, 410, 2, new Vector4f(0, 0, 0, 1), true);
-		this.renderer.drawString("Exit", 1920 / 2 - 15 * "Exit".length() + 25, 410 - (30 + 15) * 2, 2, new Vector4f(0, 0, 0, 1), true);
+		this.renderer.drawString(Translation.translateText("Inignoto:gui.singleplayer"), 1920 / 2 - 15 * Translation.translateText("Inignoto:gui.singleplayer").length() - 450 + 25, 410, 2, new Vector4f(0, 0, 0, 1), true);
+		this.renderer.drawString(Translation.translateText("Inignoto:gui.multiplayer"), 1920 / 2 - 15 * Translation.translateText("Inignoto:gui.multiplayer").length() + 25, 410, 2, new Vector4f(0, 0, 0, 1), true);
+		this.renderer.drawString(Translation.translateText("Inignoto:gui.settings"), 1920 / 2 - 15 * Translation.translateText("Inignoto:gui.settings").length() + 450, 410, 2, new Vector4f(0, 0, 0, 1), true);
+		this.renderer.drawString(Translation.translateText("Inignoto:gui.exit"), 1920 / 2 - 15 * Translation.translateText("Inignoto:gui.exit").length() + 25, 410 - (30 + 15) * 2, 2, new Vector4f(0, 0, 0, 1), true);
 
 		
 		shader.setUniformFloat("zv", 0.2f);
@@ -79,7 +80,7 @@ public class MenuScreen extends GuiScreen {
 		if (!hovered) {
 			this.renderer.drawTexture(Textures.MODELER, 1920 - 48, 32, -64, 64, 0, new Vector4f(1, 1, 1, 1));
 		} else {
-			this.renderer.drawString("Model Creator", (float)mx - "Model Creator".length() * 15 * 2, (float)my, 2, new Vector4f(1, 1, 1, 1), true);
+			this.renderer.drawString(Translation.translateText("Inignoto:gui.model_creator"), (float)mx - Translation.translateText("Inignoto:gui.model_creator").length() * 15 * 2, (float)my, 2, new Vector4f(1, 1, 1, 1), true);
 
 			this.renderer.drawTexture(Textures.MODELER, 1920 - 48, 32, -64, 64, 0, new Vector4f(0, 1, 0, 1));
 			if (Settings.isMouseButtonJustDown(0)) {

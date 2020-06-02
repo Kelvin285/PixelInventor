@@ -1,0 +1,161 @@
+"name": "Body_Lower",
+"position": [0.0, 12.0, 1.0],
+"offsetFromPivot": [0.0, 0.0, 0.0],
+"size": [8.0, 4.0, 4.0],
+"rotation": [0.0, 0.0, 0.0],
+"texOffset": [2.0, 45.0],
+"children": [
+    "name": "Body_Upper",
+    "position": [0.0, 2.0, -1.0],
+    "offsetFromPivot": [0.0, 3.0, 1.0],
+    "size": [8.0, 6.0, 4.0],
+    "rotation": [0.0, 0.0, 0.0],
+    "texOffset": [1.0, 31.0],
+    "children": [
+        "name": "Neck",
+        "position": [0.0, 3.5, 0.0],
+        "offsetFromPivot": [0.0, 0.0, 0.0],
+        "size": [6.0, 1.0, 5.0],
+        "rotation": [0.0, 0.0, 0.0],
+        "texOffset": [15.0, 22.0],
+        "children": [
+            "name": "Head",
+            "position": [0.0, 5.0, 0.0],
+            "offsetFromPivot": [0.0, 0.0, 0.0],
+            "size": [10.0, 10.0, 10.0],
+            "rotation": [0.0, 0.0, 0.0],
+            "texOffset": [0.0, 0.0],
+            "children": [
+                "name": "Nose",
+                "position": [0.0, -1.0, 5.0],
+                "offsetFromPivot": [0.0, 0.0, 0.0],
+                "size": [2.0, 1.0, 1.0],
+                "rotation": [0.0, 0.0, 0.0],
+                "texOffset": [0.0, 21.0],
+                "children": []
+                "name": "Ear",
+                "position": [5.0, 0.5, 0.0],
+                "offsetFromPivot": [0.0, 0.0, 0.0],
+                "size": [1.0, 3.0, 2.0],
+                "rotation": [0.0, -21.16452, 0.0],
+                "texOffset": [7.0, 21.0],
+                "children": []
+                "name": "Ear2",
+                "position": [-5.0, 0.5, 0.0],
+                "offsetFromPivot": [0.0, 0.0, 0.0],
+                "size": [1.0, 3.0, 2.0],
+                "rotation": [0.0, 21.16452, 0.0],
+                "texOffset": [7.0, 21.0],
+                "children": []
+            ]
+        ]
+        "name": "Left_Arm_Top",
+        "position": [5.0, 1.907349E-6, 0.0],
+        "offsetFromPivot": [0.0, 0.0, 0.0],
+        "size": [3.0, 6.0, 3.0],
+        "rotation": [-1.683E-8, 0.5600001, 16.27],
+        "texOffset": [47.0, 32.0],
+        "children": [
+            "name": "Left_Arm_Bottom",
+            "position": [0.5630076, -4.035215, -0.01244692],
+            "offsetFromPivot": [-1.0, -1.0, 0.0],
+            "size": [3.0, 5.0, 3.0],
+            "rotation": [1.391579, 1.878293, -15.38028],
+            "texOffset": [47.0, 47.0],
+            "children": [
+                "name": "Left_Hand",
+                "position": [0.4327576, -3.0, 0.0],
+                "offsetFromPivot": [-1.0, -1.0, 0.0],
+                "size": [3.0, 3.0, 4.0],
+                "rotation": [0.0, 0.0, -15.72245],
+                "texOffset": [45.0, 56.0],
+                "children": [
+                    "name": "Left_Thumb",
+                    "position": [-0.9576619, 0.4180285, 2.0],
+                    "offsetFromPivot": [0.0, 0.0, 0.0],
+                    "size": [2.0, 1.0, 1.0],
+                    "rotation": [0.0, 0.0, -89.99999],
+                    "texOffset": [56.0, 56.0],
+                    "children": []
+                ]
+            ]
+        ]
+        "name": "Right_Arm_Top",
+        "position": [-5.0, 0.0, 0.0],
+        "offsetFromPivot": [0.0, 0.0, 0.0],
+        "size": [3.0, 6.0, 3.0],
+        "rotation": [1.655871, -1.04341, -16.27699],
+        "texOffset": [30.0, 32.0],
+        "children": [
+            "name": "Right_Arm_Bottom",
+            "position": [-0.5023814, -3.999999, 0.1312553],
+            "offsetFromPivot": [1.0, -1.0, 0.0],
+            "size": [3.0, 5.0, 3.0],
+            "rotation": [-0.3084525, -0.2659452, 15.49327],
+            "texOffset": [30.0, 47.0],
+            "children": [
+                "name": "Right_Hand",
+                "position": [-0.6338782, -2.999999, 5.619985E-8],
+                "offsetFromPivot": [1.0, -1.0, 0.0],
+                "size": [3.0, 3.0, 4.0],
+                "rotation": [3.049615E-7, -9.976067E-8, 15.72245],
+                "texOffset": [28.0, 56.0],
+                "children": [
+                    "name": "Right_Thumb",
+                    "position": [0.9185755, 0.4810317, 2.0],
+                    "offsetFromPivot": [0.0, 0.0, 0.0],
+                    "size": [2.0, 1.0, 1.0],
+                    "rotation": [0.0, 0.0, -89.99999],
+                    "texOffset": [39.0, 56.0],
+                    "children": []
+                ]
+            ]
+        ]
+    ]
+]
+"name": "Right_Leg_Top",
+"position": [-2.0, 7.5, 1.0],
+"offsetFromPivot": [0.0, 0.0, 0.0],
+"size": [4.0, 5.0, 3.0],
+"rotation": [2.206438E-7, 2.85691E-7, -5.385734E-6],
+"texOffset": [43.0, 2.0],
+"children": [
+    "name": "Right_Leg_Bottom",
+    "position": [-1.895622E-7, -3.0, -2.730182E-8],
+    "offsetFromPivot": [0.0, -1.0, 0.0],
+    "size": [4.0, 3.0, 3.0],
+    "rotation": [0.0, 0.0, 0.0],
+    "texOffset": [43.0, 12.0],
+    "children": [
+        "name": "Right_Foot",
+        "position": [0.0, -2.3, -0.5],
+        "offsetFromPivot": [0.0, 0.0, 1.0],
+        "size": [4.0, 2.0, 5.0],
+        "rotation": [0.0, 0.0, 0.0],
+        "texOffset": [42.0, 20.0],
+        "children": []
+    ]
+]
+"name": "Left_Leg_Top",
+"position": [2.0, 7.5, 1.0],
+"offsetFromPivot": [0.0, 0.0, 0.0],
+"size": [4.0, 5.0, 3.0],
+"rotation": [0.0, 0.0, 0.0],
+"texOffset": [64.0, 2.0],
+"children": [
+    "name": "Left_Leg_Bottom",
+    "position": [0.0, -3.0, 0.0],
+    "offsetFromPivot": [0.0, -1.0, 0.0],
+    "size": [4.0, 3.0, 3.0],
+    "rotation": [0.0, 0.0, 0.0],
+    "texOffset": [64.0, 12.0],
+    "children": [
+        "name": "Left_Foot",
+        "position": [0.0, -2.3, -0.5],
+        "offsetFromPivot": [0.0, 0.0, 1.0],
+        "size": [4.0, 2.0, 5.0],
+        "rotation": [0.0, 0.0, 0.0],
+        "texOffset": [63.0, 20.0],
+        "children": []
+    ]
+]

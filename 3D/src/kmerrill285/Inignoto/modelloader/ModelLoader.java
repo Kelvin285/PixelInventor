@@ -2,12 +2,13 @@ package kmerrill285.Inignoto.modelloader;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.net.URISyntaxException;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Stack;
 
-import kmerrill285.Inignoto.Inignoto;
+import javax.swing.JOptionPane;
+
 import kmerrill285.Inignoto.modelloader.animation.Animation;
 import kmerrill285.Inignoto.modelloader.animation.AnimationFrame;
 import kmerrill285.Inignoto.modelloader.animation.AnimationFrameData;
@@ -194,6 +195,7 @@ public class ModelLoader {
 	}
 	
 	public static AnimModel loadModel(String model_data) {
+		DEBUG_LOADING = true;
 		String[] lines = model_data.split("\n");
 		String title = "";
 		
@@ -313,5 +315,72 @@ public class ModelLoader {
 			System.out.println(p.name + ", " + p.children.size());
 		}
 		return model;
+	}
+	
+
+	public static void saveModel(CustomModel model, File file) {
+		if (file.exists()) {
+			if (JOptionPane.showConfirmDialog(null, "This file already exists.  Do you want to replace it?") != 0) {
+				return;
+			}
+		}
+		String saveData = "";
+		for (String str : model.model.parts.keySet()) {
+			ModelPart part = model.model.parts.get(str);
+			if (part.parent == null) {
+				saveData = addToSave(part, saveData, 0);
+			}
+		}
+		try {
+			FileWriter writer = new FileWriter(file);
+			writer.write(saveData);
+			writer.close();
+			JOptionPane.showMessageDialog(null, "Saved file!");
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static String addToSave(ModelPart part, String save, int offset) {
+		for (int i = 0; i < offset * 4; i++) {
+			save += " ";
+		}
+		save += "\"name\": \""+part.name+"\",\n";
+		for (int i = 0; i < offset * 4; i++) {
+			save += " ";
+		}
+		save += "\"position\": ["+part.transformation.x + ", " + part.transformation.y + ", " + part.transformation.z+"],\n";
+		for (int i = 0; i < offset * 4; i++) {
+			save += " ";
+		}
+		save += "\"offsetFromPivot\": ["+part.transformation.offsX + ", " + part.transformation.offsY + ", " + part.transformation.offsZ+"],\n";
+		for (int i = 0; i < offset * 4; i++) {
+			save += " ";
+		}
+		save += "\"size\": ["+part.transformation.size_x + ", " + part.transformation.size_y + ", " + part.transformation.size_z+"],\n";
+		for (int i = 0; i < offset * 4; i++) {
+			save += " ";
+		}
+		save += "\"rotation\": ["+part.transformation.rotX + ", " + part.transformation.rotY + ", " + part.transformation.rotZ+"],\n";
+		for (int i = 0; i < offset * 4; i++) {
+			save += " ";
+		}
+		save += "\"texOffset\": ["+part.transformation.U + ", " + part.transformation.V + "],\n";
+		for (int i = 0; i < offset * 4; i++) {
+			save += " ";
+		}
+		if (part.children.size() > 0) {
+			save += "\"children\": [\n";
+			for (int i = 0; i < part.children.size(); i++) {
+				save = addToSave(part.children.get(i), save, offset+1);
+			}
+			for (int i = 0; i < offset * 4; i++) {
+				save += " ";
+			}
+			save += "]\n";
+		} else {
+			save += "\"children\": []\n";
+		}
+		return save;
 	}
 }
