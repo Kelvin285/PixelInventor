@@ -84,7 +84,7 @@ public class MenuScreen extends GuiScreen {
 
 			this.renderer.drawTexture(Textures.MODELER, 1920 - 48, 32, -64, 64, 0, new Vector4f(0, 1, 0, 1));
 			if (Settings.isMouseButtonJustDown(0)) {
-				this.renderer.openScreen(new ModelerScreen(renderer));
+				this.renderer.openScreen(new NewModelerScreen(renderer));
 			}
 		}
 		double dist = Math.sqrt(Math.pow(moon_x + 352 / 2 - mx, 2) + Math.pow(moon_y + 340 / 2 - my - 10, 2));

@@ -31,6 +31,8 @@ public class CustomModel {
 	public Texture texture;
 	private boolean needsToRebuild;
 	
+	public HashMap<String, ModelTransformation> currentTransformations = new HashMap<String, ModelTransformation>();
+	
 	public CustomModel(AnimModel model, Texture texture) {
 		this.model = model;
 		this.controller = new AnimationController();
@@ -119,6 +121,20 @@ public class CustomModel {
 		rotationDest.z = (float)Math.toDegrees(rotationDest.z);
 		
 		MeshRenderer.renderMesh(mesh, new Vector3f(truePos).add(new Vector3f(translationDest).mul(scale)), new Vector3f(renderRot).add(trueRot), new Vector3f(1, 1, -1).mul(scale), shader);
+		ModelTransformation t = new ModelTransformation();
+		Vector3f POS = new Vector3f(truePos).add(new Vector3f(translationDest).mul(scale));
+		t.x = POS.x;
+		t.y = POS.y;
+		t.z = POS.z;
+		Vector3f ROT = new Vector3f(renderRot).add(trueRot);
+		t.rotX = ROT.x;
+		t.rotY = ROT.y;
+		t.rotZ = ROT.z;
+		Vector3f SCALE = new Vector3f(part.transformation.size_x, part.transformation.size_y, part.transformation.size_z).mul(scale);
+		t.size_x = SCALE.x;
+		t.size_y = SCALE.y;
+		t.size_z = SCALE.z;
+		this.currentTransformations.put(part.name, t);
 		
 		ArrayList<Mesh> meshes = extraMeshes.get(part.name);
 		if (meshes == null) {
@@ -282,10 +298,6 @@ public class CustomModel {
 		
 		Mesh mesh = new Mesh(vertices, texCoords, indices, texture);
 		return mesh;
-	}
-	
-	public void renderMesh(ModelPart part, Vector3f lastPos, Vector3f lastScale, Vector3f lastRotation, ShaderProgram shader, Vector3f mainRot, Vector3f mainPos) {
-		
 	}
 
 	public void dispose() {
