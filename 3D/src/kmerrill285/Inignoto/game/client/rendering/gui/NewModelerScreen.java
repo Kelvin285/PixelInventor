@@ -1,37 +1,18 @@
 package kmerrill285.Inignoto.game.client.rendering.gui;
 
-import static org.lwjgl.nanovg.NanoVG.nvgBeginFrame;
-import static org.lwjgl.nanovg.NanoVG.nvgBeginPath;
-import static org.lwjgl.nanovg.NanoVG.nvgEndFrame;
-import static org.lwjgl.nanovg.NanoVG.nvgFill;
-import static org.lwjgl.nanovg.NanoVG.nvgFillColor;
-import static org.lwjgl.nanovg.NanoVG.nvgRect;
-import static org.lwjgl.nanovg.NanoVG.nvgRotate;
-import static org.lwjgl.nanovg.NanoVG.nvgStroke;
-import static org.lwjgl.nanovg.NanoVG.nvgStrokeColor;
-import static org.lwjgl.nanovg.NanoVG.nvgTranslate;
-import static org.lwjgl.opengl.GL11.GL_BLEND;
-import static org.lwjgl.opengl.GL11.GL_COLOR_BUFFER_BIT;
 import static org.lwjgl.opengl.GL11.GL_DEPTH_COMPONENT;
 import static org.lwjgl.opengl.GL11.GL_NEAREST;
-import static org.lwjgl.opengl.GL11.GL_ONE_MINUS_SRC_ALPHA;
 import static org.lwjgl.opengl.GL11.GL_RGBA;
-import static org.lwjgl.opengl.GL11.GL_SRC_ALPHA;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_MAG_FILTER;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_MIN_FILTER;
 import static org.lwjgl.opengl.GL11.GL_UNSIGNED_BYTE;
 import static org.lwjgl.opengl.GL11.glBindTexture;
-import static org.lwjgl.opengl.GL11.glBlendFunc;
-import static org.lwjgl.opengl.GL11.glClear;
-import static org.lwjgl.opengl.GL11.glClearColor;
 import static org.lwjgl.opengl.GL11.glDeleteTextures;
 import static org.lwjgl.opengl.GL11.glDrawBuffer;
-import static org.lwjgl.opengl.GL11.glEnable;
 import static org.lwjgl.opengl.GL11.glGenTextures;
 import static org.lwjgl.opengl.GL11.glTexImage2D;
 import static org.lwjgl.opengl.GL11.glTexParameteri;
-import static org.lwjgl.opengl.GL11.glViewport;
 import static org.lwjgl.opengl.GL30.GL_COLOR_ATTACHMENT0;
 import static org.lwjgl.opengl.GL30.GL_DEPTH_ATTACHMENT;
 import static org.lwjgl.opengl.GL30.GL_FRAMEBUFFER;
@@ -47,7 +28,7 @@ import static org.lwjgl.opengl.GL32.glFramebufferTexture;
 
 import java.awt.Point;
 import java.io.File;
-import java.util.HashMap;
+import java.util.ArrayList;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -86,27 +67,26 @@ import org.liquidengine.legui.system.renderer.Renderer;
 import org.liquidengine.legui.system.renderer.nvg.NvgRenderer;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWKeyCallbackI;
-import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NanoVGGL2;
 import org.lwjgl.nanovg.NanoVGGL3;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL40;
 
+import custom_models.Model;
+import custom_models.Part;
 import kmerrill285.Inignoto.events.Events;
 import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.Mouse;
+import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.MeshRenderer;
+import kmerrill285.Inignoto.game.client.rendering.chunk.BlockBuilder;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.textures.Texture;
 import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.settings.Translation;
-import kmerrill285.Inignoto.modelloader.AnimModel;
-import kmerrill285.Inignoto.modelloader.CustomModel;
-import kmerrill285.Inignoto.modelloader.ModelLoader;
-import kmerrill285.Inignoto.modelloader.ModelPart;
-import kmerrill285.Inignoto.modelloader.ModelTransformation;
+import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.resources.FPSCounter;
 import kmerrill285.Inignoto.resources.Utils;
 import kmerrill285.Inignoto.resources.raytracer.RayBox;
@@ -114,6 +94,28 @@ import kmerrill285.Inignoto.resources.raytracer.RayIntersection;
 import kmerrill285.Inignoto.resources.raytracer.Raytracer;
 
 public class NewModelerScreen extends ModelerScreen {
+	
+	public Texture texture;
+	public String lastLoadDir;
+	public int floorSize = 1;
+	public Mesh block;
+	public Mesh grid;
+	public Part selectedPart;
+	public Mesh selectionMesh;
+	
+	public Part handle = new Part();
+	
+	public Vector3f mousePos3D = new Vector3f(0, 0, 0);
+	public Vector3f lastMousePos3D = new Vector3f(0, 0, 0);
+	
+	public boolean Xselected, Yselected, Zselected;
+	
+	public enum SelectionMode {
+		TRANSLATION, ROTATION, SCALE, SIZE
+	}
+	
+	public SelectionMode selectionMode = SelectionMode.TRANSLATION;
+	
 	
 	public class MouseIntersection {
 		Vector3f hit;
@@ -128,8 +130,6 @@ public class NewModelerScreen extends ModelerScreen {
 	private Renderer nRenderer = null;
 	private Frame frame = null;
 	private SystemEventProcessor  systemEventProcessor = null;
-	private FBOImage fboTexture = null;
-	private long nvgContext;
 	private Widget widget;
 	private Panel panel;
 	private Panel navigation;
@@ -138,21 +138,36 @@ public class NewModelerScreen extends ModelerScreen {
 	
 	private Panel FILE_PANEL;
 	
-	private static int textureWidth = 200;
-
-    private static int textureHeight = 200;
-
-    private static int frameBufferID;
-
-    private static int textureID;
-
-    private static int renderBufferID;
-    
     boolean isVersionNew;
-	
+    
+    private Model model;
 	
 	public NewModelerScreen(GuiRenderer gui) {
 		super(gui);
+		texture = Textures.GRAY_MATERIAL;
+		Camera.position = new Vector3f(0, 1, 3);
+		Camera.rotation = new Vector3f(0, 0, 0);
+		Camera.update();
+		
+		model = new Model();
+		
+		Part part = new Part();
+		part.size = new Vector3f(16, 16, 16);
+		part.scale = new Vector3f(1, 1, 1);
+		part.name = "Part";
+		part.position.y = 16.0f;
+		part.buildPart(Textures.GRAY_MATERIAL);
+		model.getParts().add(part);
+		
+		handle = new Part();
+		handle.size = new Vector3f(32, 32, 0);
+		handle.scale = new Vector3f(1.0f / 32.0f, 1 / 32.0f, 1);
+		handle.name = "Cube";
+		handle.uv.x = 8;
+		handle.buildPart(Textures.WHITE_SQUARE);
+		
+		createGrid();
+		block = BlockBuilder.buildMesh(Tiles.GRASS, 0, -1, 0);
 		
 		frame = new Frame(1920, 1080);
 		
@@ -172,123 +187,117 @@ public class NewModelerScreen extends ModelerScreen {
         nRenderer = new NvgRenderer();
         nRenderer.initialize();
         
-        nvgContext = 0;
-
-        fboTexture = null;
         
         isVersionNew = (GL40.glGetInteger(GL40.GL_MAJOR_VERSION) > 3) || (GL40.glGetInteger(GL40.GL_MAJOR_VERSION) == 3 && GL40.glGetInteger(GL40.GL_MINOR_VERSION) >= 2);
 
-        if (isVersionNew) {
+        
 
-            int flags = NanoVGGL3.NVG_STENCIL_STROKES | NanoVGGL3.NVG_ANTIALIAS;
+        widget = new Widget(0, 0, 1920, 1080);
 
-            nvgContext = NanoVGGL3.nvgCreate(flags);
+        widget.setCloseable(false);
 
-        } else {
+        widget.setMinimizable(false);
+        widget.setTitleEnabled(false);
+		widget.setResizable(false);
+		widget.getStyle().getBackground().setColor(0.1f, 0.1f, 0.1f, 1.0f);
+		
+        widget.getContainer().getStyle().setDisplay(DisplayType.FLEX);
 
-            int flags = NanoVGGL2.NVG_STENCIL_STROKES | NanoVGGL2.NVG_ANTIALIAS;
-
-            nvgContext = NanoVGGL2.nvgCreate(flags);
-
-        }
-
-        if (nvgContext != 0) {
-
-            fboTexture = createFBOTexture(1920, 1080);
+        
 
 
+       
 
-            widget = new Widget(0, 0, 1920, 1080);
-
-            widget.setCloseable(false);
-
-            widget.setMinimizable(false);
-            widget.setTitleEnabled(false);
-    		widget.setResizable(false);
-    		widget.getStyle().getBackground().setColor(0.1f, 0.1f, 0.1f, 1.0f);
-    		
-            widget.getContainer().getStyle().setDisplay(DisplayType.FLEX);
-
-            
-
-
-           
-
-            panel = new Panel();
-            panel.setPosition(0, 0);
-            panel.getStyle().getBackground().setColor(0.1f, 0.1f, 0.1f, 1.0f);
-            panel.getStyle().getFlexStyle().setFlexGrow(1);
-            panel.getStyle().setMargin(10f);
-            panel.getStyle().setMinimumSize(1920, 30);
-            panel.getStyle().setBorderRadius(0);
-            
-            panel.getListenerMap().addListener(KeyEvent.class, (KeyEventListener) event -> {
-            	Events.keyCallback(event.getContext().getGlfwWindow(), event.getKey(), event.getScancode(), event.getAction(), event.getMods());
-            });
-            
-            panel.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
-				Events.mouseClick(event.getContext().getGlfwWindow(), event.getButton().getCode(), event.getButton().isPressed() ? 1 : 0, event.getButton() == MouseButton.MOUSE_BUTTON_UNKNOWN ? 1 : 0);
-            });
-            
-            
-            navigation = new Panel();
-            navigation.setPosition(0, 0);
-            navigation.getStyle().getBackground().setColor(0.4f, 0.4f, 0.4f, 1.0f);
-            navigation.getStyle().getFlexStyle().setFlexGrow(0);
-            navigation.getStyle().setMargin(0);
-            navigation.getStyle().setBorderRadius(0);
-            navigation.setFocusable(false);
-            
-            FILE = new Button(Translation.translateText("Inignoto:gui.file"));
-            FILE.setTextDirection(TextDirection.HORIZONTAL);
-            FILE.setSize(60, 20);
-            FILE.setPosition(0, 0);
-            FILE.getStyle().setFontSize(20f);
-            FILE.getStyle().getBackground().setColor(0, 0, 0, 0);
-            FILE.getStyle().getShadow().setSpread(0);
-            FILE.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
-            FILE.getStyle().setTextColor(1, 1, 1, 1);
-            
-            EDIT = new Button(Translation.translateText("Inignoto:gui.edit"));
-            EDIT.setTextDirection(TextDirection.HORIZONTAL);
-            EDIT.setSize(60, 20);
-            EDIT.setPosition(60, 0);
-            EDIT.getStyle().setFontSize(20f);
-            EDIT.getStyle().getBackground().setColor(0, 0, 0, 0);
-            EDIT.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
-            EDIT.getStyle().setTextColor(1, 1, 1, 1);
-            
-            FILE_PANEL = new Panel();
-            createFilePanel(FILE_PANEL);
-            
-            
-            
+        panel = new Panel();
+        panel.setPosition(0, 0);
+        panel.getStyle().getBackground().setColor(0.1f, 0.1f, 0.1f, 1.0f);
+        panel.getStyle().getFlexStyle().setFlexGrow(1);
+        panel.getStyle().setMargin(10f);
+        panel.getStyle().setMinimumSize(1920, 30);
+        panel.getStyle().setBorderRadius(0);
+        
+        panel.getListenerMap().addListener(KeyEvent.class, (KeyEventListener) event -> {
+        	Events.keyCallback(event.getContext().getGlfwWindow(), event.getKey(), event.getScancode(), event.getAction(), event.getMods());
+        });
+        
+        panel.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+			Events.mouseClick(event.getContext().getGlfwWindow(), event.getButton().getCode(), event.getButton().isPressed() ? 1 : 0, event.getButton() == MouseButton.MOUSE_BUTTON_UNKNOWN ? 1 : 0);
+        });
+        
+        
+        navigation = new Panel();
+        navigation.setPosition(0, 0);
+        navigation.getStyle().getBackground().setColor(0.4f, 0.4f, 0.4f, 1.0f);
+        navigation.getStyle().getFlexStyle().setFlexGrow(0);
+        navigation.getStyle().setMargin(0);
+        navigation.getStyle().setBorderRadius(0);
+        navigation.setFocusable(false);
+        
+        FILE = new Button(Translation.translateText("Inignoto:gui.file"));
+        FILE.setTextDirection(TextDirection.HORIZONTAL);
+        FILE.setSize(60, 20);
+        FILE.setPosition(0, 0);
+        FILE.getStyle().setFontSize(20f);
+        FILE.getStyle().getBackground().setColor(0, 0, 0, 0);
+        FILE.getStyle().getShadow().setSpread(0);
+        FILE.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
+        FILE.getStyle().setTextColor(1, 1, 1, 1);
+        
+        EDIT = new Button(Translation.translateText("Inignoto:gui.edit"));
+        EDIT.setTextDirection(TextDirection.HORIZONTAL);
+        EDIT.setSize(60, 20);
+        EDIT.setPosition(60, 0);
+        EDIT.getStyle().setFontSize(20f);
+        EDIT.getStyle().getBackground().setColor(0, 0, 0, 0);
+        EDIT.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
+        EDIT.getStyle().setTextColor(1, 1, 1, 1);
+        
+        FILE_PANEL = new Panel();
+        createFilePanel(FILE_PANEL);
+        
+        
+        
 //            widget.getContainer().add(imageView);
-            widget.getContainer().add(panel);
-            widget.getContainer().add(navigation);
-            navigation.add(FILE);
-            navigation.add(EDIT);
-            FILE.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+        widget.getContainer().add(panel);
+        widget.getContainer().add(navigation);
+        navigation.add(FILE);
+        navigation.add(EDIT);
+        FILE.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
 
-                if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
-                	if (panel.contains(FILE_PANEL)) {
-                		panel.remove(FILE_PANEL);
-                	} else {
-                		panel.add(FILE_PANEL);
-                	}
-                }
-
-            });
-            
-            panel.getListenerMap().addListener(FocusEvent.class, (FocusEventListener) event -> {
-            	if (panel.isFocused()) {
+            if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
+            	if (panel.contains(FILE_PANEL)) {
             		panel.remove(FILE_PANEL);
+            	} else {
+            		panel.add(FILE_PANEL);
             	}
-            });
-            
-            frame.getContainer().add(widget);
+            }
 
-        }
+        });
+        
+        panel.getListenerMap().addListener(FocusEvent.class, (FocusEventListener) event -> {
+        	if (panel.isFocused()) {
+        		panel.remove(FILE_PANEL);
+        	}
+        });
+        
+        frame.getContainer().add(widget);
+
+	}
+	
+	public void createGrid() {		
+		float[] vertices = new float[] {
+				-5.5f, 0.0f, -5.5f,
+				-5.5f, 0.0f, 5.5f,
+				5.5f, 0.0f, 5.5f,
+				5.5f, 0.0f, -5.5f
+		};
+		float[] texCoords = new float[] {
+				0, 0, 0, 1, 1, 1, 1, 0
+		};
+		int[] indices = new int[] {
+				0, 1, 2, 2, 3, 0
+		};
+		grid = new Mesh(vertices, texCoords, indices, Textures.GRID);
 	}
 	
 	private void createFilePanel(Panel FILE_PANEL) {
@@ -674,8 +683,7 @@ public class NewModelerScreen extends ModelerScreen {
 			try {
 				this.texture = new Texture(selectedFile);
 				if (this.model != null) {
-					this.model.texture = this.texture;
-					this.model.rebuild();
+					this.model.changeTexture(texture);
 				}
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(null, Translation.translateText("Inignoto:gui.not_valid_texture"));
@@ -694,11 +702,12 @@ public class NewModelerScreen extends ModelerScreen {
 			System.out.println(f);
 			lastLoadDir = selectedFile.getParent();
 			try {
-				AnimModel model = ModelLoader.loadModelFromFile(selectedFile);
-				this.model = new CustomModel(model, texture);
-				this.modelDir = selectedFile;
-				this.lastAction = -1;
-				this.actions.clear();
+//				AnimModel model = ModelLoader.loadModelFromFile(selectedFile);
+//				this.model = new CustomModel(model, texture);
+//				this.modelDir = selectedFile;
+//				this.lastAction = -1;
+//				this.actions.clear();
+				JOptionPane.showMessageDialog(null, "Option not currently supported");
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(null, Translation.translateText("Inignoto:gui.not_valid_model"));
 			}
@@ -715,7 +724,7 @@ public class NewModelerScreen extends ModelerScreen {
 			Camera.position.add(Camera.getUp().mul((Mouse.lastY - Mouse.y) * 0.01f));
 			Camera.position.add(Camera.getRight().mul((Mouse.lastX - Mouse.x) * 0.01f));
 		}
-		if (Settings.USE.isPressed()) {
+		if (Settings.isMouseButtonDown(1)) {
 			Camera.rotation.y += Mouse.x - Mouse.lastX;
 			Camera.rotation.x += Mouse.y - Mouse.lastY;
 		}
@@ -764,9 +773,6 @@ public class NewModelerScreen extends ModelerScreen {
 			mx = 0;
 			my = 0;
 		}
-//		if (fboTexture != null) {
-//            renderToFBO(nvgContext);
-//        }
 		
 		shaderProgram.unbind();
 
@@ -788,7 +794,11 @@ public class NewModelerScreen extends ModelerScreen {
 		shaderProgram.bind();
 
 		if (model != null) {
-			model.render(new Vector3f(0, 0, 0), new Vector3f(0, 0, 0), new Vector3f(0, 0, 0), shaderProgram);
+			model.render(shaderProgram);
+			if (this.selectedPart != null) {
+				if (selectionMesh != null)
+				this.selectedPart.renderSelected(shaderProgram, selectionMesh);
+			}
 		}
 		
 		for (int x = -floorSize; x < floorSize + 1; x++) {
@@ -803,57 +813,189 @@ public class NewModelerScreen extends ModelerScreen {
 		
 		MouseIntersection closest = null;
 		float distance = Float.MAX_VALUE;
-		ModelPart part = null;
+		Part part = null;
 		if (this.model != null) {
-			HashMap<String, ModelPart> parts = this.model.model.parts;
-			for (String str : parts.keySet()) {
-				ModelTransformation transform = this.model.currentTransformations.get(str);
-				if (transform != null) {
-					RayBox box = new RayBox();
-					box.min = new Vector3f(transform.x - transform.size_x / 2.0f, transform.y - transform.size_y / 2.0f, transform.z - transform.size_z / 2.0f);
-					box.max = new Vector3f(box.min).add(transform.size_x, transform.size_y, transform.size_z);
-					MouseIntersection i = this.getMouseIntersection(box, new Vector3f(transform.rotX, transform.rotY, transform.rotZ));
-					if (i != null) {
-						if (i.distance < distance) {
-							distance = i.distance;
-							closest = i;
-							part = parts.get(str);
-						}
+			ArrayList<Part> parts = this.model.getParts();
+			for (Part p : parts) {
+				RayBox box = new RayBox();
+				Vector3f size = new Vector3f(p.size).mul(p.scale).mul(Part.SCALING * 2.0f);
+				Vector3f position = new Vector3f(p.position).mul(Part.SCALING);
+				box.min = new Vector3f(position.x - size.x / 2.0f, position.y - size.y / 2.0f, position.z - size.z / 2.0f);
+				box.max = new Vector3f(box.min).add(size.x, size.y, size.z);
+				MouseIntersection i = this.getMouseIntersection(box, new Vector3f(p.rotation));
+				if (i != null) {
+					if (i.distance < distance) {
+						distance = i.distance;
+						closest = i;
+						part = p;
 					}
 				}
+			}
+		}
+		
+		
+		if (selectedPart != null) {
+			if (this.selectionMode == SelectionMode.TRANSLATION) {
+				{
+					handle.mesh.texture = Textures.POSITION_HANDLE_Y;
+					Vector3f position = new Vector3f(selectedPart.position).mul(Part.SCALING);
+					Vector3f size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING);
+					position.add(size.x / 2.0f, size.y * 2.5f, 0.0f);
+					MeshRenderer.renderMesh(handle.mesh, position, size, shaderProgram);
+					
+					handle.mesh.texture = Textures.POSITION_HANDLE_Y;
+					position.add(size.x / 2.0f, size.y, 0.0f);
+					MeshRenderer.renderMesh(handle.mesh, new Vector3f(position).sub(size).add(0, 0, size.z / 2.0f), new Vector3f(0, 90, 0), size, shaderProgram);
+					
+					handle.mesh.texture = Textures.POSITION_HANDLE_X;
+					position = new Vector3f(selectedPart.position).mul(Part.SCALING);
+					position.add(size.x / 2.0f, size.y * 1.5f, 0.0f);
+					MeshRenderer.renderMesh(handle.mesh, position.add(size.x * 2.0f, -size.y * 2.0f, 0), new Vector3f(0, 0, -90), size, shaderProgram);
+					
+					MeshRenderer.renderMesh(handle.mesh, position.add(0, size.y / 2.0f, -size.z / 2.0f), new Vector3f(90, 0, -90), size, shaderProgram);
+					
+					handle.mesh.texture = Textures.POSITION_HANDLE_Z;
+					position = new Vector3f(selectedPart.position).mul(Part.SCALING);
+					position.add(size.x / 2.0f, size.y * 1.5f, 0.0f);
+					MeshRenderer.renderMesh(handle.mesh, position.add(-size.x / 2.0f, -size.y * 2.0f, size.z * 2.5f), new Vector3f(0, -90, -90), size, shaderProgram);
+					MeshRenderer.renderMesh(handle.mesh, position.add(size.x / 2.0f, size.y / 2.0f, 0.0f), new Vector3f(90, -90, -90), size, shaderProgram);
+				}
+				Vector3f position = new Vector3f(selectedPart.position).mul(Part.SCALING);
+				Vector3f size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING * 2.0f);
+//				MeshRenderer.renderMesh(block, new Vector3f(position).add(-0.1f, size.y * 2.0f, -0.1f), new Vector3f(0.2f, 2.0f, 0.2f), shaderProgram);
+				
+				RayBox Y_HANDLE = new RayBox();
+				Y_HANDLE.min = new Vector3f(position.add(-0.1f, 0.0f, -0.1f));
+				Y_HANDLE.max = new Vector3f(Y_HANDLE.min).add(0.2f, 2.0f, 0.2f);
+				
+				MouseIntersection i = getMouseIntersection(Y_HANDLE, new Vector3f());
+				if (i != null) {
+					if (Settings.isMouseButtonJustDown(0)) {
+						this.Yselected = true;
+						mousePos3D = i.hit;
+						lastMousePos3D = i.hit;
+					}
+				}
+				if (this.Yselected) {
+					Y_HANDLE.min = new Vector3f(position.add(-100, -100, -0.1f));
+					Y_HANDLE.max = new Vector3f(Y_HANDLE.min).add(200, 200, 0.1f);
+					i = getMouseIntersection(Y_HANDLE, new Vector3f());
+					if (i == null) {
+						Y_HANDLE.min = new Vector3f(position.add(-0.1f, -100, -100));
+						Y_HANDLE.max = new Vector3f(Y_HANDLE.min).add(0.1f, 200, 200);
+						i = getMouseIntersection(Y_HANDLE, new Vector3f());
+					}
+					if (i != null) {
+						if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT)) {
+							if (Math.abs(i.hit.y - lastMousePos3D.y) > Part.SCALING) {
+								mousePos3D.y = (int)(i.hit.y * (1.0f / Part.SCALING)) * Part.SCALING;
+								selectedPart.position.y = (int)selectedPart.position.y;
+							}
+						} else {
+							mousePos3D = i.hit;
+						}
+						selectedPart.translate(new Vector3f(0, (mousePos3D.y - lastMousePos3D.y) * 32.0f, 0));
+					}
+				}
+				
+				RayBox X_HANDLE = new RayBox();
+				X_HANDLE.min = new Vector3f(position.add(0.0f, -0.1f, -0.1f));
+				X_HANDLE.max = new Vector3f(X_HANDLE.min).add(2.0f, 0.2f, 0.2f);
+				
+				i = getMouseIntersection(X_HANDLE, new Vector3f());
+				if (i != null) {
+					if (Settings.isMouseButtonJustDown(0)) {
+						this.Xselected = true;
+						mousePos3D = i.hit;
+						lastMousePos3D = i.hit;
+					}
+				}
+				if (this.Xselected) {
+					X_HANDLE.min = new Vector3f(position.add(-100, -0.1f, -100));
+					X_HANDLE.max = new Vector3f(X_HANDLE.min).add(200, 0.1f, 200);
+					i = getMouseIntersection(X_HANDLE, new Vector3f());
+					if (i == null) {
+						X_HANDLE.min = new Vector3f(position.add(-100, -100, -0.1f));
+						X_HANDLE.max = new Vector3f(X_HANDLE.min).add(200, 200, 0.1f);
+						i = getMouseIntersection(X_HANDLE, new Vector3f());
+					}
+					if (i != null) {
+						if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT)) {
+							if (Math.abs(i.hit.x - lastMousePos3D.x) > Part.SCALING) {
+								mousePos3D.x = (int)(i.hit.x * (1.0f / Part.SCALING)) * Part.SCALING;
+								selectedPart.position.x = (int)selectedPart.position.x;
+							}
+						} else {
+							mousePos3D = i.hit;
+						}
+						selectedPart.translate(new Vector3f((mousePos3D.x - lastMousePos3D.x) * 32.0f, 0, 0));
+					}
+				}
+				
+				RayBox Z_HANDLE = new RayBox();
+				Z_HANDLE.min = new Vector3f(position.add(-0.1f, -0.1f, 0.0f));
+				Z_HANDLE.max = new Vector3f(Z_HANDLE.min).add(0.2f, 0.2f, 2.0f);
+				
+				i = getMouseIntersection(Z_HANDLE, new Vector3f());
+				if (i != null) {
+					if (Settings.isMouseButtonJustDown(0)) {
+						this.Zselected = true;
+						mousePos3D = i.hit;
+						lastMousePos3D = i.hit;
+					}
+				}
+				if (this.Zselected) {
+					Z_HANDLE.min = new Vector3f(position.add(-100, -0.1f, -100));
+					Z_HANDLE.max = new Vector3f(Z_HANDLE.min).add(200, 0.1f, 200);
+					i = getMouseIntersection(Z_HANDLE, new Vector3f());
+					if (i == null) {
+						Z_HANDLE.min = new Vector3f(position.add(-0.1f, -100, -100));
+						Z_HANDLE.max = new Vector3f(Z_HANDLE.min).add(0.1f, 200, 200);
+						i = getMouseIntersection(Z_HANDLE, new Vector3f());
+					}
+					if (i != null) {
+						if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT)) {
+							if (Math.abs(i.hit.z - lastMousePos3D.z) > Part.SCALING) {
+								mousePos3D.z = (int)(i.hit.z * (1.0f / Part.SCALING)) * Part.SCALING;
+								selectedPart.position.z = (int)selectedPart.position.z;
+							}
+						} else {
+							mousePos3D = i.hit;
+						}
+						selectedPart.translate(new Vector3f(0, 0, (mousePos3D.z - lastMousePos3D.z) * 32.0f));
+
+
+					}
+				}
+				
+				if (!Settings.isMouseButtonDown(0)) {
+					this.Xselected = false;
+					this.Yselected = false;
+					this.Zselected = false;
+					mousePos3D = new Vector3f(0, 0, 0);
+				}
+				lastMousePos3D = new Vector3f(mousePos3D);
 			}
 		}
 		if (Settings.isMouseButtonJustDown(0)) {
 			if (closest != null) {
 				selectPart(part);
 			} else {
+				if (!Xselected && !Yselected && !Zselected)
 				deselect();
 			}
 		}
-		
 	}
 	
 	public void deselect() {
-		if (this.model.extraMeshes.get(selectedPart) != null) {
-			this.model.extraMeshes.get(selectedPart).remove(this.selectionMesh);
-		}
-		if (this.selectionMesh != null) {
-			this.model.extraScale.remove(this.selectionMesh);
-		}
-		this.selectionMesh = null;
-		selectedPart = "";
+		selectedPart = null;
 	}
 	
-	public void selectPart(ModelPart part) {
-		if (this.model.extraMeshes.get(selectedPart) != null) {
-			this.model.extraMeshes.get(selectedPart).remove(this.selectionMesh);
-		}
-		if (this.selectionMesh != null) {
-			this.model.extraScale.remove(this.selectionMesh);
-		}
+	public void selectPart(Part part) {
 		this.selectionMesh = null;
-		selectedPart = part.name;
-		this.selectionMesh = CustomModel.buildMesh(part, Textures.TILE_SELECTION, 
+		selectedPart = part;
+		
+		this.selectionMesh = Part.buildMesh(part, Textures.TILE_SELECTION, 
 				new float[] {
 					0, 0,
 					0, 1,
@@ -884,11 +1026,7 @@ public class NewModelerScreen extends ModelerScreen {
 					0, 1,
 					1, 1,
 					1, 0
-				},
-				1.0f
-				);
-		this.model.extraMeshes.get(selectedPart).add(this.selectionMesh);
-		this.model.extraScale.put(this.selectionMesh, 1.1f);
+				});
 	}
 	
 	public MouseIntersection getMouseIntersection(RayBox box, Vector3f rotation) {
@@ -923,162 +1061,10 @@ public class NewModelerScreen extends ModelerScreen {
 	}
 	
 	
-	public static FBOImage createFBOTexture(int textureWidth, int textureHeight) {
-
-        frameBufferID = GL30.glGenFramebuffers();
-
-        glBindFramebuffer(GL_FRAMEBUFFER, frameBufferID);
-
-        textureID = glGenTextures();
-
-        glBindTexture(GL_TEXTURE_2D, textureID);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureWidth, textureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-        renderBufferID = glGenRenderbuffers();
-
-        glBindRenderbuffer(GL_RENDERBUFFER, renderBufferID);
-
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, textureWidth, textureHeight);
-
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderBufferID);
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, textureID, 0);
-
-        glDrawBuffer(GL_COLOR_ATTACHMENT0);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-
-
-        return new FBOImage(textureID, textureWidth, textureHeight);
-
-    }
-
-
-
-    private static long lastTime = System.nanoTime();
-
-
-
-    public static void renderToFBO(long nvgContext) {
-
-        // bind fbo
-
-
-
-        long thisTime = System.nanoTime();
-
-        float angle = 5 * (lastTime - thisTime) / 1E10f;
-
-
-
-        glBindFramebuffer(GL_FRAMEBUFFER, frameBufferID);
-
-        glViewport(0, 0, textureWidth, textureHeight);
-
-
-
-        glClearColor(0.3f, 0.5f, 0.7f, 0.0f);
-
-
-
-        // Clear screen
-
-        glClear(GL_COLOR_BUFFER_BIT);
-
-
-
-        glEnable(GL_BLEND);
-
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        nvgBeginFrame(nvgContext, textureWidth, textureHeight, 1);
-
-
-        
-        try (
-
-                NVGColor nvgColorOne = NVGColor.calloc();
-
-                NVGColor nvgColorTwo = NVGColor.calloc()
-
-        ) {
-
-            nvgColorOne.r(0);
-
-            nvgColorOne.g(1);
-
-            nvgColorOne.b(0);
-
-            nvgColorOne.a(1);
-
-
-
-            nvgColorTwo.r(0);
-
-            nvgColorTwo.g(0);
-
-            nvgColorTwo.b(0);
-
-            nvgColorTwo.a(1);
-
-
-
-            nvgTranslate(nvgContext, textureWidth / 2f, textureHeight / 2f);
-
-            nvgRotate(nvgContext, angle);
-
-
-
-            nvgBeginPath(nvgContext);
-
-            nvgRect(nvgContext, -textureWidth / 4f, -textureHeight / 4f, textureWidth / 2f, textureHeight / 2f);
-
-            nvgStrokeColor(nvgContext, nvgColorTwo);
-
-            nvgStroke(nvgContext);
-
-
-
-            nvgBeginPath(nvgContext);
-
-            nvgRect(nvgContext, -textureWidth / 4f, -textureHeight / 4f, textureWidth / 2f, textureHeight / 2f);
-
-            nvgFillColor(nvgContext, nvgColorOne);
-
-            nvgFill(nvgContext);
-        }
-
-
-
-        nvgEndFrame(nvgContext);
-
-        GL40.glDisable(GL40.GL_BLEND);
-
-
-
-        // unbind fbo
-
-        GL40.glBindFramebuffer(GL40.GL_FRAMEBUFFER, 0);
-
-    }
     
     public void close() {
     	super.close();
-    	if (nvgContext != 0) {
-            glDeleteRenderbuffers(renderBufferID);
-            glDeleteTextures(textureID);
-            glDeleteFramebuffers(frameBufferID);
-            if (isVersionNew) {
-                NanoVGGL3.nnvgDelete(nvgContext);
-            } else {
-                NanoVGGL2.nnvgDelete(nvgContext);
-            }
-
-        }
+    	model.dispose();
     	nRenderer.destroy();
     }
 

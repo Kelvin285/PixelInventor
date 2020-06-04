@@ -35,7 +35,10 @@ public class Textures {
 	public static Texture ROTATE = loadTexture("Inignoto", "modelmaker/rotate");
 	public static Texture SCALE = loadTexture("Inignoto", "modelmaker/scale");
 	public static Texture TRASH = loadTexture("Inignoto", "modelmaker/trash");
-
+	public static Texture POSITION_HANDLE_X = loadTexture("Inignoto", "modelmaker/position_handle_x");
+	public static Texture POSITION_HANDLE_Y = loadTexture("Inignoto", "modelmaker/position_handle_y");
+	public static Texture POSITION_HANDLE_Z = loadTexture("Inignoto", "modelmaker/position_handle_z");
+	public static Texture GRAY_MATERIAL = loadTexture("Inignoto", "modelmaker/gray_material");
 	
 	public static TextureAtlas TILES = new TextureAtlas("Inignoto", "tiles");
 	
