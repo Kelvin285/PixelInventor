@@ -5,6 +5,7 @@ import static org.lwjgl.opengl.GL11.glBindTexture;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GL15;
 
@@ -28,6 +29,39 @@ public class MeshRenderer {
 	}
 	
 	public static Matrix4f view = null;
+	
+	
+	public static void renderMesh(Mesh mesh, Vector3f position, Quaternionf rotation, Vector3f scale, ShaderProgram shader) {
+		if (mesh == null) return;
+		shader.setUniformInt("texture_sampler", 0);
+		shader.setUniformMat4("modelMatrix", getModelMatrix(position, rotation, scale));
+		shader.setUniformVec3("cameraPos", Camera.position);
+		if (Settings.SHADOWS) {
+//			uniform mat4 modelLightViewMatrix;
+//			uniform mat4 orthoProjectionMatrix;
+//			uniform sampler2D shadowMap;
+			shader.setUniformMat4("modelLightViewMatrix", getLightMatrix(position, rotation, scale, Inignoto.game.shadowRenderer));
+			shader.setUniformMat4("orthoProjectionMatrix", Inignoto.game.shadowRenderer.projectionMatrix);
+			glActiveTexture(GL15.GL_TEXTURE1);
+	    	glBindTexture(GL_TEXTURE_2D, Inignoto.game.shadowRenderer.fbo.getDepthMapTexture().getTextureId());
+	    	glActiveTexture(GL15.GL_TEXTURE2);
+	    	glBindTexture(GL_TEXTURE_2D, Inignoto.game.shadowRenderer.fbo1.getDepthMapTexture().getTextureId());
+	    	glActiveTexture(GL15.GL_TEXTURE3);
+	    	glBindTexture(GL_TEXTURE_2D, Inignoto.game.shadowRenderer.fbo2.getDepthMapTexture().getTextureId());
+	    	glActiveTexture(GL15.GL_TEXTURE4);
+	    	glBindTexture(GL_TEXTURE_2D, Inignoto.game.shadowRenderer.fbo3.getDepthMapTexture().getTextureId());
+			shader.setUniformMat4("secondOrthoMatrix", Inignoto.game.shadowRenderer.projectionMatrix1);
+			shader.setUniformMat4("thirdOrthoMatrix", Inignoto.game.shadowRenderer.projectionMatrix2);
+			shader.setUniformMat4("fourthOrthoMatrix", Inignoto.game.shadowRenderer.projectionMatrix3);
+
+			shader.setUniformInt("shadowMap", 1);
+			shader.setUniformInt("shadowMap2", 2);
+			shader.setUniformInt("shadowMap3", 3);
+			shader.setUniformInt("shadowMap4", 4);
+		}
+		
+		mesh.render();
+	}
 	
 	public static void renderMesh(Mesh mesh, Vector3f position, Vector3f rotation, Vector3f scale, ShaderProgram shader) {
 		if (mesh == null) return;
@@ -81,12 +115,26 @@ public class MeshRenderer {
 		renderer.update(Inignoto.game.world.light.getPosition(), Inignoto.game.world.light.getDirection());
 	}
 	
+	public static Matrix4f getLightMatrix(Vector3f offset, Quaternionf rotation, Vector3f scale, ShadowRenderer renderer) {
+		Matrix4f modelMatrix = new Matrix4f();
+		modelMatrix.identity().translate(offset).rotate(rotation).
+                scale(scale.x, scale.y, scale.z);
+		Matrix4f view = new Matrix4f(renderer.viewMatrix);
+        return view.mul(modelMatrix);
+    }
+	
+	public static Matrix4f getModelMatrix(Vector3f offset, Quaternionf rotation, Vector3f scale) {
+		Matrix4f modelMatrix = new Matrix4f();
+		modelMatrix.identity().translate(offset).rotate(rotation).
+                scale(scale.x, scale.y, scale.z);
+		Matrix4f view = new Matrix4f(Camera.getViewMatrix());
+        return view.mul(modelMatrix);
+    }
+	
 	public static Matrix4f getLightMatrix(Vector3f offset, Vector3f rotation, Vector3f scale, ShadowRenderer renderer) {
 		Matrix4f modelMatrix = new Matrix4f();
-		modelMatrix.identity().translate(offset).
-                rotateX((float)Math.toRadians(rotation.x)).
-                rotateY((float)Math.toRadians(rotation.y)).
-                rotateZ((float)Math.toRadians(rotation.z)).
+		modelMatrix.identity().translate(offset)
+		.rotateYXZ((float)Math.toRadians(rotation.y), (float)Math.toRadians(rotation.x), (float)Math.toRadians(rotation.z)).
                 scale(scale.x, scale.y, scale.z);
 		Matrix4f view = new Matrix4f(renderer.viewMatrix);
         return view.mul(modelMatrix);

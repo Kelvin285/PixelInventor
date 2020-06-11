@@ -1,6 +1,6 @@
 package kmerrill285.Inignoto.game.client.rendering;
 
-import static org.lwjgl.opengl.GL11.GL_FLOAT;
+import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
 import static org.lwjgl.opengl.GL11.GL_UNSIGNED_INT;
@@ -42,6 +42,8 @@ public class Mesh {
     public Texture texture;
     
     public boolean empty = true;
+    
+    public boolean outlines = false;
     
     private boolean disposed = false;
     private boolean setup = false;
@@ -176,12 +178,13 @@ public class Mesh {
     	glEnableVertexAttribArray(0);
     	glEnableVertexAttribArray(1);
     	glEnableVertexAttribArray(2);
-        glDrawElements(GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
+        glDrawElements(outlines ? GL_LINES : GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
     	glEnableVertexAttribArray(2);
         glDisableVertexAttribArray(1);
     	glDisableVertexAttribArray(0);
     	glBindVertexArray(0);
     }
+    
     
 	public boolean isSetup() {
 		return setup;

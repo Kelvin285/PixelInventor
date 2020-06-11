@@ -1,5 +1,6 @@
 package kmerrill285.Inignoto.resources.raytracer;
 
+import org.joml.Quaternionf;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
@@ -32,6 +33,31 @@ public class Raytracer {
 		Vector3f r3 = rotateAroundZ(r2, b, theta.z);
 		return r3;
 	}
+	
+	public static Vector3f rotateAround(Vector3f a, Vector3f b, Quaternionf theta) {
+		float x = a.x - b.x;
+		float y = a.y - b.y;
+		float z = a.z - b.z;
+		Vector3f vec = new Vector3f(x, y, z);
+		vec.rotate(theta);
+		vec.x += b.x;
+		vec.y += b.y;
+		vec.z += b.z;
+		return vec;
+	}
+	
+	public static Vector3f rotateDir(Vector3f a, Quaternionf theta) {
+		Vector3f b = new Vector3f(0, 0, 0);
+		float x = a.x - b.x;
+		float y = a.y - b.y;
+		float z = a.z - b.z;
+		Vector3f vec = new Vector3f(x, y, z);
+		vec.rotate(theta);
+		vec.x += b.x;
+		vec.y += b.y;
+		vec.z += b.z;
+		return vec;
+	}
 
 	public static Vector3f rotateDirY(Vector3f dir, float theta) {
 		return rotateAroundY(dir, new Vector3f(0.0f, 0.0f, 0.0f), theta);
@@ -49,6 +75,25 @@ public class Raytracer {
 		return rotateAround(dir, new Vector3f(0.0f, 0.0f, 0.0f), theta);
 	}
 
+	public static RayIntersection intersectBox(Vector3f origin, Vector3f dir, final RayBox b, Quaternionf rotation) {
+		  Vector3f center = new Vector3f(b.min).add(b.max).div(2.0f);
+		  
+		  Vector3f o2 = rotateAround(origin, center, rotation);
+		  Vector3f d2 = rotateDir(dir, rotation);
+		  RayIntersection i2 = intersectBox(o2, d2, b);
+		  
+		  return i2;
+		}
+	
+	public static boolean doesCollisionOccur(Vector3f origin, Vector3f dir, final RayBox b, Quaternionf rotation) {
+		RayIntersection i = intersectBox(origin, dir, b, rotation);
+		Vector2f l = i.lambda;
+		  if (l.x > 0.0 && l.x < l.y) {
+			  return true;
+		  }
+		return false;
+	}
+	
 	public static RayIntersection intersectBox(Vector3f origin, Vector3f dir, final RayBox b, Vector3f rotation) {
 	  Vector3f center = new Vector3f(b.min).add(b.max).div(2.0f);
 	  

@@ -11,6 +11,7 @@ import org.lwjgl.glfw.GLFW;
 import kmerrill285.Inignoto.Inignoto;
 import kmerrill285.Inignoto.events.Events;
 import kmerrill285.Inignoto.game.client.Camera;
+import kmerrill285.Inignoto.game.client.Mouse;
 import kmerrill285.Inignoto.game.client.audio.SoundSource;
 import kmerrill285.Inignoto.game.client.audio.Sounds;
 import kmerrill285.Inignoto.game.client.rendering.gui.GuiRenderer;
@@ -193,13 +194,28 @@ public class Utils {
 	}
 	
 	public static void setupProjection(ShaderProgram shader) {
-		float aspectRatio = (float)P_WIDTH / (float)P_HEIGHT;
+		
+		int[] width = new int[1];
+		int[] height = new int[1];
+		GLFW.glfwGetWindowSize(Utils.window, width, height);
+		double ax = (width[0] / (1920.0 * 0.55f));
+		double ay = (height[0] / 1080.0);
+		
+		float aspectRatio = (float)ax / (float)ay;
+		
+		
 		projectionMatrix = new Matrix4f().perspective((float)Math.toRadians(Settings.ACTUAL_FOV), aspectRatio, Z_NEAR, Z_FAR);
 		shader.setUniformMat4("projectionMatrix", projectionMatrix);
 	}
 	
 	public static Matrix4f getProjection() {
-		float aspectRatio = (float)P_WIDTH / (float)P_HEIGHT;
+		int[] width = new int[1];
+		int[] height = new int[1];
+		GLFW.glfwGetWindowSize(Utils.window, width, height);
+		double ax = (width[0] / (1920.0 * 0.55f));
+		double ay = (height[0] / 1080.0);
+		
+		float aspectRatio = (float)ax / (float)ay;
 		return new Matrix4f().perspective((float)Math.toRadians(Settings.ACTUAL_FOV), aspectRatio, Z_NEAR, Z_FAR);
 	}
 	

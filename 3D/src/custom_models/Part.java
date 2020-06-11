@@ -2,13 +2,17 @@ package custom_models;
 
 import java.util.ArrayList;
 
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+import org.joml.Vector3i;
 
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.MeshRenderer;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.textures.Texture;
+import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
 import kmerrill285.Inignoto.modelloader.Vertex;
 import kmerrill285.Inignoto.resources.raytracer.Raytracer;
 
@@ -16,9 +20,9 @@ public class Part {
 	public static final float SCALING = 1.0f / 32.0f;
 	
 	public Vector3f position = new Vector3f(0, 0, 0);
-	public Vector3f rotation = new Vector3f(0, 0, 0);
+	public Quaternionf rotation = new Quaternionf().identity();
 	public Vector3f scale = new Vector3f(0, 0, 0);
-	public Vector3f size = new Vector3f(0, 0, 0);
+	public Vector3i size = new Vector3i(0, 0, 0);
 	public Vector2f uv = new Vector2f(0, 0);
 	public Vector3f origin = new Vector3f(0, 0, 0);
 	
@@ -31,9 +35,23 @@ public class Part {
 	public String name = "Part";
 	
 	public Mesh mesh;
+	public Mesh outlineMesh;
+	
+	private Texture texture;
+	
+	public Vector3f look = new Vector3f(0, 0, 1);
+	
+	public Vector3f axisAngles = new Vector3f(0, 0, 0);
+	
+		
+	public void buildPart() {
+		this.mesh = buildMesh(this, this.texture);
+	}
 	
 	public void buildPart(Texture texture) {
 		this.mesh = buildMesh(this, texture);
+		this.texture = texture;
+		this.outlineMesh = buildOutlineMesh(this);
 	}
 	
 	public static Mesh buildMesh(Part part, Texture texture) {
@@ -42,6 +60,8 @@ public class Part {
 		float size_z = part.size.z;
 		float U = part.uv.x;
 		float V = part.uv.y;
+		
+		part.outlineMesh = buildOutlineMesh(part);
 		
 		float[] texCoords = {
 				//front
@@ -83,6 +103,35 @@ public class Part {
 				texCoords[i] /= (float)texture.getHeight();
 			}
 			return buildMesh(part, texture, texCoords);
+	}
+	
+	public static Mesh buildOutlineMesh(Part part) {
+		Mesh mesh = null;
+		Vector3f size = new Vector3f(part.size).div(4.0f);
+		float[] vertices = new float[] {
+				-size.x, -size.y, -size.z,
+				-size.x, size.y, -size.z,
+				size.x, size.y, -size.z,
+				size.x, -size.y, -size.z,
+				
+				-size.x, -size.y, size.z,
+				-size.x, size.y, size.z,
+				size.x, size.y, size.z,
+				size.x, -size.y, size.z
+		};
+		int[] indices = new int[] {
+			0, 1, 1, 2, 2, 3, 3, 0,
+			4, 5, 5, 6, 6, 7, 7, 4,
+			0, 4, 1, 5, 2, 6, 3, 7
+		};
+		float[] texCoords = new float[] {
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0
+		};
+		mesh = new Mesh(vertices, texCoords, indices, Textures.OUTLINE);
+		mesh.outlines = true;
+		return mesh;
 	}
 	
 	public static Mesh buildMesh(Part part, Texture texture, float[] texCoords) {
@@ -150,7 +199,8 @@ public class Part {
 			int J = i * 3;
 			
 				
-			Vector3f p5 = vertexCoords.get(5);
+			Vector3f p5 = new Vector3f(vertexCoords.get(5)).mul(0.5f);
+			
 			
 			
 			Vector3f v = new Vector3f(verts.get(i).x, verts.get(i).y, verts.get(i).z).sub(0.5f, 0.5f, 0.5f).mul(p5.x * 2, p5.y * 2, p5.z * 2).mul(part.scale);
@@ -174,29 +224,78 @@ public class Part {
 	}
 	
 	public void rotate(Vector3f rotation) {
-		rotate(rotation, new Vector3f(this.position).add(this.origin));
+		rotate(rotation, new Vector3f(this.position).add(new Vector3f(this.origin).rotate(this.rotation)));
 	}
 	
 	public void rotate(Vector3f rotation, Vector3f origin) {
-		this.rotation.add(rotation);
-		Raytracer.rotateAround(this.position, origin, rotation);
-		for (Part part : this.children) {
-			part.rotate(rotation, origin);
-		}
+		
+		this.axisAngles.add(rotation);
+		
+        this.rotation.rotateLocalX((float)Math.toRadians(rotation.x));
+        this.rotation.rotateLocalY((float)Math.toRadians(rotation.y));
+        this.rotation.rotateLocalZ((float)Math.toRadians(rotation.z));
+                
+        Quaternionf nRot = new Quaternionf().identity();
+        nRot.rotateLocalX((float)Math.toRadians(rotation.x));
+        nRot.rotateLocalY((float)Math.toRadians(rotation.y));
+        nRot.rotateLocalZ((float)Math.toRadians(rotation.z));
+        
+       
+        this.position = Raytracer.rotateAround(this.position, origin, nRot);
+        
+        for (Part part : this.children) {
+            part.rotate(rotation, origin);
+        }
+    }
+	
+	public void setRotation(Vector3f rotation) {
+		rotate(new Vector3f(rotation).mul(-1));
+		this.axisAngles = new Vector3f(0, 0, 0);
+		this.rotation.identity();
+		rotate(rotation);
 	}
 	
 	public void changeTexture(Texture texture) {
 		mesh.texture = texture;
+		this.texture = texture;
 	}
 	
 	public void render(ShaderProgram shader) {
+		Vector3f rot = getEulerAngles();
+		if (this.mesh != null && this.visible)
+		MeshRenderer.renderMesh(mesh, new Vector3f(position).mul(SCALING), rot, new Vector3f(scale).mul(SCALING), shader);
+		
+	}
+	
+	public Vector3f getEulerAngles() {
+		
+		Matrix4f mat = new Matrix4f().identity().rotate(rotation);
+		Vector3f euler = new Vector3f();
+		mat.getEulerAnglesZYX(euler);
+		euler.x = (float)Math.toDegrees(euler.x);
+		euler.y = (float)Math.toDegrees(euler.y);
+		euler.z = (float)Math.toDegrees(euler.z);
+
+		return euler;
+	}
+	
+	public void render(ShaderProgram shader, boolean outlines, Part selected) {
 		if (this.mesh != null && this.visible)
 		MeshRenderer.renderMesh(mesh, new Vector3f(position).mul(SCALING), rotation, new Vector3f(scale).mul(SCALING), shader);
+		if (outlines) {
+			if (selected == this) {
+				this.outlineMesh.texture = Textures.WHITE_SQUARE;
+			} else {
+				this.outlineMesh.texture = Textures.OUTLINE;
+			}
+			if (this.mesh != null && this.visible)
+				MeshRenderer.renderMesh(this.outlineMesh, new Vector3f(position).mul(SCALING), rotation, new Vector3f(scale).mul(SCALING * 2.0f), shader);
+		}
 	}
 	
 	public void renderSelected(ShaderProgram shader, Mesh selectionMesh) {
-		if (this.mesh != null && this.visible)
-		MeshRenderer.renderMesh(selectionMesh, new Vector3f(position).mul(SCALING), rotation, new Vector3f(scale).mul(SCALING * 1.1f), shader);
+//		if (this.mesh != null && this.visible)
+//		MeshRenderer.renderMesh(selectionMesh, new Vector3f(position).mul(SCALING), rotation, new Vector3f(scale).mul(SCALING * 1.1f), shader);
 	}
 	
 	public void dispose() {
