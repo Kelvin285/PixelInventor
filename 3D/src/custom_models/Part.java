@@ -43,6 +43,22 @@ public class Part {
 	
 	public Vector3f axisAngles = new Vector3f(0, 0, 0);
 	
+	public static void duplicatePart(Part part, Part parent, Model model) {
+		Part p = new Part();
+		p.name = "" + part.name + " - Copy";
+		p.position = new Vector3f(part.position);
+		p.rotation = new Quaternionf(part.rotation);
+		p.scale = new Vector3f(part.scale);
+		p.size = new Vector3i(part.size);
+		p.uv = new Vector2f(part.uv);
+		p.origin = new Vector3f(part.origin);
+		p.parent = parent;
+		for (Part c : part.children) {
+			duplicatePart(c, p, model);
+		}
+		p.buildPart(part.texture);
+		model.getParts().add(p);
+	}
 		
 	public void buildPart() {
 		this.mesh = buildMesh(this, this.texture);

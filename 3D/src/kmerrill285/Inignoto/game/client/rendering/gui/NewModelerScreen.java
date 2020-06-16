@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
+import org.joml.Quaternionf;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
@@ -116,6 +117,7 @@ public class NewModelerScreen extends ModelerScreen {
 	
 	private Panel FILE_PANEL;
 	private Panel PROPERTIES_PANEL;
+	private Panel EDIT_PANEL;
 	
     boolean isVersionNew;
     
@@ -239,6 +241,9 @@ public class NewModelerScreen extends ModelerScreen {
         FILE_PANEL = new Panel();
         createFilePanel(FILE_PANEL);
         
+        EDIT_PANEL = new Panel();
+        createEditPanel(EDIT_PANEL);
+        
         
         
 //            widget.getContainer().add(imageView);
@@ -258,18 +263,112 @@ public class NewModelerScreen extends ModelerScreen {
 
         });
         
+        EDIT.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+
+            if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
+            	if (panel.contains(EDIT_PANEL)) {
+            		panel.remove(EDIT_PANEL);
+            	} else {
+            		panel.add(EDIT_PANEL);
+            	}
+            }
+
+        });
+        
+        
+        
         panel.getListenerMap().addListener(FocusEvent.class, (FocusEventListener) event -> {
         	if (panel.isFocused()) {
         		panel.remove(FILE_PANEL);
+        		panel.remove(EDIT_PANEL);
         	}
         });
         
 
        createPropertiesPanel();
+       createPartsPanel();
         
 
         frame.getContainer().add(widget);
 	}
+	
+	private Panel PARTS_PANEL;
+	private Label parts_panel_name;
+	private ScrollablePanel parts_scroll_panel;
+	public void createPartsPanel() {
+		PARTS_PANEL = new Panel();
+		PARTS_PANEL.setSize(120, 160);
+		PARTS_PANEL.setPosition(300, 100);
+		PARTS_PANEL.getStyle().getBackground().setColor(0.3f, 0.3f, 0.3f, 1.0f);
+        
+		parts_panel_name = new Label(Translation.translateText("Inignoto:gui.parts"));
+		parts_panel_name.setSize(120, 20);
+		parts_panel_name.getStyle().getBackground().setColor(0.4f, 0.4f, 0.4f, 1.0f);
+		parts_panel_name.getStyle().setHorizontalAlign(HorizontalAlign.CENTER);
+		parts_panel_name.getStyle().setTextColor(1.0f, 1.0f, 1.0f, 1.0f);
+		PARTS_PANEL.add(parts_panel_name);
+		
+		 parts_scroll_panel = new ScrollablePanel();
+		 parts_scroll_panel.setHorizontalScrollBarVisible(false);
+         parts_scroll_panel.getContainer().setSize(PARTS_PANEL.getSize().x + 20, 9000);
+         parts_scroll_panel.setSize(PARTS_PANEL.getSize().x, PARTS_PANEL.getSize().y - 20);
+         parts_scroll_panel.getContainer().getStyle().getBackground().setColor(0.3f, 0.3f, 0.3f, 1);
+         parts_scroll_panel.getStyle().getBackground().setColor(0.3f, 0.3f, 0.3f, 1);
+
+         parts_scroll_panel.setPosition(0, 20);
+         parts_scroll_panel.getStyle().setPosition(PositionType.RELATIVE);
+         parts_scroll_panel.setAutoResize(true);
+         PARTS_PANEL.add(parts_scroll_panel);
+        
+        parts_panel_name.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+			Events.mouseClick(event.getContext().getGlfwWindow(), event.getButton().getCode(), event.getButton().isPressed() ? 1 : 0, event.getButton() == MouseButton.MOUSE_BUTTON_UNKNOWN ? 1 : 0);
+        });
+        
+        panel.add(PARTS_PANEL);
+        
+        refreshPartsPanel();
+	}
+	
+	public void refreshPartsPanel() {
+		parts_scroll_panel.getContainer().clearChildComponents();
+		ArrayList<Part> parts = this.model.getParts();
+		int y = 0;
+		for (Part part : parts) {
+			if (part.parent == null) {
+				y = addPartToPanel(part, 0, y);
+			}
+		}
+	}
+	
+	public int addPartToPanel(Part part, int x, int y) {
+		Button button = new Button(part.name);
+		button.setSize(9000, 30);
+		button.setPosition(x * 30, y * 32);
+		button.getStyle().getBackground().setColor(0.2f, 0.2f, 0.2f, 1.0f);
+		button.getStyle().setTextColor(1.0f, 1.0f, 1.0f, 1.0f);
+		button.getStyle().setHorizontalAlign(HorizontalAlign.LEFT);
+		button.getStyle().setFontSize(20.0f);
+		
+		button.getTextState().setText(part.name);
+		
+		button.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+				if (event.getButton() == MouseButton.MOUSE_BUTTON_LEFT) {
+					this.selectPart(part);
+				}
+	        });
+		
+		parts_scroll_panel.getContainer().add(button);
+		
+		int y2 = y + 1;
+		if (part.children.size() > 0) {
+			for (Part p : part.children) {
+				y2 = addPartToPanel(p, x + 1, y2);
+			}
+		}
+		y = y2 - 1;
+		return y + 1;
+	}
+	
 	private Label properties_panel_name;
 	private TextAreaField part_name;
 	private TextAreaField xPos;
@@ -289,6 +388,7 @@ public class NewModelerScreen extends ModelerScreen {
 	private TextAreaField zCenter;
 
 	private ScrollablePanel properties_scroll_panel;
+	
 	
 	public void createPropertiesPanel() {
 		PROPERTIES_PANEL = new Panel();
@@ -342,6 +442,7 @@ public class NewModelerScreen extends ModelerScreen {
         part_name.getListenerMap().addListener(KeyEvent.class, (KeyEventListener) event -> {
         	if (this.selectedPart != null)
         	this.selectedPart.name = this.part_name.getTextState().getText();
+        	this.refreshPartsPanel();
         });
         properties_scroll_panel.getContainer().add(part_name);
 
@@ -1058,6 +1159,114 @@ public class NewModelerScreen extends ModelerScreen {
 		grid = new Mesh(vertices, texCoords, indices, Textures.GRID);
 	}
 	
+	private boolean SETTING_PARENT;
+	
+	public void createEditPanel(Panel EDIT_PANEL) {
+		EDIT_PANEL.setSize(150, 30 * 4);
+		EDIT_PANEL.setPosition(this.FILE.getSize().x, 20);
+		EDIT_PANEL.getStyle().setFontSize(20f);
+		EDIT_PANEL.getStyle().getBackground().setColor(new Vector4f(0.3f, 0.3f, 0.3f, 1f));
+		EDIT_PANEL.setEnabled(false);
+		
+		Button NEW = new Button(Translation.translateText("Inignoto:gui.new_part"));
+        NEW.setSize(150, 30);
+        NEW.setPosition(0, 0);
+        NEW.getStyle().setFontSize(22f);
+        NEW.getStyle().setTextColor(0, 0, 0, 1);
+        NEW.getStyle().getBackground().setColor(new Vector4f(0, 0, 0, 0));
+        NEW.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
+        NEW.getStyle().setHorizontalAlign(HorizontalAlign.CENTER);
+        NEW.getStyle().setTextColor(1, 1, 1, 1);
+        EDIT_PANEL.add(NEW);
+        
+        NEW.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+
+            if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
+            	Part part = new Part();
+        		part.size = new Vector3i(32, 32, 32);
+        		part.scale = new Vector3f(1, 1, 1);
+        		part.name = "Part";
+        		part.position.y = 16.0f;
+        		part.buildPart(Textures.GRAY_MATERIAL);
+        		model.getParts().add(part);
+        		
+        		this.refreshPartsPanel();
+            }
+
+        });
+        
+        Button DUPLICATE = new Button(Translation.translateText("Inignoto:gui.duplicate_part"));
+        DUPLICATE.setSize(150, 30);
+        DUPLICATE.setPosition(0, 30);
+        DUPLICATE.getStyle().setFontSize(22f);
+        DUPLICATE.getStyle().setTextColor(0, 0, 0, 1);
+        DUPLICATE.getStyle().getBackground().setColor(new Vector4f(0, 0, 0, 0));
+        DUPLICATE.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
+        DUPLICATE.getStyle().setHorizontalAlign(HorizontalAlign.CENTER);
+        DUPLICATE.getStyle().setTextColor(1, 1, 1, 1);
+        EDIT_PANEL.add(DUPLICATE);
+        
+        DUPLICATE.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+
+            if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
+            	if (this.selectedPart != null) {
+            		Part.duplicatePart(this.selectedPart, null, this.model);
+            		this.refreshPartsPanel();
+            	}
+            }
+
+        });
+        
+        Button SET_PARENT = new Button(Translation.translateText("Inignoto:gui.set_parent"));
+        SET_PARENT.setSize(150, 30);
+        SET_PARENT.setPosition(0, 30 * 2);
+        SET_PARENT.getStyle().setFontSize(22f);
+        SET_PARENT.getStyle().setTextColor(0, 0, 0, 1);
+        SET_PARENT.getStyle().getBackground().setColor(new Vector4f(0, 0, 0, 0));
+        SET_PARENT.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
+        SET_PARENT.getStyle().setHorizontalAlign(HorizontalAlign.CENTER);
+        SET_PARENT.getStyle().setTextColor(1, 1, 1, 1);
+        EDIT_PANEL.add(SET_PARENT);
+        
+        SET_PARENT.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+
+            if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
+            	if (this.selectedPart != null) {
+            		SETTING_PARENT = true;
+                	JOptionPane.showMessageDialog(null, "Click on a part to set the new parent of the selected part!");
+            	}
+            }
+
+        });
+        
+        Button DELETE_PART = new Button(Translation.translateText("Inignoto:gui.delete_part"));
+        DELETE_PART.setSize(150, 30);
+        DELETE_PART.setPosition(0, 30 * 3);
+        DELETE_PART.getStyle().setFontSize(22f);
+        DELETE_PART.getStyle().setTextColor(0, 0, 0, 1);
+        DELETE_PART.getStyle().getBackground().setColor(new Vector4f(0, 0, 0, 0));
+        DELETE_PART.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
+        DELETE_PART.getStyle().setHorizontalAlign(HorizontalAlign.CENTER);
+        DELETE_PART.getStyle().setTextColor(1, 1, 1, 1);
+        EDIT_PANEL.add(DELETE_PART);
+        
+        DELETE_PART.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+
+            if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
+            	if (this.selectedPart != null) {
+            		if (JOptionPane.showConfirmDialog(null, "Are you sure you want to delete this part?") == 0) {
+            			this.model.getParts().remove(this.selectedPart);
+                		this.refreshPartsPanel();
+                		this.selectPart(null);
+                	}
+            		
+            	}
+            	
+            }
+
+        });
+	}
+	
 	private void createFilePanel(Panel FILE_PANEL) {
 		FILE_PANEL.setSize(150, 30 * 4);
         FILE_PANEL.setPosition(0, 20);
@@ -1211,19 +1420,19 @@ public class NewModelerScreen extends ModelerScreen {
         });
         panel.add(rotate);
         
-//        ImageView scale = new ImageView(scale_image);
-//        scale.setPosition(50 + 40, 30);
-//        scale.getStyle().setPosition(PositionType.RELATIVE);
-//        scale.setSize(50, 40);
-//        scale.getStyle().getBackground().setColor(0.2f, 0.2f, 0.2f, 0.0f);
-//        scale.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
-//        scale.getStyle().getBorder().setEnabled(false);
-//        scale.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
-//            if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
-//            	this.selectionMode = SelectionMode.SCALE;
-//            }
-//        });
-//        panel.add(scale);
+        ImageView scale = new ImageView(scale_image);
+        scale.setPosition(50 + 40, 30);
+        scale.getStyle().setPosition(PositionType.RELATIVE);
+        scale.setSize(50, 40);
+        scale.getStyle().getBackground().setColor(0.2f, 0.2f, 0.2f, 0.0f);
+        scale.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
+        scale.getStyle().getBorder().setEnabled(false);
+        scale.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+            if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
+            	this.selectionMode = SelectionMode.SCALE;
+            }
+        });
+        panel.add(scale);
         
         ImageView imageView = new ImageView(new_image);
         imageView.setPosition(10, 5);
@@ -1522,9 +1731,35 @@ public class NewModelerScreen extends ModelerScreen {
 	private boolean propertyScaleX = false;
 	private boolean propertyScaleY = false;
 	private boolean propertyDrag = false;
+	
+	private boolean partScaleX = false;
+	private boolean partScaleY = false;
+	private boolean partDrag = false;
+	
+	private int cursor_type = 0;
+	private final int normal = 0, grab = 1, hresize = 2, vresize = 3, typing = 4;
+	
 	public void tick() {
 		
+		switch(cursor_type) {
+		case normal:
+			GLFW.glfwSetCursor(Utils.window, Utils.NORMAL_CURSOR);
+			break;
+		case grab:
+			GLFW.glfwSetCursor(Utils.window, Utils.HAND_CURSOR);
+			break;
+		case hresize:
+			GLFW.glfwSetCursor(Utils.window, Utils.HRESIZE_CURSOR);
+			break;
+		case vresize:
+			GLFW.glfwSetCursor(Utils.window, Utils.VRESIZE_CURSOR);
+			break;
+		case typing:
+			GLFW.glfwSetCursor(Utils.window, Utils.TYPE_CURSOR);
+			break;
+		}
 		
+		cursor_type = normal;
 		double[] xpos = new double[1];
 		double[] ypos = new double[1];
 		GLFW.glfwGetCursorPos(Utils.window, xpos, ypos);
@@ -1534,10 +1769,12 @@ public class NewModelerScreen extends ModelerScreen {
 		if (Settings.isMouseButtonDown(2)) {
 			Camera.position.add(Camera.getUp().mul((Mouse.lastY - Mouse.y) * 0.01f));
 			Camera.position.add(Camera.getRight().mul((Mouse.lastX - Mouse.x) * 0.01f));
+			cursor_type = grab;
 		}
 		if (Settings.isMouseButtonDown(1)) {
 			Camera.rotation.y += Mouse.x - Mouse.lastX;
 			Camera.rotation.x += Mouse.y - Mouse.lastY;
+			cursor_type = grab;
 		}
 		if (Settings.FORWARD.isPressed()) {
 			Camera.position.add(Camera.getForward().mul(0.01f).mul((float)FPSCounter.getDelta()));
@@ -1566,6 +1803,32 @@ public class NewModelerScreen extends ModelerScreen {
 		panel.setPosition(-1, -1);
 		navigation.setPosition(0, 0);
 		navigation.getStyle().setMinimumSize(widget.getSize().x, 20);
+		
+		if (Mouse.lastX >= PROPERTIES_PANEL.getPosition().x && Mouse.lastY >= PROPERTIES_PANEL.getPosition().y &&
+				Mouse.lastX <= PROPERTIES_PANEL.getSize().x + PROPERTIES_PANEL.getPosition().x && 
+				Mouse.lastY <= PROPERTIES_PANEL.getPosition().y + 20) {
+			cursor_type = grab;
+		}
+		if (Mouse.lastX >= PROPERTIES_PANEL.getPosition().x - 3 && Mouse.lastX <= PROPERTIES_PANEL.getPosition().x + 1
+					&& Mouse.lastY >= PROPERTIES_PANEL.getPosition().y && 
+					Mouse.lastY <= PROPERTIES_PANEL.getPosition().y + PROPERTIES_PANEL.getSize().y ||
+					Mouse.lastX >= PROPERTIES_PANEL.getPosition().x + PROPERTIES_PANEL.getSize().x - 1 &&
+					Mouse.lastX <= PROPERTIES_PANEL.getPosition().x + PROPERTIES_PANEL.getSize().x + 3
+					&& Mouse.lastY >= PROPERTIES_PANEL.getPosition().y && 
+					Mouse.lastY <= PROPERTIES_PANEL.getPosition().y + PROPERTIES_PANEL.getSize().y) {
+			cursor_type = hresize;
+		}
+		
+		if (Mouse.lastY >= PROPERTIES_PANEL.getPosition().y - 3 && Mouse.lastY <= PROPERTIES_PANEL.getPosition().y + 1
+				&& Mouse.lastX >= PROPERTIES_PANEL.getPosition().x && 
+				Mouse.lastX <= PROPERTIES_PANEL.getPosition().x + PROPERTIES_PANEL.getSize().x ||
+				Mouse.lastY >= PROPERTIES_PANEL.getPosition().y - 3 + PROPERTIES_PANEL.getSize().y
+				&& Mouse.lastY <= PROPERTIES_PANEL.getPosition().y + 3 + PROPERTIES_PANEL.getSize().y
+				&& Mouse.lastX >= PROPERTIES_PANEL.getPosition().x && 
+				Mouse.lastX <= PROPERTIES_PANEL.getPosition().x + PROPERTIES_PANEL.getSize().x) {
+			cursor_type = vresize;
+		}
+		
 		
 		if (Settings.isMouseButtonDown(0)) {
 			if (Mouse.lastX >= PROPERTIES_PANEL.getPosition().x && Mouse.lastY >= PROPERTIES_PANEL.getPosition().y &&
@@ -1608,6 +1871,7 @@ public class NewModelerScreen extends ModelerScreen {
 				}
 			}
 			
+			
 			if (Mouse.lastY >= PROPERTIES_PANEL.getPosition().y - 3 && Mouse.lastY <= PROPERTIES_PANEL.getPosition().y + 1
 					&& Mouse.lastX >= PROPERTIES_PANEL.getPosition().x && 
 					Mouse.lastX <= PROPERTIES_PANEL.getPosition().x + PROPERTIES_PANEL.getSize().x) {
@@ -1645,7 +1909,121 @@ public class NewModelerScreen extends ModelerScreen {
 			propertyDrag = false;
 			propertyScaleX = false;
 			propertyScaleY = false;
+			
+			
 		}
+		
+		if (Mouse.lastX >= PARTS_PANEL.getPosition().x && Mouse.lastY >= PARTS_PANEL.getPosition().y &&
+				Mouse.lastX <= PARTS_PANEL.getSize().x + PARTS_PANEL.getPosition().x && 
+				Mouse.lastY <= PARTS_PANEL.getPosition().y + 20) {
+			cursor_type = grab;
+		}
+		if (Mouse.lastX >= PARTS_PANEL.getPosition().x - 3 && Mouse.lastX <= PARTS_PANEL.getPosition().x + 1
+					&& Mouse.lastY >= PARTS_PANEL.getPosition().y && 
+					Mouse.lastY <= PARTS_PANEL.getPosition().y + PARTS_PANEL.getSize().y ||
+					Mouse.lastX >= PARTS_PANEL.getPosition().x + PARTS_PANEL.getSize().x - 1 &&
+					Mouse.lastX <= PARTS_PANEL.getPosition().x + PARTS_PANEL.getSize().x + 3
+					&& Mouse.lastY >= PARTS_PANEL.getPosition().y && 
+					Mouse.lastY <= PARTS_PANEL.getPosition().y + PARTS_PANEL.getSize().y) {
+			cursor_type = hresize;
+		}
+		
+		if (Mouse.lastY >= PARTS_PANEL.getPosition().y - 3 && Mouse.lastY <= PARTS_PANEL.getPosition().y + 1
+				&& Mouse.lastX >= PARTS_PANEL.getPosition().x && 
+				Mouse.lastX <= PARTS_PANEL.getPosition().x + PARTS_PANEL.getSize().x ||
+				Mouse.lastY >= PARTS_PANEL.getPosition().y - 3 + PARTS_PANEL.getSize().y
+				&& Mouse.lastY <= PARTS_PANEL.getPosition().y + 3 + PARTS_PANEL.getSize().y
+				&& Mouse.lastX >= PARTS_PANEL.getPosition().x && 
+				Mouse.lastX <= PARTS_PANEL.getPosition().x + PARTS_PANEL.getSize().x) {
+			cursor_type = vresize;
+		}
+		
+		
+		if (Settings.isMouseButtonDown(0)) {
+			if (Mouse.lastX >= PARTS_PANEL.getPosition().x && Mouse.lastY >= PARTS_PANEL.getPosition().y &&
+					Mouse.lastX <= PARTS_PANEL.getSize().x + PARTS_PANEL.getPosition().x && 
+					Mouse.lastY <= PARTS_PANEL.getPosition().y + 20) {
+				if (mouseJustDown) {
+					partDrag = true;
+				}
+				if (partDrag)
+				PARTS_PANEL.getPosition().add(Mouse.x - Mouse.lastX, Mouse.y - Mouse.lastY);
+			}
+			if (Mouse.lastX >= PARTS_PANEL.getPosition().x - 3 && Mouse.lastX <= PARTS_PANEL.getPosition().x + 1
+					&& Mouse.lastY >= PARTS_PANEL.getPosition().y && 
+					Mouse.lastY <= PARTS_PANEL.getPosition().y + PARTS_PANEL.getSize().y) {
+				if (mouseJustDown) {
+					partScaleX = true;
+				}
+				if (partScaleX) {
+					PARTS_PANEL.getPosition().add(Mouse.x - Mouse.lastX, 0);
+					if (PARTS_PANEL.getSize().x > 20) {
+						PARTS_PANEL.getSize().sub(Mouse.x - Mouse.lastX, 0);
+					}else {
+						PARTS_PANEL.getSize().add(1, 0);
+					}
+				}
+			}
+			if (Mouse.lastX >= PARTS_PANEL.getPosition().x + PARTS_PANEL.getSize().x - 1 &&
+					Mouse.lastX <= PARTS_PANEL.getPosition().x + PARTS_PANEL.getSize().x + 3
+					&& Mouse.lastY >= PARTS_PANEL.getPosition().y && 
+					Mouse.lastY <= PARTS_PANEL.getPosition().y + PARTS_PANEL.getSize().y) {
+				if (mouseJustDown) {
+					partScaleX = true;
+				}
+				if (partScaleX) {
+					if (PARTS_PANEL.getSize().x > 20) {
+						PARTS_PANEL.getSize().add(Mouse.x - Mouse.lastX, 0);
+					}else {
+						PARTS_PANEL.getSize().add(1, 0);
+					}
+				}
+			}
+			
+			
+			if (Mouse.lastY >= PARTS_PANEL.getPosition().y - 3 && Mouse.lastY <= PARTS_PANEL.getPosition().y + 1
+					&& Mouse.lastX >= PARTS_PANEL.getPosition().x && 
+					Mouse.lastX <= PARTS_PANEL.getPosition().x + PARTS_PANEL.getSize().x) {
+				if (mouseJustDown) {
+					partScaleY = true;
+				}
+				if (partScaleY) {
+					PARTS_PANEL.getPosition().add(0, Mouse.y - Mouse.lastY);
+					if (PARTS_PANEL.getSize().y > 20) {
+						PARTS_PANEL.getSize().sub(0, Mouse.y - Mouse.lastY);
+					}else {
+						PARTS_PANEL.getSize().add(0, 1);
+					}
+				}
+			}
+			
+			if (Mouse.lastY >= PARTS_PANEL.getPosition().y - 3 + PARTS_PANEL.getSize().y
+					&& Mouse.lastY <= PARTS_PANEL.getPosition().y + 3 + PARTS_PANEL.getSize().y
+					&& Mouse.lastX >= PARTS_PANEL.getPosition().x && 
+					Mouse.lastX <= PARTS_PANEL.getPosition().x + PARTS_PANEL.getSize().x) {
+				if (mouseJustDown) {
+					partScaleY = true;
+				}
+				if (partScaleY) {
+					if (PARTS_PANEL.getSize().y > 20) {
+						PARTS_PANEL.getSize().add(0, Mouse.y - Mouse.lastY);
+					}else {
+						PARTS_PANEL.getSize().add(0, 1);
+					}
+				}
+			}
+			
+		} else 
+		{
+			partDrag = false;
+			partScaleX = false;
+			partScaleY = false;
+			
+			
+		}
+		
+		parts_scroll_panel.setSize(PARTS_PANEL.getSize().x, PARTS_PANEL.getSize().y);
+		parts_panel_name.setSize(PARTS_PANEL.getSize().x, 20);
 		
 		properties_scroll_panel.setSize(PROPERTIES_PANEL.getSize().x, PROPERTIES_PANEL.getSize().y);
 		properties_panel_name.setSize(PROPERTIES_PANEL.getSize().x, 20);
@@ -1747,6 +2125,9 @@ public class NewModelerScreen extends ModelerScreen {
 			PROPERTIES_PANEL.setPosition(PROPERTIES_PANEL.getPosition().x, widget.getSize().y - 22);
 		}
 		
+		if (this.Xselected || this.Yselected || this.Zselected) {
+			this.cursor_type = this.grab;
+		}
 		
 		
 		
@@ -1814,7 +2195,7 @@ public class NewModelerScreen extends ModelerScreen {
 				box.min = new Vector3f(position.x - size.x / 2.0f, position.y - size.y / 2.0f, position.z - size.z / 2.0f);
 				box.max = new Vector3f(box.min).add(size.x, size.y, size.z);
 				
-				MouseIntersection i = this.getMouseIntersection(box, new Vector3f(p.getEulerAngles()));
+				MouseIntersection i = this.getMouseIntersection(box, p.rotation);
 				if (i != null) {
 					if (i.distance < distance) {
 						distance = i.distance;
@@ -2397,6 +2778,31 @@ public class NewModelerScreen extends ModelerScreen {
 	}
 	
 	public void selectPart(Part part) {
+		
+		if (this.selectedPart != null)
+		if (this.SETTING_PARENT) {
+			this.SETTING_PARENT = false;
+			if (part == null) {
+				if (JOptionPane.showConfirmDialog(null, "Do you want to remove this part's parent?") == 0) {
+					if (this.selectedPart.parent != null) {
+						this.selectedPart.parent.children.remove(this.selectedPart);
+					}
+					this.selectedPart.parent = null;
+					this.refreshPartsPanel();
+					return;
+				}
+			} else {
+				if (part == this.selectedPart) {
+					return;
+				}
+				this.selectedPart.parent = part;
+				part.children.add(this.selectedPart);
+				this.refreshPartsPanel();
+				JOptionPane.showMessageDialog(null, "Set the parent of " + this.selectedPart.name + " to " + part.name);
+				return;
+			}
+		}
+		
 		this.selectionMesh = null;
 		selectedPart = part;
 		
@@ -2493,6 +2899,37 @@ public class NewModelerScreen extends ModelerScreen {
 					1, 1,
 					1, 0
 				});
+	}
+	
+	public MouseIntersection getMouseIntersection(RayBox box, Quaternionf rotation) {
+		int[] width = new int[1];
+		int[] height = new int[1];
+		GLFW.glfwGetWindowSize(Utils.window, width, height);
+		double mx = Mouse.x * (1920.0 / width[0]);
+		double my = (height[0] - Mouse.y) * (1080.0 / height[0]);
+		if (Double.isInfinite(mx)) {
+			mx = 0;
+			my = 0;
+		}
+		
+		float X = (float)mx / 1920.0f - 0.5f;
+		float Y = (1.0f - (float)my / 1080.0f) - 0.5f;
+
+		float size = 0.001f;
+		float yMul = 1.7f;
+		float xMul = 3;
+		float div = 1.0f / (Utils.Z_FAR - Utils.Z_NEAR);
+		Vector3f right = Camera.getRight().mul(X * xMul * div);
+		Vector3f up = Camera.getUp().mul(Y * yMul * div);
+		
+		Vector3f origin = new Vector3f(Camera.position);
+		Vector3f dir = Camera.getForward().mul(div).add(right).add(up);
+		
+		RayIntersection i = Raytracer.intersectBox(origin, dir, box, new Vector3f(0, 0, 0));
+		if (i.lambda.x > 0.0 && i.lambda.x < i.lambda.y) {
+			return new MouseIntersection(origin.add(new Vector3f(dir).mul(i.lambda.x)), i.lambda.x);
+		}
+		return null;
 	}
 	
 	public MouseIntersection getMouseIntersection(RayBox box, Vector3f rotation) {

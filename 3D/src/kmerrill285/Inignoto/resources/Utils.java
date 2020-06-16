@@ -45,6 +45,7 @@ public class Utils {
 	private static int P_WIDTH = 1920 / 2, P_HEIGHT = 1080 / 2;
 	public static boolean WINDOW_FOCUSED = false;
 	
+	public static long NORMAL_CURSOR, HAND_CURSOR, HRESIZE_CURSOR, VRESIZE_CURSOR, TYPE_CURSOR;
 	
 	public static String loadResource(File file) {
 		String str = "";
@@ -76,6 +77,12 @@ public class Utils {
 	
 	public static void setupGL() throws Exception {
 		Sounds.initAL();
+		
+		NORMAL_CURSOR = GLFW.glfwCreateStandardCursor(GLFW.GLFW_ARROW_CURSOR);
+		HAND_CURSOR = GLFW.glfwCreateStandardCursor(GLFW.GLFW_HAND_CURSOR);
+		HRESIZE_CURSOR = GLFW.glfwCreateStandardCursor(GLFW.GLFW_HRESIZE_CURSOR);
+		VRESIZE_CURSOR = GLFW.glfwCreateStandardCursor(GLFW.GLFW_VRESIZE_CURSOR);
+		TYPE_CURSOR = GLFW.glfwCreateStandardCursor(GLFW.GLFW_IBEAM_CURSOR);
 		
 		sprite_shader = new ShaderProgram();
 		sprite_shader.createVertexShader(loadResource("Inignoto", "shaders/sprite_vertex.glsl"));

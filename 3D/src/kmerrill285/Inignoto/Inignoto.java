@@ -387,6 +387,7 @@ public class Inignoto {
 	}
 	
 	public void dispose() {
+		
 		Fonts.dispose();
 		Camera.soundSource.delete();
 		Sounds.dispose();
@@ -399,6 +400,14 @@ public class Inignoto {
 		shadowRenderer.dispose();
 		framebuffer.dispose();
 		world.dispose();
+		
+		GLFW.glfwDestroyCursor(Utils.HAND_CURSOR);
+		GLFW.glfwDestroyCursor(Utils.HRESIZE_CURSOR);
+		GLFW.glfwDestroyCursor(Utils.VRESIZE_CURSOR);
+		GLFW.glfwDestroyCursor(Utils.NORMAL_CURSOR);
+		GLFW.glfwDestroyCursor(Utils.TYPE_CURSOR);
+	
+		
 		System.out.println("exit!");
 		System.exit(0);
 	}

@@ -59,3 +59,8 @@
 "Inignoto:gui.scale" = "Scale"
 "Inignoto:gui.size" = "Size"
 "Inignoto:gui.center" = "Center"
+"Inignoto:gui.parts" = "Parts"
+"Inignoto:gui.new_part" = "New Part"
+"Inignoto:gui.duplicate_part" = "Duplicate Part"
+"Inignoto:gui.set_parent" = "Set Parent"
+"Inignoto:gui.delete_part" = "Delete Part"
