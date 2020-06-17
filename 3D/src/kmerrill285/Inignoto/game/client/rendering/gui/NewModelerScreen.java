@@ -151,6 +151,9 @@ public class NewModelerScreen extends ModelerScreen {
 	
 	public NewModelerScreen(GuiRenderer gui) {
 		super(gui);
+		
+		
+		
 		texture = Textures.GRAY_MATERIAL;
 		Camera.position = new Vector3f(0, 1, 3);
 		Camera.rotation = new Vector3f(0, 0, 0);
@@ -383,9 +386,11 @@ public class NewModelerScreen extends ModelerScreen {
 	}
 	
 	public void loadImage() {
+		JOptionPane test = new JOptionPane();
+		test.getRootFrame().setAlwaysOnTop(true);
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setCurrentDirectory(new File(lastLoadDir));
-		int result = fileChooser.showOpenDialog(null);
+		int result = fileChooser.showOpenDialog(test);
 		if (result == JFileChooser.APPROVE_OPTION) {
 			File selectedFile = fileChooser.getSelectedFile();
 			String f = selectedFile.getPath();
@@ -404,7 +409,9 @@ public class NewModelerScreen extends ModelerScreen {
 					this.textures.add(this.texture);
 				}
 			} catch (Exception e) {
-				JOptionPane.showMessageDialog(null, Translation.translateText("Inignoto:gui.not_valid_texture"));
+				test = new JOptionPane();
+				test.getRootFrame().setAlwaysOnTop(true);
+				JOptionPane.showMessageDialog(test, Translation.translateText("Inignoto:gui.not_valid_texture"));
 			}
 		}
 	}
@@ -1317,7 +1324,9 @@ public class NewModelerScreen extends ModelerScreen {
             if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
             	if (this.selectedPart != null) {
             		SETTING_PARENT = true;
-                	JOptionPane.showMessageDialog(null, "Click on a part to set the new parent of the selected part!");
+            		JOptionPane test = new JOptionPane();
+    				test.getRootFrame().setAlwaysOnTop(true);
+                	JOptionPane.showMessageDialog(test, "Click on a part to set the new parent of the selected part!");
             	}
             }
 
@@ -1338,7 +1347,9 @@ public class NewModelerScreen extends ModelerScreen {
 
             if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
             	if (this.selectedPart != null) {
-            		if (JOptionPane.showConfirmDialog(null, "Are you sure you want to delete this part?") == 0) {
+            		JOptionPane test = new JOptionPane();
+    				test.getRootFrame().setAlwaysOnTop(true);
+            		if (JOptionPane.showConfirmDialog(test, "Are you sure you want to delete this part?") == 0) {
             			this.model.getParts().remove(this.selectedPart);
                 		this.refreshPartsPanel();
                 		this.selectPart(null);
@@ -1644,7 +1655,9 @@ public class NewModelerScreen extends ModelerScreen {
         NEW_TEXTURE.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
         	System.out.println("ehh");
             if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
-            	String size_str = JOptionPane.showInputDialog(Translation.translateText("Inignoto:gui.texture_size"));
+            	JOptionPane test = new JOptionPane();
+				test.getRootFrame().setAlwaysOnTop(true);
+            	String size_str = JOptionPane.showInputDialog(test, Translation.translateText("Inignoto:gui.texture_size"));
             	try {
             		int size = Integer.parseInt(size_str.trim());
             		if (size > 0) {
@@ -1657,10 +1670,14 @@ public class NewModelerScreen extends ModelerScreen {
             			this.model.changeTexture(atlas.texture);
             			textures.add(atlas.texture);
             		} else {
-            			JOptionPane.showMessageDialog(null, Translation.translateText("Inignoto:gui.invalid_size"));
+            			test = new JOptionPane();
+        				test.getRootFrame().setAlwaysOnTop(true);
+            			JOptionPane.showMessageDialog(test, Translation.translateText("Inignoto:gui.invalid_size"));
             		}
             	} catch (Exception e) {
-            		JOptionPane.showMessageDialog(null, Translation.translateText("Inignoto:gui.invalid_size"));
+            		test = new JOptionPane();
+    				test.getRootFrame().setAlwaysOnTop(true);
+            		JOptionPane.showMessageDialog(test, Translation.translateText("Inignoto:gui.invalid_size"));
             	}
             }
 
@@ -1803,7 +1820,9 @@ public class NewModelerScreen extends ModelerScreen {
 		fileChooser.grabFocus();
 		fileChooser.requestFocus();
 		fileChooser.setCurrentDirectory(new File(lastLoadDir));
-		int result = fileChooser.showOpenDialog(null);
+		JOptionPane test = new JOptionPane();
+		test.getRootFrame().setAlwaysOnTop(true);
+		int result = fileChooser.showOpenDialog(test);
 		if (result == JFileChooser.APPROVE_OPTION) {
 			File selectedFile = fileChooser.getSelectedFile();
 			String f = selectedFile.getPath();
@@ -1827,7 +1846,9 @@ public class NewModelerScreen extends ModelerScreen {
 					this.ZOOM = 1.0;
 				}
 			} catch (Exception e) {
-				JOptionPane.showMessageDialog(null, Translation.translateText("Inignoto:gui.not_valid_texture"));
+				test = new JOptionPane();
+				test.getRootFrame().setAlwaysOnTop(true);
+				JOptionPane.showMessageDialog(test, Translation.translateText("Inignoto:gui.not_valid_texture"));
 				e.printStackTrace();
 			}
 		}
@@ -1929,7 +1950,10 @@ public class NewModelerScreen extends ModelerScreen {
 				this.model.getParts().clear();
 				this.model.getParts().addAll(parts);
 			} catch (Exception e) {
-				JOptionPane.showMessageDialog(null, Translation.translateText("Inignoto:gui.not_valid_model"));
+				JOptionPane test = new JOptionPane();
+				test.getRootFrame().setAlwaysOnTop(true);
+				JOptionPane.showMessageDialog(test, Translation.translateText("Inignoto:gui.not_valid_model"));
+				
 			}
 		}
 	}
@@ -3313,7 +3337,9 @@ public class NewModelerScreen extends ModelerScreen {
 		if (this.SETTING_PARENT) {
 			this.SETTING_PARENT = false;
 			if (part == null) {
-				if (JOptionPane.showConfirmDialog(null, "Do you want to remove this part's parent?") == 0) {
+				JOptionPane test = new JOptionPane();
+				test.getRootFrame().setAlwaysOnTop(true);
+				if (JOptionPane.showConfirmDialog(test, "Do you want to remove this part's parent?") == 0) {
 					if (this.selectedPart.parent != null) {
 						this.selectedPart.parent.children.remove(this.selectedPart);
 					}
@@ -3328,7 +3354,9 @@ public class NewModelerScreen extends ModelerScreen {
 				this.selectedPart.parent = part;
 				part.children.add(this.selectedPart);
 				this.refreshPartsPanel();
-				JOptionPane.showMessageDialog(null, "Set the parent of " + this.selectedPart.name + " to " + part.name);
+				JOptionPane test = new JOptionPane();
+				test.getRootFrame().setAlwaysOnTop(true);
+				JOptionPane.showMessageDialog(test, "Set the parent of " + this.selectedPart.name + " to " + part.name);
 				return;
 			}
 		}
