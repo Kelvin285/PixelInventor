@@ -1,10 +1,28 @@
 package kmerrill285.Inignoto.game.client.rendering.gui;
 
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Scanner;
 
+import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 import org.joml.Quaternionf;
@@ -60,6 +78,7 @@ import kmerrill285.Inignoto.game.client.rendering.MeshRenderer;
 import kmerrill285.Inignoto.game.client.rendering.chunk.BlockBuilder;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.textures.Texture;
+import kmerrill285.Inignoto.game.client.rendering.textures.TextureAtlas;
 import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.settings.Translation;
@@ -119,11 +138,16 @@ public class NewModelerScreen extends ModelerScreen {
 	private Panel PROPERTIES_PANEL;
 	private Panel EDIT_PANEL;
 	
+	private ArrayList<Texture> textures = new ArrayList<Texture>();
+	
     boolean isVersionNew;
     
     private Model model;
     
     private boolean mouseJustDown = false;
+    
+    private JFrame texture_frame;
+    private BufferedImage image;	
 	
 	public NewModelerScreen(GuiRenderer gui) {
 		super(gui);
@@ -238,6 +262,26 @@ public class NewModelerScreen extends ModelerScreen {
         EDIT.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
         EDIT.getStyle().setTextColor(1, 1, 1, 1);
         
+        Button TEXTURE = new Button(Translation.translateText("Inignoto:gui.texture_editor"));
+        TEXTURE.setTextDirection(TextDirection.HORIZONTAL);
+        TEXTURE.setSize(60 * 2, 20);
+        TEXTURE.setPosition(60 * 2, 0);
+        TEXTURE.getStyle().setFontSize(20f);
+        TEXTURE.getStyle().getBackground().setColor(0, 0, 0, 0);
+        TEXTURE.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
+        TEXTURE.getStyle().setTextColor(1, 1, 1, 1);
+        
+        TEXTURE.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+
+            if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
+            	this.texture_frame.setVisible(true);
+            	this.texture_frame.setSize(500, 500);
+            	this.texture_frame.setLocationRelativeTo(null);
+            	this.texture_frame.setVisible(true);
+            }
+
+        });
+        
         FILE_PANEL = new Panel();
         createFilePanel(FILE_PANEL);
         
@@ -251,6 +295,7 @@ public class NewModelerScreen extends ModelerScreen {
         widget.getContainer().add(navigation);
         navigation.add(FILE);
         navigation.add(EDIT);
+        navigation.add(TEXTURE);
         FILE.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
 
             if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
@@ -287,9 +332,17 @@ public class NewModelerScreen extends ModelerScreen {
 
        createPropertiesPanel();
        createPartsPanel();
-        
 
         frame.getContainer().add(widget);
+        
+        this.texture_frame = new JFrame(Translation.translateText("Inignoto:gui.texture"));
+        this.texture_frame.setSize(500, 500);
+        this.texture_frame.setLocationRelativeTo(null);
+        this.texture_frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+        this.texture_frame.setVisible(true);
+        
+        
+        this.image = (BufferedImage) texture_frame.createImage(500, 500);
 	}
 	
 	private Panel PARTS_PANEL;
@@ -329,6 +382,33 @@ public class NewModelerScreen extends ModelerScreen {
         refreshPartsPanel();
 	}
 	
+	public void loadImage() {
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setCurrentDirectory(new File(lastLoadDir));
+		int result = fileChooser.showOpenDialog(null);
+		if (result == JFileChooser.APPROVE_OPTION) {
+			File selectedFile = fileChooser.getSelectedFile();
+			String f = selectedFile.getPath();
+			
+			System.out.println(f);
+			lastLoadDir = selectedFile.getParent();
+			try {
+				this.texture = new Texture(selectedFile);
+				ImageIcon icon = new ImageIcon(selectedFile.getPath());
+				this.image = (BufferedImage)icon.getImage();
+				this.ZOOM = 1.0;
+				this.SX = 0;
+				this.SY = 0;
+				if (this.model != null) {
+					this.model.changeTexture(this.texture);
+					this.textures.add(this.texture);
+				}
+			} catch (Exception e) {
+				JOptionPane.showMessageDialog(null, Translation.translateText("Inignoto:gui.not_valid_texture"));
+			}
+		}
+	}
+	
 	public void refreshPartsPanel() {
 		parts_scroll_panel.getContainer().clearChildComponents();
 		ArrayList<Part> parts = this.model.getParts();
@@ -345,6 +425,9 @@ public class NewModelerScreen extends ModelerScreen {
 		button.setSize(9000, 30);
 		button.setPosition(x * 30, y * 32);
 		button.getStyle().getBackground().setColor(0.2f, 0.2f, 0.2f, 1.0f);
+		if (part == selectedPart) {
+			button.getStyle().getBackground().setColor(0.0f, 0.0f, 0.3f, 1.0f);
+		}
 		button.getStyle().setTextColor(1.0f, 1.0f, 1.0f, 1.0f);
 		button.getStyle().setHorizontalAlign(HorizontalAlign.LEFT);
 		button.getStyle().setFontSize(20.0f);
@@ -473,7 +556,8 @@ public class NewModelerScreen extends ModelerScreen {
         	if (selectedPart != null) {
         		try {
             		float f = Float.parseFloat(xPos.getTextState().getText());
-            		selectedPart.position.x = f;
+					selectedPart.translate(new Vector3f(f, selectedPart.position.y, selectedPart.position.z).sub(selectedPart.position));
+
             	} catch (Exception e) {
             		xPos.getTextState().setText(""+selectedPart.position.x);
             	}
@@ -502,7 +586,7 @@ public class NewModelerScreen extends ModelerScreen {
         	if (selectedPart != null) {
         		try {
             		float f = Float.parseFloat(yPos.getTextState().getText());
-            		selectedPart.position.y = f;
+            		selectedPart.translate(new Vector3f(selectedPart.position.x, f, selectedPart.position.z).sub(selectedPart.position));
             	} catch (Exception e) {
             		yPos.getTextState().setText(""+selectedPart.position.y);
             	}
@@ -533,7 +617,7 @@ public class NewModelerScreen extends ModelerScreen {
         	if (selectedPart != null) {
         		try {
             		float f = Float.parseFloat(zPos.getTextState().getText());
-            		selectedPart.position.z = f;
+            		selectedPart.translate(new Vector3f(selectedPart.position.x, selectedPart.position.y, f).sub(selectedPart.position));
             	} catch (Exception e) {
             		zPos.getTextState().setText(""+selectedPart.position.z);
             	}
@@ -1391,7 +1475,7 @@ public class NewModelerScreen extends ModelerScreen {
         LoadableImage translate_image = DefaultImageLoader.loadImage("assets/Inignoto/textures/modelmaker/translate.png");
         LoadableImage rotate_image = DefaultImageLoader.loadImage("assets/Inignoto/textures/modelmaker/rotate.png");
         LoadableImage scale_image = DefaultImageLoader.loadImage("assets/Inignoto/textures/modelmaker/scale.png");
-
+        
         ImageView translate = new ImageView(translate_image);
         translate.setPosition(0, 30);
         translate.getStyle().setPosition(PositionType.RELATIVE);
@@ -1556,6 +1640,31 @@ public class NewModelerScreen extends ModelerScreen {
         NEW_TEXTURE.getStyle().setHorizontalAlign(HorizontalAlign.LEFT);
         NEW_TEXTURE.getStyle().setTextColor(1, 1, 1, 1);
         NEW_PANEL.add(NEW_TEXTURE);
+        
+        NEW_TEXTURE.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+        	System.out.println("ehh");
+            if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
+            	String size_str = JOptionPane.showInputDialog(Translation.translateText("Inignoto:gui.texture_size"));
+            	try {
+            		int size = Integer.parseInt(size_str.trim());
+            		if (size > 0) {
+            			BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+            			this.image = img;
+            			this.SX = 0;
+            			this.SY = 0;
+            			this.ZOOM = 1;
+            			TextureAtlas atlas = new TextureAtlas(img);
+            			this.model.changeTexture(atlas.texture);
+            			textures.add(atlas.texture);
+            		} else {
+            			JOptionPane.showMessageDialog(null, Translation.translateText("Inignoto:gui.invalid_size"));
+            		}
+            	} catch (Exception e) {
+            		JOptionPane.showMessageDialog(null, Translation.translateText("Inignoto:gui.invalid_size"));
+            	}
+            }
+
+        });
 	}
 
 	private void createSaveAsPanel(Panel NEW_PANEL) {
@@ -1630,6 +1739,8 @@ public class NewModelerScreen extends ModelerScreen {
         NEW_TEXTURE.getStyle().setHorizontalAlign(HorizontalAlign.LEFT);
         NEW_TEXTURE.getStyle().setTextColor(1, 1, 1, 1);
         NEW_PANEL.add(NEW_TEXTURE);
+        
+        
 	}
 	private void createImportPanel(Panel NEW_PANEL) {
 		NEW_PANEL.setSize(150, 60);
@@ -1685,7 +1796,12 @@ public class NewModelerScreen extends ModelerScreen {
 	}
 	
 	public void loadTexture() {
+		if (lastLoadDir == null) {
+			lastLoadDir = "";
+		}
 		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.grabFocus();
+		fileChooser.requestFocus();
 		fileChooser.setCurrentDirectory(new File(lastLoadDir));
 		int result = fileChooser.showOpenDialog(null);
 		if (result == JFileChooser.APPROVE_OPTION) {
@@ -1694,19 +1810,32 @@ public class NewModelerScreen extends ModelerScreen {
 			
 			System.out.println(f);
 			lastLoadDir = selectedFile.getParent();
+			
 			try {
 				this.texture = new Texture(selectedFile);
 				if (this.model != null) {
 					this.model.changeTexture(texture);
+					this.textures.add(texture);
+					ImageIcon icon = new ImageIcon(selectedFile.getPath());
+					BufferedImage img = new BufferedImage(icon.getImage().getWidth(null), icon.getImage().getHeight(null), BufferedImage.TYPE_INT_RGB);
+					Graphics g = img.getGraphics();
+					g.drawImage(icon.getImage(), 0, 0, null);
+					g.dispose();
+					this.image = img;
+					this.SX = 0;
+					this.SY = 0;
+					this.ZOOM = 1.0;
 				}
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(null, Translation.translateText("Inignoto:gui.not_valid_texture"));
+				e.printStackTrace();
 			}
 		}
 	}
 	
 	public void loadModel() {
 		JFileChooser fileChooser = new JFileChooser();
+		if (lastLoadDir == null) lastLoadDir = "";
 		fileChooser.setCurrentDirectory(new File(lastLoadDir));
 		int result = fileChooser.showOpenDialog(null);
 		if (result == JFileChooser.APPROVE_OPTION) {
@@ -1716,12 +1845,89 @@ public class NewModelerScreen extends ModelerScreen {
 			System.out.println(f);
 			lastLoadDir = selectedFile.getParent();
 			try {
-//				AnimModel model = ModelLoader.loadModelFromFile(selectedFile);
-//				this.model = new CustomModel(model, texture);
-//				this.modelDir = selectedFile;
-//				this.lastAction = -1;
-//				this.actions.clear();
-				JOptionPane.showMessageDialog(null, "Option not currently supported");
+				Scanner scanner = new Scanner(selectedFile);
+				String str = "";
+				while(scanner.hasNext()) {
+					str += scanner.nextLine()+"\n";
+				}
+				scanner.close();
+				
+				String[] lines = str.split("\n");
+				ArrayList<Part> parts = new ArrayList<Part>();
+				Part part = null;
+				for (String s : lines ) {
+					if (s.startsWith("Part")) {
+						part = new Part();
+					} else {
+						String[] data = s.trim().split(" ");
+						if (data[0].contains("Position")) {
+							float x = Float.parseFloat(data[1]);
+							float y = Float.parseFloat(data[2]);
+							float z = Float.parseFloat(data[3]);
+							part.position = new Vector3f(x, y, z);
+						} else
+						if (data[0].contains("Rotation")) {
+							float x = Float.parseFloat(data[1]);
+							float y = Float.parseFloat(data[2]);
+							float z = Float.parseFloat(data[3]);
+							float w = Float.parseFloat(data[4]);
+							part.rotation = new Quaternionf(x, y, z, w);
+						} else
+						if (data[0].contains("Size")) {
+							int x = Integer.parseInt(data[1]);
+							int y = Integer.parseInt(data[2]);
+							int z = Integer.parseInt(data[3]);
+							part.size = new Vector3i(x, y, z);
+						} else
+						if (data[0].contains("Scale")) {
+							float x = Float.parseFloat(data[1]);
+							float y = Float.parseFloat(data[2]);
+							float z = Float.parseFloat(data[3]);
+							part.scale = new Vector3f(x, y, z);
+						} else
+						if (data[0].contains("Angles")) {
+							float x = Float.parseFloat(data[1]);
+							float y = Float.parseFloat(data[2]);
+							float z = Float.parseFloat(data[3]);
+							part.axisAngles = new Vector3f(x, y, z);
+						} else
+						if (data[0].contains("Locked")) {
+							part.locked = Boolean.parseBoolean(data[1]);
+						} else
+						if (data[0].contains("Visible")) {
+							part.visible = Boolean.parseBoolean(data[1]);
+						} else
+						if (data[0].contains("Origin")) {
+							float x = Float.parseFloat(data[1]);
+							float y = Float.parseFloat(data[2]);
+							float z = Float.parseFloat(data[3]);
+							part.origin = new Vector3f(x, y, z);
+						} else
+						if (data[0].contains("UV")) {
+							int x = Integer.parseInt(data[1]);
+							int y = Integer.parseInt(data[2]);
+							part.uv = new Vector2i(x, y);
+							if (this.textures.size() > 0) {
+								part.buildPart(this.textures.get(this.textures.size() - 1));
+							} else {
+								part.buildPart(Textures.GRAY_MATERIAL);
+							}
+							parts.add(part);
+						}
+						else
+						if (data[0].contains("Parent")) {
+							int a = Integer.parseInt(data[1]);
+							int b = Integer.parseInt(data[2]);
+							parts.get(a).parent = parts.get(b);
+							parts.get(b).children.add(parts.get(a));
+						}
+						else {
+							part.name = s;
+						}
+					}
+				}
+				this.model.getParts().clear();
+				this.model.getParts().addAll(parts);
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(null, Translation.translateText("Inignoto:gui.not_valid_model"));
 			}
@@ -1739,7 +1945,316 @@ public class NewModelerScreen extends ModelerScreen {
 	private int cursor_type = 0;
 	private final int normal = 0, grab = 1, hresize = 2, vresize = 3, typing = 4;
 	
+	private int SX, SY;
+	private double ZOOM = 1.0;
+	private boolean init = false;
+	private boolean tex_sdrag = false;
+	private boolean left_mouse = false;
+	private boolean right_mouse = false;
+	private int MX, MY;
+	private int LMX, LMY;
+	private Color left_color = Color.BLACK;
+	private Color right_color = Color.WHITE;
+	private boolean uv_drag = false;
+	
+	private void init() {
+		SX = 0;
+		SY = 0;
+		BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+
+		// Create a new blank cursor.
+		Cursor blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(
+		    cursorImg, new Point(0, 0), "blank cursor");
+
+		// Set the blank cursor to the JFrame.
+		
+		this.texture_frame.addKeyListener(new KeyListener() {
+
+			@Override
+			public void keyPressed(java.awt.event.KeyEvent arg0) {
+				if (arg0.getKeyCode() == java.awt.event.KeyEvent.VK_CONTROL) {
+					uv_drag = true;
+				}
+			}
+
+			@Override
+			public void keyReleased(java.awt.event.KeyEvent arg0) {
+				if (arg0.getKeyCode() == java.awt.event.KeyEvent.VK_CONTROL) {
+					uv_drag = false;
+				}
+			}
+
+			@Override
+			public void keyTyped(java.awt.event.KeyEvent arg0) {
+				
+			}
+			
+		});
+		
+		texture_frame.getContentPane().setCursor(blankCursor);
+		this.texture_frame.addMouseWheelListener(new MouseWheelListener() {
+
+			@Override
+			public void mouseWheelMoved(MouseWheelEvent arg0) {
+				int dir = arg0.getWheelRotation();
+				if (dir > 0) {
+					if (ZOOM > 1) {
+						ZOOM--;
+					}
+				} else {
+					if (ZOOM < 32) {
+						ZOOM++;
+					}
+				}
+			}
+			
+		});
+			
+		
+		
+		this.texture_frame.addMouseMotionListener(new MouseMotionListener() {
+
+			@Override
+			public void mouseDragged(MouseEvent arg0) {
+				LMX = MX;
+				LMY = MY;
+				MX = arg0.getX();
+				MY = arg0.getY();
+			}
+
+			@Override
+			public void mouseMoved(MouseEvent arg0) {
+				LMX = MX;
+				LMY = MY;
+				MX = arg0.getX();
+				MY = arg0.getY();
+			}
+			
+		});
+		
+		this.texture_frame.addMouseListener(new MouseListener() {
+
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent arg0) {
+				LMX = MX;
+				LMY = MY;
+			}
+
+			@Override
+			public void mouseExited(MouseEvent arg0) {
+				LMX = MX;
+				LMY = MY;
+			}
+
+			@Override
+			public void mousePressed(MouseEvent arg0) {
+				LMX = MX;
+				LMY = MY;
+				System.out.println(arg0.getButton());
+				if (arg0.getButton() == 2) {
+					tex_sdrag = true;
+				}
+				if (arg0.getButton() == 1) {
+					left_mouse = true;
+				}
+				if (arg0.getButton() == 3) {
+					right_mouse = true;
+				}
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent arg0) {
+				LMX = MX;
+				LMY = MY;
+				if (arg0.getButton() == 2) {
+					tex_sdrag = false;
+				}
+				if (arg0.getButton() == 1) {
+					left_mouse = false;
+				}
+				if (arg0.getButton() == 3) {
+					right_mouse = false;
+				}
+			}
+			
+		});
+		
+		Graphics g = image.getGraphics();
+		g.setColor(Color.WHITE);
+		g.fillRect(0, 0, image.getWidth(), image.getHeight());
+		g.dispose();
+	}
+	
+	private int SMX, SMY, LSMX, LSMY;
+	
+	private boolean textureChanged = false;
+	
 	public void tick() {
+		
+		if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL)) {
+			if (Settings.isKeyJustDown(GLFW.GLFW_KEY_S)) {
+				JFileChooser fileChooser = new JFileChooser();
+				fileChooser.setCurrentDirectory(new File(lastLoadDir));
+				int result = fileChooser.showSaveDialog(null);
+				if (result == JFileChooser.APPROVE_OPTION) {
+					File selectedFile = fileChooser.getSelectedFile();
+					
+					try {
+						FileWriter writer = new FileWriter(selectedFile);
+						
+						String str = "";
+						ArrayList<Part> parts = model.getParts();
+						for (int i = 0; i < parts.size(); i++) {
+							str += "Part " + i + "\n";
+							str += parts.get(i).name + "\n";
+							str += "Position " + parts.get(i).position.x + " " + parts.get(i).position.y + " " + parts.get(i).position.z + "\n";
+							Quaternionf rotation = parts.get(i).rotation;
+							str += "Rotation " + rotation.x + " " + rotation.y + " " + rotation.z + " " + rotation.w + "\n";
+							Vector3i size = parts.get(i).size;
+							str += "Size " + size.x + " " + size.y + " " + size.z + "\n";
+							Vector3f scale = parts.get(i).scale;
+							str += "Scale " + scale.x + " " + scale.y + " " + scale.z + "\n";
+							Vector3f axisAngles = parts.get(i).axisAngles;
+							str += "Angles " + axisAngles.x + " " + axisAngles.y + " " + axisAngles.z + "\n";
+							str += "Locked " + parts.get(i).locked + "\n";
+							str += "Visible " + parts.get(i).visible + "\n";
+							Vector3f origin = parts.get(i).origin;
+							str += "Origin " + origin.x + " " + origin.y + " " + origin.z + "\n";
+							Vector2i uv = parts.get(i).uv;
+							str += "UV " + uv.x + " " + uv.y + "\n";
+							
+						}
+						for (int i = 0; i < parts.size(); i++) {
+							if (parts.get(i).parent != null) {
+								int parent = parts.indexOf(parts.get(i).parent);
+								str += "Parent " + i + " " + parent + "\n";
+							}
+						}
+						
+						writer.write(str);
+						writer.close();
+					} catch (FileNotFoundException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					
+				}
+			}
+		}
+		
+		if (textureChanged == true) {
+			TextureAtlas atlas = new TextureAtlas(this.image);
+			
+			for (Part part : model.getParts()) {
+				part.buildPart(atlas.texture);
+			}
+			textureChanged = false;
+		}
+		
+		if (init == false) {
+			init();
+			init = true;
+		}
+		Graphics g = null;
+		if (uv_drag == false) {
+			if (left_mouse) {
+				g = image.getGraphics();
+				g.setColor(left_color);
+				g.drawLine((int)Math.floor(LMX / ZOOM) + (int)Math.floor(SX), (int)Math.floor(LMY / ZOOM) + (int)Math.floor(SY), (int)Math.floor(MX / ZOOM) + (int)Math.floor(SX), (int)Math.floor(MY / ZOOM) + (int)Math.floor(SY));
+				textureChanged = true;
+			}
+			if (right_mouse) {
+				g = image.getGraphics();
+				g.setColor(right_color);
+				g.drawLine((int)Math.floor(LMX / ZOOM) + (int)Math.floor(SX), (int)Math.floor(LMY / ZOOM) + (int)Math.floor(SY), (int)Math.floor(MX / ZOOM) + (int)Math.floor(SX), (int)Math.floor(MY / ZOOM) + (int)Math.floor(SY));
+				textureChanged = true;
+			}
+		} else {
+			if (left_mouse) {
+				
+				if (selectedPart != null) {
+					selectedPart.uv.x += SMX - LSMX;
+					selectedPart.uv.y += SMY - LSMY;
+					textureChanged = true;
+				}
+			}
+		}
+		
+		if (tex_sdrag) {
+			SX += LSMX - SMX;
+			SY += LSMY - SMY;
+		}
+		
+		LSMX = SMX;
+		LSMY = SMY;
+		
+		SMX = (int)Math.floor(MX / ZOOM);
+		SMY = (int)Math.floor(MY / ZOOM);
+		
+		
+		
+		
+		Image im = texture_frame.createImage(texture_frame.getWidth(), texture_frame.getHeight());
+		g = im.getGraphics();
+		
+		BufferedImage i2 = (BufferedImage)texture_frame.createImage(image.getWidth(), image.getHeight());
+		i2.setData(image.getRaster().createTranslatedChild(0, 0));
+		
+		
+		g = i2.getGraphics();
+		g.setColor(new Color(left_color.getRed(), left_color.getGreen(), left_color.getBlue(), 100));
+		g.fillRect((int)Math.floor(MX / ZOOM) + SX, (int)Math.floor(MY / ZOOM) + SY, 1, 1);
+		
+		int xx = (int)Math.floor(MX / ZOOM) + SX;
+		int yy = (int)Math.floor(MY / ZOOM) + SY;
+		
+		g.drawLine(xx, yy + 2, xx, yy + 3);
+		g.drawLine(xx, yy - 2, xx, yy - 3);
+		g.drawLine(xx - 2, yy, xx - 3, yy);
+		g.drawLine(xx + 2, yy, xx + 3, yy);
+		
+		g = im.getGraphics();
+		g.drawImage(i2, (int)Math.floor(-SX * ZOOM) + 20, (int)Math.floor(-SY * ZOOM) + 20, (int)Math.floor(this.image.getWidth() * ZOOM), (int)Math.floor(this.image.getHeight() * ZOOM), null);
+		
+		if (this.selectedPart != null) {
+			g.setColor(new Color(0.0f, 0.0f, 1.0f, 0.2f));
+			Vector3i size = new Vector3i(this.selectedPart.size);
+			Vector2i uv = new Vector2i(this.selectedPart.uv);
+			uv.mul((int)ZOOM);
+			uv.add((int)Math.floor(-SX * ZOOM) + 20, (int)Math.floor(-SY * ZOOM) + 20);
+
+			size.mul((int)ZOOM);
+			
+			Vector3i s = new Vector3i(size);
+
+			g.fillRect(uv.x, uv.y + size.z, s.z, s.y);
+			g.fillRect(uv.x + size.z, uv.y + size.z, s.x, s.y);
+			g.fillRect(uv.x + size.z + size.x, uv.y + size.z, s.z, s.y);
+			g.fillRect(uv.x + size.z + size.x + size.z, uv.y + size.z, s.x, s.y);
+			g.fillRect(uv.x + size.z, uv.y, s.x, s.z);
+			g.fillRect(uv.x + size.z + size.x, uv.y, s.x, s.z);
+			
+			
+			g.setColor(new Color(0.0f, 1.0f, 0.0f, 1.0f));
+			
+			g.drawRect(uv.x, uv.y + size.z, s.z, s.y);
+			g.drawRect(uv.x + size.z, uv.y + size.z, s.x, s.y);
+			g.drawRect(uv.x + size.z + size.x, uv.y + size.z, s.z, s.y);
+			g.drawRect(uv.x + size.z + size.x + size.z, uv.y + size.z, s.x, s.y);
+			g.drawRect(uv.x + size.z, uv.y, s.x, s.z);
+			g.drawRect(uv.x + size.z + size.x, uv.y, s.x, s.z);
+		}
+		
+		g = this.texture_frame.getGraphics();
+		g.drawImage(im, 0, 0, null);
+		g.dispose();
+		
 		
 		switch(cursor_type) {
 		case normal:
@@ -2125,6 +2640,19 @@ public class NewModelerScreen extends ModelerScreen {
 			PROPERTIES_PANEL.setPosition(PROPERTIES_PANEL.getPosition().x, widget.getSize().y - 22);
 		}
 		
+		if (PARTS_PANEL.getPosition().x < -PARTS_PANEL.getSize().x + 20) {
+			PARTS_PANEL.setPosition(-PARTS_PANEL.getSize().x + 20 + 2, PARTS_PANEL.getPosition().y);
+		}
+		if (PARTS_PANEL.getPosition().y < 20) {
+			PARTS_PANEL.setPosition(PARTS_PANEL.getPosition().x, 22);
+		}
+		if (PARTS_PANEL.getPosition().x + 20 > widget.getSize().x) {
+			PARTS_PANEL.setPosition(widget.getSize().x - 20 - 2, PARTS_PANEL.getPosition().y);
+		}
+		if (PARTS_PANEL.getPosition().y + 20 > widget.getSize().y) {
+			PARTS_PANEL.setPosition(PARTS_PANEL.getPosition().x, widget.getSize().y - 22);
+		}
+		
 		if (this.Xselected || this.Yselected || this.Zselected) {
 			this.cursor_type = this.grab;
 		}
@@ -2190,7 +2718,7 @@ public class NewModelerScreen extends ModelerScreen {
 			ArrayList<Part> parts = this.model.getParts();
 			for (Part p : parts) {
 				RayBox box = new RayBox();
-				Vector3f size = new Vector3f(p.size).mul(p.scale).mul(Part.SCALING * 2.0f);
+				Vector3f size = new Vector3f(p.size).mul(p.scale).mul(Part.SCALING);
 				Vector3f position = new Vector3f(p.position).mul(Part.SCALING);
 				box.min = new Vector3f(position.x - size.x / 2.0f, position.y - size.y / 2.0f, position.z - size.z / 2.0f);
 				box.max = new Vector3f(box.min).add(size.x, size.y, size.z);
@@ -2674,7 +3202,8 @@ public class NewModelerScreen extends ModelerScreen {
 					if (i.hit.y - lastMousePos3D.y > Part.SCALING || i.hit.y - lastMousePos3D.y < Part.SCALING / 2.0f) {
 						
 						mousePos3D.y = (int)(i.hit.y * (1.0f / Part.SCALING)) * Part.SCALING;
-						selectedPart.position.y = (int)selectedPart.position.y;
+						selectedPart.translate(new Vector3f(selectedPart.position.x, (int)selectedPart.position.y, selectedPart.position.z).sub(selectedPart.position));
+
 						
 					}
 				} else {
@@ -2715,7 +3244,7 @@ public class NewModelerScreen extends ModelerScreen {
 				if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT)) {
 					if (Math.abs(i.hit.x - lastMousePos3D.x) > Part.SCALING || i.hit.x - lastMousePos3D.x < Part.SCALING / 2.0f) {
 						mousePos3D.x = (int)(i.hit.x * (1.0f / Part.SCALING)) * Part.SCALING;
-						selectedPart.position.x = (int)selectedPart.position.x;
+						selectedPart.translate(new Vector3f((int)selectedPart.position.x, selectedPart.position.y, selectedPart.position.z).sub(selectedPart.position));
 					}
 				} else {
 					mousePos3D = i.hit;
@@ -2755,7 +3284,8 @@ public class NewModelerScreen extends ModelerScreen {
 				if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT)) {
 					if (Math.abs(i.hit.z - lastMousePos3D.z) > Part.SCALING || i.hit.z - lastMousePos3D.z < Part.SCALING / 2.0f) {
 						mousePos3D.z = (int)(i.hit.z * (1.0f / Part.SCALING)) * Part.SCALING;
-						selectedPart.position.z = (int)selectedPart.position.z;
+						selectedPart.translate(new Vector3f(selectedPart.position.x, selectedPart.position.y, (int)selectedPart.position.z).sub(selectedPart.position));
+
 					}
 				} else {
 					mousePos3D = i.hit;
@@ -2805,6 +3335,8 @@ public class NewModelerScreen extends ModelerScreen {
 		
 		this.selectionMesh = null;
 		selectedPart = part;
+		
+		this.refreshPartsPanel();
 		
 		if (selectedPart != null) {
 			this.part_name.getTextState().setText(selectedPart.name);
@@ -2899,6 +3431,7 @@ public class NewModelerScreen extends ModelerScreen {
 					1, 1,
 					1, 0
 				});
+		this.refreshPartsPanel();
 	}
 	
 	public MouseIntersection getMouseIntersection(RayBox box, Quaternionf rotation) {
@@ -2925,7 +3458,7 @@ public class NewModelerScreen extends ModelerScreen {
 		Vector3f origin = new Vector3f(Camera.position);
 		Vector3f dir = Camera.getForward().mul(div).add(right).add(up);
 		
-		RayIntersection i = Raytracer.intersectBox(origin, dir, box, new Vector3f(0, 0, 0));
+		RayIntersection i = Raytracer.intersectBox(origin, dir, box, rotation);
 		if (i.lambda.x > 0.0 && i.lambda.x < i.lambda.y) {
 			return new MouseIntersection(origin.add(new Vector3f(dir).mul(i.lambda.x)), i.lambda.x);
 		}
@@ -2956,7 +3489,7 @@ public class NewModelerScreen extends ModelerScreen {
 		Vector3f origin = new Vector3f(Camera.position);
 		Vector3f dir = Camera.getForward().mul(div).add(right).add(up);
 		
-		RayIntersection i = Raytracer.intersectBox(origin, dir, box, new Vector3f(0, 0, 0));
+		RayIntersection i = Raytracer.intersectBox(origin, dir, box, rotation);
 		if (i.lambda.x > 0.0 && i.lambda.x < i.lambda.y) {
 			return new MouseIntersection(origin.add(new Vector3f(dir).mul(i.lambda.x)), i.lambda.x);
 		}
@@ -2969,6 +3502,9 @@ public class NewModelerScreen extends ModelerScreen {
     	super.close();
     	model.dispose();
     	nRenderer.destroy();
+    	for (Texture texture : this.textures) {
+    		texture.dispose();
+    	}
     }
 
 }

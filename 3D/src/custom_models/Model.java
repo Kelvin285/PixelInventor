@@ -15,13 +15,13 @@ public class Model {
 	
 	public void render(ShaderProgram shader, boolean outlines, Part selected) {
 		for (Part part : parts) {
-			part.render(shader, outlines, selected);
+			part.renderInverted(shader, outlines, selected);
 		}
 	}
 	
 	public void render(ShaderProgram shader) {
 		for (Part part : parts) {
-			part.render(shader);
+			part.renderInverted(shader);
 		}
 	}
 	

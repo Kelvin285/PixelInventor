@@ -1,0 +1,47 @@
+Part 0
+Head
+Position 0.0 26.0 2.0
+Rotation 0.0 0.0 0.0 1.0
+Size 10 10 10
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 0 0
+Part 1
+Nose
+Position 0.0 25.0 7.0
+Rotation 0.0 0.0 0.0 1.0
+Size 2 1 1
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 0 21
+Part 2
+Right_Ear
+Position -5.0 26.397058 2.0
+Rotation 0.0 0.30204538 0.0 0.95329356
+Size 1 3 2
+Scale 1.0 1.0 1.0
+Angles 0.0 35.160988 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 7 21
+Part 3
+Left_Ear - Copy
+Position 5.0 26.359955 2.0
+Rotation 0.0 -0.30204538 0.0 0.95329356
+Size 1 3 2
+Scale 1.0 1.0 1.0
+Angles 0.0 -35.160988 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 7 21
+Parent 1 0
+Parent 2 0
+Parent 3 0

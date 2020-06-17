@@ -68,6 +68,8 @@ public class TextureAtlas {
 		GL30.glGenerateMipmap(GL11.GL_TEXTURE_2D);
 		
 		this.texture = new Texture(textureID);
+		this.texture.width = image.getWidth();
+		this.texture.height = image.getHeight();
 	}
 	
 	public int[] getTexture(String name) {

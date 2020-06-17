@@ -64,3 +64,7 @@
 "Inignoto:gui.duplicate_part" = "Duplicate Part"
 "Inignoto:gui.set_parent" = "Set Parent"
 "Inignoto:gui.delete_part" = "Delete Part"
+"Inignoto:gui.texture" = "Texture"
+"Inignoto:gui.texture_editor" = "Texture Editor"
+"Inignoto:gui.texture_size" = "Enter a texture size (ex: 16, 32, 64, or 128)"
+"Inignoto:gui.invalid_size" = "Texture size must be an integer greater than zero!"

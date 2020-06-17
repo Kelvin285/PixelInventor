@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector2f;
+import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
@@ -23,7 +24,7 @@ public class Part {
 	public Quaternionf rotation = new Quaternionf().identity();
 	public Vector3f scale = new Vector3f(0, 0, 0);
 	public Vector3i size = new Vector3i(0, 0, 0);
-	public Vector2f uv = new Vector2f(0, 0);
+	public Vector2i uv = new Vector2i(0, 0);
 	public Vector3f origin = new Vector3f(0, 0, 0);
 	
 	public Part parent;
@@ -50,7 +51,7 @@ public class Part {
 		p.rotation = new Quaternionf(part.rotation);
 		p.scale = new Vector3f(part.scale);
 		p.size = new Vector3i(part.size);
-		p.uv = new Vector2f(part.uv);
+		p.uv = new Vector2i(part.uv);
 		p.origin = new Vector3f(part.origin);
 		p.parent = parent;
 		for (Part c : part.children) {
@@ -235,7 +236,7 @@ public class Part {
 	public void translate(Vector3f translation) {
 		this.position.add(translation);
 		for (Part part : this.children) {
-			part.translate(translation);
+			part.translate(new Vector3f(translation));
 		}
 	}
 	
@@ -272,8 +273,15 @@ public class Part {
 	}
 	
 	public void changeTexture(Texture texture) {
-		mesh.texture = texture;
-		this.texture = texture;
+		this.buildPart(texture);
+	}
+	
+	
+	public void renderInverted(ShaderProgram shader) {
+		Vector3f rot = getEulerAngles();
+		if (this.mesh != null && this.visible)
+		MeshRenderer.renderMesh(mesh, new Vector3f(position).mul(SCALING), rot, new Vector3f(scale).mul(SCALING).mul(1, 1, -1), shader);
+		
 	}
 	
 	public void render(ShaderProgram shader) {
@@ -293,6 +301,20 @@ public class Part {
 		euler.z = (float)Math.toDegrees(euler.z);
 
 		return euler;
+	}
+	
+	public void renderInverted(ShaderProgram shader, boolean outlines, Part selected) {
+		if (this.mesh != null && this.visible)
+		MeshRenderer.renderMesh(mesh, new Vector3f(position).mul(SCALING), rotation, new Vector3f(scale).mul(SCALING).mul(1, 1, -1), shader);
+		if (outlines) {
+			if (selected == this) {
+				this.outlineMesh.texture = Textures.WHITE_SQUARE;
+			} else {
+				this.outlineMesh.texture = Textures.OUTLINE;
+			}
+			if (this.mesh != null && this.visible)
+				MeshRenderer.renderMesh(this.outlineMesh, new Vector3f(position).mul(SCALING), rotation, new Vector3f(scale).mul(SCALING * 2.0f), shader);
+		}
 	}
 	
 	public void render(ShaderProgram shader, boolean outlines, Part selected) {

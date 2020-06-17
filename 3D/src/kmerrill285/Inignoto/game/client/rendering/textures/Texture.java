@@ -16,7 +16,7 @@ import de.matthiasmann.twl.utils.PNGDecoder.Format;
 public class Texture {
 	public String fileName;
 	private int textureId;
-	private int width, height;
+	public int width, height;
 	
 	public Texture(File file) {
 		try {
