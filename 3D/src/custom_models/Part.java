@@ -46,7 +46,7 @@ public class Part {
 	
 	public static void duplicatePart(Part part, Part parent, Model model) {
 		Part p = new Part();
-		p.name = "" + part.name + " - Copy";
+		p.name = "" + part.name;
 		p.position = new Vector3f(part.position);
 		p.rotation = new Quaternionf(part.rotation);
 		p.scale = new Vector3f(part.scale);
@@ -54,6 +54,29 @@ public class Part {
 		p.uv = new Vector2i(part.uv);
 		p.origin = new Vector3f(part.origin);
 		p.parent = parent;
+		if (parent != null) {
+			parent.children.add(p);
+		}
+		for (Part c : part.children) {
+			duplicatePart(c, p, model);
+		}
+		p.buildPart(part.texture);
+		model.getParts().add(p);
+	}
+	
+	public static void copyModelPart(Part part, Part parent, Model model) {
+		Part p = new Part();
+		p.name = "" + part.name;
+		p.position = new Vector3f(part.position);
+		p.rotation = new Quaternionf(part.rotation);
+		p.scale = new Vector3f(part.scale);
+		p.size = new Vector3i(part.size);
+		p.uv = new Vector2i(part.uv);
+		p.origin = new Vector3f(part.origin);
+		p.parent = parent;
+		if (parent != null) {
+			parent.children.add(p);
+		}
 		for (Part c : part.children) {
 			duplicatePart(c, p, model);
 		}

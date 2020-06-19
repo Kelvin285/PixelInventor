@@ -13,6 +13,16 @@ public class Model {
 		return this.parts;
 	}
 	
+	public Model copyModel() {
+		Model model = new Model();
+		for (Part part : parts) {
+			if (part.parent == null) {
+				Part.copyModelPart(part, null, model);
+			}
+		}
+		return model;
+	}
+	
 	public void render(ShaderProgram shader, boolean outlines, Part selected) {
 		for (Part part : parts) {
 			part.renderInverted(shader, outlines, selected);

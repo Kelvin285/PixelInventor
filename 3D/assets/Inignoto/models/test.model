@@ -1,47 +1,169 @@
 Part 0
-Head
-Position 0.0 26.0 2.0
-Rotation 0.0 0.0 0.0 1.0
-Size 10 10 10
-Scale 1.0 1.0 1.0
-Angles 0.0 0.0 0.0
-Locked true
-Visible true
-Origin 0.0 0.0 0.0
-UV 0 0
-Part 1
 Nose
-Position 0.0 25.0 7.0
-Rotation 0.0 0.0 0.0 1.0
+ - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy
+Position -0.18807493 25.822998 6.9965043
+Rotation 0.0 -0.01881042 0.0 0.9998174
 Size 2 1 1
 Scale 1.0 1.0 1.0
-Angles 0.0 0.0 0.0
+Angles 0.0 -2.1555862 0.0
 Locked true
 Visible true
 Origin 0.0 0.0 0.0
 UV 0 21
-Part 2
+Part 1
 Right_Ear
-Position -5.0 26.397058 2.0
-Rotation 0.0 0.30204538 0.0 0.95329356
+Position -5.001445 27.342003 1.9431663
+Rotation 0.0 0.28405827 0.0 0.9588004
 Size 1 3 2
 Scale 1.0 1.0 1.0
-Angles 0.0 35.160988 0.0
+Angles 0.0 -2.1555862 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 7 21
+Part 2
+Left_Ear
+Position 4.992046 27.30125 2.3065906
+Rotation 0.0 -0.31992316 0.0 0.94744134
+Size 1 3 2
+Scale 1.0 1.0 1.0
+Angles 0.0 -2.1555862 0.0
 Locked true
 Visible true
 Origin 0.0 0.0 0.0
 UV 7 21
 Part 3
-Left_Ear - Copy
-Position 5.0 26.359955 2.0
-Rotation 0.0 -0.30204538 0.0 0.95329356
-Size 1 3 2
+Head
+Position 0.0 26.822998 2.0
+Rotation 0.0 -0.01881042 0.0 0.9998174
+Size 10 10 10
 Scale 1.0 1.0 1.0
-Angles 0.0 -35.160988 0.0
+Angles 0.0 -2.1555862 0.0
 Locked true
 Visible true
 Origin 0.0 0.0 0.0
-UV 7 21
-Parent 1 0
-Parent 2 0
-Parent 3 0
+UV 0 0
+Part 4
+Neck
+ - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy
+Position 0.0 21.822998 2.0
+Rotation 0.0 -0.01881042 0.0 0.9998174
+Size 6 1 5
+Scale 1.0 1.0 1.0
+Angles 0.0 -2.1555862 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 15 22
+Part 5
+Body_Upper
+
+ - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy
+Position 0.0 18.41277 2.0
+Rotation 0.0 -0.01881042 0.0 0.9998174
+Size 8 6 4
+Scale 1.01 1.0 1.01
+Angles 0.0 -2.1555862 0.0
+Locked true
+Visible true
+Origin 0.0 -0.1 0.0
+UV 1 31
+Part 6
+Right_Foot
+ - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy
+Position -2.0362146 4.0 2.924062
+Rotation 0.0 -0.01881042 0.0 0.9998174
+Size 4 2 5
+Scale 1.0 1.0 1.1
+Angles 0.0 -2.1555862 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 42 20
+Part 7
+Right_Leg_Lower
+
+ - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy
+Position -1.9986043 5.9752617 1.9247662
+Rotation 0.0 -0.01881042 0.0 0.9998174
+Size 4 3 3
+Scale 1.0 1.0 1.0
+Angles 0.0 -2.1555862 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 43 12
+Part 8
+Right_Leg_Upper
+ - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy
+Position -1.9986043 9.708733 1.9247662
+Rotation 0.0 -0.01881042 0.0 0.9998174
+Size 4 5 3
+Scale 1.0 1.0 1.0
+Angles 0.0 -2.1555862 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 43 2
+Part 9
+Body_Lower
+
+Position 0.0 14.0 2.0
+Rotation 0.0 -0.01881042 0.0 0.9998174
+Size 8 4 4
+Scale 1.0 1.0 1.0
+Angles 0.0 -2.1555862 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 2 45
+Part 10
+Left_Foot
+
+ - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy
+Position 2.0 4.0 3.0
+Rotation 0.0 0.0 0.0 1.0
+Size 4 2 5
+Scale 1.0 1.0 1.1
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 63 20
+Part 11
+Left_Leg_Lower
+
+ - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy - Copy
+Position 2.0 5.9752617 2.0
+Rotation 0.0 0.0 0.0 1.0
+Size 4 3 3
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 64 12
+Part 12
+Left_Leg_Upper
+ - Copy - Copy
+Position 2.0 9.708733 2.0
+Rotation 0.0 0.0 0.0 1.0
+Size 4 5 3
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 64 2
+Parent 0 3
+Parent 1 3
+Parent 2 3
+Parent 3 4
+Parent 4 5
+Parent 5 9
+Parent 6 7
+Parent 7 8
+Parent 8 9
+Parent 10 11
+Parent 11 12
+Parent 12 9

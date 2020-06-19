@@ -533,6 +533,7 @@ public class NewModelerScreen extends ModelerScreen {
         	if (this.selectedPart != null)
         	this.selectedPart.name = this.part_name.getTextState().getText();
         	this.refreshPartsPanel();
+        	this.doAction();
         });
         properties_scroll_panel.getContainer().add(part_name);
 
@@ -564,6 +565,7 @@ public class NewModelerScreen extends ModelerScreen {
         		try {
             		float f = Float.parseFloat(xPos.getTextState().getText());
 					selectedPart.translate(new Vector3f(f, selectedPart.position.y, selectedPart.position.z).sub(selectedPart.position));
+					this.doAction();
 
             	} catch (Exception e) {
             		xPos.getTextState().setText(""+selectedPart.position.x);
@@ -594,6 +596,7 @@ public class NewModelerScreen extends ModelerScreen {
         		try {
             		float f = Float.parseFloat(yPos.getTextState().getText());
             		selectedPart.translate(new Vector3f(selectedPart.position.x, f, selectedPart.position.z).sub(selectedPart.position));
+            		this.doAction();
             	} catch (Exception e) {
             		yPos.getTextState().setText(""+selectedPart.position.y);
             	}
@@ -625,6 +628,7 @@ public class NewModelerScreen extends ModelerScreen {
         		try {
             		float f = Float.parseFloat(zPos.getTextState().getText());
             		selectedPart.translate(new Vector3f(selectedPart.position.x, selectedPart.position.y, f).sub(selectedPart.position));
+            		this.doAction();
             	} catch (Exception e) {
             		zPos.getTextState().setText(""+selectedPart.position.z);
             	}
@@ -661,6 +665,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(xRot.getTextState().getText());
                 		selectedPart.setRotation(new Vector3f(f, selectedPart.getEulerAngles().y, selectedPart.getEulerAngles().z));
+                		this.doAction();
                 	} catch (Exception e) {
                 		xRot.getTextState().setText(""+selectedPart.rotation.x);
                 	}
@@ -691,6 +696,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(yRot.getTextState().getText());
                 		selectedPart.setRotation(new Vector3f(selectedPart.getEulerAngles().x, f, selectedPart.getEulerAngles().z));
+                		this.doAction();
                 	} catch (Exception e) {
                 		yRot.getTextState().setText(""+selectedPart.rotation.y);
                 	}
@@ -721,6 +727,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(zRot.getTextState().getText());
                 		selectedPart.setRotation(new Vector3f(selectedPart.getEulerAngles().x, selectedPart.getEulerAngles().y, f));
+                		this.doAction();
                 	} catch (Exception e) {
                 		zRot.getTextState().setText(""+selectedPart.rotation.z);
                 	}
@@ -761,6 +768,7 @@ public class NewModelerScreen extends ModelerScreen {
                 		int f = Integer.parseInt(xSize.getTextState().getText());
                 		selectedPart.size.x = f;
                 		selectedPart.buildPart();
+                		this.doAction();
                 	} catch (Exception e) {
                 		xSize.getTextState().setText(""+selectedPart.size.x);
                 	}
@@ -792,6 +800,7 @@ public class NewModelerScreen extends ModelerScreen {
                 		int f = Integer.parseInt(ySize.getTextState().getText());
                 		selectedPart.size.y = f;
                 		selectedPart.buildPart();
+                		this.doAction();
                 	} catch (Exception e) {
                 		ySize.getTextState().setText(""+selectedPart.size.y);
                 	}
@@ -823,6 +832,7 @@ public class NewModelerScreen extends ModelerScreen {
                 		int f = Integer.parseInt(zSize.getTextState().getText());
                 		selectedPart.size.z = f;
                 		selectedPart.buildPart();
+                		this.doAction();
                 	} catch (Exception e) {
                 		zSize.getTextState().setText(""+selectedPart.size.z);
                 	}
@@ -860,6 +870,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(xScale.getTextState().getText());
                 		selectedPart.scale.x = f;
+                		this.doAction();
                 	} catch (Exception e) {
                 		xScale.getTextState().setText(""+selectedPart.scale.x);
                 	}
@@ -890,6 +901,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(yScale.getTextState().getText());
                 		selectedPart.scale.y = f;
+                		this.doAction();
                 	} catch (Exception e) {
                 		yScale.getTextState().setText(""+selectedPart.scale.y);
                 	}
@@ -920,6 +932,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(zScale.getTextState().getText());
                 		selectedPart.scale.z = f;
+                		this.doAction();
                 	} catch (Exception e) {
                 		zScale.getTextState().setText(""+selectedPart.scale.z);
                 	}
@@ -957,6 +970,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(xCenter.getTextState().getText());
                 		selectedPart.origin.x = f;
+                		this.doAction();
                 	} catch (Exception e) {
                 		xCenter.getTextState().setText(""+selectedPart.origin.x);
                 	}
@@ -987,6 +1001,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(yCenter.getTextState().getText());
                 		selectedPart.origin.y = f;
+                		this.doAction();
                 	} catch (Exception e) {
                 		yCenter.getTextState().setText(""+selectedPart.origin.y);
                 	}
@@ -1017,6 +1032,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(zCenter.getTextState().getText());
                 		selectedPart.origin.z = f;
+                		this.doAction();
                 	} catch (Exception e) {
                 		zCenter.getTextState().setText(""+selectedPart.origin.z);
                 	}
@@ -1037,6 +1053,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(xPos.getTextState().getText());
                 		selectedPart.position.x = f;
+                		this.doAction();
                 	} catch (Exception e) {
                 		xPos.getTextState().setText(""+selectedPart.position.x);
                 	}
@@ -1050,6 +1067,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(yPos.getTextState().getText());
                 		selectedPart.position.y = f;
+                		this.doAction();
                 	} catch (Exception e) {
                 		yPos.getTextState().setText(""+selectedPart.position.y);
                 	}
@@ -1063,6 +1081,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(zPos.getTextState().getText());
                 		selectedPart.position.z = f;
+                		this.doAction();
                 	} catch (Exception e) {
                 		zPos.getTextState().setText(""+selectedPart.position.z);
                 	}
@@ -1076,6 +1095,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(xCenter.getTextState().getText());
                 		selectedPart.origin.x = f;
+                		this.doAction();
                 	} catch (Exception e) {
                 		xCenter.getTextState().setText(""+selectedPart.origin.x);
                 	}
@@ -1089,6 +1109,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(yCenter.getTextState().getText());
                 		selectedPart.origin.y = f;
+                		this.doAction();
                 	} catch (Exception e) {
                 		yCenter.getTextState().setText(""+selectedPart.origin.y);
                 	}
@@ -1102,6 +1123,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(zCenter.getTextState().getText());
                 		selectedPart.origin.z = f;
+                		this.doAction();
                 	} catch (Exception e) {
                 		zCenter.getTextState().setText(""+selectedPart.origin.z);
                 	}
@@ -1115,6 +1137,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(xRot.getTextState().getText());
                 		selectedPart.setRotation(new Vector3f(f, selectedPart.getEulerAngles().y, selectedPart.getEulerAngles().z));
+                		this.doAction();
                 	} catch (Exception e) {
                 		xRot.getTextState().setText(""+selectedPart.rotation.x);
                 	}
@@ -1128,6 +1151,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(yRot.getTextState().getText());
                 		selectedPart.setRotation(new Vector3f(selectedPart.getEulerAngles().x, f, selectedPart.getEulerAngles().z));
+                		this.doAction();
                 	} catch (Exception e) {
                 		yRot.getTextState().setText(""+selectedPart.rotation.y);
                 	}
@@ -1141,6 +1165,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(zRot.getTextState().getText());
                 		selectedPart.setRotation(new Vector3f(selectedPart.getEulerAngles().x, selectedPart.getEulerAngles().y, f));
+                		this.doAction();
                 	} catch (Exception e) {
                 		zRot.getTextState().setText(""+selectedPart.rotation.z);
                 	}
@@ -1154,6 +1179,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(xScale.getTextState().getText());
                 		selectedPart.scale.x = f;
+                		this.doAction();
                 	} catch (Exception e) {
                 		xScale.getTextState().setText(""+selectedPart.scale.x);
                 	}
@@ -1167,6 +1193,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(yScale.getTextState().getText());
                 		selectedPart.scale.y = f;
+                		this.doAction();
                 	} catch (Exception e) {
                 		yScale.getTextState().setText(""+selectedPart.scale.y);
                 	}
@@ -1180,6 +1207,7 @@ public class NewModelerScreen extends ModelerScreen {
             		try {
                 		float f = Float.parseFloat(zScale.getTextState().getText());
                 		selectedPart.scale.z = f;
+                		this.doAction();
                 	} catch (Exception e) {
                 		zScale.getTextState().setText(""+selectedPart.scale.z);
                 	}
@@ -1194,6 +1222,7 @@ public class NewModelerScreen extends ModelerScreen {
                 		int f = Integer.parseInt(xSize.getTextState().getText());
                 		selectedPart.size.x = f;
                 		selectedPart.buildPart();
+                		this.doAction();
                 	} catch (Exception e) {
                 		xSize.getTextState().setText(""+selectedPart.size.x);
                 	}
@@ -1208,6 +1237,7 @@ public class NewModelerScreen extends ModelerScreen {
                 		int f = Integer.parseInt(ySize.getTextState().getText());
                 		selectedPart.size.y = f;
                 		selectedPart.buildPart();
+                		this.doAction();
                 	} catch (Exception e) {
                 		ySize.getTextState().setText(""+selectedPart.size.y);
                 	}
@@ -1222,6 +1252,7 @@ public class NewModelerScreen extends ModelerScreen {
                 		int f = Integer.parseInt(zSize.getTextState().getText());
                 		selectedPart.size.z = f;
                 		selectedPart.buildPart();
+                		this.doAction();
                 	} catch (Exception e) {
                 		zSize.getTextState().setText(""+selectedPart.size.z);
                 	}
@@ -1252,8 +1283,11 @@ public class NewModelerScreen extends ModelerScreen {
 	
 	private boolean SETTING_PARENT;
 	
+	public ArrayList<Model> actions = new ArrayList<Model>();
+	public int lastAction = 0;
+	
 	public void createEditPanel(Panel EDIT_PANEL) {
-		EDIT_PANEL.setSize(150, 30 * 4);
+		EDIT_PANEL.setSize(150, 30 * 6);
 		EDIT_PANEL.setPosition(this.FILE.getSize().x, 20);
 		EDIT_PANEL.getStyle().setFontSize(20f);
 		EDIT_PANEL.getStyle().getBackground().setColor(new Vector4f(0.3f, 0.3f, 0.3f, 1f));
@@ -1303,6 +1337,7 @@ public class NewModelerScreen extends ModelerScreen {
             	if (this.selectedPart != null) {
             		Part.duplicatePart(this.selectedPart, null, this.model);
             		this.refreshPartsPanel();
+            		this.doAction();
             	}
             }
 
@@ -1353,6 +1388,7 @@ public class NewModelerScreen extends ModelerScreen {
             			this.model.getParts().remove(this.selectedPart);
                 		this.refreshPartsPanel();
                 		this.selectPart(null);
+                		this.doAction();
                 	}
             		
             	}
@@ -1360,6 +1396,83 @@ public class NewModelerScreen extends ModelerScreen {
             }
 
         });
+        
+        Button UNDO = new Button(Translation.translateText("Inignoto:gui.undo"));
+        UNDO.setSize(150, 30);
+        UNDO.setPosition(0, 30 * 4);
+        UNDO.getStyle().setFontSize(22f);
+        UNDO.getStyle().setTextColor(0, 0, 0, 1);
+        UNDO.getStyle().getBackground().setColor(new Vector4f(0, 0, 0, 0));
+        UNDO.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
+        UNDO.getStyle().setHorizontalAlign(HorizontalAlign.CENTER);
+        UNDO.getStyle().setTextColor(1, 1, 1, 1);
+        EDIT_PANEL.add(UNDO);
+
+        UNDO.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+
+            if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
+            	undo();
+            }
+        });
+        
+        Button REDO = new Button(Translation.translateText("Inignoto:gui.redo"));
+        REDO.setSize(150, 30);
+        REDO.setPosition(0, 30 * 5);
+        REDO.getStyle().setFontSize(22f);
+        REDO.getStyle().setTextColor(0, 0, 0, 1);
+        REDO.getStyle().getBackground().setColor(new Vector4f(0, 0, 0, 0));
+        REDO.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
+        REDO.getStyle().setHorizontalAlign(HorizontalAlign.CENTER);
+        REDO.getStyle().setTextColor(1, 1, 1, 1);
+        EDIT_PANEL.add(REDO);
+        
+        REDO.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+
+            if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
+            	redo();
+            }
+        });
+        
+        this.actions.add(model.copyModel());
+        
+	}
+	
+	public void undo() {
+		if (lastAction < 1) {
+			return;
+		}
+		actions.set(lastAction, model.copyModel());
+		lastAction--;
+		this.model.dispose();
+		this.model = actions.get(lastAction).copyModel();
+		this.refreshPartsPanel();
+		System.out.println("undo");
+	}
+	
+	public void redo() {
+		if (lastAction + 1 < actions.size()) {
+			lastAction++;
+			this.model.dispose();
+			this.model = actions.get(lastAction).copyModel();
+		}
+		this.refreshPartsPanel();
+		System.out.println("redo");
+	}
+	
+	public void doAction() {
+		ArrayList<Model> m = new ArrayList<Model>();
+		for (int i = 0; i < lastAction + 1; i++) {
+			m.add(actions.get(i));
+		}
+		for (int i = 0; i < actions.size(); i++) {
+			if (!m.contains(actions.get(i))) {
+				actions.get(i).dispose();
+			}
+		}
+		m.add(model.copyModel());
+		actions = m;
+		lastAction = m.size() - 1;
+		System.out.println("action " + lastAction);
 	}
 	
 	private void createFilePanel(Panel FILE_PANEL) {
@@ -1787,6 +1900,7 @@ public class NewModelerScreen extends ModelerScreen {
         	if (event.getAction() == MouseClickEvent.MouseClickAction.PRESS) {
         		if (event.getButton().getCode() == 0) {
         			loadModel();
+        			this.doAction();
         		}
         	}
         });
@@ -1855,10 +1969,13 @@ public class NewModelerScreen extends ModelerScreen {
 	}
 	
 	public void loadModel() {
+		JOptionPane test = new JOptionPane();
+		JOptionPane.getRootFrame().setAlwaysOnTop(true);
+		
 		JFileChooser fileChooser = new JFileChooser();
 		if (lastLoadDir == null) lastLoadDir = "";
 		fileChooser.setCurrentDirectory(new File(lastLoadDir));
-		int result = fileChooser.showOpenDialog(null);
+		int result = fileChooser.showOpenDialog(test);
 		if (result == JFileChooser.APPROVE_OPTION) {
 			File selectedFile = fileChooser.getSelectedFile();
 			String f = selectedFile.getPath();
@@ -1950,7 +2067,7 @@ public class NewModelerScreen extends ModelerScreen {
 				this.model.getParts().clear();
 				this.model.getParts().addAll(parts);
 			} catch (Exception e) {
-				JOptionPane test = new JOptionPane();
+				test = new JOptionPane();
 				test.getRootFrame().setAlwaysOnTop(true);
 				JOptionPane.showMessageDialog(test, Translation.translateText("Inignoto:gui.not_valid_model"));
 				
@@ -2118,57 +2235,66 @@ public class NewModelerScreen extends ModelerScreen {
 	
 	private boolean textureChanged = false;
 	
-	public void tick() {
-		
-		if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL)) {
-			if (Settings.isKeyJustDown(GLFW.GLFW_KEY_S)) {
-				JFileChooser fileChooser = new JFileChooser();
-				fileChooser.setCurrentDirectory(new File(lastLoadDir));
-				int result = fileChooser.showSaveDialog(null);
-				if (result == JFileChooser.APPROVE_OPTION) {
-					File selectedFile = fileChooser.getSelectedFile();
-					
-					try {
-						FileWriter writer = new FileWriter(selectedFile);
-						
-						String str = "";
-						ArrayList<Part> parts = model.getParts();
-						for (int i = 0; i < parts.size(); i++) {
-							str += "Part " + i + "\n";
-							str += parts.get(i).name + "\n";
-							str += "Position " + parts.get(i).position.x + " " + parts.get(i).position.y + " " + parts.get(i).position.z + "\n";
-							Quaternionf rotation = parts.get(i).rotation;
-							str += "Rotation " + rotation.x + " " + rotation.y + " " + rotation.z + " " + rotation.w + "\n";
-							Vector3i size = parts.get(i).size;
-							str += "Size " + size.x + " " + size.y + " " + size.z + "\n";
-							Vector3f scale = parts.get(i).scale;
-							str += "Scale " + scale.x + " " + scale.y + " " + scale.z + "\n";
-							Vector3f axisAngles = parts.get(i).axisAngles;
-							str += "Angles " + axisAngles.x + " " + axisAngles.y + " " + axisAngles.z + "\n";
-							str += "Locked " + parts.get(i).locked + "\n";
-							str += "Visible " + parts.get(i).visible + "\n";
-							Vector3f origin = parts.get(i).origin;
-							str += "Origin " + origin.x + " " + origin.y + " " + origin.z + "\n";
-							Vector2i uv = parts.get(i).uv;
-							str += "UV " + uv.x + " " + uv.y + "\n";
-							
-						}
-						for (int i = 0; i < parts.size(); i++) {
-							if (parts.get(i).parent != null) {
-								int parent = parts.indexOf(parts.get(i).parent);
-								str += "Parent " + i + " " + parent + "\n";
-							}
-						}
-						
-						writer.write(str);
-						writer.close();
-					} catch (FileNotFoundException e) {
-						e.printStackTrace();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+	public void save() {
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setCurrentDirectory(new File(lastLoadDir));
+		int result = fileChooser.showSaveDialog(null);
+		if (result == JFileChooser.APPROVE_OPTION) {
+			File selectedFile = fileChooser.getSelectedFile();
+			
+			try {
+				FileWriter writer = new FileWriter(selectedFile);
+				
+				String str = "";
+				ArrayList<Part> parts = model.getParts();
+				for (int i = 0; i < parts.size(); i++) {
+					str += "Part " + i + "\n";
+					str += parts.get(i).name + "\n";
+					str += "Position " + parts.get(i).position.x + " " + parts.get(i).position.y + " " + parts.get(i).position.z + "\n";
+					Quaternionf rotation = parts.get(i).rotation;
+					str += "Rotation " + rotation.x + " " + rotation.y + " " + rotation.z + " " + rotation.w + "\n";
+					Vector3i size = parts.get(i).size;
+					str += "Size " + size.x + " " + size.y + " " + size.z + "\n";
+					Vector3f scale = parts.get(i).scale;
+					str += "Scale " + scale.x + " " + scale.y + " " + scale.z + "\n";
+					Vector3f axisAngles = parts.get(i).axisAngles;
+					str += "Angles " + axisAngles.x + " " + axisAngles.y + " " + axisAngles.z + "\n";
+					str += "Locked " + parts.get(i).locked + "\n";
+					str += "Visible " + parts.get(i).visible + "\n";
+					Vector3f origin = parts.get(i).origin;
+					str += "Origin " + origin.x + " " + origin.y + " " + origin.z + "\n";
+					Vector2i uv = parts.get(i).uv;
+					str += "UV " + uv.x + " " + uv.y + "\n";
 					
 				}
+				for (int i = 0; i < parts.size(); i++) {
+					if (parts.get(i).parent != null) {
+						int parent = parts.indexOf(parts.get(i).parent);
+						str += "Parent " + i + " " + parent + "\n";
+					}
+				}
+				
+				writer.write(str);
+				writer.close();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+		}
+	}
+	
+	public void tick() {
+		if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT)) {
+			if (Settings.isKeyJustDown(GLFW.GLFW_KEY_S)) {
+				save();
+			}
+			if (Settings.isKeyJustDown(GLFW.GLFW_KEY_Z)) {
+				undo();
+			}
+			if (Settings.isKeyJustDown(GLFW.GLFW_KEY_Y)) {
+				redo();
 			}
 		}
 		
@@ -2775,6 +2901,7 @@ public class NewModelerScreen extends ModelerScreen {
 		if (Settings.isMouseButtonJustDown(0)) {
 			mouseJustDown = true;
 			if (closest != null) {
+				if (!Xselected && !Yselected && !Zselected)
 				selectPart(part);
 			} else {
 				if (!Xselected && !Yselected && !Zselected)
@@ -2975,6 +3102,9 @@ public class NewModelerScreen extends ModelerScreen {
 		}
 		
 		if (!Settings.isMouseButtonDown(0)) {
+			if (Xselected || Yselected || Zselected) {
+				this.doAction();
+			}
 			this.Xselected = false;
 			this.Yselected = false;
 			this.Zselected = false;
@@ -3152,6 +3282,9 @@ public class NewModelerScreen extends ModelerScreen {
 		}
 		
 		if (!Settings.isMouseButtonDown(0)) {
+			if (Xselected || Yselected || Zselected) {
+				this.doAction();
+			}
 			this.Xselected = false;
 			this.Yselected = false;
 			this.Zselected = false;
@@ -3319,6 +3452,9 @@ public class NewModelerScreen extends ModelerScreen {
 		}
 		
 		if (!Settings.isMouseButtonDown(0)) {
+			if (Xselected || Yselected || Zselected) {
+				this.doAction();
+			}
 			this.Xselected = false;
 			this.Yselected = false;
 			this.Zselected = false;
@@ -3345,6 +3481,7 @@ public class NewModelerScreen extends ModelerScreen {
 					}
 					this.selectedPart.parent = null;
 					this.refreshPartsPanel();
+					this.doAction();
 					return;
 				}
 			} else {
@@ -3357,6 +3494,7 @@ public class NewModelerScreen extends ModelerScreen {
 				JOptionPane test = new JOptionPane();
 				test.getRootFrame().setAlwaysOnTop(true);
 				JOptionPane.showMessageDialog(test, "Set the parent of " + this.selectedPart.name + " to " + part.name);
+				this.doAction();
 				return;
 			}
 		}
@@ -3529,6 +3667,9 @@ public class NewModelerScreen extends ModelerScreen {
     public void close() {
     	super.close();
     	model.dispose();
+    	for (int i = 0; i < actions.size(); i++) {
+    		actions.get(i).dispose();
+    	}
     	nRenderer.destroy();
     	for (Texture texture : this.textures) {
     		texture.dispose();
