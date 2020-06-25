@@ -1,17 +1,13 @@
 package kmerrill285.Inignoto.game.entity;
 
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
-import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.TilePos;
 import kmerrill285.Inignoto.resources.FPSCounter;
-import kmerrill285.Inignoto.resources.MathHelper;
-import kmerrill285.Inignoto.resources.RayTraceResult;
 import kmerrill285.Inignoto.resources.RayTraceResult.RayTraceType;
 
 public class Entity {

@@ -1,35 +1,6 @@
 package kmerrill285.Inignoto.game.client.rendering.gui;
 
-import java.awt.Point;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-
-import org.joml.Vector3f;
-import org.joml.Vector4f;
-import org.lwjgl.glfw.GLFW;
-
-import kmerrill285.Inignoto.game.client.Camera;
-import kmerrill285.Inignoto.game.client.Mouse;
-import kmerrill285.Inignoto.game.client.rendering.Mesh;
-import kmerrill285.Inignoto.game.client.rendering.MeshRenderer;
-import kmerrill285.Inignoto.game.client.rendering.chunk.BlockBuilder;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
-import kmerrill285.Inignoto.game.client.rendering.textures.Texture;
-import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
-import kmerrill285.Inignoto.game.settings.Settings;
-import kmerrill285.Inignoto.game.settings.Translation;
-import kmerrill285.Inignoto.game.tile.Tiles;
-import kmerrill285.Inignoto.modelloader.AnimModel;
-import kmerrill285.Inignoto.modelloader.CustomModel;
-import kmerrill285.Inignoto.modelloader.ModelLoader;
-import kmerrill285.Inignoto.modelloader.ModelPart;
-import kmerrill285.Inignoto.modelloader.ModelTransformation;
-import kmerrill285.Inignoto.resources.FPSCounter;
-import kmerrill285.Inignoto.resources.Utils;
 
 public class ModelerScreen extends MenuScreen {
 

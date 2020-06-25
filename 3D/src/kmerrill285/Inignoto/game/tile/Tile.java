@@ -7,7 +7,6 @@ import java.util.Scanner;
 
 import org.joml.Vector3f;
 
-import kmerrill285.Inignoto.game.client.audio.TileSound;
 import kmerrill285.Inignoto.game.client.rendering.BlockFace;
 import kmerrill285.Inignoto.game.entity.ItemDropEntity;
 import kmerrill285.Inignoto.game.settings.Translation;

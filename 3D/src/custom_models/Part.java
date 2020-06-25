@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
-import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
@@ -44,8 +43,13 @@ public class Part {
 	
 	public Vector3f axisAngles = new Vector3f(0, 0, 0);
 	
+	private Model model;
+	public Part(Model model) {
+		this.model = model;
+	}
+	
 	public static void duplicatePart(Part part, Part parent, Model model) {
-		Part p = new Part();
+		Part p = new Part(model);
 		p.name = "" + part.name;
 		p.position = new Vector3f(part.position);
 		p.rotation = new Quaternionf(part.rotation);
@@ -65,7 +69,7 @@ public class Part {
 	}
 	
 	public static void copyModelPart(Part part, Part parent, Model model) {
-		Part p = new Part();
+		Part p = new Part(model);
 		p.name = "" + part.name;
 		p.position = new Vector3f(part.position);
 		p.rotation = new Quaternionf(part.rotation);
@@ -256,36 +260,98 @@ public class Part {
 		return new Mesh(vertices, texCoords, indices, texture);
 	}
 	
-	public void translate(Vector3f translation) {
-		this.position.add(translation);
-		for (Part part : this.children) {
-			part.translate(new Vector3f(translation));
+	public static KeyTransformation getOrCreateKeyTransformation(int frame, Part part) {
+		KeyTransformation transformation = null;
+		ArrayList<Keyframe> keyframes = part.model.getKeyframes();
+		if (frame <= keyframes.size() - 1 && frame >= 0) {
+			Keyframe currentFrame = keyframes.get(frame);
+			transformation = currentFrame.transformations.get(part);
+			if (transformation == null) {
+				transformation = new KeyTransformation();
+				currentFrame.transformations.put(part, transformation);
+			}
 		}
+		return transformation;
+	}
+	
+	public void translate(Vector3f translation) {
+		if (this.model.editMode == Model.EditMode.ANIMATION) {
+			
+			KeyTransformation transformation = getOrCreateKeyTransformation((int)model.currentTime, this);
+			
+			if (transformation != null) {
+				transformation.translate(translation);
+			}
+			
+			for (Part part : this.children) {
+				KeyTransformation t = getOrCreateKeyTransformation((int)model.currentTime, part);
+				if (t != null) {
+					t.translate(translation);
+				}
+			}
+			
+		} else {
+			this.position.add(translation);
+			for (Part part : this.children) {
+				part.translate(new Vector3f(translation));
+			}
+		}
+		
 	}
 	
 	public void rotate(Vector3f rotation) {
-		rotate(rotation, new Vector3f(this.position).add(new Vector3f(this.origin).rotate(this.rotation)));
+		if (this.model.editMode == Model.EditMode.ANIMATION) {
+			KeyTransformation transformation = getOrCreateKeyTransformation((int)model.currentTime, this);
+			
+			if (transformation != null) {
+				transformation.rotate(rotation);
+			}
+			
+			for (Part part : this.children) {
+				KeyTransformation t = getOrCreateKeyTransformation((int)model.currentTime, part);
+				if (t != null) {
+					t.rotate(rotation);
+				}
+			}
+		} else {
+			rotate(rotation, new Vector3f(this.position).add(new Vector3f(this.origin).rotate(this.rotation)));
+		}
 	}
 	
 	public void rotate(Vector3f rotation, Vector3f origin) {
+		if (this.model.editMode == Model.EditMode.ANIMATION) {
+			KeyTransformation transformation = getOrCreateKeyTransformation((int)model.currentTime, this);
+			
+			if (transformation != null) {
+				transformation.rotate(rotation, origin);
+			}
+			
+			for (Part part : this.children) {
+				KeyTransformation t = getOrCreateKeyTransformation((int)model.currentTime, part);
+				if (t != null) {
+					t.rotate(rotation, origin);
+				}
+			}
+		} else {
+			this.axisAngles.add(rotation);
+			
+	        this.rotation.rotateLocalX((float)Math.toRadians(rotation.x));
+	        this.rotation.rotateLocalY((float)Math.toRadians(rotation.y));
+	        this.rotation.rotateLocalZ((float)Math.toRadians(rotation.z));
+	                
+	        Quaternionf nRot = new Quaternionf().identity();
+	        nRot.rotateLocalX((float)Math.toRadians(rotation.x));
+	        nRot.rotateLocalY((float)Math.toRadians(rotation.y));
+	        nRot.rotateLocalZ((float)Math.toRadians(rotation.z));
+	        
+	       
+	        this.position = Raytracer.rotateAround(this.position, origin, nRot);
+	        
+	        for (Part part : this.children) {
+	            part.rotate(rotation, origin);
+	        }
+		}
 		
-		this.axisAngles.add(rotation);
-		
-        this.rotation.rotateLocalX((float)Math.toRadians(rotation.x));
-        this.rotation.rotateLocalY((float)Math.toRadians(rotation.y));
-        this.rotation.rotateLocalZ((float)Math.toRadians(rotation.z));
-                
-        Quaternionf nRot = new Quaternionf().identity();
-        nRot.rotateLocalX((float)Math.toRadians(rotation.x));
-        nRot.rotateLocalY((float)Math.toRadians(rotation.y));
-        nRot.rotateLocalZ((float)Math.toRadians(rotation.z));
-        
-       
-        this.position = Raytracer.rotateAround(this.position, origin, nRot);
-        
-        for (Part part : this.children) {
-            part.rotate(rotation, origin);
-        }
     }
 	
 	public void setRotation(Vector3f rotation) {

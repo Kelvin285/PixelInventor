@@ -369,9 +369,7 @@ public class Inignoto {
 		
 		
 	}
-	
-	private boolean updateWorld = false;
-	
+		
 	public void update() {
 		
 		if (this.guiRenderer.getOpenScreen() instanceof MenuScreen == false)

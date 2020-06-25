@@ -6,7 +6,6 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -92,7 +91,7 @@ import kmerrill285.Inignoto.resources.raytracer.Raytracer;
 public class NewModelerScreen extends ModelerScreen {
 	
 	public Texture texture;
-	public String lastLoadDir;
+	public String lastLoadDir = "";
 	public int floorSize = 1;
 	public Mesh block;
 	public Mesh cube;
@@ -101,7 +100,7 @@ public class NewModelerScreen extends ModelerScreen {
 	public Mesh selectionMesh;
 	public Mesh rotationHandle;
 	
-	public Part handle = new Part();
+	public Part handle = new Part(null);
 	
 	public Vector3f mousePos3D = new Vector3f(0, 0, 0);
 	public Vector3f lastMousePos3D = new Vector3f(0, 0, 0);
@@ -161,7 +160,7 @@ public class NewModelerScreen extends ModelerScreen {
 		
 		model = new Model();
 		
-		Part part = new Part();
+		Part part = new Part(model);
 		part.size = new Vector3i(32, 32, 32);
 		part.scale = new Vector3f(1, 1, 1);
 		part.name = "Part";
@@ -169,7 +168,7 @@ public class NewModelerScreen extends ModelerScreen {
 		part.buildPart(Textures.GRAY_MATERIAL);
 		model.getParts().add(part);
 		
-		handle = new Part();
+		handle = new Part(null);
 		handle.size = new Vector3i(32, 32, 0);
 		handle.scale = new Vector3f(1.0f / 16.0f, 1 / 16.0f, 1);
 		handle.name = "Cube";
@@ -344,7 +343,6 @@ public class NewModelerScreen extends ModelerScreen {
         this.texture_frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         this.texture_frame.setVisible(true);
         
-        
         this.image = (BufferedImage) texture_frame.createImage(500, 500);
 	}
 	
@@ -385,12 +383,21 @@ public class NewModelerScreen extends ModelerScreen {
         refreshPartsPanel();
 	}
 	
+	public void createKeyframePanel() {
+		
+	}
+	
 	public void loadImage() {
-		JOptionPane test = new JOptionPane();
-		test.getRootFrame().setAlwaysOnTop(true);
+		JFrame test = new JFrame();
+		test.setAlwaysOnTop(true);
+		test.toFront();
+		test.requestFocus();
+		test.setLocationRelativeTo(null);
+		test.setVisible(true);
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setCurrentDirectory(new File(lastLoadDir));
 		int result = fileChooser.showOpenDialog(test);
+		test.setVisible(false);
 		if (result == JFileChooser.APPROVE_OPTION) {
 			File selectedFile = fileChooser.getSelectedFile();
 			String f = selectedFile.getPath();
@@ -409,9 +416,14 @@ public class NewModelerScreen extends ModelerScreen {
 					this.textures.add(this.texture);
 				}
 			} catch (Exception e) {
-				test = new JOptionPane();
-				test.getRootFrame().setAlwaysOnTop(true);
+				test = new JFrame();
+				test.setAlwaysOnTop(true);
+				test.toFront();
+				test.requestFocus();
+				test.setLocationRelativeTo(null);
+				test.setVisible(true);
 				JOptionPane.showMessageDialog(test, Translation.translateText("Inignoto:gui.not_valid_texture"));
+				test.setVisible(false);
 			}
 		}
 	}
@@ -1307,7 +1319,7 @@ public class NewModelerScreen extends ModelerScreen {
         NEW.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
 
             if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
-            	Part part = new Part();
+            	Part part = new Part(model);
         		part.size = new Vector3i(32, 32, 32);
         		part.scale = new Vector3f(1, 1, 1);
         		part.name = "Part";
@@ -1359,9 +1371,14 @@ public class NewModelerScreen extends ModelerScreen {
             if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
             	if (this.selectedPart != null) {
             		SETTING_PARENT = true;
-            		JOptionPane test = new JOptionPane();
-    				test.getRootFrame().setAlwaysOnTop(true);
+            		JFrame test = new JFrame();
+            		test.setAlwaysOnTop(true);
+            		test.toFront();
+            		test.requestFocus();
+            		test.setLocationRelativeTo(null);
+            		test.setVisible(true);
                 	JOptionPane.showMessageDialog(test, "Click on a part to set the new parent of the selected part!");
+                	test.setVisible(false);
             	}
             }
 
@@ -1382,14 +1399,19 @@ public class NewModelerScreen extends ModelerScreen {
 
             if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
             	if (this.selectedPart != null) {
-            		JOptionPane test = new JOptionPane();
-    				test.getRootFrame().setAlwaysOnTop(true);
+            		JFrame test = new JFrame();
+            		test.setAlwaysOnTop(true);
+            		test.toFront();
+            		test.requestFocus();
+            		test.setLocationRelativeTo(null);
+            		test.setVisible(true);
             		if (JOptionPane.showConfirmDialog(test, "Are you sure you want to delete this part?") == 0) {
             			this.model.getParts().remove(this.selectedPart);
                 		this.refreshPartsPanel();
                 		this.selectPart(null);
                 		this.doAction();
                 	}
+            		test.setVisible(false);
             		
             	}
             	
@@ -1768,9 +1790,14 @@ public class NewModelerScreen extends ModelerScreen {
         NEW_TEXTURE.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
         	System.out.println("ehh");
             if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
-            	JOptionPane test = new JOptionPane();
-				test.getRootFrame().setAlwaysOnTop(true);
+            	JFrame test = new JFrame();
+        		test.setAlwaysOnTop(true);
+        		test.toFront();
+        		test.requestFocus();
+        		test.setLocationRelativeTo(null);
+        		test.setVisible(true);
             	String size_str = JOptionPane.showInputDialog(test, Translation.translateText("Inignoto:gui.texture_size"));
+            	test.setVisible(false);
             	try {
             		int size = Integer.parseInt(size_str.trim());
             		if (size > 0) {
@@ -1783,14 +1810,25 @@ public class NewModelerScreen extends ModelerScreen {
             			this.model.changeTexture(atlas.texture);
             			textures.add(atlas.texture);
             		} else {
-            			test = new JOptionPane();
-        				test.getRootFrame().setAlwaysOnTop(true);
+            			test = new JFrame();
+            			test.setAlwaysOnTop(true);
+            			test.toFront();
+            			test.requestFocus();
+            			test.setLocationRelativeTo(null);
+            			test.setVisible(true);
             			JOptionPane.showMessageDialog(test, Translation.translateText("Inignoto:gui.invalid_size"));
+            			test.setVisible(false);
+            			
             		}
             	} catch (Exception e) {
-            		test = new JOptionPane();
-    				test.getRootFrame().setAlwaysOnTop(true);
+            		test = new JFrame();
+            		test.setAlwaysOnTop(true);
+            		test.toFront();
+            		test.requestFocus();
+            		test.setLocationRelativeTo(null);
+            		test.setVisible(true);
             		JOptionPane.showMessageDialog(test, Translation.translateText("Inignoto:gui.invalid_size"));
+            		test.setVisible(false);
             	}
             }
 
@@ -1934,9 +1972,14 @@ public class NewModelerScreen extends ModelerScreen {
 		fileChooser.grabFocus();
 		fileChooser.requestFocus();
 		fileChooser.setCurrentDirectory(new File(lastLoadDir));
-		JOptionPane test = new JOptionPane();
-		test.getRootFrame().setAlwaysOnTop(true);
+		JFrame test = new JFrame();
+		test.setAlwaysOnTop(true);
+		test.toFront();
+		test.requestFocus();
+		test.setLocationRelativeTo(null);
+		test.setVisible(true);
 		int result = fileChooser.showOpenDialog(test);
+		test.setVisible(false);
 		if (result == JFileChooser.APPROVE_OPTION) {
 			File selectedFile = fileChooser.getSelectedFile();
 			String f = selectedFile.getPath();
@@ -1960,22 +2003,31 @@ public class NewModelerScreen extends ModelerScreen {
 					this.ZOOM = 1.0;
 				}
 			} catch (Exception e) {
-				test = new JOptionPane();
-				test.getRootFrame().setAlwaysOnTop(true);
+				test = new JFrame();
+				test.setAlwaysOnTop(true);
+				test.toFront();
+				test.requestFocus();
+				test.setLocationRelativeTo(null);
+				test.setVisible(true);
 				JOptionPane.showMessageDialog(test, Translation.translateText("Inignoto:gui.not_valid_texture"));
+				test.setVisible(false);
 				e.printStackTrace();
 			}
 		}
 	}
 	
 	public void loadModel() {
-		JOptionPane test = new JOptionPane();
-		JOptionPane.getRootFrame().setAlwaysOnTop(true);
-		
+		JFrame test = new JFrame();
+		test.setAlwaysOnTop(true);
+		test.toFront();
+		test.requestFocus();
+		test.setLocationRelativeTo(null);
+		test.setVisible(true);
 		JFileChooser fileChooser = new JFileChooser();
 		if (lastLoadDir == null) lastLoadDir = "";
 		fileChooser.setCurrentDirectory(new File(lastLoadDir));
 		int result = fileChooser.showOpenDialog(test);
+		test.setVisible(false);
 		if (result == JFileChooser.APPROVE_OPTION) {
 			File selectedFile = fileChooser.getSelectedFile();
 			String f = selectedFile.getPath();
@@ -1995,7 +2047,7 @@ public class NewModelerScreen extends ModelerScreen {
 				Part part = null;
 				for (String s : lines ) {
 					if (s.startsWith("Part")) {
-						part = new Part();
+						part = new Part(model);
 					} else {
 						String[] data = s.trim().split(" ");
 						if (data[0].contains("Position")) {
@@ -2067,10 +2119,14 @@ public class NewModelerScreen extends ModelerScreen {
 				this.model.getParts().clear();
 				this.model.getParts().addAll(parts);
 			} catch (Exception e) {
-				test = new JOptionPane();
-				test.getRootFrame().setAlwaysOnTop(true);
+				test = new JFrame();
+				test.setAlwaysOnTop(true);
+				test.toFront();
+				test.requestFocus();
+				test.setLocationRelativeTo(null);
+				test.setVisible(true);
 				JOptionPane.showMessageDialog(test, Translation.translateText("Inignoto:gui.not_valid_model"));
-				
+				test.setVisible(false);
 			}
 		}
 	}
@@ -2094,9 +2150,6 @@ public class NewModelerScreen extends ModelerScreen {
 	private boolean right_mouse = false;
 	private int MX, MY;
 	private int LMX, LMY;
-	private Color left_color = Color.BLACK;
-	private Color right_color = Color.WHITE;
-	private boolean uv_drag = false;
 	
 	private void init() {
 		SX = 0;
@@ -2106,31 +2159,6 @@ public class NewModelerScreen extends ModelerScreen {
 		// Create a new blank cursor.
 		Cursor blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(
 		    cursorImg, new Point(0, 0), "blank cursor");
-
-		// Set the blank cursor to the JFrame.
-		
-		this.texture_frame.addKeyListener(new KeyListener() {
-
-			@Override
-			public void keyPressed(java.awt.event.KeyEvent arg0) {
-				if (arg0.getKeyCode() == java.awt.event.KeyEvent.VK_CONTROL) {
-					uv_drag = true;
-				}
-			}
-
-			@Override
-			public void keyReleased(java.awt.event.KeyEvent arg0) {
-				if (arg0.getKeyCode() == java.awt.event.KeyEvent.VK_CONTROL) {
-					uv_drag = false;
-				}
-			}
-
-			@Override
-			public void keyTyped(java.awt.event.KeyEvent arg0) {
-				
-			}
-			
-		});
 		
 		texture_frame.getContentPane().setCursor(blankCursor);
 		this.texture_frame.addMouseWheelListener(new MouseWheelListener() {
@@ -2236,9 +2264,16 @@ public class NewModelerScreen extends ModelerScreen {
 	private boolean textureChanged = false;
 	
 	public void save() {
+		JFrame test = new JFrame();
+		test.setAlwaysOnTop(true);
+		test.toFront();
+		test.requestFocus();
+		test.setLocationRelativeTo(null);
+		test.setVisible(true);
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setCurrentDirectory(new File(lastLoadDir));
-		int result = fileChooser.showSaveDialog(null);
+		int result = fileChooser.showSaveDialog(test);
+		test.setVisible(false);
 		if (result == JFileChooser.APPROVE_OPTION) {
 			File selectedFile = fileChooser.getSelectedFile();
 			
@@ -2286,7 +2321,7 @@ public class NewModelerScreen extends ModelerScreen {
 	}
 	
 	public void tick() {
-		if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT)) {
+		if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL)) {
 			if (Settings.isKeyJustDown(GLFW.GLFW_KEY_S)) {
 				save();
 			}
@@ -2312,29 +2347,16 @@ public class NewModelerScreen extends ModelerScreen {
 			init = true;
 		}
 		Graphics g = null;
-		if (uv_drag == false) {
-			if (left_mouse) {
-				g = image.getGraphics();
-				g.setColor(left_color);
-				g.drawLine((int)Math.floor(LMX / ZOOM) + (int)Math.floor(SX), (int)Math.floor(LMY / ZOOM) + (int)Math.floor(SY), (int)Math.floor(MX / ZOOM) + (int)Math.floor(SX), (int)Math.floor(MY / ZOOM) + (int)Math.floor(SY));
+		
+		if (left_mouse) {
+			
+			if (selectedPart != null) {
+				selectedPart.uv.x += SMX - LSMX;
+				selectedPart.uv.y += SMY - LSMY;
 				textureChanged = true;
-			}
-			if (right_mouse) {
-				g = image.getGraphics();
-				g.setColor(right_color);
-				g.drawLine((int)Math.floor(LMX / ZOOM) + (int)Math.floor(SX), (int)Math.floor(LMY / ZOOM) + (int)Math.floor(SY), (int)Math.floor(MX / ZOOM) + (int)Math.floor(SX), (int)Math.floor(MY / ZOOM) + (int)Math.floor(SY));
-				textureChanged = true;
-			}
-		} else {
-			if (left_mouse) {
-				
-				if (selectedPart != null) {
-					selectedPart.uv.x += SMX - LSMX;
-					selectedPart.uv.y += SMY - LSMY;
-					textureChanged = true;
-				}
 			}
 		}
+		
 		
 		if (tex_sdrag) {
 			SX += LSMX - SMX;
@@ -2358,7 +2380,7 @@ public class NewModelerScreen extends ModelerScreen {
 		
 		
 		g = i2.getGraphics();
-		g.setColor(new Color(left_color.getRed(), left_color.getGreen(), left_color.getBlue(), 100));
+		g.setColor(new Color(0, 0, 0, 100));
 		g.fillRect((int)Math.floor(MX / ZOOM) + SX, (int)Math.floor(MY / ZOOM) + SY, 1, 1);
 		
 		int xx = (int)Math.floor(MX / ZOOM) + SX;
@@ -2432,13 +2454,13 @@ public class NewModelerScreen extends ModelerScreen {
 		Mouse.y = (float) ypos[0];
 		
 		if (Settings.isMouseButtonDown(2)) {
-			Camera.position.add(Camera.getUp().mul((Mouse.lastY - Mouse.y) * 0.01f));
-			Camera.position.add(Camera.getRight().mul((Mouse.lastX - Mouse.x) * 0.01f));
+			Camera.position.add(Camera.getUp().mul((Mouse.lastY - Mouse.y) * 0.01f * Settings.MOUSE_SENSITIVITY));
+			Camera.position.add(Camera.getRight().mul((Mouse.lastX - Mouse.x) * 0.01f * Settings.MOUSE_SENSITIVITY));
 			cursor_type = grab;
 		}
 		if (Settings.isMouseButtonDown(1)) {
-			Camera.rotation.y += Mouse.x - Mouse.lastX;
-			Camera.rotation.x += Mouse.y - Mouse.lastY;
+			Camera.rotation.y += (Mouse.x - Mouse.lastX) * Settings.MOUSE_SENSITIVITY;
+			Camera.rotation.x += (Mouse.y - Mouse.lastY) * Settings.MOUSE_SENSITIVITY;
 			cursor_type = grab;
 		}
 		if (Settings.FORWARD.isPressed()) {
@@ -3337,36 +3359,51 @@ public class NewModelerScreen extends ModelerScreen {
 		Y_HANDLE.min = new Vector3f(new Vector3f(position));
 		Y_HANDLE.max = new Vector3f(Y_HANDLE.min).add(0.2f, 1.0f, 0.2f);
 		
+		int[] width = new int[1];
+		int[] height = new int[1];
+		GLFW.glfwGetWindowSize(Utils.window, width, height);
+		double mx = Mouse.x * (1920.0 / width[0]);
+		double my = (height[0] - Mouse.y) * (1080.0 / height[0]);
+		if (Double.isInfinite(mx)) {
+			mx = 0;
+			my = 0;
+		}
+		
 		MouseIntersection i = getMouseIntersection(Y_HANDLE, new Vector3f());
 		if (i != null) {
 			if (Settings.isMouseButtonJustDown(0)) {
 				this.Yselected = true;
-				mousePos3D = i.hit;
-				lastMousePos3D = i.hit;
+				mousePos3D.x = (float) mx;
+				mousePos3D.y = (float) my;
+				mousePos3D.z = (float)-( my * Math.cos(Math.toRadians(Camera.rotation.y)) + mx * Math.sin(Math.toRadians(Camera.rotation.y)));
+				mousePos3D.rotateX((float)Math.toRadians(Camera.rotation.x));
+				mousePos3D.rotateY((float)Math.toRadians(Camera.rotation.y));
+				mousePos3D.rotateZ((float)Math.toRadians(Camera.rotation.z));
+				lastMousePos3D = new Vector3f(mousePos3D);
 			}
 		}
+		
+		
+		
 		if (this.Yselected) {
-			Y_HANDLE.min = new Vector3f(position.add(-100, -100, -0.1f));
-			Y_HANDLE.max = new Vector3f(Y_HANDLE.min).add(200, 200, 0.1f);
-			i = getMouseIntersection(Y_HANDLE, new Vector3f());
-			if (i == null) {
-				Y_HANDLE.min = new Vector3f(position.add(-0.1f, -100, -100));
-				Y_HANDLE.max = new Vector3f(Y_HANDLE.min).add(0.1f, 200, 200);
-				i = getMouseIntersection(Y_HANDLE, new Vector3f());
-			}
-			if (i != null) {
-				if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT)) {
-					if (i.hit.y - lastMousePos3D.y > Part.SCALING || i.hit.y - lastMousePos3D.y < Part.SCALING / 2.0f) {
-						
-						mousePos3D.y = (int)(i.hit.y * (1.0f / Part.SCALING)) * Part.SCALING;
-						selectedPart.translate(new Vector3f(selectedPart.position.x, (int)selectedPart.position.y, selectedPart.position.z).sub(selectedPart.position));
-
-						
-					}
-				} else {
-					mousePos3D = i.hit;
+			mousePos3D.x = (float) mx;
+			mousePos3D.y = (float) my;
+			mousePos3D.z = (float)-( my * Math.cos(Math.toRadians(Camera.rotation.y)) + mx * Math.sin(Math.toRadians(Camera.rotation.y)));
+			mousePos3D.rotateX((float)Math.toRadians(Camera.rotation.x));
+			mousePos3D.rotateY((float)Math.toRadians(Camera.rotation.y));
+			mousePos3D.rotateZ((float)Math.toRadians(Camera.rotation.z));
+			
+			if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT)) {
+				
+				if (mousePos3D.distance(lastMousePos3D) > 8) {
+					selectedPart.translate(new Vector3f(0, (mousePos3D.y - lastMousePos3D.y) / 8.0f, 0));
+					lastMousePos3D = new Vector3f(mousePos3D);
 				}
-				selectedPart.translate(new Vector3f(0, (mousePos3D.y - lastMousePos3D.y) * 32.0f, 0));
+				selectedPart.translate(new Vector3f(selectedPart.position.x, (int)selectedPart.position.y, selectedPart.position.z).sub(selectedPart.position));
+
+			} else {
+				selectedPart.translate(new Vector3f(0, (mousePos3D.y - lastMousePos3D.y) / 8.0f, 0));
+				lastMousePos3D = new Vector3f(mousePos3D);
 			}
 		}
 		
@@ -3384,29 +3421,35 @@ public class NewModelerScreen extends ModelerScreen {
 		if (i != null) {
 			if (Settings.isMouseButtonJustDown(0)) {
 				this.Xselected = true;
-				mousePos3D = i.hit;
-				lastMousePos3D = i.hit;
+				mousePos3D.x = (float) mx;
+				mousePos3D.y = (float) my;
+				mousePos3D.z = (float)-( my * Math.cos(Math.toRadians(Camera.rotation.y)) + mx * Math.sin(Math.toRadians(Camera.rotation.y)));
+				mousePos3D.rotateX((float)Math.toRadians(Camera.rotation.x));
+				mousePos3D.rotateY((float)Math.toRadians(Camera.rotation.y));
+				mousePos3D.rotateZ((float)Math.toRadians(Camera.rotation.z));
+				lastMousePos3D = new Vector3f(mousePos3D);
 			}
 		}
+		
 		if (this.Xselected) {
-			X_HANDLE.min = new Vector3f(position.add(-100, -0.1f, -100));
-			X_HANDLE.max = new Vector3f(X_HANDLE.min).add(200, 0.1f, 200);
-			i = getMouseIntersection(X_HANDLE, new Vector3f());
-			if (i == null) {
-				X_HANDLE.min = new Vector3f(position.add(-100, -100, -0.1f));
-				X_HANDLE.max = new Vector3f(X_HANDLE.min).add(200, 200, 0.1f);
-				i = getMouseIntersection(X_HANDLE, new Vector3f());
-			}
-			if (i != null) {
-				if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT)) {
-					if (Math.abs(i.hit.x - lastMousePos3D.x) > Part.SCALING || i.hit.x - lastMousePos3D.x < Part.SCALING / 2.0f) {
-						mousePos3D.x = (int)(i.hit.x * (1.0f / Part.SCALING)) * Part.SCALING;
-						selectedPart.translate(new Vector3f((int)selectedPart.position.x, selectedPart.position.y, selectedPart.position.z).sub(selectedPart.position));
-					}
-				} else {
-					mousePos3D = i.hit;
+			mousePos3D.x = (float) mx;
+			mousePos3D.y = (float) my;
+			mousePos3D.z = (float)-( my * Math.cos(Math.toRadians(Camera.rotation.y)) + mx * Math.sin(Math.toRadians(Camera.rotation.y)));
+			mousePos3D.rotateX((float)Math.toRadians(Camera.rotation.x));
+			mousePos3D.rotateY((float)Math.toRadians(Camera.rotation.y));
+			mousePos3D.rotateZ((float)Math.toRadians(Camera.rotation.z));
+
+			if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT)) {
+				
+				if (mousePos3D.distance(lastMousePos3D) > 8) {
+					selectedPart.translate(new Vector3f((mousePos3D.x - lastMousePos3D.x) / 8.0f, 0, 0));
+					lastMousePos3D = new Vector3f(mousePos3D);
 				}
-				selectedPart.translate(new Vector3f((mousePos3D.x - lastMousePos3D.x) * 32.0f, 0, 0));
+				selectedPart.translate(new Vector3f((int)selectedPart.position.x, selectedPart.position.y, selectedPart.position.z).sub(selectedPart.position));
+
+			} else {
+				selectedPart.translate(new Vector3f((mousePos3D.x - lastMousePos3D.x) / 8.0f, 0, 0));
+				lastMousePos3D = new Vector3f(mousePos3D);
 			}
 		}
 		
@@ -3424,30 +3467,35 @@ public class NewModelerScreen extends ModelerScreen {
 		if (i != null) {
 			if (Settings.isMouseButtonJustDown(0)) {
 				this.Zselected = true;
-				mousePos3D = i.hit;
-				lastMousePos3D = i.hit;
+				mousePos3D.x = (float) mx;
+				mousePos3D.y = (float) my;
+				mousePos3D.z = (float)-( my * Math.cos(Math.toRadians(Camera.rotation.y)) + mx * Math.sin(Math.toRadians(Camera.rotation.y)));
+				mousePos3D.rotateX((float)Math.toRadians(Camera.rotation.x));
+				mousePos3D.rotateY((float)Math.toRadians(Camera.rotation.y));
+				mousePos3D.rotateZ((float)Math.toRadians(Camera.rotation.z));
+				
+				lastMousePos3D = new Vector3f(mousePos3D);
 			}
 		}
 		if (this.Zselected) {
-			Z_HANDLE.min = new Vector3f(position.add(-100, -0.1f, -100));
-			Z_HANDLE.max = new Vector3f(Z_HANDLE.min).add(200, 0.1f, 200);
-			i = getMouseIntersection(Z_HANDLE, new Vector3f());
-			if (i == null) {
-				Z_HANDLE.min = new Vector3f(position.add(-0.1f, -100, -100));
-				Z_HANDLE.max = new Vector3f(Z_HANDLE.min).add(0.1f, 200, 200);
-				i = getMouseIntersection(Z_HANDLE, new Vector3f());
-			}
-			if (i != null) {
-				if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT)) {
-					if (Math.abs(i.hit.z - lastMousePos3D.z) > Part.SCALING || i.hit.z - lastMousePos3D.z < Part.SCALING / 2.0f) {
-						mousePos3D.z = (int)(i.hit.z * (1.0f / Part.SCALING)) * Part.SCALING;
-						selectedPart.translate(new Vector3f(selectedPart.position.x, selectedPart.position.y, (int)selectedPart.position.z).sub(selectedPart.position));
-
-					}
-				} else {
-					mousePos3D = i.hit;
+			mousePos3D.x = (float) mx;
+			mousePos3D.y = (float) my;
+			mousePos3D.z = (float)-( my * Math.cos(Math.toRadians(Camera.rotation.y)) + mx * Math.sin(Math.toRadians(Camera.rotation.y)));
+			mousePos3D.rotateX((float)Math.toRadians(Camera.rotation.x));
+			mousePos3D.rotateY((float)Math.toRadians(Camera.rotation.y));
+			mousePos3D.rotateZ((float)Math.toRadians(Camera.rotation.z));
+			
+			if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_ALT)) {
+				
+				if (mousePos3D.distance(lastMousePos3D) > 8) {
+					selectedPart.translate(new Vector3f(0, 0, -(mousePos3D.z - lastMousePos3D.z) / 8.0f));
+					lastMousePos3D = new Vector3f(mousePos3D);
 				}
-				selectedPart.translate(new Vector3f(0, 0, (mousePos3D.z - lastMousePos3D.z) * 32.0f));
+				selectedPart.translate(new Vector3f(selectedPart.position.x, selectedPart.position.y, (int)selectedPart.position.z).sub(selectedPart.position));
+
+			} else {
+				selectedPart.translate(new Vector3f(0, 0, -(mousePos3D.z - lastMousePos3D.z) / 8.0f));
+				lastMousePos3D = new Vector3f(mousePos3D);
 			}
 		}
 		
@@ -3460,7 +3508,6 @@ public class NewModelerScreen extends ModelerScreen {
 			this.Zselected = false;
 			mousePos3D = new Vector3f(0, 0, 0);
 		}
-		lastMousePos3D = new Vector3f(mousePos3D);
 	}
 		
 	public void deselect() {
@@ -3473,8 +3520,12 @@ public class NewModelerScreen extends ModelerScreen {
 		if (this.SETTING_PARENT) {
 			this.SETTING_PARENT = false;
 			if (part == null) {
-				JOptionPane test = new JOptionPane();
-				test.getRootFrame().setAlwaysOnTop(true);
+				JFrame test = new JFrame();
+				test.setAlwaysOnTop(true);
+				test.toFront();
+				test.requestFocus();
+				test.setLocationRelativeTo(null);
+				test.setVisible(true);
 				if (JOptionPane.showConfirmDialog(test, "Do you want to remove this part's parent?") == 0) {
 					if (this.selectedPart.parent != null) {
 						this.selectedPart.parent.children.remove(this.selectedPart);
@@ -3482,18 +3533,25 @@ public class NewModelerScreen extends ModelerScreen {
 					this.selectedPart.parent = null;
 					this.refreshPartsPanel();
 					this.doAction();
+					test.setVisible(false);
 					return;
 				}
 			} else {
+				
 				if (part == this.selectedPart) {
 					return;
 				}
 				this.selectedPart.parent = part;
 				part.children.add(this.selectedPart);
 				this.refreshPartsPanel();
-				JOptionPane test = new JOptionPane();
-				test.getRootFrame().setAlwaysOnTop(true);
+				JFrame test = new JFrame();
+				test.setAlwaysOnTop(true);
+				test.toFront();
+				test.requestFocus();
+				test.setLocationRelativeTo(null);
+				test.setVisible(true);
 				JOptionPane.showMessageDialog(test, "Set the parent of " + this.selectedPart.name + " to " + part.name);
+				test.setVisible(false);
 				this.doAction();
 				return;
 			}
@@ -3614,7 +3672,6 @@ public class NewModelerScreen extends ModelerScreen {
 		float X = (float)mx / 1920.0f - 0.5f;
 		float Y = (1.0f - (float)my / 1080.0f) - 0.5f;
 
-		float size = 0.001f;
 		float yMul = 1.7f;
 		float xMul = 3;
 		float div = 1.0f / (Utils.Z_FAR - Utils.Z_NEAR);
@@ -3645,7 +3702,6 @@ public class NewModelerScreen extends ModelerScreen {
 		float X = (float)mx / 1920.0f - 0.5f;
 		float Y = (1.0f - (float)my / 1080.0f) - 0.5f;
 
-		float size = 0.001f;
 		float yMul = 1.7f;
 		float xMul = 3;
 		float div = 1.0f / (Utils.Z_FAR - Utils.Z_NEAR);

@@ -2,8 +2,6 @@ package kmerrill285.Inignoto.game.world.chunk;
 
 import java.io.Serializable;
 
-import kmerrill285.Inignoto.game.tile.Tile;
-
 public class TileData implements Serializable {
 	private static final long serialVersionUID = 272466692325542004L;
 	private int tile;

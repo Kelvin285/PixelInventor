@@ -1,6 +1,5 @@
 package kmerrill285.Inignoto.game.entity;
 
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import kmerrill285.Inignoto.game.client.rendering.Mesh;

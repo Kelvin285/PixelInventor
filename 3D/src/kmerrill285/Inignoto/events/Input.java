@@ -55,7 +55,6 @@ public class Input {
 	private static void updateCamera() {
 		if (FPSCounter.getDelta() <= 0) return;
 		float speed = 0.5f;
-		float rotSpeed = 2.0f;
 		if (Settings.RIGHT.isPressed()) {
 			float yaw = 90;
 			Camera.position.x+=speed * Camera.getForward(0, Camera.rotation.y + yaw).x * FPSCounter.getDelta();
@@ -72,14 +71,12 @@ public class Input {
 
 		if (Settings.FORWARD.isPressed()) {
 			float yaw = 0;
-			float pitch = 0;
 			Camera.position.x+=speed * Camera.getForward(0, Camera.rotation.y + yaw).x * FPSCounter.getDelta();
 			Camera.position.z+=speed * Camera.getForward(0, Camera.rotation.y + yaw).z * FPSCounter.getDelta();
 		}
 
 		if (Settings.BACKWARD.isPressed()) {
 			float yaw = 180;
-			float pitch = 0;
 			Camera.position.x+=speed * Camera.getForward(0, Camera.rotation.y + yaw).x * FPSCounter.getDelta();
 			Camera.position.z+=speed * Camera.getForward(0, Camera.rotation.y + yaw).z * FPSCounter.getDelta();
 		}

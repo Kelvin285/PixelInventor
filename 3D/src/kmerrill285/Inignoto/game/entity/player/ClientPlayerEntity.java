@@ -8,12 +8,9 @@ import kmerrill285.Inignoto.game.client.rendering.entity.PlayerRenderer;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tile;
-import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.resources.FPSCounter;
 import kmerrill285.Inignoto.resources.MathHelper;
-import kmerrill285.Inignoto.resources.RayTraceResult;
-import kmerrill285.Inignoto.resources.RayTraceResult.RayTraceType;
 
 public class ClientPlayerEntity extends PlayerEntity {
 	
@@ -60,9 +57,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 		
 		float XP = 0;
 		float ZP = 0;
-		
-		int extra = 0;
-		
+				
 		if (!rolling)
 		if (Settings.RUN.isPressed()) {
 			this.running = true;
@@ -180,7 +175,6 @@ public class ClientPlayerEntity extends PlayerEntity {
 				} else {
 					dir.add(0, 1);
 				}
-				extra = -45;
 				bobSpeed = 18f;
 				bobSpeedX = 18f;
 				isMoving = true;
@@ -198,9 +192,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 				} else {
 					dir.add(0, -1);
 				}
-				
-				extra = 45;
-				
+								
 				bobSpeed = 18f * backMul;
 				bobSpeedX = 18f * backMul;
 				isMoving = true;
@@ -378,10 +370,6 @@ public class ClientPlayerEntity extends PlayerEntity {
 			}
 		}
 		
-		float moveLerp = 1.0f;
-		if (onGround == false) {
-			moveLerp = 0.1f;
-		}
 		if (onGround) {
 			velocity.x = MathHelper.lerp(velocity.x, XP * this.moveSpeed * mul, 0.45f);
 			velocity.z = MathHelper.lerp(velocity.z, ZP * this.moveSpeed * mul, 0.45f);

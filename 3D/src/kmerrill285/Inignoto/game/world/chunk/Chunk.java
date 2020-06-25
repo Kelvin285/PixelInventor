@@ -32,9 +32,7 @@ public class Chunk {
 	public static final int SIZE_Y = 16;
 		
 	private static final int NUM_TILES = Chunk.SIZE * Chunk.SIZE * Chunk.SIZE_Y;
-	
-	private static final Vector3f scale = new Vector3f(SIZE, SIZE_Y, SIZE);
-	
+		
 	private World world;
 	
 	private int x, y, z;

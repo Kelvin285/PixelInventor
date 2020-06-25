@@ -2,15 +2,33 @@ package custom_models;
 
 import java.util.ArrayList;
 
-import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.textures.Texture;
 
 public class Model {
 	private ArrayList<Part> parts = new ArrayList<Part>();
-		
+	
+	private ArrayList<Keyframe> keyframes = new ArrayList<Keyframe>();
+	
+	public float currentTime = 0.0f;
+	public float animationSpeed = 1.0f;
+	
+	public enum EditMode {
+		MODEL, ANIMATION
+	}
+	
+	public EditMode editMode = EditMode.MODEL;
+	
 	public ArrayList<Part> getParts() {
 		return this.parts;
+	}
+	
+	public ArrayList<Keyframe> getKeyframes() {
+		return this.keyframes;
+	}
+	
+	public int getAnimationLength() {
+		return this.keyframes.size();
 	}
 	
 	public Model copyModel() {
@@ -19,6 +37,9 @@ public class Model {
 			if (part.parent == null) {
 				Part.copyModelPart(part, null, model);
 			}
+		}
+		for (Keyframe frame : keyframes) {
+			model.keyframes.add(frame.copy());
 		}
 		return model;
 	}
