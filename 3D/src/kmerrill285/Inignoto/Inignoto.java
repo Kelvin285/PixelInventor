@@ -13,6 +13,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
+import custom_models.Part;
 import kmerrill285.Inignoto.events.Events;
 import kmerrill285.Inignoto.events.Input;
 import kmerrill285.Inignoto.game.client.Camera;
@@ -388,6 +389,7 @@ public class Inignoto {
 		
 		Fonts.dispose();
 		Camera.soundSource.delete();
+		Part.originMesh.dispose();
 		Sounds.dispose();
 		Settings.saveSettings();
 		Utils.sprite_shader.dispose();

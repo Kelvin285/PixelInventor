@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -573,6 +574,68 @@ public class NewModelerScreen extends ModelerScreen {
 			}
         });
 		
+		final Button anim_speed = new Button(Translation.translateText("Inignoto:gui.animation_speed"));
+		anim_speed.getStyle().setTextColor(1, 1, 1, 1);
+		anim_speed.getStyle().setFontSize(20.0f);
+		anim_speed.getStyle().getBackground().setColor(0.4f, 0.4f, 0.4f, 1.0f);
+		anim_speed.setPosition(150, 20 * 3 + 5);
+		anim_speed.getSize().x = edit_model.getTextState().getTextWidth();
+		anim_speed.getSize().y = 20;
+		
+		
+		anim_speed.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+			if (event.getAction() == MouseClickAction.CLICK)
+			{
+				JFrame test = new JFrame();
+				test.setAlwaysOnTop(true);
+				test.toFront();
+				test.requestFocus();
+				test.setLocationRelativeTo(null);
+				test.setVisible(true);
+				
+				try {
+					float i = Integer.parseInt(JOptionPane.showInputDialog(test, Translation.translateText("Inignoto:gui.animation_speed" + " ("+(int)(model.animationSpeed * 30)+") FPS")));
+					if (i >= 0) {
+						model.animationSpeed = i / 30.0f;
+					}
+				} catch (Exception e) {
+					
+				}
+				test.setVisible(false);
+			}
+        });
+		
+		final Button frame_speed = new Button(Translation.translateText("Inignoto:gui.frame_speed"));
+		frame_speed.getStyle().setTextColor(1, 1, 1, 1);
+		frame_speed.getStyle().setFontSize(20.0f);
+		frame_speed.getStyle().getBackground().setColor(0.4f, 0.4f, 0.4f, 1.0f);
+		frame_speed.setPosition(150, 20 * 3 + 5);
+		frame_speed.getSize().x = edit_model.getTextState().getTextWidth();
+		frame_speed.getSize().y = 20;
+		
+		
+		frame_speed.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+			if (event.getAction() == MouseClickAction.CLICK)
+			{
+				JFrame test = new JFrame();
+				test.setAlwaysOnTop(true);
+				test.toFront();
+				test.requestFocus();
+				test.setLocationRelativeTo(null);
+				test.setVisible(true);
+				
+				try {
+					float i = Integer.parseInt(JOptionPane.showInputDialog(test, Translation.translateText("Inignoto:gui.frame_speed" + " ("+(int)(model.getKeyframes().get(model.getCurrentFrame()).speed * 30)+") FPS")));
+					if (i >= 0) {
+						model.getKeyframes().get(model.getCurrentFrame()).speed = i / 30.0f;
+					}
+				} catch (Exception e) {
+					
+				}
+				test.setVisible(false);
+			}
+        });
+		
 		paste_frame.getListenerMap().addListener(ButtonWidthChangeEvent.class, (ButtonWidthChangeEventListener) event -> {
 			 Button button = event.getTargetComponent();
 		     float textWidth = button.getTextState().getTextWidth();
@@ -603,7 +666,20 @@ public class NewModelerScreen extends ModelerScreen {
 		     textWidth = button.getTextState().getTextWidth();
 		     button.getSize().x = textWidth + 5;
 		     button.setPosition(play.getPosition().x + play.getSize().x + 5, button.getPosition().y);
+		     
+		     button = anim_speed;
+		     textWidth = button.getTextState().getTextWidth();
+		     button.getSize().x = textWidth + 5;
+		     button.setPosition(stop.getPosition().x + stop.getSize().x + 5, button.getPosition().y);
+		     
+		     button = frame_speed;
+		     textWidth = button.getTextState().getTextWidth();
+		     button.getSize().x = textWidth + 5;
+		     button.setPosition(anim_speed.getPosition().x + anim_speed.getSize().x + 5, button.getPosition().y);
 		});
+		
+		ANIMATION_PANEL.add(anim_speed);
+		ANIMATION_PANEL.add(frame_speed);
 		
 		ANIMATION_PANEL.add(play);
 		ANIMATION_PANEL.add(stop);
@@ -743,6 +819,7 @@ public class NewModelerScreen extends ModelerScreen {
 			if (timeline.size() > 0) {
 				model.getKeyframes().clear();
 				model.getKeyframes().addAll(timeline);
+				this.refreshTimeline();
 			}
 			
 		}
@@ -2242,7 +2319,7 @@ public class NewModelerScreen extends ModelerScreen {
         NEW_TEXTURE.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
         	if (event.getAction() == MouseClickEvent.MouseClickAction.PRESS) {
         		if (event.getButton().getCode() == 0) {
-        			//save();
+        			saveUIMap();
         		}
         	}
         });
@@ -2637,6 +2714,67 @@ public class NewModelerScreen extends ModelerScreen {
 	private int SMX, SMY, LSMX, LSMY;
 	
 	private boolean textureChanged = false;
+	
+	public void saveUIMap() {
+		JFrame test = new JFrame();
+		test.setAlwaysOnTop(true);
+		test.toFront();
+		test.requestFocus();
+		test.setLocationRelativeTo(null);
+		test.setVisible(true);
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setCurrentDirectory(new File(lastLoadDir));
+		int result = fileChooser.showSaveDialog(test);
+		test.setVisible(false);
+		System.out.println(result);
+
+		if (result == JFileChooser.APPROVE_OPTION) {
+			File selectedFile = fileChooser.getSelectedFile();
+			this.lastLoadDir = selectedFile.getPath();
+			int maxX = 0;
+			
+			int maxY = 0;
+			
+			for (Part part : model.getParts()) {
+				if (part.uv.x + part.size.z * 2 + part.size.x * 2 > maxX) {
+					maxX = part.uv.x + part.size.z * 2 + part.size.x * 2;
+				}
+				if (part.uv.y + part.size.z + part.size.y > maxY) {
+					maxY = part.uv.y + part.size.z + part.size.y;
+				}
+			}
+			
+			BufferedImage image = new BufferedImage(maxX, maxY, BufferedImage.TYPE_INT_ARGB);
+			Graphics g = image.getGraphics();
+			g.setColor(Color.WHITE);
+			g.fillRect(0, 0, image.getWidth(), image.getHeight());
+			for (Part part : model.getParts()) {
+				Vector2i uv = part.uv;
+				Vector3i size = part.size;
+				Vector3i s = new Vector3i(size);
+				
+				g.setColor(Color.RED);
+				g.fillRect(uv.x, uv.y + size.z, s.z, s.y);
+				g.setColor(Color.GREEN);
+				g.fillRect(uv.x + size.z, uv.y + size.z, s.x, s.y);
+				g.setColor(Color.BLUE);
+				g.fillRect(uv.x + size.z + size.x, uv.y + size.z, s.z, s.y);
+				g.setColor(Color.YELLOW);
+				g.fillRect(uv.x + size.z + size.x + size.z, uv.y + size.z, s.x, s.y);
+				g.setColor(Color.GRAY);
+				g.fillRect(uv.x + size.z, uv.y, s.x, s.z);
+				g.setColor(Color.CYAN);
+				g.fillRect(uv.x + size.z + size.x, uv.y, s.x, s.z);
+			}
+			g.dispose();
+			
+			try {
+				ImageIO.write(image, "png", selectedFile);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 	
 	public void save() {
 		JFrame test = new JFrame();

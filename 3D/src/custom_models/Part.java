@@ -6,10 +6,10 @@ import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
-import org.joml.Vector3fc;
 import org.joml.Vector3i;
 
 import custom_models.Model.EditMode;
+import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.MeshRenderer;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
@@ -39,6 +39,7 @@ public class Part {
 	
 	public Mesh mesh;
 	public Mesh outlineMesh;
+	public static Part originMesh;
 	
 	private Texture texture;
 	
@@ -49,6 +50,16 @@ public class Part {
 	private Model model;
 	public Part(Model model) {
 		this.model = model;
+	}
+	
+	static {
+		if (originMesh == null) {
+			Part part = new Part(null);
+			part.size = new Vector3i(2, 2, 2);
+			part.scale = new Vector3f(1.0f);
+			part.buildPart(Textures.RED);
+			originMesh = part;
+		}
 	}
 	
 	public static void duplicatePart(Part part, Part parent, Model model) {
@@ -391,11 +402,25 @@ public class Part {
 	}
 	
 	public void renderInverted(ShaderProgram shader, boolean outlines, Part selected) {
+		
+		
+		
+
 		if (this.mesh != null && this.visible)
 		MeshRenderer.renderMesh(mesh, new Vector3f(getPosition()).mul(SCALING), getRotation(), new Vector3f(getScale()).mul(SCALING).mul(1, 1, -1), shader);
 		if (outlines) {
 			if (selected == this) {
 				this.outlineMesh.texture = Textures.WHITE_SQUARE;
+				
+				if (this != Part.originMesh) {
+					Vector3f o = new Vector3f(new Vector3f(this.getPosition()).add(new Vector3f(new Vector3f(this.origin).rotate(this.getRotation())))).mul(SCALING);
+					Vector3f dir = new Vector3f(new Vector3f(this.getPosition()).add(new Vector3f(new Vector3f(this.origin).rotate(this.getRotation())))).mul(SCALING).sub(Camera.position);
+					if (dir.length() > 0) {
+						dir.div(dir.length());
+					}
+					dir.mul(0.05f);
+					MeshRenderer.renderMesh(Part.originMesh.mesh, new Vector3f(Camera.position).add(dir), new Vector3f(SCALING * 0.025f), shader);
+				}
 			} else {
 				this.outlineMesh.texture = Textures.OUTLINE;
 			}
@@ -405,11 +430,19 @@ public class Part {
 	}
 	
 	public void render(ShaderProgram shader, boolean outlines, Part selected) {
+		
 		if (this.mesh != null && this.visible)
 		MeshRenderer.renderMesh(mesh, new Vector3f(getPosition()).mul(SCALING), getRotation(), new Vector3f(getScale()).mul(SCALING), shader);
 		if (outlines) {
 			if (selected == this) {
 				this.outlineMesh.texture = Textures.WHITE_SQUARE;
+				
+//				Vector3f dir = new Vector3f(this.getPosition().add(new Vector3f(this.origin.rotate(this.getRotation())))).sub(Camera.position);
+//				if (dir.length() > 0) {
+//					dir.div(dir.length());
+//				}
+//				MeshRenderer.renderMesh(Part.originMesh, new Vector3f(Camera.position).add(dir), new Vector3f(1.0f), shader);
+
 			} else {
 				this.outlineMesh.texture = Textures.OUTLINE;
 			}

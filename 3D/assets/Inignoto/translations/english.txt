@@ -81,5 +81,6 @@
 "Inignoto:gui.play" = "Play"
 "Inignoto:gui.stop" = "Stop"
 "Inignoto:gui.animation_speed" = "Animation Speed"
+"Inignoto:gui.frame_speed" = "Frame Speed"
 "Inignoto:gui.insert_frame_after" = "Insert Frame After"
 "Inignoto:gui.insert_frame_before" = "Insert Frame Before"

@@ -11,7 +11,6 @@ import org.lwjgl.glfw.GLFW;
 import kmerrill285.Inignoto.Inignoto;
 import kmerrill285.Inignoto.events.Events;
 import kmerrill285.Inignoto.game.client.Camera;
-import kmerrill285.Inignoto.game.client.Mouse;
 import kmerrill285.Inignoto.game.client.audio.SoundSource;
 import kmerrill285.Inignoto.game.client.audio.Sounds;
 import kmerrill285.Inignoto.game.client.rendering.gui.GuiRenderer;
