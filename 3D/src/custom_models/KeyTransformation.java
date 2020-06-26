@@ -1,5 +1,7 @@
 package custom_models;
 
+import java.io.Serializable;
+
 import org.joml.Quaternionf;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
@@ -7,12 +9,14 @@ import org.joml.Vector3i;
 
 import kmerrill285.Inignoto.resources.raytracer.Raytracer;
 
-public class KeyTransformation {
+public class KeyTransformation implements Serializable {
+	private static final long serialVersionUID = 1L;
+
 	public static final float SCALING = 1.0f / 32.0f;
 	
 	public Vector3f position = new Vector3f(0, 0, 0);
 	public Quaternionf rotation = new Quaternionf().identity();
-	public Vector3f scale = new Vector3f(0, 0, 0);
+	public Vector3f scale = new Vector3f(1, 1, 1);
 	public Vector3i size = new Vector3i(0, 0, 0);
 	public Vector2i uv = new Vector2i(0, 0);
 	public Vector3f origin = new Vector3f(0, 0, 0);

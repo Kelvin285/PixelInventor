@@ -39,11 +39,14 @@ import org.liquidengine.legui.component.Panel;
 import org.liquidengine.legui.component.ScrollablePanel;
 import org.liquidengine.legui.component.TextAreaField;
 import org.liquidengine.legui.component.Widget;
+import org.liquidengine.legui.component.event.button.ButtonWidthChangeEvent;
+import org.liquidengine.legui.component.event.button.ButtonWidthChangeEventListener;
 import org.liquidengine.legui.component.optional.align.HorizontalAlign;
 import org.liquidengine.legui.component.optional.align.VerticalAlign;
 import org.liquidengine.legui.event.FocusEvent;
 import org.liquidengine.legui.event.KeyEvent;
 import org.liquidengine.legui.event.MouseClickEvent;
+import org.liquidengine.legui.event.MouseClickEvent.MouseClickAction;
 import org.liquidengine.legui.image.LoadableImage;
 import org.liquidengine.legui.image.loader.DefaultImageLoader;
 import org.liquidengine.legui.input.Mouse.MouseButton;
@@ -53,6 +56,7 @@ import org.liquidengine.legui.listener.MouseClickEventListener;
 import org.liquidengine.legui.listener.processor.EventProcessorProvider;
 import org.liquidengine.legui.style.Style.DisplayType;
 import org.liquidengine.legui.style.Style.PositionType;
+import org.liquidengine.legui.style.flex.FlexStyle.JustifyContent;
 import org.liquidengine.legui.style.font.TextDirection;
 import org.liquidengine.legui.system.context.CallbackKeeper;
 import org.liquidengine.legui.system.context.Context;
@@ -67,8 +71,11 @@ import org.lwjgl.glfw.GLFWKeyCallbackI;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL40;
 
+import custom_models.KeyTransformation;
+import custom_models.Keyframe;
 import custom_models.Model;
 import custom_models.Part;
+import kmerrill285.Inignoto.Inignoto;
 import kmerrill285.Inignoto.events.Events;
 import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.Mouse;
@@ -159,18 +166,18 @@ public class NewModelerScreen extends ModelerScreen {
 		Camera.update();
 		
 		model = new Model();
-		
+				
 		Part part = new Part(model);
 		part.size = new Vector3i(32, 32, 32);
-		part.scale = new Vector3f(1, 1, 1);
+		part.setScale(new Vector3f(1, 1, 1));
 		part.name = "Part";
-		part.position.y = 16.0f;
+		part.getPosition().y = 16.0f;
 		part.buildPart(Textures.GRAY_MATERIAL);
 		model.getParts().add(part);
 		
 		handle = new Part(null);
 		handle.size = new Vector3i(32, 32, 0);
-		handle.scale = new Vector3f(1.0f / 16.0f, 1 / 16.0f, 1);
+		handle.setScale(new Vector3f(1.0f / 16.0f, 1 / 16.0f, 1));
 		handle.name = "Cube";
 		handle.uv.x = 8;
 		handle.buildPart(Textures.WHITE_SQUARE);
@@ -191,6 +198,8 @@ public class NewModelerScreen extends ModelerScreen {
         		
         };
         keeper.getChainKeyCallback().add(glfwKeyCallbackI);
+        
+        
         
         systemEventProcessor = new SystemEventProcessorImpl();
         SystemEventProcessor.addDefaultCallbacks(keeper, systemEventProcessor);
@@ -264,7 +273,7 @@ public class NewModelerScreen extends ModelerScreen {
         EDIT.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
         EDIT.getStyle().setTextColor(1, 1, 1, 1);
         
-        Button TEXTURE = new Button(Translation.translateText("Inignoto:gui.texture_editor"));
+        Button TEXTURE = new Button(Translation.translateText("Inignoto:gui.uv_editor"));
         TEXTURE.setTextDirection(TextDirection.HORIZONTAL);
         TEXTURE.setSize(60 * 2, 20);
         TEXTURE.setPosition(60 * 2, 0);
@@ -334,16 +343,301 @@ public class NewModelerScreen extends ModelerScreen {
 
        createPropertiesPanel();
        createPartsPanel();
+       createAnimationPanel();
 
         frame.getContainer().add(widget);
         
-        this.texture_frame = new JFrame(Translation.translateText("Inignoto:gui.texture"));
+        this.texture_frame = new JFrame(Translation.translateText("Inignoto:gui.uv_map"));
         this.texture_frame.setSize(500, 500);
         this.texture_frame.setLocationRelativeTo(null);
         this.texture_frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         this.texture_frame.setVisible(true);
         
         this.image = (BufferedImage) texture_frame.createImage(500, 500);
+	}
+	
+	private Panel ANIMATION_PANEL;
+	private Label animation_panel_name;
+	private Panel TIMELINE;
+	private Button main_menu;
+	
+	public boolean savedModel = true;
+	
+	private float lastTime;
+	
+	public Keyframe keyClipboard = null;
+	
+	public void createAnimationPanel() {
+		ANIMATION_PANEL = new Panel();
+		ANIMATION_PANEL.setSize(1920, 100);
+		ANIMATION_PANEL.setPosition(0, Utils.FRAME_HEIGHT - 100);
+		ANIMATION_PANEL.getStyle().getBackground().setColor(0.3f, 0.3f, 0.3f, 1.0f);
+		panel.add(ANIMATION_PANEL);
+		
+		main_menu = new Button(Translation.translateText("Inignoto:gui.exit"));
+		main_menu.getStyle().setPosition(PositionType.RELATIVE);
+		main_menu.getStyle().getFlexStyle().setJustifyContent(JustifyContent.FLEX_END);
+		main_menu.setSize(50, 20);
+		main_menu.getStyle().getBackground().setColor(0.4f, 0.4f, 0.4f, 1.0f);
+		main_menu.getStyle().setTextColor(1, 1, 1, 1);
+		main_menu.getStyle().setFontSize(20.0f);
+		
+		main_menu.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+			if (!this.savedModel) {
+	    		JFrame test = new JFrame();
+				test.setAlwaysOnTop(true);
+				test.toFront();
+				test.requestFocus();
+				test.setLocationRelativeTo(null);
+				test.setVisible(true);
+				int i = JOptionPane.showConfirmDialog(test, Translation.translateText("Inignoto:gui.you_have_not_saved"));
+				test.setVisible(false);
+				if (i == 0) {
+					Inignoto.game.guiRenderer.openScreen(new MenuScreen(Inignoto.game.guiRenderer).delay(100));
+				}
+	    	} else {
+	    		Inignoto.game.guiRenderer.openScreen(new MenuScreen(Inignoto.game.guiRenderer).delay(100));
+	    	}
+			
+        });
+		ANIMATION_PANEL.add(main_menu);
+		
+		TIMELINE = new Panel();
+		TIMELINE.setPosition(150, 30);
+		TIMELINE.setSize(ANIMATION_PANEL.getSize().x - 600, ANIMATION_PANEL.getSize().y);
+		TIMELINE.getStyle().getBackground().setColor(0.1f, 0.1f, 0.1f, 1.0f);
+		ANIMATION_PANEL.add(TIMELINE);
+
+		Label label = new Label(Translation.translateText("Inignoto:gui.timeline"));
+		label.getStyle().getBackground().setColor(0, 0, 0, 0);
+		label.getStyle().setBorder(null);
+		label.setPosition(150, 10);
+		label.getStyle().setFontSize(25.0f);
+		label.getStyle().setTextColor(1, 1, 1, 0.75f);
+		ANIMATION_PANEL.add(label);
+		refreshTimeline();
+		
+		Button edit_model = new Button(Translation.translateText("Inignoto:gui.edit_model"));
+		edit_model.getStyle().setTextColor(1, 1, 1, 1);
+		edit_model.getStyle().setFontSize(20.0f);
+		edit_model.getStyle().getBackground().setColor(0.4f, 0.4f, 0.4f, 1.0f);
+		edit_model.setPosition(10, 20);
+		edit_model.getSize().x = edit_model.getTextState().getTextWidth();
+		edit_model.getSize().y = 20;
+		
+		edit_model.getListenerMap().addListener(ButtonWidthChangeEvent.class, (ButtonWidthChangeEventListener) event -> {
+			 Button button = event.getTargetComponent();
+		     float textWidth = button.getTextState().getTextWidth();
+		     button.getSize().x = textWidth;
+		});
+		
+		edit_model.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+			this.model.editMode = Model.EditMode.MODEL;
+        });
+		
+		Button edit_animation = new Button(Translation.translateText("Inignoto:gui.edit_animation"));
+		edit_animation.getStyle().setTextColor(1, 1, 1, 1);
+		edit_animation.getStyle().setFontSize(20.0f);
+		edit_animation.getStyle().getBackground().setColor(0.4f, 0.4f, 0.4f, 1.0f);
+		edit_animation.setPosition(10, 20 * 2 + 10);
+		edit_animation.getSize().x = edit_model.getTextState().getTextWidth();
+		edit_animation.getSize().y = 20;
+		
+		edit_animation.getListenerMap().addListener(ButtonWidthChangeEvent.class, (ButtonWidthChangeEventListener) event -> {
+			 Button button = event.getTargetComponent();
+		     float textWidth = button.getTextState().getTextWidth();
+		     button.getSize().x = textWidth;
+		});
+		
+		edit_animation.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+			this.model.editMode = Model.EditMode.ANIMATION;
+        });
+		
+		final Button copy_frame = new Button(Translation.translateText("Inignoto:gui.copy_frame"));
+		copy_frame.getStyle().setTextColor(1, 1, 1, 1);
+		copy_frame.getStyle().setFontSize(20.0f);
+		copy_frame.getStyle().getBackground().setColor(0.4f, 0.4f, 0.4f, 1.0f);
+		copy_frame.setPosition(150, 20 * 3 + 5);
+		copy_frame.getSize().x = edit_model.getTextState().getTextWidth();
+		copy_frame.getSize().y = 20;
+		
+		copy_frame.getListenerMap().addListener(ButtonWidthChangeEvent.class, (ButtonWidthChangeEventListener) event -> {
+			 Button button = event.getTargetComponent();
+		     float textWidth = button.getTextState().getTextWidth();
+		     button.getSize().x = textWidth + 5;
+		});
+		
+		copy_frame.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+			keyClipboard = model.getKeyframes().get((int)model.currentTime).copy();
+        });
+		
+		ANIMATION_PANEL.add(copy_frame);
+		
+		Button paste_frame = new Button(Translation.translateText("Inignoto:gui.paste_frame"));
+		paste_frame.getStyle().setTextColor(1, 1, 1, 1);
+		paste_frame.getStyle().setFontSize(20.0f);
+		paste_frame.getStyle().getBackground().setColor(0.4f, 0.4f, 0.4f, 1.0f);
+		paste_frame.setPosition(150, 20 * 3 + 5);
+		paste_frame.getSize().x = edit_model.getTextState().getTextWidth();
+		paste_frame.getSize().y = 20;
+		
+		
+		
+		paste_frame.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+			//keyClipboard = model.getKeyframes().get((int)model.currentTime).copy();
+			 model.getKeyframes().get((int)model.currentTime).paste(keyClipboard);
+        });
+		
+		final Button delete_frame = new Button(Translation.translateText("Inignoto:gui.delete_frame"));
+		delete_frame.getStyle().setTextColor(1, 1, 1, 1);
+		delete_frame.getStyle().setFontSize(20.0f);
+		delete_frame.getStyle().getBackground().setColor(0.4f, 0.4f, 0.4f, 1.0f);
+		delete_frame.setPosition(150, 20 * 3 + 5);
+		delete_frame.getSize().x = edit_model.getTextState().getTextWidth();
+		delete_frame.getSize().y = 20;
+		delete_frame.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+			if (event.getAction() == MouseClickAction.CLICK)
+				if ((int)model.currentTime < model.getKeyframes().size()) {
+					model.getKeyframes().remove((int)model.currentTime);
+					this.refreshTimeline();
+				}
+        });
+		
+		
+		final Button insert_before = new Button(Translation.translateText("Inignoto:gui.insert_frame_before"));
+		insert_before.getStyle().setTextColor(1, 1, 1, 1);
+		insert_before.getStyle().setFontSize(20.0f);
+		insert_before.getStyle().getBackground().setColor(0.4f, 0.4f, 0.4f, 1.0f);
+		insert_before.setPosition(150, 20 * 3 + 5);
+		insert_before.getSize().x = edit_model.getTextState().getTextWidth();
+		insert_before.getSize().y = 20;
+		
+		
+		insert_before.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+			if (event.getAction() == MouseClickAction.CLICK)
+			{
+				model.getKeyframes().add(model.getCurrentFrame(), new Keyframe(model.getCurrentFrame()));
+				model.currentTime++;
+				this.refreshTimeline();
+			}
+        });
+		
+		final Button insert_after = new Button(Translation.translateText("Inignoto:gui.insert_frame_after"));
+		insert_after.getStyle().setTextColor(1, 1, 1, 1);
+		insert_after.getStyle().setFontSize(20.0f);
+		insert_after.getStyle().getBackground().setColor(0.4f, 0.4f, 0.4f, 1.0f);
+		insert_after.setPosition(150, 20 * 3 + 5);
+		insert_after.getSize().x = edit_model.getTextState().getTextWidth();
+		insert_after.getSize().y = 20;
+		
+		
+		insert_after.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+			if (event.getAction() == MouseClickAction.CLICK)
+			{
+				model.getKeyframes().add(model.getCurrentFrame() + 1, new Keyframe(model.getCurrentFrame() + 1));
+				this.refreshTimeline();
+			}
+        });
+		
+		final Button play = new Button(Translation.translateText("Inignoto:gui.play"));
+		play.getStyle().setTextColor(1, 1, 1, 1);
+		play.getStyle().setFontSize(20.0f);
+		play.getStyle().getBackground().setColor(0.4f, 0.4f, 0.4f, 1.0f);
+		play.setPosition(150, 20 * 3 + 5);
+		play.getSize().x = edit_model.getTextState().getTextWidth();
+		play.getSize().y = 20;
+		
+		
+		play.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+			if (event.getAction() == MouseClickAction.CLICK)
+			{
+				lastTime = (int)model.currentTime;
+				model.play(model.currentTime);
+			}
+        });
+		
+		final Button stop = new Button(Translation.translateText("Inignoto:gui.stop"));
+		stop.getStyle().setTextColor(1, 1, 1, 1);
+		stop.getStyle().setFontSize(20.0f);
+		stop.getStyle().getBackground().setColor(0.4f, 0.4f, 0.4f, 1.0f);
+		stop.setPosition(150, 20 * 3 + 5);
+		stop.getSize().x = edit_model.getTextState().getTextWidth();
+		stop.getSize().y = 20;
+		
+		
+		stop.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+			if (event.getAction() == MouseClickAction.CLICK)
+			{
+				model.stop();
+				model.currentTime = lastTime;
+			}
+        });
+		
+		paste_frame.getListenerMap().addListener(ButtonWidthChangeEvent.class, (ButtonWidthChangeEventListener) event -> {
+			 Button button = event.getTargetComponent();
+		     float textWidth = button.getTextState().getTextWidth();
+		     button.getSize().x = textWidth + 5;
+		     button.setPosition(copy_frame.getPosition().x + copy_frame.getSize().x + 5, button.getPosition().y);
+		     
+		     button = delete_frame;
+		     textWidth = button.getTextState().getTextWidth();
+		     button.getSize().x = textWidth + 5;
+		     button.setPosition(paste_frame.getPosition().x + paste_frame.getSize().x + 5, button.getPosition().y);
+		     
+		     button = insert_before;
+		     textWidth = button.getTextState().getTextWidth();
+		     button.getSize().x = textWidth + 5;
+		     button.setPosition(delete_frame.getPosition().x + delete_frame.getSize().x + 5, button.getPosition().y);
+		     
+		     button = insert_after;
+		     textWidth = button.getTextState().getTextWidth();
+		     button.getSize().x = textWidth + 5;
+		     button.setPosition(insert_before.getPosition().x + insert_before.getSize().x + 5, button.getPosition().y);
+		     
+		     button = play;
+		     textWidth = button.getTextState().getTextWidth();
+		     button.getSize().x = textWidth + 5;
+		     button.setPosition(insert_after.getPosition().x + insert_after.getSize().x + 5, button.getPosition().y);
+		     
+		     button = stop;
+		     textWidth = button.getTextState().getTextWidth();
+		     button.getSize().x = textWidth + 5;
+		     button.setPosition(play.getPosition().x + play.getSize().x + 5, button.getPosition().y);
+		});
+		
+		ANIMATION_PANEL.add(play);
+		ANIMATION_PANEL.add(stop);
+
+		ANIMATION_PANEL.add(insert_after);
+
+		ANIMATION_PANEL.add(insert_before);
+
+		ANIMATION_PANEL.add(delete_frame);
+		ANIMATION_PANEL.add(copy_frame);
+		ANIMATION_PANEL.add(paste_frame);
+
+		ANIMATION_PANEL.add(edit_model);
+		ANIMATION_PANEL.add(edit_animation);
+		
+	}
+	
+	public void refreshTimeline() {
+		TIMELINE.clearChildComponents();
+		for (int i = 0; i < model.getKeyframes().size(); i++) {
+			Button button = new Button();
+			button.setSize(10, 50);
+			button.setPosition(10 * i, 0);
+			if (i == (int)model.currentTime) {
+				button.getStyle().getBackground().setColor(0, 1, 0, 1);
+			}
+			TIMELINE.add(button);
+			final int I = i;
+			button.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+				model.currentTime = I;
+				refreshTimeline();
+			});
+		}
+		
 	}
 	
 	private Panel PARTS_PANEL;
@@ -428,6 +722,53 @@ public class NewModelerScreen extends ModelerScreen {
 		}
 	}
 	
+	public void loadAnimation() {
+		JFrame test = new JFrame();
+		test.setAlwaysOnTop(true);
+		test.toFront();
+		test.requestFocus();
+		test.setLocationRelativeTo(null);
+		test.setVisible(true);
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setCurrentDirectory(new File(lastLoadDir));
+		int result = fileChooser.showOpenDialog(test);
+		test.setVisible(false);
+		if (result == JFileChooser.APPROVE_OPTION) {
+			File selectedFile = fileChooser.getSelectedFile();
+			String f = selectedFile.getPath();
+			
+			System.out.println(f);
+			lastLoadDir = selectedFile.getParent();
+			ArrayList<Keyframe> timeline = Model.loadAnimation(selectedFile);
+			if (timeline.size() > 0) {
+				model.getKeyframes().clear();
+				model.getKeyframes().addAll(timeline);
+			}
+			
+		}
+	}
+	
+	public void saveAnimation() {
+		JFrame test = new JFrame();
+		test.setAlwaysOnTop(true);
+		test.toFront();
+		test.requestFocus();
+		test.setLocationRelativeTo(null);
+		test.setVisible(true);
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setCurrentDirectory(new File(lastLoadDir));
+		int result = fileChooser.showSaveDialog(test);
+		test.setVisible(false);
+		if (result == JFileChooser.APPROVE_OPTION) {
+			File selectedFile = fileChooser.getSelectedFile();
+			String f = selectedFile.getPath();
+			
+			System.out.println(f);
+			lastLoadDir = selectedFile.getParent();
+			Model.saveAnimation(model.getKeyframes(), selectedFile);
+		}
+	}
+	
 	public void refreshPartsPanel() {
 		parts_scroll_panel.getContainer().clearChildComponents();
 		ArrayList<Part> parts = this.model.getParts();
@@ -494,7 +835,7 @@ public class NewModelerScreen extends ModelerScreen {
 	
 	public void createPropertiesPanel() {
 		PROPERTIES_PANEL = new Panel();
-        PROPERTIES_PANEL.setSize(120, 160);
+        PROPERTIES_PANEL.setSize(200, 160 * 3.75f);
         PROPERTIES_PANEL.setPosition(0, 100);
         PROPERTIES_PANEL.getStyle().getBackground().setColor(0.3f, 0.3f, 0.3f, 1.0f);
         
@@ -576,11 +917,11 @@ public class NewModelerScreen extends ModelerScreen {
         	if (selectedPart != null) {
         		try {
             		float f = Float.parseFloat(xPos.getTextState().getText());
-					selectedPart.translate(new Vector3f(f, selectedPart.position.y, selectedPart.position.z).sub(selectedPart.position));
+					selectedPart.translate(new Vector3f(f, selectedPart.getPosition().y, selectedPart.getPosition().z).sub(selectedPart.getPosition()));
 					this.doAction();
 
             	} catch (Exception e) {
-            		xPos.getTextState().setText(""+selectedPart.position.x);
+            		xPos.getTextState().setText(""+selectedPart.getPosition().x);
             	}
         	}
         });
@@ -607,10 +948,10 @@ public class NewModelerScreen extends ModelerScreen {
         	if (selectedPart != null) {
         		try {
             		float f = Float.parseFloat(yPos.getTextState().getText());
-            		selectedPart.translate(new Vector3f(selectedPart.position.x, f, selectedPart.position.z).sub(selectedPart.position));
+            		selectedPart.translate(new Vector3f(selectedPart.getPosition().x, f, selectedPart.getPosition().z).sub(selectedPart.getPosition()));
             		this.doAction();
             	} catch (Exception e) {
-            		yPos.getTextState().setText(""+selectedPart.position.y);
+            		yPos.getTextState().setText(""+selectedPart.getPosition().y);
             	}
         	}
         });
@@ -639,10 +980,10 @@ public class NewModelerScreen extends ModelerScreen {
         	if (selectedPart != null) {
         		try {
             		float f = Float.parseFloat(zPos.getTextState().getText());
-            		selectedPart.translate(new Vector3f(selectedPart.position.x, selectedPart.position.y, f).sub(selectedPart.position));
+            		selectedPart.translate(new Vector3f(selectedPart.getPosition().x, selectedPart.getPosition().y, f).sub(selectedPart.getPosition()));
             		this.doAction();
             	} catch (Exception e) {
-            		zPos.getTextState().setText(""+selectedPart.position.z);
+            		zPos.getTextState().setText(""+selectedPart.getPosition().z);
             	}
         	}
         });
@@ -679,7 +1020,7 @@ public class NewModelerScreen extends ModelerScreen {
                 		selectedPart.setRotation(new Vector3f(f, selectedPart.getEulerAngles().y, selectedPart.getEulerAngles().z));
                 		this.doAction();
                 	} catch (Exception e) {
-                		xRot.getTextState().setText(""+selectedPart.rotation.x);
+                		xRot.getTextState().setText(""+selectedPart.getRotation().x);
                 	}
             	}
             });
@@ -710,7 +1051,7 @@ public class NewModelerScreen extends ModelerScreen {
                 		selectedPart.setRotation(new Vector3f(selectedPart.getEulerAngles().x, f, selectedPart.getEulerAngles().z));
                 		this.doAction();
                 	} catch (Exception e) {
-                		yRot.getTextState().setText(""+selectedPart.rotation.y);
+                		yRot.getTextState().setText(""+selectedPart.getRotation().y);
                 	}
             	}
             });
@@ -741,7 +1082,7 @@ public class NewModelerScreen extends ModelerScreen {
                 		selectedPart.setRotation(new Vector3f(selectedPart.getEulerAngles().x, selectedPart.getEulerAngles().y, f));
                 		this.doAction();
                 	} catch (Exception e) {
-                		zRot.getTextState().setText(""+selectedPart.rotation.z);
+                		zRot.getTextState().setText(""+selectedPart.getRotation().z);
                 	}
             	}
             });
@@ -881,10 +1222,10 @@ public class NewModelerScreen extends ModelerScreen {
             	if (selectedPart != null) {
             		try {
                 		float f = Float.parseFloat(xScale.getTextState().getText());
-                		selectedPart.scale.x = f;
+                		selectedPart.scale(f - selectedPart.getScale().x, 0, 0);
                 		this.doAction();
                 	} catch (Exception e) {
-                		xScale.getTextState().setText(""+selectedPart.scale.x);
+                		xScale.getTextState().setText(""+selectedPart.getScale().x);
                 	}
             	}
             });
@@ -912,10 +1253,10 @@ public class NewModelerScreen extends ModelerScreen {
             	if (selectedPart != null) {
             		try {
                 		float f = Float.parseFloat(yScale.getTextState().getText());
-                		selectedPart.scale.y = f;
+                		selectedPart.scale(0, f - selectedPart.getScale().y, 0);
                 		this.doAction();
                 	} catch (Exception e) {
-                		yScale.getTextState().setText(""+selectedPart.scale.y);
+                		yScale.getTextState().setText(""+selectedPart.getScale().y);
                 	}
             	}
             });
@@ -943,10 +1284,10 @@ public class NewModelerScreen extends ModelerScreen {
             	if (selectedPart != null) {
             		try {
                 		float f = Float.parseFloat(zScale.getTextState().getText());
-                		selectedPart.scale.z = f;
+                		selectedPart.scale(0, 0, f - selectedPart.getScale().z);
                 		this.doAction();
                 	} catch (Exception e) {
-                		zScale.getTextState().setText(""+selectedPart.scale.z);
+                		zScale.getTextState().setText(""+selectedPart.getScale().z);
                 	}
             	}
             });
@@ -1064,10 +1405,10 @@ public class NewModelerScreen extends ModelerScreen {
         		if (selectedPart != null) {
             		try {
                 		float f = Float.parseFloat(xPos.getTextState().getText());
-                		selectedPart.position.x = f;
+                		selectedPart.translate(new Vector3f(f - selectedPart.getPosition().x, 0, 0));
                 		this.doAction();
                 	} catch (Exception e) {
-                		xPos.getTextState().setText(""+selectedPart.position.x);
+                		xPos.getTextState().setText(""+selectedPart.getPosition().x);
                 	}
             	}
         	}
@@ -1078,10 +1419,10 @@ public class NewModelerScreen extends ModelerScreen {
         		if (selectedPart != null) {
             		try {
                 		float f = Float.parseFloat(yPos.getTextState().getText());
-                		selectedPart.position.y = f;
+                		selectedPart.translate(new Vector3f(0, f - selectedPart.getPosition().y, 0));
                 		this.doAction();
                 	} catch (Exception e) {
-                		yPos.getTextState().setText(""+selectedPart.position.y);
+                		yPos.getTextState().setText(""+selectedPart.getPosition().y);
                 	}
             	}
         	}
@@ -1092,10 +1433,10 @@ public class NewModelerScreen extends ModelerScreen {
         		if (selectedPart != null) {
             		try {
                 		float f = Float.parseFloat(zPos.getTextState().getText());
-                		selectedPart.position.z = f;
+                		selectedPart.translate(new Vector3f(0, 0, f - selectedPart.getPosition().z));
                 		this.doAction();
                 	} catch (Exception e) {
-                		zPos.getTextState().setText(""+selectedPart.position.z);
+                		zPos.getTextState().setText(""+selectedPart.getPosition().z);
                 	}
             	}
         	}
@@ -1151,7 +1492,7 @@ public class NewModelerScreen extends ModelerScreen {
                 		selectedPart.setRotation(new Vector3f(f, selectedPart.getEulerAngles().y, selectedPart.getEulerAngles().z));
                 		this.doAction();
                 	} catch (Exception e) {
-                		xRot.getTextState().setText(""+selectedPart.rotation.x);
+                		xRot.getTextState().setText(""+selectedPart.getRotation().x);
                 	}
             	}
         	}
@@ -1165,7 +1506,7 @@ public class NewModelerScreen extends ModelerScreen {
                 		selectedPart.setRotation(new Vector3f(selectedPart.getEulerAngles().x, f, selectedPart.getEulerAngles().z));
                 		this.doAction();
                 	} catch (Exception e) {
-                		yRot.getTextState().setText(""+selectedPart.rotation.y);
+                		yRot.getTextState().setText(""+selectedPart.getRotation().y);
                 	}
             	}
         	}
@@ -1179,7 +1520,7 @@ public class NewModelerScreen extends ModelerScreen {
                 		selectedPart.setRotation(new Vector3f(selectedPart.getEulerAngles().x, selectedPart.getEulerAngles().y, f));
                 		this.doAction();
                 	} catch (Exception e) {
-                		zRot.getTextState().setText(""+selectedPart.rotation.z);
+                		zRot.getTextState().setText(""+selectedPart.getRotation().z);
                 	}
             	}
         	}
@@ -1190,10 +1531,10 @@ public class NewModelerScreen extends ModelerScreen {
         		if (selectedPart != null) {
             		try {
                 		float f = Float.parseFloat(xScale.getTextState().getText());
-                		selectedPart.scale.x = f;
+                		selectedPart.getScale().x = f;
                 		this.doAction();
                 	} catch (Exception e) {
-                		xScale.getTextState().setText(""+selectedPart.scale.x);
+                		xScale.getTextState().setText(""+selectedPart.getScale().x);
                 	}
             	}
         	}
@@ -1204,10 +1545,10 @@ public class NewModelerScreen extends ModelerScreen {
         		if (selectedPart != null) {
             		try {
                 		float f = Float.parseFloat(yScale.getTextState().getText());
-                		selectedPart.scale.y = f;
+                		selectedPart.getScale().y = f;
                 		this.doAction();
                 	} catch (Exception e) {
-                		yScale.getTextState().setText(""+selectedPart.scale.y);
+                		yScale.getTextState().setText(""+selectedPart.getScale().y);
                 	}
             	}
         	}
@@ -1218,10 +1559,10 @@ public class NewModelerScreen extends ModelerScreen {
         		if (selectedPart != null) {
             		try {
                 		float f = Float.parseFloat(zScale.getTextState().getText());
-                		selectedPart.scale.z = f;
+                		selectedPart.getScale().z = f;
                 		this.doAction();
                 	} catch (Exception e) {
-                		zScale.getTextState().setText(""+selectedPart.scale.z);
+                		zScale.getTextState().setText(""+selectedPart.getScale().z);
                 	}
             	}
         	}
@@ -1321,9 +1662,9 @@ public class NewModelerScreen extends ModelerScreen {
             if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
             	Part part = new Part(model);
         		part.size = new Vector3i(32, 32, 32);
-        		part.scale = new Vector3f(1, 1, 1);
+        		part.setScale(new Vector3f(1, 1, 1));
         		part.name = "Part";
-        		part.position.y = 16.0f;
+        		part.getPosition().y = 16.0f;
         		part.buildPart(Textures.GRAY_MATERIAL);
         		model.getParts().add(part);
         		
@@ -1469,6 +1810,7 @@ public class NewModelerScreen extends ModelerScreen {
 		this.model = actions.get(lastAction).copyModel();
 		this.refreshPartsPanel();
 		System.out.println("undo");
+		this.refreshTimeline();
 	}
 	
 	public void redo() {
@@ -1479,9 +1821,11 @@ public class NewModelerScreen extends ModelerScreen {
 		}
 		this.refreshPartsPanel();
 		System.out.println("redo");
+		this.refreshTimeline();
 	}
 	
 	public void doAction() {
+		this.savedModel = false;
 		ArrayList<Model> m = new ArrayList<Model>();
 		for (int i = 0; i < lastAction + 1; i++) {
 			m.add(actions.get(i));
@@ -1498,7 +1842,7 @@ public class NewModelerScreen extends ModelerScreen {
 	}
 	
 	private void createFilePanel(Panel FILE_PANEL) {
-		FILE_PANEL.setSize(150, 30 * 4);
+		FILE_PANEL.setSize(150, 30 * 3);
         FILE_PANEL.setPosition(0, 20);
         FILE_PANEL.getStyle().setFontSize(20f);
         FILE_PANEL.getStyle().getBackground().setColor(new Vector4f(0.3f, 0.3f, 0.3f, 1f));
@@ -1526,20 +1870,20 @@ public class NewModelerScreen extends ModelerScreen {
         SAVE.getStyle().setTextColor(1, 1, 1, 1);
         FILE_PANEL.add(SAVE);
         
-        Button SAVE_AS = new Button(Translation.translateText("Inignoto:gui.save_as"));
-        SAVE_AS.setSize(150, 30);
-        SAVE_AS.setPosition(0, 30 * 2);
-        SAVE_AS.getStyle().setFontSize(22f);
-        SAVE_AS.getStyle().setTextColor(0, 0, 0, 1);
-        SAVE_AS.getStyle().getBackground().setColor(new Vector4f(0, 0, 0, 0));
-        SAVE_AS.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
-        SAVE_AS.getStyle().setHorizontalAlign(HorizontalAlign.CENTER);
-        SAVE_AS.getStyle().setTextColor(1, 1, 1, 1);
-        FILE_PANEL.add(SAVE_AS);
+//        Button SAVE_AS = new Button(Translation.translateText("Inignoto:gui.save_as"));
+//        SAVE_AS.setSize(150, 30);
+//        SAVE_AS.setPosition(0, 30 * 2);
+//        SAVE_AS.getStyle().setFontSize(22f);
+//        SAVE_AS.getStyle().setTextColor(0, 0, 0, 1);
+//        SAVE_AS.getStyle().getBackground().setColor(new Vector4f(0, 0, 0, 0));
+//        SAVE_AS.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
+//        SAVE_AS.getStyle().setHorizontalAlign(HorizontalAlign.CENTER);
+//        SAVE_AS.getStyle().setTextColor(1, 1, 1, 1);
+//        FILE_PANEL.add(SAVE_AS);
         
         Button IMPORT = new Button(Translation.translateText("Inignoto:gui.import"));
         IMPORT.setSize(150, 30);
-        IMPORT.setPosition(0, 30 * 3);
+        IMPORT.setPosition(0, 30 * 2);
         IMPORT.getStyle().setFontSize(22f);
         IMPORT.getStyle().setTextColor(0, 0, 0, 1);
         IMPORT.getStyle().getBackground().setColor(new Vector4f(0, 0, 0, 0));
@@ -1554,8 +1898,8 @@ public class NewModelerScreen extends ModelerScreen {
         Panel SAVE_PANEL = new Panel();
         createSavePanel(SAVE_PANEL);
         
-        Panel SAVE_AS_PANEL = new Panel();
-        createSaveAsPanel(SAVE_AS_PANEL);
+//        Panel SAVE_AS_PANEL = new Panel();
+//        createSaveAsPanel(SAVE_AS_PANEL);
         
         Panel IMPORT_PANEL = new Panel();
         createImportPanel(IMPORT_PANEL);
@@ -1585,18 +1929,18 @@ public class NewModelerScreen extends ModelerScreen {
 
         });
         
-        SAVE_AS.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
-
-            if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
-            	if (panel.contains(SAVE_AS_PANEL)) {
-            		panel.remove(SAVE_AS_PANEL);
-            	} else {
-            		panel.add(SAVE_AS_PANEL);
-            		SAVE_AS_PANEL.setFocused(true);
-            	}
-            }
-
-        });
+//        SAVE_AS.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+//
+//            if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
+//            	if (panel.contains(SAVE_AS_PANEL)) {
+//            		panel.remove(SAVE_AS_PANEL);
+//            	} else {
+//            		panel.add(SAVE_AS_PANEL);
+//            		SAVE_AS_PANEL.setFocused(true);
+//            	}
+//            }
+//
+//        });
         
         IMPORT.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
 
@@ -1617,10 +1961,10 @@ public class NewModelerScreen extends ModelerScreen {
         LoadableImage right_arrow_image = DefaultImageLoader.loadImage("assets/Inignoto/textures/modelmaker/right_arrow.png");
         LoadableImage save_image = DefaultImageLoader.loadImage("assets/Inignoto/textures/modelmaker/save.png");
         LoadableImage import_image = DefaultImageLoader.loadImage("assets/Inignoto/textures/modelmaker/import.png");
-        LoadableImage save_as_image = DefaultImageLoader.loadImage("assets/Inignoto/textures/modelmaker/save_as.png");
+//        LoadableImage save_as_image = DefaultImageLoader.loadImage("assets/Inignoto/textures/modelmaker/save_as.png");
         LoadableImage translate_image = DefaultImageLoader.loadImage("assets/Inignoto/textures/modelmaker/translate.png");
         LoadableImage rotate_image = DefaultImageLoader.loadImage("assets/Inignoto/textures/modelmaker/rotate.png");
-        LoadableImage scale_image = DefaultImageLoader.loadImage("assets/Inignoto/textures/modelmaker/scale.png");
+//        LoadableImage scale_image = DefaultImageLoader.loadImage("assets/Inignoto/textures/modelmaker/scale.png");
         
         ImageView translate = new ImageView(translate_image);
         translate.setPosition(0, 30);
@@ -1650,19 +1994,19 @@ public class NewModelerScreen extends ModelerScreen {
         });
         panel.add(rotate);
         
-        ImageView scale = new ImageView(scale_image);
-        scale.setPosition(50 + 40, 30);
-        scale.getStyle().setPosition(PositionType.RELATIVE);
-        scale.setSize(50, 40);
-        scale.getStyle().getBackground().setColor(0.2f, 0.2f, 0.2f, 0.0f);
-        scale.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
-        scale.getStyle().getBorder().setEnabled(false);
-        scale.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
-            if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
-            	this.selectionMode = SelectionMode.SCALE;
-            }
-        });
-        panel.add(scale);
+//        ImageView scale = new ImageView(scale_image);
+//        scale.setPosition(50 + 40, 30);
+//        scale.getStyle().setPosition(PositionType.RELATIVE);
+//        scale.setSize(50, 40);
+//        scale.getStyle().getBackground().setColor(0.2f, 0.2f, 0.2f, 0.0f);
+//        scale.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
+//        scale.getStyle().getBorder().setEnabled(false);
+//        scale.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+//            if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
+//            	this.selectionMode = SelectionMode.SCALE;
+//            }
+//        });
+//        panel.add(scale);
         
         ImageView imageView = new ImageView(new_image);
         imageView.setPosition(10, 5);
@@ -1684,15 +2028,15 @@ public class NewModelerScreen extends ModelerScreen {
         save.getStyle().getBorder().setEnabled(false);
         SAVE.add(save);
         
-        ImageView save_as = new ImageView(save_as_image);
-        save_as.setPosition(15, 5);
-        save_as.getStyle().setPosition(PositionType.RELATIVE);
-        save_as.getStyle().setMinimumSize(50, 50);
-        save_as.setSize(20, 20);
-        save_as.getStyle().getBackground().setColor(0, 0, 0, 0);
-        save_as.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
-        save_as.getStyle().getBorder().setEnabled(false);
-        SAVE_AS.add(save_as);
+//        ImageView save_as = new ImageView(save_as_image);
+//        save_as.setPosition(15, 5);
+//        save_as.getStyle().setPosition(PositionType.RELATIVE);
+//        save_as.getStyle().setMinimumSize(50, 50);
+//        save_as.setSize(20, 20);
+//        save_as.getStyle().getBackground().setColor(0, 0, 0, 0);
+//        save_as.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
+//        save_as.getStyle().getBorder().setEnabled(false);
+//        SAVE_AS.add(save_as);
 
         ImageView import_img = new ImageView(import_image);
         import_img.setPosition(10, 5);
@@ -1726,17 +2070,17 @@ public class NewModelerScreen extends ModelerScreen {
             rightArrow.getStyle().getBorder().setEnabled(false);
             SAVE.add(rightArrow);
         }
-        {
-        	ImageView rightArrow = new ImageView(right_arrow_image);
-            rightArrow.setPosition(150 - 15, 10);
-            rightArrow.getStyle().setPosition(PositionType.RELATIVE);
-            rightArrow.getStyle().setMinimumSize(50, 50);
-            rightArrow.setSize(10, 10);
-            rightArrow.getStyle().getBackground().setColor(0, 0, 0, 0);
-            rightArrow.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
-            rightArrow.getStyle().getBorder().setEnabled(false);
-            SAVE_AS.add(rightArrow);
-        }
+//        {
+//        	ImageView rightArrow = new ImageView(right_arrow_image);
+//            rightArrow.setPosition(150 - 15, 10);
+//            rightArrow.getStyle().setPosition(PositionType.RELATIVE);
+//            rightArrow.getStyle().setMinimumSize(50, 50);
+//            rightArrow.setSize(10, 10);
+//            rightArrow.getStyle().getBackground().setColor(0, 0, 0, 0);
+//            rightArrow.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
+//            rightArrow.getStyle().getBorder().setEnabled(false);
+//            SAVE_AS.add(rightArrow);
+//        }
         {
         	ImageView rightArrow = new ImageView(right_arrow_image);
             rightArrow.setPosition(150 - 15, 10);
@@ -1774,64 +2118,43 @@ public class NewModelerScreen extends ModelerScreen {
         NEW_MODEL.getStyle().setTextColor(1, 1, 1, 1);
         NEW_MODEL.getStyle().setHorizontalAlign(HorizontalAlign.LEFT);
         NEW_PANEL.add(NEW_MODEL);
-        
-        
-        Button NEW_TEXTURE = new Button(Translation.translateText("Inignoto:gui.texture"));
-        NEW_TEXTURE.setSize(150, 30);
-        NEW_TEXTURE.setPosition(0, 30);
-        NEW_TEXTURE.getStyle().setFontSize(22f);
-        NEW_TEXTURE.getStyle().setTextColor(0, 0, 0, 1);
-        NEW_TEXTURE.getStyle().getBackground().setColor(new Vector4f(0, 0, 0, 0));
-        NEW_TEXTURE.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
-        NEW_TEXTURE.getStyle().setHorizontalAlign(HorizontalAlign.LEFT);
-        NEW_TEXTURE.getStyle().setTextColor(1, 1, 1, 1);
-        NEW_PANEL.add(NEW_TEXTURE);
-        
-        NEW_TEXTURE.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
-        	System.out.println("ehh");
-            if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
-            	JFrame test = new JFrame();
-        		test.setAlwaysOnTop(true);
-        		test.toFront();
-        		test.requestFocus();
-        		test.setLocationRelativeTo(null);
-        		test.setVisible(true);
-            	String size_str = JOptionPane.showInputDialog(test, Translation.translateText("Inignoto:gui.texture_size"));
-            	test.setVisible(false);
-            	try {
-            		int size = Integer.parseInt(size_str.trim());
-            		if (size > 0) {
-            			BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-            			this.image = img;
-            			this.SX = 0;
-            			this.SY = 0;
-            			this.ZOOM = 1;
-            			TextureAtlas atlas = new TextureAtlas(img);
-            			this.model.changeTexture(atlas.texture);
-            			textures.add(atlas.texture);
-            		} else {
-            			test = new JFrame();
-            			test.setAlwaysOnTop(true);
-            			test.toFront();
-            			test.requestFocus();
-            			test.setLocationRelativeTo(null);
-            			test.setVisible(true);
-            			JOptionPane.showMessageDialog(test, Translation.translateText("Inignoto:gui.invalid_size"));
-            			test.setVisible(false);
-            			
-            		}
-            	} catch (Exception e) {
-            		test = new JFrame();
-            		test.setAlwaysOnTop(true);
-            		test.toFront();
-            		test.requestFocus();
-            		test.setLocationRelativeTo(null);
-            		test.setVisible(true);
-            		JOptionPane.showMessageDialog(test, Translation.translateText("Inignoto:gui.invalid_size"));
-            		test.setVisible(false);
-            	}
+        NEW_MODEL.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+        	
+            if (event.getAction().equals(MouseClickEvent.MouseClickAction.RELEASE)) {
+            	{
+                	this.model.getParts().clear();
+                	Part part = new Part(model);
+            		part.size = new Vector3i(32, 32, 32);
+            		part.setScale(new Vector3f(1, 1, 1));
+            		part.name = "Part";
+            		part.getPosition().y = 16.0f;
+            		part.buildPart(Textures.GRAY_MATERIAL);
+            		model.getParts().add(part);
+            		this.doAction();
+                }
             }
-
+        });
+        
+        
+        
+        Button NEW_ANIMATION = new Button(Translation.translateText("Inignoto:gui.animation"));
+        NEW_ANIMATION.setSize(150, 30);
+        NEW_ANIMATION.setPosition(0, 30);
+        NEW_ANIMATION.getStyle().setFontSize(22f);
+        NEW_ANIMATION.getStyle().setTextColor(0, 0, 0, 1);
+        NEW_ANIMATION.getStyle().getBackground().setColor(new Vector4f(0, 0, 0, 0));
+        NEW_ANIMATION.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
+        NEW_ANIMATION.getStyle().setHorizontalAlign(HorizontalAlign.LEFT);
+        NEW_ANIMATION.getStyle().setTextColor(1, 1, 1, 1);
+        NEW_PANEL.add(NEW_ANIMATION);
+        
+        NEW_ANIMATION.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+            if (event.getAction().equals(MouseClickEvent.MouseClickAction.RELEASE)) {
+            	this.model.getKeyframes().clear();
+            	this.model.getKeyframes().add(new Keyframe(0));
+            	this.doAction();
+            	this.refreshTimeline();
+            }
         });
 	}
 
@@ -1873,7 +2196,7 @@ public class NewModelerScreen extends ModelerScreen {
         NEW_PANEL.add(NEW_TEXTURE);
 	}
 	private void createSavePanel(Panel NEW_PANEL) {
-		NEW_PANEL.setSize(150, 60);
+		NEW_PANEL.setSize(150, 60 + 30);
         NEW_PANEL.setPosition(150, 20 + 30);
         NEW_PANEL.getStyle().getBackground().setColor(new Vector4f(0.3f, 0.3f, 0.3f, 1f));
         
@@ -1896,8 +2219,16 @@ public class NewModelerScreen extends ModelerScreen {
         NEW_MODEL.getStyle().setHorizontalAlign(HorizontalAlign.LEFT);
         NEW_PANEL.add(NEW_MODEL);
         
+        NEW_MODEL.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+        	if (event.getAction() == MouseClickEvent.MouseClickAction.PRESS) {
+        		if (event.getButton().getCode() == 0) {
+        			save();
+        		}
+        	}
+        });
         
-        Button NEW_TEXTURE = new Button(Translation.translateText("Inignoto:gui.texture"));
+        
+        Button NEW_TEXTURE = new Button(Translation.translateText("Inignoto:gui.uv_map"));
         NEW_TEXTURE.setSize(150, 30);
         NEW_TEXTURE.setPosition(0, 30);
         NEW_TEXTURE.getStyle().setFontSize(22f);
@@ -1908,11 +2239,36 @@ public class NewModelerScreen extends ModelerScreen {
         NEW_TEXTURE.getStyle().setTextColor(1, 1, 1, 1);
         NEW_PANEL.add(NEW_TEXTURE);
         
+        NEW_TEXTURE.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+        	if (event.getAction() == MouseClickEvent.MouseClickAction.PRESS) {
+        		if (event.getButton().getCode() == 0) {
+        			//save();
+        		}
+        	}
+        });
         
+        Button NEW_ANIMATION = new Button(Translation.translateText("Inignoto:gui.animation"));
+        NEW_ANIMATION.setSize(150, 30);
+        NEW_ANIMATION.setPosition(0, 30 * 2);
+        NEW_ANIMATION.getStyle().setFontSize(22f);
+        NEW_ANIMATION.getStyle().setTextColor(0, 0, 0, 1);
+        NEW_ANIMATION.getStyle().getBackground().setColor(new Vector4f(0, 0, 0, 0));
+        NEW_ANIMATION.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
+        NEW_ANIMATION.getStyle().setHorizontalAlign(HorizontalAlign.LEFT);
+        NEW_ANIMATION.getStyle().setTextColor(1, 1, 1, 1);
+        NEW_PANEL.add(NEW_ANIMATION);
+        
+        NEW_ANIMATION.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+        	if (event.getAction() == MouseClickEvent.MouseClickAction.PRESS) {
+        		if (event.getButton().getCode() == 0) {
+        			this.saveAnimation();
+        		}
+        	}
+        });
 	}
 	private void createImportPanel(Panel NEW_PANEL) {
-		NEW_PANEL.setSize(150, 60);
-        NEW_PANEL.setPosition(150, 20 + 30 * 3);
+		NEW_PANEL.setSize(150, 60 + 30);
+        NEW_PANEL.setPosition(150, 20 + 30 * 2);
         NEW_PANEL.getStyle().getBackground().setColor(new Vector4f(0.3f, 0.3f, 0.3f, 1f));
         
         NEW_PANEL.getListenerMap().addListener(FocusEvent.class, (FocusEventListener) event -> {
@@ -1959,6 +2315,25 @@ public class NewModelerScreen extends ModelerScreen {
         	if (event.getAction() == MouseClickEvent.MouseClickAction.PRESS) {
         		if (event.getButton().getCode() == 0) {
         			loadTexture();
+        		}
+        	}
+        });
+        
+        Button NEW_ANIMATION = new Button(Translation.translateText("Inignoto:gui.animation"));
+        NEW_ANIMATION.setSize(150, 30);
+        NEW_ANIMATION.setPosition(0, 30 * 2);
+        NEW_ANIMATION.getStyle().setFontSize(22f);
+        NEW_ANIMATION.getStyle().setTextColor(0, 0, 0, 1);
+        NEW_ANIMATION.getStyle().getBackground().setColor(new Vector4f(0, 0, 0, 0));
+        NEW_ANIMATION.getStyle().getShadow().setColor(new Vector4f(0, 0, 0, 0));
+        NEW_ANIMATION.getStyle().setHorizontalAlign(HorizontalAlign.LEFT);
+        NEW_ANIMATION.getStyle().setTextColor(1, 1, 1, 1);
+        NEW_PANEL.add(NEW_ANIMATION);
+        
+        NEW_ANIMATION.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+        	if (event.getAction() == MouseClickEvent.MouseClickAction.PRESS) {
+        		if (event.getButton().getCode() == 0) {
+        			this.loadAnimation();
         		}
         	}
         });
@@ -2054,14 +2429,14 @@ public class NewModelerScreen extends ModelerScreen {
 							float x = Float.parseFloat(data[1]);
 							float y = Float.parseFloat(data[2]);
 							float z = Float.parseFloat(data[3]);
-							part.position = new Vector3f(x, y, z);
+							part.setPosition(new Vector3f(x, y, z));
 						} else
 						if (data[0].contains("Rotation")) {
 							float x = Float.parseFloat(data[1]);
 							float y = Float.parseFloat(data[2]);
 							float z = Float.parseFloat(data[3]);
 							float w = Float.parseFloat(data[4]);
-							part.rotation = new Quaternionf(x, y, z, w);
+							part.setRotation(new Quaternionf(x, y, z, w));
 						} else
 						if (data[0].contains("Size")) {
 							int x = Integer.parseInt(data[1]);
@@ -2073,7 +2448,7 @@ public class NewModelerScreen extends ModelerScreen {
 							float x = Float.parseFloat(data[1]);
 							float y = Float.parseFloat(data[2]);
 							float z = Float.parseFloat(data[3]);
-							part.scale = new Vector3f(x, y, z);
+							part.setScale(new Vector3f(x, y, z));
 						} else
 						if (data[0].contains("Angles")) {
 							float x = Float.parseFloat(data[1]);
@@ -2285,12 +2660,12 @@ public class NewModelerScreen extends ModelerScreen {
 				for (int i = 0; i < parts.size(); i++) {
 					str += "Part " + i + "\n";
 					str += parts.get(i).name + "\n";
-					str += "Position " + parts.get(i).position.x + " " + parts.get(i).position.y + " " + parts.get(i).position.z + "\n";
-					Quaternionf rotation = parts.get(i).rotation;
+					str += "Position " + parts.get(i).getPosition().x + " " + parts.get(i).getPosition().y + " " + parts.get(i).getPosition().z + "\n";
+					Quaternionf rotation = parts.get(i).getRotation();
 					str += "Rotation " + rotation.x + " " + rotation.y + " " + rotation.z + " " + rotation.w + "\n";
 					Vector3i size = parts.get(i).size;
 					str += "Size " + size.x + " " + size.y + " " + size.z + "\n";
-					Vector3f scale = parts.get(i).scale;
+					Vector3f scale = parts.get(i).getScale();
 					str += "Scale " + scale.x + " " + scale.y + " " + scale.z + "\n";
 					Vector3f axisAngles = parts.get(i).axisAngles;
 					str += "Angles " + axisAngles.x + " " + axisAngles.y + " " + axisAngles.z + "\n";
@@ -2311,6 +2686,7 @@ public class NewModelerScreen extends ModelerScreen {
 				
 				writer.write(str);
 				writer.close();
+				this.savedModel = true;
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -2330,6 +2706,35 @@ public class NewModelerScreen extends ModelerScreen {
 			}
 			if (Settings.isKeyJustDown(GLFW.GLFW_KEY_Y)) {
 				redo();
+			}
+			if (Settings.isKeyJustDown(GLFW.GLFW_KEY_T)) {
+				if (this.selectedPart != null) {
+					this.selectedPart.translate(new Vector3f(this.selectedPart.getActualPosition()).mul(-1));
+				}
+			}
+			if (Settings.isKeyJustDown(GLFW.GLFW_KEY_R)) {
+				if (this.selectedPart != null) {
+					this.selectedPart.setRotation(new Vector3f(0, 0, 0));
+				}
+			}
+		} else {
+			if (Settings.FORWARD.isPressed()) {
+				Camera.position.add(Camera.getForward().mul(0.01f).mul((float)FPSCounter.getDelta()));
+			}
+			if (Settings.BACKWARD.isPressed()) {
+				Camera.position.add(Camera.getForward().mul(-0.01f).mul((float)FPSCounter.getDelta()));
+			}
+			if (Settings.RIGHT.isPressed()) {
+				Camera.position.add(Camera.getRight().mul(0.01f).mul((float)FPSCounter.getDelta()));
+			}
+			if (Settings.LEFT.isPressed()) {
+				Camera.position.add(Camera.getRight().mul(-0.01f).mul((float)FPSCounter.getDelta()));
+			}
+			if (Settings.isKeyDown(GLFW.GLFW_KEY_SPACE)) {
+				Camera.position.add(0, 0.01f * (float)FPSCounter.getDelta(), 0);
+			}
+			if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_SHIFT)) {
+				Camera.position.add(0, -0.01f * (float)FPSCounter.getDelta(), 0);
 			}
 		}
 		
@@ -2463,24 +2868,7 @@ public class NewModelerScreen extends ModelerScreen {
 			Camera.rotation.x += (Mouse.y - Mouse.lastY) * Settings.MOUSE_SENSITIVITY;
 			cursor_type = grab;
 		}
-		if (Settings.FORWARD.isPressed()) {
-			Camera.position.add(Camera.getForward().mul(0.01f).mul((float)FPSCounter.getDelta()));
-		}
-		if (Settings.BACKWARD.isPressed()) {
-			Camera.position.add(Camera.getForward().mul(-0.01f).mul((float)FPSCounter.getDelta()));
-		}
-		if (Settings.RIGHT.isPressed()) {
-			Camera.position.add(Camera.getRight().mul(0.01f).mul((float)FPSCounter.getDelta()));
-		}
-		if (Settings.LEFT.isPressed()) {
-			Camera.position.add(Camera.getRight().mul(-0.01f).mul((float)FPSCounter.getDelta()));
-		}
-		if (Settings.JUMP.isPressed()) {
-			Camera.position.add(0, 0.01f * (float)FPSCounter.getDelta(), 0);
-		}
-		if (Settings.SNEAK.isPressed()) {
-			Camera.position.add(0, -0.01f * (float)FPSCounter.getDelta(), 0);
-		}
+		
 		
 		
 		widget.setPosition(0, 0);
@@ -2708,6 +3096,15 @@ public class NewModelerScreen extends ModelerScreen {
 			
 			
 		}
+		int[] width = new int[1];
+		int[] height = new int[1];
+		GLFW.glfwGetWindowSize(Utils.window, width, height);
+		ANIMATION_PANEL.setSize(width[0] + 5, 101);
+		ANIMATION_PANEL.setPosition(-1, height[0] - 100);
+		
+		TIMELINE.setSize(ANIMATION_PANEL.getSize().x - 300, ANIMATION_PANEL.getSize().y * 0.25f);
+		
+		main_menu.setPosition(ANIMATION_PANEL.getSize().x - 60, 100 - 25);
 		
 		parts_scroll_panel.setSize(PARTS_PANEL.getSize().x, PARTS_PANEL.getSize().y);
 		parts_panel_name.setSize(PARTS_PANEL.getSize().x, 20);
@@ -2722,49 +3119,119 @@ public class NewModelerScreen extends ModelerScreen {
 		if (!xPos.isFocused()) 
 		{
 			if (selectedPart != null)
-			xPos.getTextState().setText(""+selectedPart.position.x);
+			{
+				if (model.editMode == Model.EditMode.MODEL)
+					xPos.getTextState().setText(""+selectedPart.getPosition().x);
+				else {
+					KeyTransformation transform = Part.getOrCreateKeyTransformation((int)model.currentTime, selectedPart);
+					if (transform != null) {
+						xPos.getTextState().setText(""+transform.position.x);
+					}
+				}
+			}
 		}
 		if (!yPos.isFocused()) 
 		{
 			if (selectedPart != null)
-			yPos.getTextState().setText(""+selectedPart.position.y);
+				if (model.editMode == Model.EditMode.MODEL)
+					yPos.getTextState().setText(""+selectedPart.getPosition().y);
+				else {
+					KeyTransformation transform = Part.getOrCreateKeyTransformation((int)model.currentTime, selectedPart);
+					if (transform != null) {
+						yPos.getTextState().setText(""+transform.position.y);
+					}
+				}
 		}
 		if (!zPos.isFocused()) 
 		{
 			if (selectedPart != null)
-			zPos.getTextState().setText(""+selectedPart.position.z);
+				if (model.editMode == Model.EditMode.MODEL)
+					zPos.getTextState().setText(""+selectedPart.getPosition().z);
+				else {
+					KeyTransformation transform = Part.getOrCreateKeyTransformation((int)model.currentTime, selectedPart);
+					if (transform != null) {
+						zPos.getTextState().setText(""+transform.position.z);
+					}
+				}
 		}
 		
 		if (!xRot.isFocused()) 
 		{
 			if (selectedPart != null)
-				xRot.getTextState().setText(""+selectedPart.getEulerAngles().x);
+				if (model.editMode == Model.EditMode.MODEL)
+					xRot.getTextState().setText(""+selectedPart.getEulerAngles().x);
+				else
+				{
+					KeyTransformation transform = Part.getOrCreateKeyTransformation((int)model.currentTime, selectedPart);
+					if (transform != null) {
+						xRot.getTextState().setText(""+transform.rotation.x);
+					}
+				}
 		}
 		if (!yRot.isFocused()) 
 		{
 			if (selectedPart != null)
-				yRot.getTextState().setText(""+selectedPart.getEulerAngles().y);
+				if (model.editMode == Model.EditMode.MODEL)
+					yRot.getTextState().setText(""+selectedPart.getEulerAngles().y);
+				else {
+					KeyTransformation transform = Part.getOrCreateKeyTransformation((int)model.currentTime, selectedPart);
+					if (transform != null) {
+						yRot.getTextState().setText(""+transform.rotation.y);
+					}
+				}
 		}
 		if (!zRot.isFocused()) 
 		{
 			if (selectedPart != null)
-				zRot.getTextState().setText(""+selectedPart.getEulerAngles().z);
+				if (model.editMode == Model.EditMode.MODEL)
+					zRot.getTextState().setText(""+selectedPart.getEulerAngles().z);
+				else
+				{
+					KeyTransformation transform = Part.getOrCreateKeyTransformation((int)model.currentTime, selectedPart);
+					if (transform != null) {
+						zRot.getTextState().setText(""+transform.rotation.z);
+					}
+				}
 		}
 		
 		if (!xScale.isFocused()) 
 		{
 			if (selectedPart != null)
-				xScale.getTextState().setText(""+selectedPart.scale.x);
+				if (model.editMode == Model.EditMode.MODEL)
+					xScale.getTextState().setText(""+selectedPart.getScale().x);
+				else
+				{
+					KeyTransformation transform = Part.getOrCreateKeyTransformation((int)model.currentTime, selectedPart);
+					if (transform != null) {
+						xScale.getTextState().setText(""+transform.scale.x);
+					}
+				}
 		}
 		if (!yScale.isFocused()) 
 		{
 			if (selectedPart != null)
-				yScale.getTextState().setText(""+selectedPart.scale.y);
+				if (model.editMode == Model.EditMode.MODEL)
+					yScale.getTextState().setText(""+selectedPart.getScale().y);
+				else
+				{
+					KeyTransformation transform = Part.getOrCreateKeyTransformation((int)model.currentTime, selectedPart);
+					if (transform != null) {
+						yScale.getTextState().setText(""+transform.scale.y);
+					}
+				}
 		}
 		if (!zScale.isFocused()) 
 		{
 			if (selectedPart != null)
-				zScale.getTextState().setText(""+selectedPart.scale.z);
+				if (model.editMode == Model.EditMode.MODEL)
+					zScale.getTextState().setText(""+selectedPart.getScale().z);
+				else
+				{
+					KeyTransformation transform = Part.getOrCreateKeyTransformation((int)model.currentTime, selectedPart);
+					if (transform != null) {
+						zScale.getTextState().setText(""+transform.scale.z);
+					}
+				}
 		}
 		
 		if (!xSize.isFocused()) 
@@ -2890,12 +3357,12 @@ public class NewModelerScreen extends ModelerScreen {
 			ArrayList<Part> parts = this.model.getParts();
 			for (Part p : parts) {
 				RayBox box = new RayBox();
-				Vector3f size = new Vector3f(p.size).mul(p.scale).mul(Part.SCALING);
-				Vector3f position = new Vector3f(p.position).mul(Part.SCALING);
+				Vector3f size = new Vector3f(p.size).mul(p.getScale()).mul(Part.SCALING);
+				Vector3f position = new Vector3f(p.getPosition()).mul(Part.SCALING);
 				box.min = new Vector3f(position.x - size.x / 2.0f, position.y - size.y / 2.0f, position.z - size.z / 2.0f);
 				box.max = new Vector3f(box.min).add(size.x, size.y, size.z);
 				
-				MouseIntersection i = this.getMouseIntersection(box, p.rotation);
+				MouseIntersection i = this.getMouseIntersection(box, p.getRotation());
 				if (i != null) {
 					if (i.distance < distance) {
 						distance = i.distance;
@@ -2971,23 +3438,23 @@ public class NewModelerScreen extends ModelerScreen {
 		float DISTANCE = Float.MAX_VALUE;
 		{
 			float w = 0.05f;
-			Vector3f position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-			Vector3f size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING * 0.5f);
-			size.rotate(selectedPart.rotation);
+			Vector3f position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+			Vector3f size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING * 0.5f);
+			size.rotate(selectedPart.getRotation());
 			size.absolute();
 			rotationHandle.texture = Textures.GREEN;
 			MeshRenderer.renderMesh(rotationHandle, new Vector3f(position).add(0, size.y + 1, 0), new Vector3f(0.5f, w, 0.5f), shaderProgram);
 			
-			position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-			size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING * 0.5f);
-			size.rotate(selectedPart.rotation);
+			position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+			size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING * 0.5f);
+			size.rotate(selectedPart.getRotation());
 			size.absolute();
 			rotationHandle.texture = Textures.RED;
 			MeshRenderer.renderMesh(rotationHandle, new Vector3f(position).add(size.x + 1, 0, 0), new Vector3f(w, 0.5f, 0.5f), shaderProgram);
 			
-			position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-			size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING * 0.5f);
-			size.rotate(selectedPart.rotation);
+			position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+			size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING * 0.5f);
+			size.rotate(selectedPart.getRotation());
 			size.absolute();
 			rotationHandle.texture = Textures.BLUE;
 			MeshRenderer.renderMesh(rotationHandle, new Vector3f(position).add(0, 0, size.z + 1), new Vector3f(0.5f, 0.5f, w), shaderProgram);
@@ -2995,9 +3462,9 @@ public class NewModelerScreen extends ModelerScreen {
 		
 		
 		float w = 0.05f;
-		Vector3f position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-		Vector3f size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING * 0.5f);
-		size.rotate(selectedPart.rotation);
+		Vector3f position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+		Vector3f size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING * 0.5f);
+		size.rotate(selectedPart.getRotation());
 		size.absolute();
 		RayBox Y_HANDLE = new RayBox();
 		Y_HANDLE.min = new Vector3f(position).sub(0.5f, w / 2.0f, 0.5f).add(0, size.y + 1, 0);
@@ -3020,9 +3487,9 @@ public class NewModelerScreen extends ModelerScreen {
 			}
 		}
 		
-		position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-		size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING * 0.5f);
-		size.rotate(selectedPart.rotation);
+		position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+		size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING * 0.5f);
+		size.rotate(selectedPart.getRotation());
 		size.absolute();
 		RayBox X_HANDLE = new RayBox();
 		X_HANDLE.min = new Vector3f(position).sub(w / 2.0f, 0.5f, 0.5f).add(size.x + 1, 0, 0);
@@ -3048,9 +3515,9 @@ public class NewModelerScreen extends ModelerScreen {
 			}
 		}
 		
-		position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-		size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING * 0.5f);
-		size.rotate(selectedPart.rotation);
+		position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+		size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING * 0.5f);
+		size.rotate(selectedPart.getRotation());
 		size.absolute();
 		RayBox Z_HANDLE = new RayBox();
 		Z_HANDLE.min = new Vector3f(position).sub(0.5f, 0.5f, w / 2.0f).add(0, 0, size.z + 1);
@@ -3169,31 +3636,31 @@ public class NewModelerScreen extends ModelerScreen {
 		mousePos3D.y = (float)my;
 		mousePos3D.z = 0;
 		{
-			Vector3f position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-			Vector3f size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING);
+			Vector3f position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+			Vector3f size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING);
 			position.add(-0.1f, size.y + 0.5f, -0.1f);
-			position.rotate(selectedPart.rotation);
+			position.rotate(selectedPart.getRotation());
 			cube.texture = Textures.GREEN;
 			MeshRenderer.renderMesh(cube, position, new Vector3f(0.2f, 0.2f, 0.2f), shaderProgram);
 
-			position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-			size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING);
+			position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+			size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING);
 			position.add(size.x + 0.5f, -0.1f, -0.1f);
-			position.rotate(selectedPart.rotation);
+			position.rotate(selectedPart.getRotation());
 			cube.texture = Textures.RED;
 			MeshRenderer.renderMesh(cube, position, new Vector3f(0.2f, 0.2f, 0.2f), shaderProgram);
 			
-			position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-			size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING);
+			position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+			size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING);
 			position.add(-0.1f, -0.1f, size.z + 0.5f);
-			position.rotate(selectedPart.rotation);
+			position.rotate(selectedPart.getRotation());
 			cube.texture = Textures.BLUE;
 			MeshRenderer.renderMesh(cube, position, new Vector3f(0.2f, 0.2f, 0.2f), shaderProgram);
 		}
-		Vector3f position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-		Vector3f size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING);
+		Vector3f position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+		Vector3f size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING);
 		position.add(-0.1f, size.y + 0.5f, -0.1f);
-		position.rotate(selectedPart.rotation);
+		position.rotate(selectedPart.getRotation());
 		RayBox Y_HANDLE = new RayBox();
 		Y_HANDLE.min = new Vector3f(new Vector3f(position));
 		Y_HANDLE.max = new Vector3f(Y_HANDLE.min).add(0.2f, 0.2f, 0.2f);
@@ -3220,10 +3687,10 @@ public class NewModelerScreen extends ModelerScreen {
 		}
 		
 		
-		position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-		size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING);
+		position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+		size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING);
 		position.add(size.x + 0.5f, -0.1f, -0.1f);
-		position.rotate(selectedPart.rotation);
+		position.rotate(selectedPart.getRotation());
 		RayBox X_HANDLE = new RayBox();
 		X_HANDLE.min = new Vector3f(new Vector3f(position));
 		X_HANDLE.max = new Vector3f(X_HANDLE.min).add(0.2f, 0.2f, 0.2f);
@@ -3248,7 +3715,7 @@ public class NewModelerScreen extends ModelerScreen {
 			if (i != null) {
 				if (Math.abs(i.hit.x - lastMousePos3D.x) > Part.SCALING) {
 					mousePos3D.x = (int)(i.hit.x * (1.0f / Part.SCALING)) * Part.SCALING;
-					selectedPart.position.x = (int)selectedPart.position.x;
+					selectedPart.getPosition().x = (int)selectedPart.getPosition().x;
 				}
 				if (mousePos3D.x < lastMousePos3D.x) {
 					selectedPart.size.add(new Vector3i((int)((mousePos3D.x - lastMousePos3D.x) * 16), 0, 0));
@@ -3262,10 +3729,10 @@ public class NewModelerScreen extends ModelerScreen {
 		}
 		
 		
-		position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-		size = new Vector3f(selectedPart.size.x, selectedPart.size.y, selectedPart.size.z).mul(selectedPart.scale).mul(Part.SCALING);
+		position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+		size = new Vector3f(selectedPart.size.x, selectedPart.size.y, selectedPart.size.z).mul(selectedPart.getScale()).mul(Part.SCALING);
 		position.add(-0.1f, -0.1f, size.z + 0.5f);
-		position.rotate(selectedPart.rotation);
+		position.rotate(selectedPart.getRotation());
 		RayBox Z_HANDLE = new RayBox();
 		Z_HANDLE.min = new Vector3f(new Vector3f(position));
 		Z_HANDLE.max = new Vector3f(Z_HANDLE.min).add(0.2f, 0.2f, 0.2f);
@@ -3290,7 +3757,7 @@ public class NewModelerScreen extends ModelerScreen {
 			if (i != null) {
 				if (Math.abs(i.hit.z - lastMousePos3D.z) > Part.SCALING) {
 					mousePos3D.z = (int)(i.hit.z * (1.0f / Part.SCALING)) * Part.SCALING;
-					selectedPart.position.z = (int)selectedPart.position.z;
+					selectedPart.getPosition().z = (int)selectedPart.getPosition().z;
 				}
 				if (mousePos3D.z < lastMousePos3D.z) {
 					selectedPart.size.add(new Vector3i(0, 0, (int)((mousePos3D.z - lastMousePos3D.z) * 16)));
@@ -3316,9 +3783,9 @@ public class NewModelerScreen extends ModelerScreen {
 	public void handleTranslation(ShaderProgram shaderProgram) {
 		{
 			handle.mesh.texture = Textures.POSITION_HANDLE_Y;
-			Vector3f position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-			Vector3f size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING);
-			size.rotate(selectedPart.rotation);
+			Vector3f position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+			Vector3f size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING);
+			size.rotate(selectedPart.getRotation());
 			size.absolute();
 			position.add(0.25f, size.y + 0.5f, 0);
 			
@@ -3327,9 +3794,9 @@ public class NewModelerScreen extends ModelerScreen {
 
 			
 			handle.mesh.texture = Textures.POSITION_HANDLE_X;
-			position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-			size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING);
-			size.rotate(selectedPart.rotation);
+			position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+			size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING);
+			size.rotate(selectedPart.getRotation());
 			size.absolute();
 			position.add(size.x + 0.5f, -0.25f, 0);
 			
@@ -3338,9 +3805,9 @@ public class NewModelerScreen extends ModelerScreen {
 
 
 			handle.mesh.texture = Textures.POSITION_HANDLE_Z;
-			position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-			size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING);
-			size.rotate(selectedPart.rotation);
+			position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+			size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING);
+			size.rotate(selectedPart.getRotation());
 			size.absolute();
 			position.add(0, -0.25f, size.z + 0.5f);
 			
@@ -3349,9 +3816,9 @@ public class NewModelerScreen extends ModelerScreen {
 
 			
 		}
-		Vector3f position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-		Vector3f size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING);
-		size.rotate(selectedPart.rotation);
+		Vector3f position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+		Vector3f size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING);
+		size.rotate(selectedPart.getRotation());
 		size.absolute();
 		position.add(-0.1f, size.y, -0.1f);
 		
@@ -3399,7 +3866,7 @@ public class NewModelerScreen extends ModelerScreen {
 					selectedPart.translate(new Vector3f(0, (mousePos3D.y - lastMousePos3D.y) / 8.0f, 0));
 					lastMousePos3D = new Vector3f(mousePos3D);
 				}
-				selectedPart.translate(new Vector3f(selectedPart.position.x, (int)selectedPart.position.y, selectedPart.position.z).sub(selectedPart.position));
+				selectedPart.translate(new Vector3f(selectedPart.getPosition().x, (int)selectedPart.getPosition().y, selectedPart.getPosition().z).sub(selectedPart.getPosition()));
 
 			} else {
 				selectedPart.translate(new Vector3f(0, (mousePos3D.y - lastMousePos3D.y) / 8.0f, 0));
@@ -3408,9 +3875,9 @@ public class NewModelerScreen extends ModelerScreen {
 		}
 		
 		
-		position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-		size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING);
-		size.rotate(selectedPart.rotation);
+		position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+		size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING);
+		size.rotate(selectedPart.getRotation());
 		size.absolute();
 		position.add(size.x, -0.1f, -0.1f);
 		RayBox X_HANDLE = new RayBox();
@@ -3445,7 +3912,7 @@ public class NewModelerScreen extends ModelerScreen {
 					selectedPart.translate(new Vector3f((mousePos3D.x - lastMousePos3D.x) / 8.0f, 0, 0));
 					lastMousePos3D = new Vector3f(mousePos3D);
 				}
-				selectedPart.translate(new Vector3f((int)selectedPart.position.x, selectedPart.position.y, selectedPart.position.z).sub(selectedPart.position));
+				selectedPart.translate(new Vector3f((int)selectedPart.getPosition().x, selectedPart.getPosition().y, selectedPart.getPosition().z).sub(selectedPart.getPosition()));
 
 			} else {
 				selectedPart.translate(new Vector3f((mousePos3D.x - lastMousePos3D.x) / 8.0f, 0, 0));
@@ -3454,9 +3921,9 @@ public class NewModelerScreen extends ModelerScreen {
 		}
 		
 		
-		position = new Vector3f(selectedPart.position).mul(Part.SCALING);
-		size = new Vector3f(selectedPart.size).mul(selectedPart.scale).mul(Part.SCALING);
-		size.rotate(selectedPart.rotation);
+		position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
+		size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING);
+		size.rotate(selectedPart.getRotation());
 		size.absolute();
 		position.add(-0.1f, -0.1f, size.z);
 		RayBox Z_HANDLE = new RayBox();
@@ -3491,7 +3958,7 @@ public class NewModelerScreen extends ModelerScreen {
 					selectedPart.translate(new Vector3f(0, 0, -(mousePos3D.z - lastMousePos3D.z) / 8.0f));
 					lastMousePos3D = new Vector3f(mousePos3D);
 				}
-				selectedPart.translate(new Vector3f(selectedPart.position.x, selectedPart.position.y, (int)selectedPart.position.z).sub(selectedPart.position));
+				selectedPart.translate(new Vector3f(selectedPart.getPosition().x, selectedPart.getPosition().y, (int)selectedPart.getPosition().z).sub(selectedPart.getPosition()));
 
 			} else {
 				selectedPart.translate(new Vector3f(0, 0, -(mousePos3D.z - lastMousePos3D.z) / 8.0f));
@@ -3565,11 +4032,11 @@ public class NewModelerScreen extends ModelerScreen {
 		if (selectedPart != null) {
 			this.part_name.getTextState().setText(selectedPart.name);
 			this.part_name.setEditable(true);
-			this.xPos.getTextState().setText(""+selectedPart.position.x);
+			this.xPos.getTextState().setText(""+selectedPart.getPosition().x);
 			this.xPos.setEditable(true);
-			this.yPos.getTextState().setText(""+selectedPart.position.y);
+			this.yPos.getTextState().setText(""+selectedPart.getPosition().y);
 			this.yPos.setEditable(true);
-			this.zPos.getTextState().setText(""+selectedPart.position.z);
+			this.zPos.getTextState().setText(""+selectedPart.getPosition().z);
 			this.zPos.setEditable(true);
 			this.xRot.setEditable(true);
 			this.yRot.setEditable(true);
@@ -3722,6 +4189,14 @@ public class NewModelerScreen extends ModelerScreen {
     
     public void close() {
     	super.close();
+    	
+    	this.texture_frame.dispose();
+    	
+    	GLFW.glfwSetKeyCallback(Utils.window, Events::keyCallback);
+		GLFW.glfwSetCursorPosCallback(Utils.window, Events::mousePos);
+		GLFW.glfwSetMouseButtonCallback(Utils.window, Events::mouseClick);
+		GLFW.glfwSetWindowFocusCallback(Utils.window, Events::windowFocus);
+    	
     	model.dispose();
     	for (int i = 0; i < actions.size(); i++) {
     		actions.get(i).dispose();

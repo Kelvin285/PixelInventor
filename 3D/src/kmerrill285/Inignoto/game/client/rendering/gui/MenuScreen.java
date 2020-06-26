@@ -25,17 +25,34 @@ public class MenuScreen extends GuiScreen {
 	
 	boolean grabbed = false;
 	
+	int delay = 0;
+	
 	public MenuScreen(GuiRenderer renderer) {
 		super(renderer);
+	}
+	
+	public MenuScreen delay(int delay) {
+		this.delay = delay;
+		return this;
 	}
 
 	@Override
 	public void tick() {
+		if (delay > 0) 
+		{
+			delay--;
+			return;
+		}
 		frameCounter = (System.nanoTime() / 100000000) * 0.25f;
 	}
 
 	@Override
 	public void render(ShaderProgram shader) {
+		if (delay > 0) 
+		{
+			delay--;
+			return;
+		}
 		int frame = (int)frameCounter % 4;
 		
 		GL11.glEnable(GL11.GL_BLEND);

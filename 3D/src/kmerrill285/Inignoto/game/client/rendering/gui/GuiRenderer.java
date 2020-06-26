@@ -155,6 +155,9 @@ public class GuiRenderer {
 	}
 	
 	public void openScreen(GuiScreen screen) {
+		if (currentScreen != null) {
+			currentScreen.close();
+		}
 		currentScreen = screen;
 	}
 	

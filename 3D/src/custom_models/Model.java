@@ -1,17 +1,54 @@
 package custom_models;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.textures.Texture;
 
 public class Model {
+
 	private ArrayList<Part> parts = new ArrayList<Part>();
 	
-	private ArrayList<Keyframe> keyframes = new ArrayList<Keyframe>();
+	private ArrayList<Keyframe> timeline = new ArrayList<Keyframe>();
 	
 	public float currentTime = 0.0f;
-	public float animationSpeed = 1.0f;
+	public float animationSpeed = 1.0f / 30.0f;
+	
+	private boolean playing = false;
+	
+	public boolean isPlaying() {
+		return playing;
+	}
+	
+	public void play(float time) {
+		playing = true;
+		currentTime = time;
+	}
+	
+	public void stop() {
+		playing = false;
+	}
+	
+	public int getCurrentFrame() {
+		return (int)currentTime;
+	}
+	
+	public int getNextFrame() {
+		int next = (int)currentTime + 1;
+		if (next > timeline.size() - 1) {
+			next = 0;
+		}
+		return next;
+	}
+	
+	public float timeUntilNextFrame() {
+		return (int)currentTime + 1 - currentTime;
+	}
 	
 	public enum EditMode {
 		MODEL, ANIMATION
@@ -19,16 +56,58 @@ public class Model {
 	
 	public EditMode editMode = EditMode.MODEL;
 	
+	public Model() {
+		changeTimelineLength(1);
+	}
+	
 	public ArrayList<Part> getParts() {
 		return this.parts;
 	}
 	
 	public ArrayList<Keyframe> getKeyframes() {
-		return this.keyframes;
+		return this.timeline;
 	}
 	
 	public int getAnimationLength() {
-		return this.keyframes.size();
+		return this.timeline.size();
+	}
+	
+	public void changeTimelineLength(int newValue) {
+		if (newValue >= 0) {
+			while(getAnimationLength() < newValue) {
+				getKeyframes().add(new Keyframe(timeline.size()));
+			}
+			while (getAnimationLength() > newValue && getAnimationLength() > 0) {
+				getKeyframes().remove(getKeyframes().size() - 1);
+			}
+		}
+	}
+	
+	public static void saveAnimation(ArrayList<Keyframe> timeline, File file) {
+		try {
+			ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file));
+			oos.writeObject(timeline);
+			oos.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static ArrayList<Keyframe> loadAnimation(File file) {
+		try {
+			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file));
+			@SuppressWarnings("unchecked")
+			ArrayList<Keyframe> timeline = (ArrayList<Keyframe>)ois.readObject();
+			ois.close();
+			return timeline;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return new ArrayList<Keyframe>();
+	}
+	
+	public void increaseTimelineLength() {
+		
 	}
 	
 	public Model copyModel() {
@@ -38,13 +117,33 @@ public class Model {
 				Part.copyModelPart(part, null, model);
 			}
 		}
-		for (Keyframe frame : keyframes) {
-			model.keyframes.add(frame.copy());
+		for (Keyframe frame : timeline) {
+			if (frame != null)
+			{
+				model.timeline.add(frame.copy());
+			} else {
+				model.timeline.add(new Keyframe(model.timeline.size()));
+			}
 		}
 		return model;
 	}
 	
 	public void render(ShaderProgram shader, boolean outlines, Part selected) {
+		if (this.currentTime >= this.getKeyframes().size()) {
+			this.currentTime -= this.getKeyframes().size();
+		}
+		if (this.currentTime < 0) {
+			this.currentTime += this.getKeyframes().size();
+		}
+		if (this.isPlaying()) {
+			currentTime += this.animationSpeed * this.timeline.get(this.getCurrentFrame()).speed;
+		}
+		if (this.currentTime >= this.getKeyframes().size()) {
+			this.currentTime -= this.getKeyframes().size();
+		}
+		if (this.currentTime < 0) {
+			this.currentTime += this.getKeyframes().size();
+		}
 		for (Part part : parts) {
 			part.renderInverted(shader, outlines, selected);
 		}

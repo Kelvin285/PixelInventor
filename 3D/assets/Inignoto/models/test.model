@@ -55,7 +55,6 @@ Origin 0.0 0.0 0.0
 UV 15 22
 Part 5
 Left_Hand
-
 Position 16.0 17.0 2.0
 Rotation 0.0 0.0 0.70710677 0.70710677
 Size 3 3 4
@@ -189,7 +188,6 @@ Origin 0.0 0.0 0.0
 UV 56 56
 Part 17
 Right_Hand
-
 Position -15.999527 17.019531 2.0
 Rotation 0.0 0.0 -0.70710677 0.70710677
 Size 3 3 4
@@ -223,7 +221,6 @@ Origin 0.0 0.0 0.0
 UV 30 32
 Part 20
 Right_Thumb
-
 Position -15.8821945 16.0 4.0
 Rotation 0.0 0.0 0.0 1.0
 Size 2 1 1
