@@ -117,14 +117,14 @@ public class Model {
 				Part.copyModelPart(part, null, model);
 			}
 		}
-		for (Keyframe frame : timeline) {
-			if (frame != null)
-			{
-				model.timeline.add(frame.copy());
-			} else {
-				model.timeline.add(new Keyframe(model.timeline.size()));
-			}
+		model.timeline.clear();
+		for (int i = 0; i < timeline.size(); i++) {
+			model.timeline.add(timeline.get(i).copy());
 		}
+		while(model.timeline.size() > timeline.size()) {
+			model.timeline.remove(model.timeline.size() - 1);
+		}
+		model.editMode = this.editMode;
 		return model;
 	}
 	

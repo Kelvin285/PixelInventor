@@ -62,32 +62,12 @@ public class Part {
 		}
 	}
 	
-	public static void duplicatePart(Part part, Part parent, Model model) {
-		Part p = new Part(model);
-		p.name = "" + part.name;
-		p.setPosition(new Vector3f(part.getPosition()));
-		p.setRotation(new Quaternionf(part.getRotation()));
-		p.setScale(new Vector3f(part.getScale()));
-		p.size = new Vector3i(part.size);
-		p.uv = new Vector2i(part.uv);
-		p.origin = new Vector3f(part.origin);
-		p.parent = parent;
-		if (parent != null) {
-			parent.children.add(p);
-		}
-		for (Part c : part.children) {
-			duplicatePart(c, p, model);
-		}
-		p.buildPart(part.texture);
-		model.getParts().add(p);
-	}
-	
 	public static void copyModelPart(Part part, Part parent, Model model) {
 		Part p = new Part(model);
 		p.name = "" + part.name;
-		p.setPosition(new Vector3f(part.getPosition()));
-		p.setRotation(new Quaternionf(part.getRotation()));
-		p.setScale(new Vector3f(part.getScale()));
+		p.setPosition(new Vector3f(part.position));
+		p.setRotation(new Quaternionf(part.rotation));
+		p.setScale(new Vector3f(part.scale));
 		p.size = new Vector3i(part.size);
 		p.uv = new Vector2i(part.uv);
 		p.origin = new Vector3f(part.origin);
@@ -96,7 +76,7 @@ public class Part {
 			parent.children.add(p);
 		}
 		for (Part c : part.children) {
-			duplicatePart(c, p, model);
+			copyModelPart(c, p, model);
 		}
 		p.buildPart(part.texture);
 		model.getParts().add(p);

@@ -353,8 +353,10 @@ public class NewModelerScreen extends ModelerScreen {
         this.texture_frame.setLocationRelativeTo(null);
         this.texture_frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         this.texture_frame.setVisible(true);
+        this.texture_frame.setAlwaysOnTop(true);
         
         this.image = (BufferedImage) texture_frame.createImage(500, 500);
+        this.texture_frame.setVisible(false);
 	}
 	
 	private Panel ANIMATION_PANEL;
@@ -397,7 +399,7 @@ public class NewModelerScreen extends ModelerScreen {
 					Inignoto.game.guiRenderer.openScreen(new MenuScreen(Inignoto.game.guiRenderer).delay(100));
 				}
 	    	} else {
-	    		Inignoto.game.guiRenderer.openScreen(new MenuScreen(Inignoto.game.guiRenderer).delay(100));
+				Inignoto.game.guiRenderer.openScreen(new MenuScreen(Inignoto.game.guiRenderer).delay(100));
 	    	}
 			
         });
@@ -432,9 +434,7 @@ public class NewModelerScreen extends ModelerScreen {
 		     button.getSize().x = textWidth;
 		});
 		
-		edit_model.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
-			this.model.editMode = Model.EditMode.MODEL;
-        });
+		
 		
 		Button edit_animation = new Button(Translation.translateText("Inignoto:gui.edit_animation"));
 		edit_animation.getStyle().setTextColor(1, 1, 1, 1);
@@ -452,6 +452,14 @@ public class NewModelerScreen extends ModelerScreen {
 		
 		edit_animation.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
 			this.model.editMode = Model.EditMode.ANIMATION;
+			edit_animation.getStyle().getBackground().setColor(0.2f, 0.2f, 0.2f, 1.0f);
+			edit_model.getStyle().getBackground().setColor(0.4f, 0.4f, 0.4f, 1.0f);
+        });
+		
+		edit_model.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
+			this.model.editMode = Model.EditMode.MODEL;
+			edit_model.getStyle().getBackground().setColor(0.2f, 0.2f, 0.2f, 1.0f);
+			edit_animation.getStyle().getBackground().setColor(0.4f, 0.4f, 0.4f, 1.0f);
         });
 		
 		final Button copy_frame = new Button(Translation.translateText("Inignoto:gui.copy_frame"));
@@ -470,6 +478,7 @@ public class NewModelerScreen extends ModelerScreen {
 		
 		copy_frame.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
 			keyClipboard = model.getKeyframes().get((int)model.currentTime).copy();
+			this.doAction();
         });
 		
 		ANIMATION_PANEL.add(copy_frame);
@@ -485,8 +494,8 @@ public class NewModelerScreen extends ModelerScreen {
 		
 		
 		paste_frame.getListenerMap().addListener(MouseClickEvent.class, (MouseClickEventListener) event -> {
-			//keyClipboard = model.getKeyframes().get((int)model.currentTime).copy();
 			 model.getKeyframes().get((int)model.currentTime).paste(keyClipboard);
+			 this.doAction();
         });
 		
 		final Button delete_frame = new Button(Translation.translateText("Inignoto:gui.delete_frame"));
@@ -501,6 +510,7 @@ public class NewModelerScreen extends ModelerScreen {
 				if ((int)model.currentTime < model.getKeyframes().size()) {
 					model.getKeyframes().remove((int)model.currentTime);
 					this.refreshTimeline();
+					this.doAction();
 				}
         });
 		
@@ -520,6 +530,7 @@ public class NewModelerScreen extends ModelerScreen {
 				model.getKeyframes().add(model.getCurrentFrame(), new Keyframe(model.getCurrentFrame()));
 				model.currentTime++;
 				this.refreshTimeline();
+				this.doAction();
 			}
         });
 		
@@ -537,6 +548,7 @@ public class NewModelerScreen extends ModelerScreen {
 			{
 				model.getKeyframes().add(model.getCurrentFrame() + 1, new Keyframe(model.getCurrentFrame() + 1));
 				this.refreshTimeline();
+				this.doAction();
 			}
         });
 		
@@ -594,9 +606,10 @@ public class NewModelerScreen extends ModelerScreen {
 				test.setVisible(true);
 				
 				try {
-					float i = Integer.parseInt(JOptionPane.showInputDialog(test, Translation.translateText("Inignoto:gui.animation_speed" + " ("+(int)(model.animationSpeed * 30)+") FPS")));
+					float i = Integer.parseInt(JOptionPane.showInputDialog(test, Translation.translateText("Inignoto:gui.animation_speed" + " ("+(int)(model.animationSpeed * 30 * 30)+") FPS")));
 					if (i >= 0) {
-						model.animationSpeed = i / 30.0f;
+						model.animationSpeed = i / (30.0f * 30.0f);
+						this.doAction();
 					}
 				} catch (Exception e) {
 					
@@ -628,6 +641,7 @@ public class NewModelerScreen extends ModelerScreen {
 					float i = Integer.parseInt(JOptionPane.showInputDialog(test, Translation.translateText("Inignoto:gui.frame_speed" + " ("+(int)(model.getKeyframes().get(model.getCurrentFrame()).speed * 30)+") FPS")));
 					if (i >= 0) {
 						model.getKeyframes().get(model.getCurrentFrame()).speed = i / 30.0f;
+						this.doAction();
 					}
 				} catch (Exception e) {
 					
@@ -1765,7 +1779,7 @@ public class NewModelerScreen extends ModelerScreen {
 
             if (event.getAction().equals(MouseClickEvent.MouseClickAction.CLICK)) {
             	if (this.selectedPart != null) {
-            		Part.duplicatePart(this.selectedPart, null, this.model);
+            		Part.copyModelPart(this.selectedPart, null, this.model);
             		this.refreshPartsPanel();
             		this.doAction();
             	}
@@ -1886,7 +1900,6 @@ public class NewModelerScreen extends ModelerScreen {
 		this.model.dispose();
 		this.model = actions.get(lastAction).copyModel();
 		this.refreshPartsPanel();
-		System.out.println("undo");
 		this.refreshTimeline();
 	}
 	
@@ -2392,6 +2405,7 @@ public class NewModelerScreen extends ModelerScreen {
         	if (event.getAction() == MouseClickEvent.MouseClickAction.PRESS) {
         		if (event.getButton().getCode() == 0) {
         			loadTexture();
+        			this.doAction();
         		}
         	}
         });
@@ -2411,6 +2425,7 @@ public class NewModelerScreen extends ModelerScreen {
         	if (event.getAction() == MouseClickEvent.MouseClickAction.PRESS) {
         		if (event.getButton().getCode() == 0) {
         			this.loadAnimation();
+        			this.doAction();
         		}
         	}
         });
@@ -2835,6 +2850,24 @@ public class NewModelerScreen extends ModelerScreen {
 	}
 	
 	public void tick() {
+		if (Settings.isKeyJustDown(GLFW.GLFW_KEY_DELETE)) {
+			if (this.selectedPart != null) {
+        		JFrame test = new JFrame();
+        		test.setAlwaysOnTop(true);
+        		test.toFront();
+        		test.requestFocus();
+        		test.setLocationRelativeTo(null);
+        		test.setVisible(true);
+        		if (JOptionPane.showConfirmDialog(test, "Are you sure you want to delete this part?") == 0) {
+        			this.model.getParts().remove(this.selectedPart);
+            		this.refreshPartsPanel();
+            		this.selectPart(null);
+            		this.doAction();
+            	}
+        		test.setVisible(false);
+        		
+        	}
+		}
 		if (Settings.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL)) {
 			if (Settings.isKeyJustDown(GLFW.GLFW_KEY_S)) {
 				save();
@@ -2854,6 +2887,37 @@ public class NewModelerScreen extends ModelerScreen {
 				if (this.selectedPart != null) {
 					this.selectedPart.setRotation(new Vector3f(0, 0, 0));
 				}
+			}
+			if (Settings.isKeyJustDown(GLFW.GLFW_KEY_D)) {
+				if (this.selectedPart != null) {
+					Part.copyModelPart(this.selectedPart, null, this.model);
+            		this.refreshPartsPanel();
+            		this.doAction();
+				}
+			}
+			if (Settings.isKeyJustDown(GLFW.GLFW_KEY_P)) {
+				if (this.selectedPart != null) {
+            		SETTING_PARENT = true;
+            		JFrame test = new JFrame();
+            		test.setAlwaysOnTop(true);
+            		test.toFront();
+            		test.requestFocus();
+            		test.setLocationRelativeTo(null);
+            		test.setVisible(true);
+                	JOptionPane.showMessageDialog(test, "Click on a part to set the new parent of the selected part!");
+                	test.setVisible(false);
+            	}
+			}
+			if (Settings.isKeyJustDown(GLFW.GLFW_KEY_G)) {
+				Part part = new Part(model);
+        		part.size = new Vector3i(32, 32, 32);
+        		part.setScale(new Vector3f(1, 1, 1));
+        		part.name = "Part";
+        		part.getPosition().y = 16.0f;
+        		part.buildPart(Textures.GRAY_MATERIAL);
+        		model.getParts().add(part);
+        		
+        		this.refreshPartsPanel();
 			}
 		} else {
 			if (Settings.FORWARD.isPressed()) {
@@ -2964,6 +3028,30 @@ public class NewModelerScreen extends ModelerScreen {
 			g.drawRect(uv.x + size.z + size.x + size.z, uv.y + size.z, s.x, s.y);
 			g.drawRect(uv.x + size.z, uv.y, s.x, s.z);
 			g.drawRect(uv.x + size.z + size.x, uv.y, s.x, s.z);
+		}
+		
+		for (Part part : model.getParts()) {
+			if (part != selectedPart) {
+				g.setColor(new Color(0.0f, 0.0f, 1.0f, 0.2f));
+				Vector3i size = new Vector3i(part.size);
+				Vector2i uv = new Vector2i(part.uv);
+				uv.mul((int)ZOOM);
+				uv.add((int)Math.floor(-SX * ZOOM) + 20, (int)Math.floor(-SY * ZOOM) + 20);
+
+				size.mul((int)ZOOM);
+				
+				Vector3i s = new Vector3i(size);
+				
+				
+				g.setColor(new Color(0.0f, 0.0f, 1.0f, 1.0f));
+				
+				g.drawRect(uv.x, uv.y + size.z, s.z, s.y);
+				g.drawRect(uv.x + size.z, uv.y + size.z, s.x, s.y);
+				g.drawRect(uv.x + size.z + size.x, uv.y + size.z, s.z, s.y);
+				g.drawRect(uv.x + size.z + size.x + size.z, uv.y + size.z, s.x, s.y);
+				g.drawRect(uv.x + size.z, uv.y, s.x, s.z);
+				g.drawRect(uv.x + size.z + size.x, uv.y, s.x, s.z);
+			}
 		}
 		
 		g = this.texture_frame.getGraphics();
@@ -3581,21 +3669,21 @@ public class NewModelerScreen extends ModelerScreen {
 			size.rotate(selectedPart.getRotation());
 			size.absolute();
 			rotationHandle.texture = Textures.GREEN;
-			MeshRenderer.renderMesh(rotationHandle, new Vector3f(position).add(0, size.y + 1, 0), new Vector3f(0.5f, w, 0.5f), shaderProgram);
+			MeshRenderer.renderMesh(rotationHandle, new Vector3f(position).add(0, size.y + 0.2f, 0), new Vector3f(0.5f, w, 0.5f), shaderProgram);
 			
 			position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
 			size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING * 0.5f);
 			size.rotate(selectedPart.getRotation());
 			size.absolute();
 			rotationHandle.texture = Textures.RED;
-			MeshRenderer.renderMesh(rotationHandle, new Vector3f(position).add(size.x + 1, 0, 0), new Vector3f(w, 0.5f, 0.5f), shaderProgram);
+			MeshRenderer.renderMesh(rotationHandle, new Vector3f(position).add(size.x + 0.2f, 0, 0), new Vector3f(w, 0.5f, 0.5f), shaderProgram);
 			
 			position = new Vector3f(selectedPart.getPosition()).mul(Part.SCALING);
 			size = new Vector3f(selectedPart.size).mul(selectedPart.getScale()).mul(Part.SCALING * 0.5f);
 			size.rotate(selectedPart.getRotation());
 			size.absolute();
 			rotationHandle.texture = Textures.BLUE;
-			MeshRenderer.renderMesh(rotationHandle, new Vector3f(position).add(0, 0, size.z + 1), new Vector3f(0.5f, 0.5f, w), shaderProgram);
+			MeshRenderer.renderMesh(rotationHandle, new Vector3f(position).add(0, 0, size.z + 0.2f), new Vector3f(0.5f, 0.5f, w), shaderProgram);
 		}
 		
 		
@@ -3605,8 +3693,8 @@ public class NewModelerScreen extends ModelerScreen {
 		size.rotate(selectedPart.getRotation());
 		size.absolute();
 		RayBox Y_HANDLE = new RayBox();
-		Y_HANDLE.min = new Vector3f(position).sub(0.5f, w / 2.0f, 0.5f).add(0, size.y + 1, 0);
-		Y_HANDLE.max = new Vector3f(position).add(0.5f, w / 2.0f, 0.5f).add(0, size.y + 1, 0);
+		Y_HANDLE.min = new Vector3f(position).sub(0.5f, w / 2.0f, 0.5f).add(0, size.y + 0.2f, 0);
+		Y_HANDLE.max = new Vector3f(position).add(0.5f, w / 2.0f, 0.5f).add(0, size.y + 0.2f, 0);
 		MouseIntersection i = this.getMouseIntersection(Y_HANDLE, new Vector3f(0, 0, 0));
 		if (i != null) {
 			DISTANCE = i.distance;
@@ -3630,8 +3718,8 @@ public class NewModelerScreen extends ModelerScreen {
 		size.rotate(selectedPart.getRotation());
 		size.absolute();
 		RayBox X_HANDLE = new RayBox();
-		X_HANDLE.min = new Vector3f(position).sub(w / 2.0f, 0.5f, 0.5f).add(size.x + 1, 0, 0);
-		X_HANDLE.max = new Vector3f(position).add(w / 2.0f, 0.5f, 0.5f).add(size.x + 1, 0, 0);
+		X_HANDLE.min = new Vector3f(position).sub(w / 2.0f, 0.5f, 0.5f).add(size.x + 0.2f, 0, 0);
+		X_HANDLE.max = new Vector3f(position).add(w / 2.0f, 0.5f, 0.5f).add(size.x + 0.2f, 0, 0);
 		i = this.getMouseIntersection(X_HANDLE, new Vector3f(0, 0, 0));
 		if (i != null) {
 			if (i.distance < DISTANCE) {
@@ -3658,8 +3746,8 @@ public class NewModelerScreen extends ModelerScreen {
 		size.rotate(selectedPart.getRotation());
 		size.absolute();
 		RayBox Z_HANDLE = new RayBox();
-		Z_HANDLE.min = new Vector3f(position).sub(0.5f, 0.5f, w / 2.0f).add(0, 0, size.z + 1);
-		Z_HANDLE.max = new Vector3f(position).add(0.5f, 0.5f, w / 2.0f).add(0, 0, size.z + 1);
+		Z_HANDLE.min = new Vector3f(position).sub(0.5f, 0.5f, w / 2.0f).add(0, 0, size.z + 0.2f);
+		Z_HANDLE.max = new Vector3f(position).add(0.5f, 0.5f, w / 2.0f).add(0, 0, size.z + 0.2f);
 		i = this.getMouseIntersection(Z_HANDLE, new Vector3f(0, 0, 0));
 		if (i != null) {
 			if (i.distance < DISTANCE) {
