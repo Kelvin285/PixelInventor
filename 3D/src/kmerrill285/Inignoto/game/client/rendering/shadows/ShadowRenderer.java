@@ -3,9 +3,7 @@ package kmerrill285.Inignoto.game.client.rendering.shadows;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.rendering.postprocessing.FrameBuffer;
-import kmerrill285.Inignoto.resources.Utils;
 
 public class ShadowRenderer {
 	public FrameBuffer fbo;

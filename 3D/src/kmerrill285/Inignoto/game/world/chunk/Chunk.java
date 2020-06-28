@@ -49,7 +49,8 @@ public class Chunk {
 	public float loadValue = 1.0f;
 	
 	public boolean generated = false;
-	
+	public boolean isGenerating = false;
+
 	
 	public Chunk(int x, int y, int z, World world) {
 		this.x = x;
@@ -108,10 +109,11 @@ public class Chunk {
 	public Tile getLocalTile(int x, int y, int z) {
 		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
 			if (tiles == null) {
-				getWorld().getChunkGenerator().generateChunk(this, false);
+				tiles = new TileData[NUM_TILES];
+				getWorld().getChunkGenerator().generateChunk(this, world.getMetaChunk(this.getX(), this.getY(), this.getZ()), true);
 			}
 			if (tiles == null) {
-				tiles = new TileData[NUM_TILES];
+				return Tiles.AIR;
 			}
 			if (tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y] == null) return Tiles.AIR;
 			return Tiles.getTile(tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y].getTile());
@@ -124,7 +126,10 @@ public class Chunk {
 		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
 			if (tiles == null) {
 				tiles = new TileData[NUM_TILES];
-				getWorld().getChunkGenerator().generateChunk(this, false);
+				getWorld().getChunkGenerator().generateChunk(this, world.getMetaChunk(this.getX(), this.getY(), this.getZ()), true);
+			}
+			if (tiles == null) {
+				return new TileData(Tiles.AIR.getID());
 			}
 			if (modifying) changed = true;
 			if (tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y] == null) return new TileData(Tiles.AIR.getID());
@@ -135,6 +140,7 @@ public class Chunk {
 	
 	public void setTileData(int x, int y, int z, TileData data) {
 		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			
 			if (tiles == null) {
 				return;
 			}
@@ -186,6 +192,7 @@ public class Chunk {
 	public void save() {
 		if (!this.needsToSave) return;
 		if (tiles == null) return;
+		saving = true;
 		String DIR = "Inignoto/saves/"+Inignoto.game.world.getWorldSaver().getWorldName()+"/";
 		File dir = new File(DIR);
 		dir.mkdirs();
@@ -198,11 +205,13 @@ public class Chunk {
 	
 		try {
 			FileOutputStream fos = new FileOutputStream(savefile);
-			ObjectOutputStream oos = new ObjectOutputStream(fos);
-
-			oos.writeObject(tiles);
-			
-			oos.close();
+			for (int i = 0; i < tiles.length; i++) {
+				if (tiles[i] == null) {
+					tiles[i] = new TileData(Tiles.AIR.getID());
+				}
+				fos.write(tiles[i].getTile());
+				fos.write(tiles[i].getWaterLevel());
+			}
 			fos.close();
 			this.needsToSave = false;
 		} catch (Exception e) {
@@ -210,10 +219,16 @@ public class Chunk {
 			this.savefile.delete();
 			System.out.println("Failed to save chunk!");
 		}
+		saving = false;
 		
 	}
 	
+	public boolean saving = false;
+	
 	public boolean load() {
+		if (saving) {
+			return true;
+		}
 		if (savefile == null) {
 			String DIR = "Inignoto/saves/"+Inignoto.game.world.getWorldSaver().getWorldName()+"/";
 			setSavefile(new File(DIR+"chunk"+getX()+","+getY()+","+getZ()+".chnk"));
@@ -222,19 +237,29 @@ public class Chunk {
 		
 		boolean setTile = false;
 		if (savefile != null) {
-			tiles = new TileData[SIZE * SIZE_Y * SIZE];
 			try {
 				FileInputStream fis = new FileInputStream(savefile);
-				ObjectInputStream ois = new ObjectInputStream(fis);
-				TileData[] t = (TileData[])ois.readObject();
-				ois.close();
-				fis.close();
-				tiles = t;
-				for (int i = 0; i < t.length; i++) {
-					if (t[i].getTile() != Tiles.AIR.getID()) {
-						voxels++;
-					}
+				this.generated = false;
+				tiles = new TileData[SIZE * SIZE_Y * SIZE];
+				for (int i = 0; i < tiles.length; i++) {
+					tiles[i] = new TileData(fis.read());
+					tiles[i].setWaterLevel(fis.read());
 				}
+				fis.close();
+				this.generated = true;
+//				ObjectInputStream ois = new ObjectInputStream(fis);
+//				TileData[] t = (TileData[])ois.readObject();
+//				ois.close();
+//				fis.close();
+//				tiles = t;
+//				for (int i = 0; i < t.length; i++) {
+//					if (t[i] == null) {
+//						t[i] = new TileData(Tiles.AIR.getID());
+//					}
+//					if (t[i].getTile() != Tiles.AIR.getID()) {
+//						voxels++;
+//					}
+//				}
 				return true;
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -313,6 +338,7 @@ public class Chunk {
 	private boolean needsToRebuild = false;
 	boolean triedToLoad = false;
 	public void render(ShaderProgram shader) {
+		
 		if (meshesToRemove.size() > 0) {
 			meshesToRemove.pop().dispose();
 		}
@@ -328,6 +354,13 @@ public class Chunk {
 				MeshRenderer.renderMesh(mesh, new Vector3f(getX() * SIZE, getY() * SIZE_Y, getZ() * SIZE), shader);
 				shader.setUniformFloat("loadValue", 0);
 			}
+		} else {
+			if (this.generated) {
+				if (this.tiles != null)
+				mesh = ChunkBuilder.buildChunk(this);
+				
+			}
+			
 		}
 		this.testForActivation();
 	}
@@ -346,19 +379,28 @@ public class Chunk {
 			if (this.mesh != null) this.mesh.dispose();
 			needsToRebuild = false;
 			mesh = ChunkBuilder.buildChunk(this);
+			
 		}
 		if (isActive()) {
 			if (tiles == null) {
-				getWorld().getChunkGenerator().generateChunk(this, false);
+				getWorld().getChunkGenerator().generateChunk(this, world.getMetaChunk(this.getX(), this.getY(), this.getZ()), true);
+				mesh = ChunkBuilder.buildChunk(this);
+				this.generated = true;
+			}
+			if (this.mesh == null) {
+				mesh = ChunkBuilder.buildChunk(this);
+				
 			}
 		} else {
 			if (mesh != null) {
 				if (changed) {
 					mesh = ChunkBuilder.buildChunk(this);
+					
 					changed = false;
 				}
-				if (!needsToSave)
+				if (!needsToSave && generated) {
 					tiles = null;
+				}
 			}
 		}
 	}

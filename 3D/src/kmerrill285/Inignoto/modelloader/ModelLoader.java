@@ -88,9 +88,7 @@ public class ModelLoader {
 		String[] lines = anim_data.split("\n");
 		String title = "";
 		float duration;
-		
-		ModelPart part = null;
-		
+				
 		Animation animation = null;
 		
 		String currentPart = "";

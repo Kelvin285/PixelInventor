@@ -148,7 +148,6 @@ public class Raytracer {
 	  float tFar = min(min(t2.x, t2.y), t2.z);
 	  
 	  Vector3f hitnear = new Vector3f(origin).add(new Vector3f(dir).mul(tNear));
-	  Vector3f hitfar = new Vector3f(origin).add(new Vector3f(dir).mul(tFar));
 	  Vector3f normal = new Vector3f(0.0f, 0.0f, 0.0f);
 		  	//left
 		  	if (hitnear.x >= b.min.x - bias && hitnear.x <= b.min.x + bias) {

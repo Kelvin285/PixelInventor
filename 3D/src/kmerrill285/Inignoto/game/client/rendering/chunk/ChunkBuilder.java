@@ -1,6 +1,5 @@
 package kmerrill285.Inignoto.game.client.rendering.chunk;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 
 import kmerrill285.Inignoto.game.client.rendering.BlockFace;
@@ -15,7 +14,7 @@ public class ChunkBuilder {
 
 	
 	public static Mesh buildChunk(Chunk chunk) {
-		if (chunk.voxels <= 0) return null;
+//		if (chunk.voxels <= 0) return null;
 		ArrayList<Float> vertices = new ArrayList<Float>();
 		ArrayList<Integer> indices = new ArrayList<Integer>();
 		ArrayList<Float> texCoords = new ArrayList<Float>();
@@ -41,7 +40,7 @@ public class ChunkBuilder {
 	final int FULL = 16 * 16 * 16;
 	
 	public static int buildChunk(Chunk chunk, ArrayList<Float> vertices, ArrayList<Integer> indices, ArrayList<Float> texCoords, int index) {
-		if (chunk.voxels <= 0) return index;
+//		if (chunk.voxels <= 0) return index;
 		for (int i = 0; i < Chunk.SIZE_Y / Chunk.SIZE; i++) {
 				for (int x = 0; x < Chunk.SIZE; x++) {
 					for (int y = i * Chunk.SIZE; y < i * Chunk.SIZE + Chunk.SIZE; y++) {
@@ -62,22 +61,6 @@ public class ChunkBuilder {
 		}
 		
 		return index;
-	}
-
-	private static ArrayDeque<Chunk> queue = new ArrayDeque<Chunk>();
-	
-	public static void updateQueue() {
-		if (queue.size() <= 0) return;
-		Chunk c = queue.pop();
-		if (c != null) {
-			c.mesh = ChunkBuilder.buildChunk(c);
-			c.setTiles(null);
-		}
-	}
-	
-	public static void queueChunk(Chunk chunk) {
-		if (!queue.contains(chunk))
-			queue.push(chunk);
 	}
 	
 	

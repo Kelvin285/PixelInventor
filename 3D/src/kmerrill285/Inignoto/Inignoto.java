@@ -149,19 +149,19 @@ public class Inignoto {
 		thread.start();
 		
 		
-		new Thread() {
-			public void run() {
-				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
-					world.saveChunks();
-					try {
-						Thread.sleep(5);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-						System.exit(0);
-					}
-				}
-			}
-		}.start();
+//		new Thread() {
+//			public void run() {
+//				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
+//					world.saveChunks();
+//					try {
+//						Thread.sleep(5);
+//					} catch (InterruptedException e) {
+//						e.printStackTrace();
+//						System.exit(0);
+//					}
+//				}
+//			}
+//		}.start();
 		
 		
 		FPSCounter.start();

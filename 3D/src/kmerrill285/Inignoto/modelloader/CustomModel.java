@@ -3,8 +3,6 @@ package kmerrill285.Inignoto.modelloader;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import javax.rmi.CORBA.Util;
-
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -159,9 +157,6 @@ public class CustomModel {
 		float size_x = part.transformation.size_x;
 		float size_y = part.transformation.size_y;
 		float size_z = part.transformation.size_z;
-		float offsX = part.transformation.offsX;
-		float offsY = part.transformation.offsY;
-		float offsZ = part.transformation.offsZ;
 		float[] texCoords = {
 				//front
 				U + size_z, V + size_z + size_y,
@@ -312,7 +307,6 @@ public class CustomModel {
 	{
 		Vertex animRot = null;
 		Vertex nextRot = null;
-		Vertex newAnimRot = null;
 		
 		AnimationFrame currentRotationFrame = null;
 		AnimationFrame nextRotationFrame = null;
@@ -421,9 +415,7 @@ public class CustomModel {
 		
 		AnimationFrame currentPositionFrame = null;
 		AnimationFrame nextPositionFrame = null;
-		
-		Vertex newAnimPos = null;
-		
+				
 		if (currentAnimation != null) {
 			//get current position frame data
 			int iterations = 0;

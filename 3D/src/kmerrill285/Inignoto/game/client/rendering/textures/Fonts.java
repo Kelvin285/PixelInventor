@@ -9,8 +9,6 @@ import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.lwjgl.opengl.GL11;
-
 public class Fonts {
 	public static Font FONT = new Font(Font.MONOSPACED, Font.PLAIN, 48);
 	public static Font BOLD = new Font(Font.MONOSPACED, Font.BOLD, 48);
@@ -21,9 +19,7 @@ public class Fonts {
 	public static Map<Character, Texture> bold = new HashMap<>();
 
 	public static void loadFonts() {
-		int width = 0;
 		int height = 0;
-		int x = 0;
 		
 		for (int i = 32; i < 256; i++) {
 			if (i == 127) continue;

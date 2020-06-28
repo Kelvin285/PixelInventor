@@ -35,7 +35,6 @@ public class PlayerEntity extends Entity {
 		this.size.x = 0.35f;
 		this.size.z = this.size.x;
 		
-		
 		if (!crawling) {
 			boolean up = false;
 			if (this.doesCollisionOccur(position.x, position.y + 1, position.z)) up = true;

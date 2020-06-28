@@ -7,8 +7,9 @@ import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.Chunk;
+import kmerrill285.Inignoto.game.world.chunk.MetaChunk;
 import kmerrill285.Inignoto.game.world.chunk.TileData;
-import kmerrill285.Inignoto.game.world.structures.Structure;
+import kmerrill285.Inignoto.game.world.chunk.generator.feature.Structure;
 
 public class ChunkGenerator {
 	
@@ -22,11 +23,13 @@ public class ChunkGenerator {
 		this.world = world;
 	}
 
-	public void generateChunk(Chunk chunk, boolean structures) {
+	public void generateChunk(Chunk chunk, MetaChunk metachunk, boolean structures) {
 		if (chunk.load() == true) return;
 		if (chunk.getTiles() == null) {
 			chunk.setTiles(new TileData[Chunk.SIZE * Chunk.SIZE_Y * Chunk.SIZE]);
 		}
+		chunk.isGenerating = true;
+
 		for (int x = 0; x < Chunk.SIZE; x++) {
 			for (int y = 0; y < Chunk.SIZE_Y; y++) {
 				for (int z = 0; z < Chunk.SIZE; z++) {
@@ -48,16 +51,29 @@ public class ChunkGenerator {
 					
 					if (Y == height) {
 						chunk.setLocalTile(x, y, z, topTile);
+						Structure.TREE.addToChunk(chunk, x, y, z, X, Y, Z);
 					} 
 					if (Y < height){
 						chunk.setLocalTile(x, y, z, Tiles.DIRT);
-						Structure.TREE.addToChunk(chunk, x, y, z, X, Y, Z);
+					}
+					if (metachunk != null) {
+						TileData data = metachunk.getTileData(x, y, z);
+						if (data != null) {
+							if (data.getTile() != Tiles.AIR.getID())
+							chunk.setTileData(x, y, z, new TileData(metachunk.getTileData(x, y, z).getTile()));
+						}
 					}
 					
 				}
 			}
 		}
+		if (metachunk != null) {
+			world.removeMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ());
+		}
+		
+		chunk.isGenerating = false;
 	}
+	
 	
 	public float getHeight(float x, float z) {
 		float height = noise.GetSimplexFractal(x * 2, 0, z * 2) * 24;

@@ -11,7 +11,6 @@ import static org.lwjgl.opengl.GL30.glFramebufferTexture2D;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
-import org.lwjgl.opengl.GL45;
 
 import kmerrill285.Inignoto.Inignoto;
 import kmerrill285.Inignoto.game.client.rendering.textures.Texture;

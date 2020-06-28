@@ -14,7 +14,6 @@ import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.audio.SoundSource;
 import kmerrill285.Inignoto.game.client.audio.Sounds;
 import kmerrill285.Inignoto.game.client.rendering.gui.GuiRenderer;
-import kmerrill285.Inignoto.game.client.rendering.gui.MenuScreen;
 import kmerrill285.Inignoto.game.client.rendering.postprocessing.FrameBuffer;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
@@ -25,7 +24,7 @@ import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.settings.Translation;
 import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.world.World;
-import kmerrill285.Inignoto.game.world.structures.Structure;
+import kmerrill285.Inignoto.game.world.chunk.generator.feature.Structure;
 
 public class Utils {
 	public static long window;
@@ -41,7 +40,6 @@ public class Utils {
 	public static Matrix4f projectionMatrix;
 	
 	public static int FRAME_WIDTH = 1920 / 2, FRAME_HEIGHT = 1080 / 2;
-	private static int P_WIDTH = 1920 / 2, P_HEIGHT = 1080 / 2;
 	public static boolean WINDOW_FOCUSED = false;
 	
 	public static long NORMAL_CURSOR, HAND_CURSOR, HRESIZE_CURSOR, VRESIZE_CURSOR, TYPE_CURSOR;
@@ -196,7 +194,7 @@ public class Utils {
 		
 		Fonts.loadFonts();
 		
-		Inignoto.game.guiRenderer.openScreen(new MenuScreen(Inignoto.game.guiRenderer));
+//		Inignoto.game.guiRenderer.openScreen(new MenuScreen(Inignoto.game.guiRenderer));
 	}
 	
 	public static void setupProjection(ShaderProgram shader) {

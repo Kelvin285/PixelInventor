@@ -1,7 +1,5 @@
 package kmerrill285.Inignoto.resources;
 
-import java.io.PrintStream;
-
 public class FPSCounter {
 	private static int fps;
 	private static long lastFPS;

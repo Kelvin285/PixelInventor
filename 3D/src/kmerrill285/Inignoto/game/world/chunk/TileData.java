@@ -3,7 +3,7 @@ package kmerrill285.Inignoto.game.world.chunk;
 import java.io.Serializable;
 
 public class TileData implements Serializable {
-	private static final long serialVersionUID = 272466692325542004L;
+	private static final long serialVersionUID = 1L;
 	private int tile;
 	float miningTime;
 	int waterLevel;

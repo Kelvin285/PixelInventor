@@ -37,7 +37,7 @@ out vec3 vertexNormal;
 void main()
 {
 	vertexNormal = normal;
-	vec3 pos = position - vec3(0, 10, 0) * loadValue;
+	vec3 pos = position;
 	lValue = loadValue;
 	gl_Position = projectionMatrix * modelMatrix * vec4(pos, 1.0);
 	mvVertexPos = gl_Position.xyz;
