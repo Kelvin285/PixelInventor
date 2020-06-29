@@ -149,19 +149,21 @@ public class Inignoto {
 		thread.start();
 		
 		
-//		new Thread() {
-//			public void run() {
-//				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
-//					world.saveChunks();
-//					try {
-//						Thread.sleep(5);
-//					} catch (InterruptedException e) {
-//						e.printStackTrace();
-//						System.exit(0);
-//					}
-//				}
-//			}
-//		}.start();
+		new Thread() {
+			public void run() {
+				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
+					TPSCounter.startUpdate();
+					update();
+					try {
+						Thread.sleep(5);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+						System.exit(0);
+					}
+					TPSCounter.endUpdate();
+				}
+			}
+		}.start();
 		
 		
 		FPSCounter.start();
@@ -171,21 +173,20 @@ public class Inignoto {
 		
 		while (!GLFW.glfwWindowShouldClose(Utils.window)) {
 			try {
-				TPSCounter.updateTPS();
+				FPSCounter.startUpdate();
 
-				if (guiRenderer.getOpenScreen() == null) {
-					updateLight();
-					update();
-					updateLight();
-				}
-				Camera.update();
+
+				
 				if (ticks == 0) {
-					FPSCounter.startUpdate();
+
+					if (guiRenderer.getOpenScreen() == null) {
+						updateLight();
+						updateLight();
+					}
+					Camera.update();
+					
 					Camera.updateView();
-//					updateLight();
 					render();
-//					updateLight();
-					FPSCounter.endUpdate();
 					
 				} else {
 					ticks++;
@@ -197,9 +198,9 @@ public class Inignoto {
 				}
 				if (updateMouse)
 				Mouse.update();
-//				updateLight();
-//				
-//				updateLight();
+
+				FPSCounter.endUpdate();
+
 			}catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -372,11 +373,8 @@ public class Inignoto {
 	}
 		
 	public void update() {
-		
 		if (this.guiRenderer.getOpenScreen() instanceof MenuScreen == false)
-		if (TPSCounter.canTick()) {
 			world.tick();
-		}
 		
 	}
 	

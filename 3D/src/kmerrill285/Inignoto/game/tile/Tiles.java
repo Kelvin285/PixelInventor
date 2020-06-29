@@ -13,6 +13,7 @@ public class Tiles {
 	public static Tile DIRT;
 	public static Tile GRASS;
 	public static Tile STONE;
+	public static Tile SMOOTH_STONE;
 	public static Tile PURPLE_GRASS;
 	public static Tile LOG;
 	public static Tile LEAVES;
@@ -33,5 +34,6 @@ public class Tiles {
 		PURPLE_GRASS = new GrassTile("Inignoto:purple_grass", TileSound.grass).setHardness(GRASS.getHardness());
 		LOG = new Tile("Inignoto:log", TileSound.wood).setHardness(2.5f);
 		LEAVES = new Tile("Inignoto:leaves", TileSound.leaves).setHardness(0.2f);
+		SMOOTH_STONE = new Tile("Inignoto:smooth_stone", TileSound.stone).setHardness(3.0f);
 	}
 }

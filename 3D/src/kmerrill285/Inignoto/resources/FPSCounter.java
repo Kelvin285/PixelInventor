@@ -3,14 +3,14 @@ package kmerrill285.Inignoto.resources;
 public class FPSCounter {
 	private static int fps;
 	private static long lastFPS;
-	private static long currentTime;
-	private static long lastTime;
+	private static long currentTime = System.currentTimeMillis();;
+	private static long lastTime = currentTime;
 	private static double delta;
-	private static long totalGameTime = 0;
+	private static double totalGameTime = 0;
 	public static final long MIN_DELTA = 1000000/20; // 20fps
 	
 	public static long getTime() {
-		return totalGameTime;
+		return (long)totalGameTime;
 	}
 	
 	public static void start() {
@@ -26,9 +26,11 @@ public class FPSCounter {
 		fps++;
 	}
 	public static void startUpdate() {
-		currentTime = System.nanoTime();
-		delta = (Math.max(currentTime-lastTime,MIN_DELTA) / 1000000.0) / 20.0;
-		if (delta < 1.5f) delta = 1.5f;
+		currentTime = System.currentTimeMillis();
+		delta = ((currentTime-lastTime) / 1000.0);
+		if (delta < 0) delta = 0;
+		if (delta > 1) delta = 1;
+		
 	}
 	
 	public static void endUpdate() {
@@ -37,7 +39,8 @@ public class FPSCounter {
 	}
 
 	public static double getDelta() {
-		return delta;
+		
+		return delta * 16.667 * 10.0;
 	}
 	
 	public static int getFPS() {

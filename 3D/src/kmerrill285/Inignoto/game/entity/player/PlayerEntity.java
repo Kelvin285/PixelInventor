@@ -10,7 +10,7 @@ public class PlayerEntity extends Entity {
 
 	protected boolean crawling = false;
 	protected boolean rolling = false;
-	public int rollTap = 0;
+	public double rollTap = 0;
 	
 	public int ZOOM = 0;
 	
@@ -105,7 +105,9 @@ public class PlayerEntity extends Entity {
 	}
 	
 	public void jump() {
-		if (!crawling && !rolling) super.jump();
+		if (!crawling && !rolling) {
+			super.jump();
+		}
 		else crawling = false;
 	}
 

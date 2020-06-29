@@ -23,7 +23,7 @@ public class Settings {
 	public static boolean SHADOWS = false;
 	public static boolean REFLECTIONS = false;
 	
-	public static float EXPOSURE = 1.5f;
+	public static float EXPOSURE = 1.0f;
 		
 	public static boolean POST_PROCESSING = false;
 	
@@ -116,9 +116,9 @@ public class Settings {
 						if (a.contentEquals("REFLECTIONS")) {
 							REFLECTIONS = Boolean.parseBoolean(b);
 						}
-						if (a.contentEquals("EXPOSURE")) {
-							EXPOSURE = Float.parseFloat(b);
-						}
+//						if (a.contentEquals("EXPOSURE")) {
+//							EXPOSURE = Float.parseFloat(b);
+//						}
 						if (a.contentEquals("POST_PROCESSING")) {
 							POST_PROCESSING = Boolean.parseBoolean(b);
 						}
@@ -201,7 +201,7 @@ public class Settings {
 //			str += getSaveString("SHADOWS", SHADOWS);
 			str += getSaveString("DISTANCE_BLUR", DISTANCE_BLUR);
 			str += getSaveString("REFLECTIONS", REFLECTIONS);
-			str += getSaveString("EXPOSURE", EXPOSURE);
+//			str += getSaveString("EXPOSURE", EXPOSURE);
 			str += getSaveString("POST_PROCESSING", POST_PROCESSING);
 			str += getSaveString("FRAME_SKIP", frameSkip);
 			str += getSaveString("JUMP", JUMP.write());

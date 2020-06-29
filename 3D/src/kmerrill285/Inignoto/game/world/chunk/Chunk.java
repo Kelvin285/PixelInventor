@@ -328,7 +328,6 @@ public class Chunk {
 									}
 								}
 							}
-							
 						}
 					}
 				}
@@ -384,20 +383,12 @@ public class Chunk {
 		if (isActive()) {
 			if (tiles == null) {
 				getWorld().getChunkGenerator().generateChunk(this, world.getMetaChunk(this.getX(), this.getY(), this.getZ()), true);
-				mesh = ChunkBuilder.buildChunk(this);
 				this.generated = true;
-			}
-			if (this.mesh == null) {
-				mesh = ChunkBuilder.buildChunk(this);
-				
+				this.markForRerender();
 			}
 		} else {
 			if (mesh != null) {
-				if (changed) {
-					mesh = ChunkBuilder.buildChunk(this);
-					
-					changed = false;
-				}
+				
 				if (!needsToSave && generated) {
 					tiles = null;
 				}

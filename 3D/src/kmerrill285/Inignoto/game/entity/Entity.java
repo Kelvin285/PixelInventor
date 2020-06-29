@@ -7,7 +7,7 @@ import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.TilePos;
-import kmerrill285.Inignoto.resources.FPSCounter;
+import kmerrill285.Inignoto.resources.TPSCounter;
 import kmerrill285.Inignoto.resources.RayTraceResult.RayTraceType;
 
 public class Entity {
@@ -104,7 +104,7 @@ public class Entity {
 				fallTimer--;
 			} else {
 				fallTimer = 0;
-				velocity.y -= getGravity() * FPSCounter.getDelta();
+				velocity.y -= getGravity() * TPSCounter.getDelta();
 			}
 		} else {
 			fallTimer = 25;
@@ -164,17 +164,19 @@ public class Entity {
 		
 		if (velocity.y < 0) {
 			boolean collision = false;
-			if (doesCollisionOccur(position.x, position.y + velocity.y - bias, position.z)) collision = true;
-			if (doesCollisionOccur(position.x + size.x, position.y + velocity.y - bias, position.z)) collision = true;
-			if (doesCollisionOccur(position.x + size.x, position.y + velocity.y - bias, position.z + size.z)) collision = true;
-			if (doesCollisionOccur(position.x, position.y + velocity.y - bias, position.z + size.z)) collision = true;
+			if (doesCollisionOccur(position.x, position.y + velocity.y * (float)TPSCounter.getDelta() - bias, position.z)) collision = true;
+			if (doesCollisionOccur(position.x + size.x, position.y + velocity.y * (float)TPSCounter.getDelta() - bias, position.z)) collision = true;
+			if (doesCollisionOccur(position.x + size.x, position.y + velocity.y * (float)TPSCounter.getDelta() - bias, position.z + size.z)) collision = true;
+			if (doesCollisionOccur(position.x, position.y + velocity.y * (float)TPSCounter.getDelta() - bias, position.z + size.z)) collision = true;
 			if (collision) {
 				if (!lastOnGround) {
 					jumpDelay = 1;
 				}
 				onGround = true;
+				position.y = (float)Math.floor(lastPos.y);
+				
 				velocity.y = 0;
-				position.y = (float) Math.floor(lastPos.y);
+				
 			}
 		}
 		
@@ -200,9 +202,9 @@ public class Entity {
 		
 		isMoving = (int)(velocity.x * 10) != 0 && (int)(velocity.y * 10) != 0;
 		if (ticksExisted > 100) {
-			position.x += velocity.x * FPSCounter.getDelta();
-			position.y += velocity.y * FPSCounter.getDelta();
-			position.z += velocity.z * FPSCounter.getDelta();
+			position.x += velocity.x * TPSCounter.getDelta();
+			position.y += velocity.y * TPSCounter.getDelta();
+			position.z += velocity.z * TPSCounter.getDelta();
 		}
 		
 		ticksExisted++;
@@ -222,16 +224,16 @@ public class Entity {
 	}
 	
 	public float getGravity() {
-		return 1.0f / 90.0f;
+		return 2.0f / 90.0f;
 	}
 	
 	public float getTerminalVelocity() {
-		return (1.0f / 60.0f) * 43 ;
+		return (1.0f / 60.0f) * 43;
 	}
 	
 	public void jump() {
 		if (jumpDelay > 0) return;
-		velocity.y = 0.15f * 1.25f;
+		velocity.y = 0.15f * 1.7f;
 		velocity.x *= 1.5f;
 		velocity.z *= 1.5f;
 	}

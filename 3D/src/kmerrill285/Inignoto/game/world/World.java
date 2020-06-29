@@ -111,8 +111,12 @@ public class World {
 	private Vector3i cp = new Vector3i(0);
 	
 	public void buildChunks() {
-		for (int i = 0; i < saveQueue.size(); i++) {
-			saveQueue.get(i).save();
+		try {
+			for (int i = 0; i < saveQueue.size(); i++) {
+				saveQueue.get(i).save();
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
 		}
 		saveQueue.clear();
 		
@@ -256,11 +260,15 @@ public class World {
 				rendering.add(c);
 			}
 		}
-		
+
 		for (int i = 0; i < rendering.size(); i++) {
 			if (rendering.get(i) == null) continue;
-			rendering.get(i).tick();
-			rendering.get(i).render(shader);
+			try {
+				rendering.get(i).tick();
+				rendering.get(i).render(shader);
+			}catch (Exception e) {
+				
+			}
 		}
 		
 		adding = true;

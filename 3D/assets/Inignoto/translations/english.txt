@@ -4,6 +4,8 @@
 "Inignoto:purple_grass" = "Purple Grass"
 "Inignoto:log" = "Log"
 "Inignoto:leaves" = "Leaves"
+"Inignoto:smooth_stone" = "Smooth Stone"
+
 "Inignoto:input.jump" = "Jump"
 "Inignoto:input.sneak" = "Sneak"
 "Inignoto:input.run" = "Run"
@@ -19,6 +21,7 @@
 "Inignoto:input.crawling" = "Crawling"
 "Inignoto:input.zoom_out" = "Zoom Out"
 "Inignoto:input.delete" = "Delete"
+
 "Inignoto:gui.singleplayer" = "Singleplayer"
 "Inignoto:gui.multiplayer" = "Multiplayer"
 "Inignoto:gui.settings" = "Settings"

@@ -9,7 +9,7 @@ import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.world.World;
-import kmerrill285.Inignoto.resources.FPSCounter;
+import kmerrill285.Inignoto.resources.TPSCounter;
 import kmerrill285.Inignoto.resources.MathHelper;
 
 public class ClientPlayerEntity extends PlayerEntity {
@@ -48,7 +48,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 		super.tick();
 		
 		if (useTimer > 0) {
-			useTimer-=FPSCounter.getDelta()*0.5f;
+			useTimer-=TPSCounter.getDelta()*0.5f;
 		} else {
 			useTimer = 0;
 		}
@@ -73,9 +73,9 @@ public class ClientPlayerEntity extends PlayerEntity {
 		Vector2f dir = new Vector2f(0);
 		
 
-		if (hopTap > 0) hopTap --;
+		if (hopTap > 0) hopTap -=TPSCounter.getDelta();
 		
-		if (rollTap > 0) rollTap--;
+		if (rollTap > 0) rollTap-=TPSCounter.getDelta();
 		else
 			rolling = false;
 		
@@ -114,7 +114,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 						if (ZOOM == 2) {
 							mdir *= -1;
 						}
-						float move = 0.3f;
+						float move = 0.7f;
 						
 						if (hopTap == 0) {
 							velocity.y = 0.12f;
@@ -151,11 +151,11 @@ public class ClientPlayerEntity extends PlayerEntity {
 							mdir *= -1;
 						}
 						if (hopTap == 0) {
-							float move = 0.15f;
+							float move = 0.5f;
 							velocity.y = 0.12f;
 							velocity.x += (float)Math.cos(Math.toRadians(yaw)) * mdir * move;
 							velocity.z += (float)Math.sin(Math.toRadians(yaw)) * mdir * move;
-							hopTap = 15;
+							hopTap = 30;
 						}
 						
 					}
@@ -281,8 +281,8 @@ public class ClientPlayerEntity extends PlayerEntity {
 		
 		
 		
-		headBob += bobSpeed * FPSCounter.getDelta() * 0.5f;
-		headBobX += bobSpeedX * FPSCounter.getDelta() * 0.5f;
+		headBob += bobSpeed * TPSCounter.getDelta() * 0.5f;
+		headBobX += bobSpeedX * TPSCounter.getDelta() * 0.5f;
 		if (headBob > 360) headBob -= 360;
 		if (headBobX > 360) headBobX -= 360;
 		if (headBob < 0) headBob += 360;
@@ -311,12 +311,12 @@ public class ClientPlayerEntity extends PlayerEntity {
 			}
 		}
 		
-		float mul = 0.8f;
-		if (running && onGround) mul = 1.55f;
+		float mul = 0.7f;
+		if (running) mul = 1.2f;
 		if (isSneaking && onGround) mul = 0.3f;
 		if (crawling && onGround) mul = 0.3f;
 		
-		mul *= 0.7f;
+		mul *= 3.0f;
 		
 		if (Settings.JUMP.isPressed()) {
 			if (onGround)
@@ -370,12 +370,18 @@ public class ClientPlayerEntity extends PlayerEntity {
 			}
 		}
 		
+		
+		
 		if (onGround) {
-			velocity.x = MathHelper.lerp(velocity.x, XP * this.moveSpeed * mul, 0.45f);
-			velocity.z = MathHelper.lerp(velocity.z, ZP * this.moveSpeed * mul, 0.45f);
+			velocity.x += XP * this.moveSpeed * mul * TPSCounter.getDelta();
+			velocity.z += ZP * this.moveSpeed * mul * TPSCounter.getDelta();
+			velocity.x = MathHelper.lerp(velocity.x, 0, 0.3f);
+			velocity.z = MathHelper.lerp(velocity.z, 0, 0.3f);
 		} else {
-			velocity.x = MathHelper.lerp(velocity.x, XP * this.moveSpeed * mul, 0.05f);
-			velocity.z = MathHelper.lerp(velocity.z, ZP * this.moveSpeed * mul, 0.05f);
+			velocity.x += XP * this.moveSpeed * mul * TPSCounter.getDelta() * 0.1f;
+			velocity.z += ZP * this.moveSpeed * mul * TPSCounter.getDelta() * 0.1f;
+			velocity.x = MathHelper.lerp(velocity.x, 0, 0.05f);
+			velocity.z = MathHelper.lerp(velocity.z, 0, 0.05f);
 		}
 		
 		
