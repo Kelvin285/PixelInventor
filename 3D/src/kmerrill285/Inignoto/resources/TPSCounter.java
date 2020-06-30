@@ -46,8 +46,15 @@ public class TPSCounter {
 		totalGameTime+=delta;
 	}
 
-	public static double getDelta() {
+	public static double getTrueDelta() {
 		
-		return delta * 16.667 * 2.0;
+		return delta;
+	}
+	
+	public static double getDelta() {
+		double d = delta * 16.667 * 2.0;
+		if (d > 2.0) d = 2.0;
+		if (d < Double.MIN_VALUE) d = Double.MIN_VALUE;
+		return d;
 	}
 }

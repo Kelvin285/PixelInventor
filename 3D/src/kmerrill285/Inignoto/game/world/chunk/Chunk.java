@@ -4,9 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.ArrayDeque;
 
 import org.joml.Vector3f;
 import org.joml.Vector3i;
@@ -20,6 +17,7 @@ import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tile;
+import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
 import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.resources.Constants;
@@ -43,6 +41,7 @@ public class Chunk {
 	private TileData[] tiles;
 	
 	public Mesh mesh;
+	public Mesh waterMesh;
 	
 	public boolean needsToSave = false;
 	
@@ -106,12 +105,15 @@ public class Chunk {
 		this.tiles = tiles;
 	}
 	
+	public boolean isWithinChunk(int x, int y, int z) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			return true;
+		}
+		return false;
+	}
+	
 	public Tile getLocalTile(int x, int y, int z) {
 		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
-			if (tiles == null) {
-				tiles = new TileData[NUM_TILES];
-				getWorld().getChunkGenerator().generateChunk(this, world.getMetaChunk(this.getX(), this.getY(), this.getZ()), true);
-			}
 			if (tiles == null) {
 				return Tiles.AIR;
 			}
@@ -121,17 +123,11 @@ public class Chunk {
 		return Tiles.AIR;
 	}
 	
-	private boolean changed = false;
 	public TileData getTileData(int x, int y, int z, boolean modifying) {
 		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
 			if (tiles == null) {
-				tiles = new TileData[NUM_TILES];
-				getWorld().getChunkGenerator().generateChunk(this, world.getMetaChunk(this.getX(), this.getY(), this.getZ()), true);
-			}
-			if (tiles == null) {
 				return new TileData(Tiles.AIR.getID());
 			}
-			if (modifying) changed = true;
 			if (tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y] == null) return new TileData(Tiles.AIR.getID());
 			return tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y];
 		}
@@ -177,11 +173,19 @@ public class Chunk {
 		}
 	}
 
+	public boolean isLocalTileNotSame(int x, int y, int z, Tile tile) {
+		Tile local = getLocalTile(x, y, z);
+		return local.getID() != tile.getID();
+	}
 	
+	public boolean isLocalTileAir(int x, int y, int z) {
+		Tile local = getLocalTile(x, y, z);
+		return local == Tiles.AIR;
+	}
 	
 	public boolean isLocalTileNotFull(int x, int y, int z) {
 		Tile local = getLocalTile(x, y, z);
-		return !local.isFullCube() || !local.isVisible();
+		return !local.isFullCube() || !local.isVisible() || local.getRayTraceType() != TileRayTraceType.SOLID;
 	}
 
 	public World getWorld() {
@@ -278,6 +282,10 @@ public class Chunk {
 	
 	public boolean isActive() {
 		if (voxels <= 0) return false;
+		return isInActiveRange();
+	}
+	
+	public boolean isInActiveRange() {
 		int x = getX() * SIZE + SIZE / 2;
 		int y = getY() * SIZE_Y + SIZE_Y / 2;
 		int z = getZ() * SIZE + SIZE / 2;
@@ -337,10 +345,13 @@ public class Chunk {
 	private boolean needsToRebuild = false;
 	boolean triedToLoad = false;
 	public void render(ShaderProgram shader) {
-		
-		if (meshesToRemove.size() > 0) {
-			meshesToRemove.pop().dispose();
+		if (mesh == null) {
+			if (this.generated) {
+				if (this.tiles != null)
+				mesh = ChunkBuilder.buildChunk(this);
+			}
 		}
+		
 		if (mesh != null) {
 			if (canRender()) {
 				if (loadValue > 0) {
@@ -353,15 +364,25 @@ public class Chunk {
 				MeshRenderer.renderMesh(mesh, new Vector3f(getX() * SIZE, getY() * SIZE_Y, getZ() * SIZE), shader);
 				shader.setUniformFloat("loadValue", 0);
 			}
-		} else {
-			if (this.generated) {
-				if (this.tiles != null)
-				mesh = ChunkBuilder.buildChunk(this);
-				
-			}
-			
 		}
 		this.testForActivation();
+	}
+	
+	public void renderWater(ShaderProgram shader) {
+		if (waterMesh == null) {
+			if (this.generated) {
+				if (this.tiles != null)
+				waterMesh = ChunkBuilder.buildLiquidChunk(this);
+			}
+		}
+		
+		if (waterMesh != null) {
+			if (canRender()) {
+				shader.setUniformFloat("loadValue", loadValue);
+				MeshRenderer.renderMesh(waterMesh, new Vector3f(getX() * SIZE, getY() * SIZE_Y, getZ() * SIZE), shader);
+				shader.setUniformFloat("loadValue", 0);
+			}
+		}
 	}
 	
 
@@ -376,15 +397,17 @@ public class Chunk {
 	public void testForActivation() {
 		if (needsToRebuild) {
 			if (this.mesh != null) this.mesh.dispose();
+			if (this.waterMesh != null) this.waterMesh.dispose();
 			needsToRebuild = false;
 			mesh = ChunkBuilder.buildChunk(this);
-			
+			waterMesh = ChunkBuilder.buildLiquidChunk(this);
+
 		}
-		if (isActive()) {
+		if (isActive() || this.mesh != null) {
 			if (tiles == null) {
-				getWorld().getChunkGenerator().generateChunk(this, world.getMetaChunk(this.getX(), this.getY(), this.getZ()), true);
-				this.generated = true;
-				this.markForRerender();
+				this.tiles = new TileData[NUM_TILES];
+				this.generated = false;
+				this.world.markChunkForBuilding(this);
 			}
 		} else {
 			if (mesh != null) {
@@ -398,13 +421,11 @@ public class Chunk {
 	
 	public void dispose() {
 		if (mesh != null) mesh.dispose();
+		if (waterMesh != null) waterMesh.dispose();
 		if (needsToSave) this.save();
-		while (meshesToRemove.size() > 0) {
-			meshesToRemove.pop().dispose();
-		}
 		tiles = null;
 		this.mesh = null;
-		this.meshesToRemove = null;
+		this.waterMesh = null;
 		this.setSavefile(null);
 	}
 
@@ -422,10 +443,6 @@ public class Chunk {
 			World.saveQueue.add(this);
 	}
 	
-	private ArrayDeque<Mesh> meshesToRemove = new ArrayDeque<Mesh>();
-	public void removeMesh(final Mesh mesh) {
-		meshesToRemove.add(mesh);
-	}
 
 	public void setSavefile(File savefile) {
 		this.savefile = savefile;

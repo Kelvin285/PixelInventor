@@ -25,6 +25,7 @@ public class MathHelper {
 		return new javax.vecmath.Vector3f(vec.x, vec.y, vec.z);
 	}
 	
+	
 	//https://bits.stephan-brumme.com/roundUpToNextPowerOfTwo.html
 	public static int nextPowerOfTwo(int x) {
   	  x--;

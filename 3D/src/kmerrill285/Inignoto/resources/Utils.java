@@ -184,7 +184,7 @@ public class Utils {
 		Inignoto.game.shadowRenderer = new ShadowRenderer();
 		
 		Inignoto.game.world = new World("World", new Random().nextLong());
-		Inignoto.game.player = new ClientPlayerEntity(new Vector3f(0.5f, Inignoto.game.world.getChunkGenerator().getHeight(0, 0), 0.5f), Inignoto.game.world);
+		Inignoto.game.player = new ClientPlayerEntity(new Vector3f(0.5f, Inignoto.game.world.getChunkGenerator().getBaseHeight(0, 0), 0.5f), Inignoto.game.world);
 		
 		Settings.loadSettings();
 		

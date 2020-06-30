@@ -7,8 +7,9 @@ import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.TilePos;
-import kmerrill285.Inignoto.resources.TPSCounter;
+import kmerrill285.Inignoto.resources.PhysicsHelper;
 import kmerrill285.Inignoto.resources.RayTraceResult.RayTraceType;
+import kmerrill285.Inignoto.resources.TPSCounter;
 
 public class Entity {
 	public Vector3f position;
@@ -36,22 +37,25 @@ public class Entity {
 	public float renderDistance = 200;
 	public boolean touchedGround = false;
 	
-	private int fallTimer = 0;
+	protected double fallTimer = 0;
 	
-	private int jumpDelay = 0;
+	protected int jumpDelay = 0;
 	
 	public float rotY;
 	public float headPitch;
 	public float headYaw;
 	
+	public float mass;
 	
-	public Entity(Vector3f position, Vector3f size, World world) {
+	
+	public Entity(Vector3f position, Vector3f size, World world, float mass) {
 		this.position = position;
 		this.velocity = new Vector3f(0, 0, 0);
 		this.lastPos = new Vector3f(position);
 		this.world = world;
 		this.size = size;
 		this.eyeHeight = this.size.y * 0.9f;
+		this.mass = mass;
 	}
 	
 	public void tick() {
@@ -98,19 +102,6 @@ public class Entity {
 				velocity = new Vector3f(0, 0, 0);
 			}
 		}
-		
-		if (!onGround) {
-			if (fallTimer > 0) {
-				fallTimer--;
-			} else {
-				fallTimer = 0;
-				velocity.y -= getGravity() * TPSCounter.getDelta();
-			}
-		} else {
-			fallTimer = 25;
-		}
-		
-		if (fallTimer > 0) onGround = true;
 		
 		float bias = 0.1f;
 		
@@ -164,21 +155,35 @@ public class Entity {
 		
 		if (velocity.y < 0) {
 			boolean collision = false;
-			if (doesCollisionOccur(position.x, position.y + velocity.y * (float)TPSCounter.getDelta() - bias, position.z)) collision = true;
-			if (doesCollisionOccur(position.x + size.x, position.y + velocity.y * (float)TPSCounter.getDelta() - bias, position.z)) collision = true;
-			if (doesCollisionOccur(position.x + size.x, position.y + velocity.y * (float)TPSCounter.getDelta() - bias, position.z + size.z)) collision = true;
-			if (doesCollisionOccur(position.x, position.y + velocity.y * (float)TPSCounter.getDelta() - bias, position.z + size.z)) collision = true;
+			while (doesCollisionOccur(position.x, position.y + velocity.y - bias, position.z)) {
+				velocity.y+=0.5f;
+				collision = true;
+			}
+			while (doesCollisionOccur(position.x + size.x, position.y + velocity.y - bias, position.z)) {
+				velocity.y+=0.5f;
+				collision = true;
+			}
+			while (doesCollisionOccur(position.x + size.x, position.y + velocity.y - bias, position.z + size.z)) {
+				velocity.y+=0.5f;
+				collision = true;
+			}
+			while (doesCollisionOccur(position.x, position.y + velocity.y - bias, position.z + size.z)) {
+				velocity.y+=0.5f;
+				collision = true;
+			}
 			if (collision) {
 				if (!lastOnGround) {
 					jumpDelay = 1;
 				}
 				onGround = true;
-				position.y = (float)Math.floor(lastPos.y);
-				
+				position.y += velocity.y;
+				position.y = (float)Math.floor(position.y);
 				velocity.y = 0;
-				
+			} else {
+				onGround = false;
 			}
 		}
+		
 		
 		if (velocity.y > 0) {
 			boolean collision = false;
@@ -192,19 +197,57 @@ public class Entity {
 			}
 		}
 		
-		if (velocity.y < -getTerminalVelocity()) {
-			velocity.y = -getTerminalVelocity();
+		{
+			boolean collision = false;
+			if (doesCollisionOccur(position.x, position.y - bias, position.z)) {
+				collision = true;
+			}
+			if (doesCollisionOccur(position.x + size.x, position.y - bias, position.z)) {
+				collision = true;
+			}
+			if (doesCollisionOccur(position.x + size.x, position.y - bias, position.z + size.z)) {
+				collision = true;
+			}
+			if (doesCollisionOccur(position.x, position.y - bias, position.z + size.z)) {
+				collision = true;
+			}
+			if (collision) {
+				onGround = true;
+			} else {
+				onGround = false;
+			}
 		}
+		if (!onGround) {
+			
+			if (fallTimer > 0) {
+				fallTimer-=TPSCounter.getDelta() * 8.0f;
+			} else {
+				fallTimer = 0;
 				
+				PhysicsHelper.applyForce(velocity, new Vector3f(0, -PhysicsHelper.calculateGravity(mass), 0), mass);
+			}
+		} else {
+			fallTimer = 5;
+		}
+		if (fallTimer > 0) onGround = true;
+		
+		
+		
 		lastPos.x = position.x;
 		lastPos.y = position.y;
 		lastPos.z = position.z;
 		
 		isMoving = (int)(velocity.x * 10) != 0 && (int)(velocity.y * 10) != 0;
+		
+		PhysicsHelper.applyDrag(velocity, new Vector3f(size), mass, world.getTile(this.getTilePos()).getDensity());
+		
 		if (ticksExisted > 100) {
-			position.x += velocity.x * TPSCounter.getDelta();
-			position.y += velocity.y * TPSCounter.getDelta();
-			position.z += velocity.z * TPSCounter.getDelta();
+			
+			position.x += velocity.x;
+			position.y += velocity.y;
+			position.z += velocity.z;
+			
+			
 		}
 		
 		ticksExisted++;
@@ -233,9 +276,7 @@ public class Entity {
 	
 	public void jump() {
 		if (jumpDelay > 0) return;
-		velocity.y = 0.15f * 1.7f;
-		velocity.x *= 1.5f;
-		velocity.z *= 1.5f;
+		velocity.y = 0.05f;
 	}
 	
 	public void dispose() {

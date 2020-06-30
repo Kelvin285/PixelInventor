@@ -17,6 +17,7 @@ import kmerrill285.Inignoto.game.world.chunk.TilePos;
 import kmerrill285.Inignoto.resources.FPSCounter;
 import kmerrill285.Inignoto.resources.RayTraceResult.Direction;
 import kmerrill285.Inignoto.resources.RayTraceResult.RayTraceType;
+import kmerrill285.Inignoto.resources.TPSCounter;
 
 public class Input {
 	
@@ -95,8 +96,13 @@ public class Input {
 	private static void doGameInput() {
 		updateCamera();
 		if (Mouse.locked) {
-			Camera.rotation.y += (Mouse.x - Mouse.lastX) * Settings.MOUSE_SENSITIVITY * FPSCounter.getDelta();
-			Camera.rotation.x += (Mouse.y - Mouse.lastY) * Settings.MOUSE_SENSITIVITY * FPSCounter.getDelta();
+			if (TPSCounter.getDelta() < 2.0f) {
+				Camera.rotation.y += (Mouse.x - Mouse.lastX) * Settings.MOUSE_SENSITIVITY * TPSCounter.getDelta() * 2;
+				Camera.rotation.x += (Mouse.y - Mouse.lastY) * Settings.MOUSE_SENSITIVITY * TPSCounter.getDelta() * 2;
+			} else {
+				Camera.rotation.y += (Mouse.x - Mouse.lastX) * Settings.MOUSE_SENSITIVITY * 4;
+				Camera.rotation.x += (Mouse.y - Mouse.lastY) * Settings.MOUSE_SENSITIVITY * 4;
+			}
 			
 			if (Camera.rotation.x < -90) Camera.rotation.x = -90;
 			if (Camera.rotation.x > 90) Camera.rotation.x = 90;

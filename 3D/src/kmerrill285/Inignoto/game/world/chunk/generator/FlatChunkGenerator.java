@@ -9,7 +9,7 @@ public class FlatChunkGenerator extends ChunkGenerator {
 	public FlatChunkGenerator(World world, long seed) {
 		super(world, seed);
 	}
-	public float getHeight(float x, float z) {
+	public float getBaseHeight(float x, float z) {
 		return 5;
 	}
 	

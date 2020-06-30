@@ -8,7 +8,8 @@ public class TileSound {
 	public static int[] leaves;
 	public static int[] snow;
 	public static int[] wood;
-	
+	public static int[] sand;
+
 	private static int loadSound(String modId, String sound) {
 		return Sounds.loadSound(modId, "tiles/"+sound);
 	}

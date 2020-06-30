@@ -9,13 +9,14 @@ import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.world.World;
-import kmerrill285.Inignoto.resources.TPSCounter;
 import kmerrill285.Inignoto.resources.MathHelper;
+import kmerrill285.Inignoto.resources.PhysicsHelper;
+import kmerrill285.Inignoto.resources.TPSCounter;
 
 public class ClientPlayerEntity extends PlayerEntity {
 	
 	private int crawlTap = 0;
-	private int hopTap = 0;
+	private double hopTap = 0;
 	
 	
 
@@ -43,9 +44,18 @@ public class ClientPlayerEntity extends PlayerEntity {
 	
 	private boolean moved = false;
 	
+	float motionMul = 0.7f;
+	
+	private Vector2f groundMove = new Vector2f(0);
+	private Vector2f airMove = new Vector2f(0);
+	
 	@Override
 	public void tick() {
 		super.tick();
+		
+		if (this.fallTimer > 0) {
+			this.onGround = true;
+		}
 		
 		if (useTimer > 0) {
 			useTimer-=TPSCounter.getDelta()*0.5f;
@@ -73,17 +83,21 @@ public class ClientPlayerEntity extends PlayerEntity {
 		Vector2f dir = new Vector2f(0);
 		
 
-		if (hopTap > 0) hopTap -=TPSCounter.getDelta();
-		
+		if (hopTap > 0) hopTap -=TPSCounter.getDelta() * 2;
+		else hopTap = 0;
 		if (rollTap > 0) rollTap-=TPSCounter.getDelta();
 		else
+		{
+			rollTap = 0;
 			rolling = false;
+		}
 		
 		if (onGround) {
 			rightHop = false;
 			leftHop = false;
 			backHop = false;
 		}
+		
 		
 		if (onGround && !isSneaking && !crawling) {
 			
@@ -117,19 +131,12 @@ public class ClientPlayerEntity extends PlayerEntity {
 						float move = 0.7f;
 						
 						if (hopTap == 0) {
-							velocity.y = 0.12f;
-							velocity.x += (float)Math.cos(Math.toRadians(yaw)) * mdir * move * 0.75f;
-							velocity.z += (float)Math.sin(Math.toRadians(yaw)) * mdir * move * 0.75f;
-							if (ZOOM == 2) {
-								move *= -1;
-							}
-							if (mdir == 0) {
-								velocity.x += (float)Math.cos(Math.toRadians(yaw + 90)) * move;
-								velocity.z += (float)Math.sin(Math.toRadians(yaw + 90)) * move;
-							} else {
-								velocity.x += (float)Math.cos(Math.toRadians(yaw + 90)) * move * 0.75f;
-								velocity.z += (float)Math.sin(Math.toRadians(yaw + 90)) * move * 0.75f;
-							}
+							jump();
+							this.velocity.y *= 0.5f;
+							velocity.x += (float)Math.cos(Math.toRadians(yaw)) * mdir * move * 0.75f * TPSCounter.getDelta() * 2;
+							velocity.z += (float)Math.sin(Math.toRadians(yaw)) * mdir * move * 0.75f * TPSCounter.getDelta();
+							this.motionMul = MathHelper.lerp(this.motionMul, 5, 0.1f);
+
 							hopTap = 20;
 						}
 					} else 
@@ -152,9 +159,11 @@ public class ClientPlayerEntity extends PlayerEntity {
 						}
 						if (hopTap == 0) {
 							float move = 0.5f;
-							velocity.y = 0.12f;
-							velocity.x += (float)Math.cos(Math.toRadians(yaw)) * mdir * move;
-							velocity.z += (float)Math.sin(Math.toRadians(yaw)) * mdir * move;
+							jump();
+							this.velocity.y *= 0.5f;
+//							velocity.x += (float)Math.cos(Math.toRadians(yaw)) * mdir * move * TPSCounter.getDelta() * 3;
+//							velocity.z += (float)Math.sin(Math.toRadians(yaw)) * mdir * move * TPSCounter.getDelta() * 3;
+							this.motionMul = MathHelper.lerp(this.motionMul, 3, 0.5f);
 							hopTap = 30;
 						}
 						
@@ -249,6 +258,14 @@ public class ClientPlayerEntity extends PlayerEntity {
 			}
 		}
 		
+		if (onGround) {
+			groundMove.x = XP;
+			groundMove.y = ZP;
+		} else {
+			airMove.x = XP;
+			airMove.y = ZP;
+		}
+		
 		
 		this.isSneaking = Settings.SNEAK.isPressed();
 		
@@ -311,15 +328,33 @@ public class ClientPlayerEntity extends PlayerEntity {
 			}
 		}
 		
-		float mul = 0.7f;
-		if (running) mul = 1.2f;
-		if (isSneaking && onGround) mul = 0.3f;
-		if (crawling && onGround) mul = 0.3f;
+		float deltaMul = 7.0f;
+		if (onGround) {
+			if (isSneaking) motionMul = MathHelper.lerp(motionMul, 0.1f, 0.5f * (float)TPSCounter.getDelta() * deltaMul);
+			else
+			if (crawling) motionMul = MathHelper.lerp(motionMul, 0.1f, 0.5f * (float)TPSCounter.getDelta() * deltaMul);
+			else
+			if (running) motionMul = MathHelper.lerp(motionMul, 0.4f, 0.07f * (float)TPSCounter.getDelta() * deltaMul);
+			else {
+				if (isMoving) {
+					motionMul = MathHelper.lerp(motionMul, 0.2f, 0.1f * (float)TPSCounter.getDelta() * deltaMul);
+				} else {
+					motionMul = MathHelper.lerp(motionMul, 0.0f, 0.5f * (float)TPSCounter.getDelta() * deltaMul);
+				}
+			}
+		} else {
+			if (motionMul < 0.17f) {
+				motionMul = MathHelper.lerp(motionMul, 0.17f, 0.5f * (float)TPSCounter.getDelta() * deltaMul);
+			}
+		}
 		
-		mul *= 3.0f;
+		if (lastOnGround != onGround) {
+			motionMul *= 1.1f;
+		}
+		
 		
 		if (Settings.JUMP.isPressed()) {
-			if (onGround)
+			if (onGround && velocity.y <= 0)
 			jump();
 			else if (Settings.JUMP.isJustPressed()) {
 				Vector3f forward = Camera.getForward();
@@ -373,15 +408,14 @@ public class ClientPlayerEntity extends PlayerEntity {
 		
 		
 		if (onGround) {
-			velocity.x += XP * this.moveSpeed * mul * TPSCounter.getDelta();
-			velocity.z += ZP * this.moveSpeed * mul * TPSCounter.getDelta();
-			velocity.x = MathHelper.lerp(velocity.x, 0, 0.3f);
-			velocity.z = MathHelper.lerp(velocity.z, 0, 0.3f);
+			velocity.x = MathHelper.lerp(velocity.x, groundMove.x * this.moveSpeed * motionMul, 0.1f * (float)TPSCounter.getDelta() * deltaMul);
+			velocity.z = MathHelper.lerp(velocity.z, groundMove.y * this.moveSpeed * motionMul, 0.1f * (float)TPSCounter.getDelta() * deltaMul);
 		} else {
-			velocity.x += XP * this.moveSpeed * mul * TPSCounter.getDelta() * 0.1f;
-			velocity.z += ZP * this.moveSpeed * mul * TPSCounter.getDelta() * 0.1f;
-			velocity.x = MathHelper.lerp(velocity.x, 0, 0.05f);
-			velocity.z = MathHelper.lerp(velocity.z, 0, 0.05f);
+			groundMove.x = MathHelper.lerp(groundMove.x, airMove.x, 0.025f * (float)TPSCounter.getDelta() * deltaMul);
+			groundMove.y = MathHelper.lerp(groundMove.y, airMove.y, 0.025f * (float)TPSCounter.getDelta() * deltaMul);
+			velocity.x = MathHelper.lerp(velocity.x, groundMove.x * this.moveSpeed * motionMul, 0.1f * (float)TPSCounter.getDelta() * deltaMul);
+			velocity.z = MathHelper.lerp(velocity.z, groundMove.y * this.moveSpeed * motionMul, 0.1f * (float)TPSCounter.getDelta() * deltaMul);
+			
 		}
 		
 		
@@ -463,6 +497,13 @@ public class ClientPlayerEntity extends PlayerEntity {
 				}
 			}
 			
+			
+		}
+		
+		if (lastOnGround == true && onGround == false && isSneaking) {
+			position = new Vector3f(this.lastPos);
+			velocity.x = 0;
+			velocity.z = 0;
 		}
 		
 		

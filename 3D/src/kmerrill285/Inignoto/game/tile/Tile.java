@@ -41,6 +41,7 @@ public class Tile {
 	private int ID;
 	
 	private float hardness;
+	private float density;
 	
 	private TileRayTraceType rayTraceType = TileRayTraceType.SOLID; 
 	
@@ -116,6 +117,15 @@ public class Tile {
 	
 	public float getHardness() {
 		return this.hardness;
+	}
+	
+	public float getDensity() {
+		return this.density;
+	}
+	
+	public Tile setDensity(float density) {
+		this.density = density;
+		return this;
 	}
 	
 	public Tile setHardness(float hardness) {

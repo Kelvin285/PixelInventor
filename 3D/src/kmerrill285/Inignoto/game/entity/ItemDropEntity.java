@@ -18,7 +18,7 @@ public class ItemDropEntity extends Entity {
 	public Tile tile;
 
 	public ItemDropEntity(Vector3f position, World world, Tile tile) {
-		super(position, new Vector3f(0.25f, 0.25f, 0.25f), world);
+		super(position, new Vector3f(0.25f, 0.25f, 0.25f), world, tile.getDensity());
 		this.tile = tile;
 	}
 

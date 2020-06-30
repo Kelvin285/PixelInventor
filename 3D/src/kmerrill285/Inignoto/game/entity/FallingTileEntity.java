@@ -16,7 +16,7 @@ public class FallingTileEntity extends Entity {
 	private Tile tile;
 	private Mesh mesh;
 	public FallingTileEntity(TilePos position, World world, Tile tile) {
-		super(new Vector3f(position.x, position.y-0.5f, position.z), new Vector3f(1, 1, 1), world);
+		super(new Vector3f(position.x, position.y-0.5f, position.z), new Vector3f(1, 1, 1), world, tile.getDensity());
 		this.tile = tile;
 		mesh = BlockBuilder.buildMesh(tile, 0, 0, 0);
 	}

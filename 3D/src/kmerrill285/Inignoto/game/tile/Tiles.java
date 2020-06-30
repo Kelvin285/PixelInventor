@@ -17,6 +17,8 @@ public class Tiles {
 	public static Tile PURPLE_GRASS;
 	public static Tile LOG;
 	public static Tile LEAVES;
+	public static Tile WATER;
+	public static Tile SAND;
 	
 	public static Tile getTile(int ID) {
 		for (String str : REGISTRY.keySet()) {
@@ -27,13 +29,16 @@ public class Tiles {
 	}
 	
 	public static void loadTiles() {
-		AIR = new Tile("Inignoto:air", null).setFullCube(false).setRayTraceType(TileRayTraceType.GAS).setBlocksMovement(false).setReplaceable();
-		DIRT = new FallingTile("Inignoto:dirt", TileSound.dirt).setHardness(1.0f);
-		GRASS = new GrassTile("Inignoto:grass", TileSound.grass).setHardness(1.5f);
-		STONE = new Tile("Inignoto:stone", TileSound.stone).setHardness(3.0f);
-		PURPLE_GRASS = new GrassTile("Inignoto:purple_grass", TileSound.grass).setHardness(GRASS.getHardness());
-		LOG = new Tile("Inignoto:log", TileSound.wood).setHardness(2.5f);
-		LEAVES = new Tile("Inignoto:leaves", TileSound.leaves).setHardness(0.2f);
-		SMOOTH_STONE = new Tile("Inignoto:smooth_stone", TileSound.stone).setHardness(3.0f);
+		AIR = new Tile("Inignoto:air", null).setFullCube(false).setRayTraceType(TileRayTraceType.GAS).setBlocksMovement(false).setReplaceable().setDensity(1.225f / 1000.0f);
+		DIRT = new FallingTile("Inignoto:dirt", TileSound.dirt).setHardness(1.0f).setDensity(2.6f);
+		GRASS = new GrassTile("Inignoto:grass", TileSound.grass).setHardness(1.5f).setDensity(2.6f);
+		STONE = new Tile("Inignoto:stone", TileSound.stone).setHardness(3.0f).setDensity(2.6f);
+		PURPLE_GRASS = new GrassTile("Inignoto:purple_grass", TileSound.grass).setHardness(GRASS.getHardness()).setDensity(2.6f);;
+		LOG = new Tile("Inignoto:log", TileSound.wood).setHardness(2.5f).setDensity(2.6f);
+		LEAVES = new Tile("Inignoto:leaves", TileSound.leaves).setHardness(0.2f).setDensity(2.6f);
+		SMOOTH_STONE = new Tile("Inignoto:smooth_stone", TileSound.stone).setHardness(3.0f).setDensity(2.6f);
+		WATER = new Tile("Inignoto:water", null).setDensity(1.0f).setRayTraceType(TileRayTraceType.LIQUID).setBlocksMovement(false).setReplaceable();
+		SAND = new FallingTile("Inignoto:sand", TileSound.sand).setHardness(0.8f).setDensity(2.6f);
+
 	}
 }

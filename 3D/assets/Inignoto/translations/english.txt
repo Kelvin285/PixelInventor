@@ -5,6 +5,8 @@
 "Inignoto:log" = "Log"
 "Inignoto:leaves" = "Leaves"
 "Inignoto:smooth_stone" = "Smooth Stone"
+"Inignoto:water" = "Water"
+"Inignoto:sand" = "Sand"
 
 "Inignoto:input.jump" = "Jump"
 "Inignoto:input.sneak" = "Sneak"

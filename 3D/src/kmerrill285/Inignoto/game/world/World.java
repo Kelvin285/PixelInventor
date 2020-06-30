@@ -7,6 +7,7 @@ import java.util.Random;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
+import custom_models.Part;
 import kmerrill285.Inignoto.Inignoto;
 import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
@@ -54,7 +55,7 @@ public class World {
 	public ArrayList<Chunk> unloadedChunks = new ArrayList<Chunk>();
 	public ArrayList<Chunk> activeChunks = new ArrayList<Chunk>();
 	public ArrayList<Chunk> rendering = new ArrayList<Chunk>();
-	public ArrayList<Chunk> chunksToBuild = new ArrayList<Chunk>();
+	private ArrayList<Chunk> chunksToBuild = new ArrayList<Chunk>();
 	
 	public World(String worldName, long s) {
 		worldSaver = new WorldSaver(worldName, this, s);
@@ -103,10 +104,19 @@ public class World {
 	public void addChunk(int x, int y, int z) {
 		if (getChunk(x, y, z) == null) {
 			chunks.put(x+","+y+","+z,new Chunk(x, y, z, this));
-			chunksToBuild.add(getChunk(x, y, z));
 		}
 		activeChunks.add(getChunk(x, y, z));
+		Chunk chunk = getChunk(x, y, z);
+		markChunkForBuilding(chunk);
 	}
+	
+	public void markChunkForBuilding(Chunk chunk) {
+		if (chunk.mesh == null) {
+			if (!chunksToBuild.contains(chunk));
+			chunksToBuild.add(chunk);
+		}
+	}
+	
 	public static Chunk pseudochunk = new Chunk(0, 0, 0, null);
 	private Vector3i cp = new Vector3i(0);
 	
@@ -145,13 +155,24 @@ public class World {
 					World.pseudochunk.setPos(closest.getX(), closest.getY(), closest.getZ());
 					World.pseudochunk.setWorld(this);
 					World.pseudochunk.setSavefile(null);
-					this.getChunkGenerator().generateChunk(World.pseudochunk, getMetaChunk(closest.getX(), closest.getY(), closest.getZ()), true);
-					closest.mesh = ChunkBuilder.buildChunk(World.pseudochunk);
+					
+					if (closest.isInActiveRange()) {
+						World.pseudochunk.setTiles(new TileData[Chunk.SIZE * Chunk.SIZE * Chunk.SIZE_Y]);
+						this.getChunkGenerator().generateChunk(World.pseudochunk, getMetaChunk(closest.getX(), closest.getY(), closest.getZ()), true);
+						closest.mesh = ChunkBuilder.buildChunk(World.pseudochunk);
+						closest.waterMesh = ChunkBuilder.buildLiquidChunk(World.pseudochunk);
+						closest.setTiles( World.pseudochunk.getTiles());
+					} else {
+						this.getChunkGenerator().generateChunk(World.pseudochunk, getMetaChunk(closest.getX(), closest.getY(), closest.getZ()), true);
+						closest.mesh = ChunkBuilder.buildChunk(World.pseudochunk);
+						closest.waterMesh = ChunkBuilder.buildLiquidChunk(World.pseudochunk);
+					}
 					closest.generated = true;
 				}
 				chunksToBuild.remove(closest);
 			}
 		}
+		chunksToBuild.clear();
 		
 	}
 
@@ -169,7 +190,6 @@ public class World {
 			unloadedChunks.clear();
 			
 			activeChunks.clear();
-			
 			
 			for (String str : chunks.keySet()) {
 				unloadedChunks.add(chunks.get(str));
@@ -271,6 +291,15 @@ public class World {
 			}
 		}
 		
+		for (int i = 0; i < rendering.size(); i++) {
+			if (rendering.get(i) == null) continue;
+			try {
+				rendering.get(i).renderWater(shader);
+			}catch (Exception e) {
+				
+			}
+		}
+		
 		adding = true;
 		renderTileHover(shader);
 	}
@@ -317,89 +346,24 @@ public class World {
 	
 	private Mesh selection = null;
 	private void renderTileHover(ShaderProgram shader) {
+		
 		if (selection == null) {
-			float[] vertices = new float[] {
-				0, 0, 0, //0
-				0, 1, 0, //1
-				1, 1, 0, //2
-				1, 0, 0, //3
-				
-				0, 0, 1, //4
-				0, 1, 1, //5
-				1, 1, 1, //6
-				1, 0, 1, //7
-				
-				0, 0, 0, //8
-				0, 0, 1, //9
-				1, 0, 1, //10
-				1, 0, 0, //11
-				
-				0, 1, 0, //12
-				0, 1, 1, //13
-				1, 1, 1, //14
-				1, 1, 0, //15
-				
-				0, 0, 0, //16
-				0, 1, 0, //17
-				0, 1, 1, //18
-				0, 0, 1, //19
-				
-				1, 0, 0, //20
-				1, 1, 0, //21
-				1, 1, 1, //22
-				1, 0, 1, //23
-			};
-			float[] texCoords = new float[] {
-				0, 0,
-				0, 1,
-				1, 1,
-				1, 0,
-				
-				0, 0,
-				0, 1,
-				1, 1,
-				1, 0,
-				
-				0, 0,
-				0, 1,
-				1, 1,
-				1, 0,
-				
-				0, 0,
-				0, 1,
-				1, 1,
-				1, 0,
-				
-				0, 0,
-				0, 1,
-				1, 1,
-				1, 0,
-				
-				0, 0,
-				0, 1,
-				1, 1,
-				1, 0
-				
-			};
-			int[] indices = new int[] {
-				0, 1, 2, 2, 3, 0,
-				4, 5, 6, 6, 7, 4,
-				
-				8, 9, 10, 10, 11, 8,
-				12, 13, 14, 14, 15, 12,
-				
-				16, 17, 18, 18, 19, 16,
-				20, 21, 22, 22, 23, 20
-			};
-			Texture tex = Textures.TILE_SELECTION;
-			selection = new Mesh(vertices, texCoords, indices, tex);
+			Part part = new Part(null);
+			part.size = new Vector3i(2, 2, 2);
+			part.outlineMesh = Part.buildOutlineMesh(part);
+			part.outlineMesh.texture = Textures.WHITE_SQUARE;
+			this.selection = part.outlineMesh;
 		}
+		
 		if (Camera.currentTile != null) {
+			
 			TilePos pos = Camera.currentTile.getPosition();
 			if (pos != null) {
 				float size = 0.01f;
+				
 				if (Camera.currentTile.getType() == RayTraceType.TILE) {
-					MeshRenderer.renderMesh(selection, new Vector3f(pos.x - (size / 2.0f), pos.y - (size / 2.0f), pos.z - (size / 2.0f)), new Vector3f(1.0f + size, 1.0f + size, 1.0f + size), shader);
+					
+					MeshRenderer.renderMesh(selection, new Vector3f(pos.x - (size / 2.0f), pos.y - (size / 2.0f), pos.z - (size / 2.0f)).add(0.5f, 0.5f, 0.5f), new Vector3f(1.0f + size, 1.0f + size, 1.0f + size).mul(1.01f), shader);
 					
 				}
 			}

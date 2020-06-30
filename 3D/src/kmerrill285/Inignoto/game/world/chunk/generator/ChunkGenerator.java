@@ -4,12 +4,14 @@ import java.util.Random;
 
 import imported.FastNoise;
 import kmerrill285.Inignoto.game.tile.Tile;
+import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
 import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.Chunk;
 import kmerrill285.Inignoto.game.world.chunk.MetaChunk;
 import kmerrill285.Inignoto.game.world.chunk.TileData;
 import kmerrill285.Inignoto.game.world.chunk.generator.feature.Structure;
+import kmerrill285.Inignoto.resources.MathHelper;
 
 public class ChunkGenerator {
 	
@@ -44,18 +46,170 @@ public class ChunkGenerator {
 			for (int z = 0; z < Chunk.SIZE; z++) {
 				int X = nx + x;
 				int Z = nz + z;
-				int height = (int)getHeight(X, Z);
-				Tile topTile = getTopTile(X, Z);
+				float baseheight = (int)getBaseHeight(X, Z);
+				float RIVERS = getRivers(X, Z);
+				int rivers = (int)RIVERS;
+				
+				float terrace = noise.GetSimplex(X * 0.1f, Z * 0.1f) + 0.5f;
+
+				if (rivers > 0) {
+					baseheight += (getHillHeight(X, Z) * RIVERS);
+
+					
+					if (baseheight < 0) {
+						baseheight = MathHelper.lerp(baseheight, 0, 0.7f);
+					}
+					if (terrace > 0) {
+						if (baseheight >= 20 && baseheight <= 30) {
+							baseheight = MathHelper.lerp(baseheight, 25, 0.7f);
+						}
+						if (terrace > 0.2)
+						if (baseheight >= 60 && baseheight <= 80) {
+							baseheight = MathHelper.lerp(baseheight, 70, 0.85f);
+						}
+					}
+					if (terrace < 0 && terrace > -0.1) {
+						if (baseheight >= 0 && baseheight <= 20) {
+							baseheight = MathHelper.lerp(baseheight, 10, 0.7f);
+						}
+					}
+				}
+				
+				int height = (int)baseheight;
+								
 				for (int y = 0; y < Chunk.SIZE_Y; y++) {
 					int Y = ny + y;
 					
-					if (Y == height) {
-						chunk.setLocalTile(x, y, z, topTile);
-						Structure.TREE.addToChunk(chunk, x, y, z, X, Y, Z);
-					} 
 					if (Y < height){
 						chunk.setLocalTile(x, y, z, Tiles.DIRT);
 					}
+					
+					if (Y >= height + rivers && Y <= height - 1 && rivers < 0) {
+						chunk.setLocalTile(x, y, z, Tiles.WATER);
+						if (Y == height - 1) {
+							chunk.setLocalTile(x, y, z, Tiles.AIR);
+						}
+					}
+					
+				}
+				
+			}
+		}
+		
+		populateChunk(chunk, metachunk, true);
+		
+		if (metachunk != null) {
+			world.removeMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ());
+		}
+		
+		chunk.isGenerating = false;
+	}
+
+	public void populateChunk(Chunk chunk, MetaChunk metachunk, boolean structures) {
+		
+		int nx = chunk.getX() * Chunk.SIZE;
+		int ny = chunk.getY() * Chunk.SIZE_Y;
+		int nz = chunk.getZ() * Chunk.SIZE;
+		for (int x = 0; x < Chunk.SIZE; x++) {
+			for (int z = 0; z < Chunk.SIZE; z++) {
+				int X = nx + x;
+				int Z = nz + z;
+				float baseheight = (int)getBaseHeight(X, Z);
+				float RIVERS = getRivers(X, Z);
+				int rivers = (int)RIVERS;
+				
+				float terrace = noise.GetSimplex(X * 0.1f, Z * 0.1f) + 0.5f;
+
+				if (rivers > 0) {
+					baseheight += (getHillHeight(X, Z) * RIVERS);
+
+					
+					if (baseheight < 0) {
+						baseheight = MathHelper.lerp(baseheight, 0, 0.7f);
+					}
+					if (terrace > 0) {
+						if (baseheight >= 20 && baseheight <= 30) {
+							baseheight = MathHelper.lerp(baseheight, 25, 0.7f);
+						}
+						if (terrace > 0.2)
+						if (baseheight >= 60 && baseheight <= 80) {
+							baseheight = MathHelper.lerp(baseheight, 70, 0.85f);
+						}
+					}
+					if (terrace < 0 && terrace > -0.1) {
+						if (baseheight >= 0 && baseheight <= 20) {
+							baseheight = MathHelper.lerp(baseheight, 10, 0.7f);
+						}
+					}
+				}
+				
+				int height = (int)baseheight;
+				Tile topTile = getTopTile(X, Z);
+				
+				
+				if (rivers < 0) {
+					topTile = Tiles.SAND;
+					double stone = noise.GetSimplex(x * 15, z * 15);
+					stone += 0.5f;
+					if (stone <= 0.1f) {
+						topTile = Tiles.STONE;
+					}
+				}
+								
+				for (int y = 0; y < Chunk.SIZE_Y; y++) {
+					int Y = ny + y;
+					
+					int stone_layer = (int)(30 * (10 * noise.GetSimplex((Y + terrace * 5) * 0.5f, 0)));
+					
+
+					
+					
+					if (Y < height){
+						if (Y < height - 2){
+							if (chunk.getLocalTile(x, y, z).getRayTraceType() == TileRayTraceType.SOLID) {
+								if (rivers < 0 && Y >= height + rivers - 3) {
+									chunk.setLocalTile(x, y, z, Tiles.STONE);
+								} else {
+									chunk.setLocalTile(x, y, z, Tiles.SMOOTH_STONE);
+								}
+								if (stone_layer % 4 == 0 || stone_layer % 7 == 0) {
+									chunk.setLocalTile(x, y, z, Tiles.STONE);
+								}
+							}
+							
+						}
+					}
+					
+					
+					
+					if (rivers >= 0) {
+						if (Y == height) {
+							chunk.setLocalTile(x, y, z, topTile);
+							if (topTile == Tiles.SAND) {
+								Structure.RIVER_ROCK.addToChunk(chunk, x, y, z, X, Y, Z);
+							}
+//							if (topTile == Tiles.GRASS) {
+//								Structure.TREE.addToChunk(chunk, x, y, z, X, Y, Z);
+//							}
+						} 
+					}
+					
+					if (rivers == -1 || rivers == 1) {
+						if (RIVERS < -1.5f) {
+							if (Y == height + rivers - 1) {
+								chunk.setLocalTile(x, y, z, topTile);
+							}
+						} else {
+							if (Y == height + rivers) {
+								chunk.setLocalTile(x, y, z, topTile);
+							}
+						}
+					}
+										
+					if (Y == height + rivers && rivers < 0) {
+						Structure.RIVER_ROCK.addToChunk(chunk, x, y, z, X, Y, Z);
+					}
+					
 					if (metachunk != null) {
 						TileData data = metachunk.getTileData(x, y, z);
 						if (data != null) {
@@ -65,29 +219,55 @@ public class ChunkGenerator {
 					}
 					
 				}
+				
 			}
 		}
-		if (metachunk != null) {
-			world.removeMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ());
-		}
 		
-		chunk.isGenerating = false;
 	}
 	
 	
-	public float getHeight(float x, float z) {
-		float height = noise.GetSimplexFractal(x * 2, 0, z * 2) * 24;
-		float mountain = noise.GetSimplex(x / 500.0f, 0.0f, z / 500.0f) * 512;
+	public float getHillHeight(float x, float z) {
+		x += noise.GetSimplexFractal(x * 0.5f, z) * 50;
+		z += noise.GetSimplexFractal(x, z * 0.5f) * 50;
 		
-		return (height + 64 + mountain) / 5.0f;
+		float base = noise.GetSimplex(x * 0.4f, z * 0.4f) * 10;
+		
+		if (base < -5) base += (-5 - base);
+		
+		base += noise.GetPerlin(x * 0.7f, z * 0.7f);
+
+		
+		return base;
+	}
+	
+	public float getRivers(float x, float z) {
+		x += noise.GetSimplexFractal(x * 0.5f, z) * 50;
+		z += noise.GetSimplexFractal(x, z * 0.5f) * 50;
+		float river = Math.abs(noise.GetSimplex(x * 0.1f, z * 0.1f) + 0.5f);
+		river -= 0.5f;
+		
+		return (Math.abs(river) - 0.08f) * 50;
+	}
+	public float getBaseHeight(float x, float z) {
+		x += noise.GetSimplex(x * 0.1f, z) * 50;
+		z += noise.GetSimplex(z, z * 0.1f) * 50;
+		
+		x += noise.GetSimplexFractal(x * 0.5f, z) * 50;
+		z += noise.GetSimplexFractal(x, z * 0.5f) * 50;
+		
+		float base = noise.GetSimplex(x * 0.1f, z * 0.1f) * 10;
+		
+		base += noise.GetPerlin(x * 0.5f, z * 0.5f) * 2;
+				
+		return base;
 	}
 	
 	public Tile getTopTile(float x, float z) {
-		double purple = noise.GetSimplex(x, 0, z);
+//		double purple = noise.GetSimplex(x, z);
 		Tile topTile = Tiles.GRASS;
-		if (purple > 0) {
-			topTile = Tiles.PURPLE_GRASS;
-		}
+//		if (purple > 0) {
+//			topTile = Tiles.PURPLE_GRASS;
+//		}
 		return topTile;
 	}
 
