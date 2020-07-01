@@ -97,11 +97,11 @@ public class Input {
 		updateCamera();
 		if (Mouse.locked) {
 			if (TPSCounter.getDelta() < 2.0f) {
-				Camera.rotation.y += (Mouse.x - Mouse.lastX) * Settings.MOUSE_SENSITIVITY * TPSCounter.getDelta() * 2;
-				Camera.rotation.x += (Mouse.y - Mouse.lastY) * Settings.MOUSE_SENSITIVITY * TPSCounter.getDelta() * 2;
+				Camera.rotation.y += (Mouse.x - Mouse.lastX) * Settings.MOUSE_SENSITIVITY * TPSCounter.getDelta() * 4;
+				Camera.rotation.x += (Mouse.y - Mouse.lastY) * Settings.MOUSE_SENSITIVITY * TPSCounter.getDelta() * 4;
 			} else {
-				Camera.rotation.y += (Mouse.x - Mouse.lastX) * Settings.MOUSE_SENSITIVITY * 4;
-				Camera.rotation.x += (Mouse.y - Mouse.lastY) * Settings.MOUSE_SENSITIVITY * 4;
+				Camera.rotation.y += (Mouse.x - Mouse.lastX) * Settings.MOUSE_SENSITIVITY * 6;
+				Camera.rotation.x += (Mouse.y - Mouse.lastY) * Settings.MOUSE_SENSITIVITY * 6;
 			}
 			
 			if (Camera.rotation.x < -90) Camera.rotation.x = -90;

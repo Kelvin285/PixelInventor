@@ -14,7 +14,8 @@ import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.Chunk;
 import kmerrill285.Inignoto.game.world.chunk.TileData;
 import kmerrill285.Inignoto.game.world.chunk.TilePos;
-import kmerrill285.Inignoto.game.world.chunk.generator.feature.trees.Tree;
+import kmerrill285.Inignoto.game.world.chunk.generator.feature.trees.BigTree;
+import kmerrill285.Inignoto.game.world.chunk.generator.feature.trees.SimpleTree;
 import kmerrill285.Inignoto.game.world.chunk.generator.rocks.RiverRock;
 
 public class Structure implements Serializable {
@@ -34,8 +35,9 @@ public class Structure implements Serializable {
 	private Structure structure;
 	
 	public static StoneCube STONE_CUBE = new StoneCube();
-	public static Tree TREE = new Tree();
+	public static BigTree BIG_TREE = new BigTree();
 	public static RiverRock RIVER_ROCK = new RiverRock();
+	public static SimpleTree SIMPLE_TREE = new SimpleTree();
 
 	protected boolean override;
 	

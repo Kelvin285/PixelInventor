@@ -4,7 +4,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Random;
 import java.util.Scanner;
+
+import kmerrill285.Inignoto.game.entity.Entity;
+import kmerrill285.Inignoto.game.entity.player.PlayerEntity;
 
 
 public class WorldSaver {
@@ -35,6 +39,7 @@ public class WorldSaver {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
 	}
 	
 	public void loadWorld() {
@@ -58,7 +63,7 @@ public class WorldSaver {
 			}
 		}
 		if (seed == -1) {
-			seed = this.seed;
+			seed = new Random().nextLong();
 		}
 		world.setSeed(seed);
 		System.out.println("World seed: " + seed);

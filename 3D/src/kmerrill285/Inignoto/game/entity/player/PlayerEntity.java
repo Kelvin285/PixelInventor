@@ -34,7 +34,7 @@ public class PlayerEntity extends Entity {
 	@Override
 	public void tick() {
 		super.tick();
-		this.size.x = 0.35f;
+		this.size.x = 0.5f;
 		this.size.z = this.size.x;
 		
 		if (!crawling) {
@@ -49,7 +49,7 @@ public class PlayerEntity extends Entity {
 		if (isSneaking) {
 			this.size.y = MathHelper.lerp(this.size.y, 1.25f, 0.25f * (float)TPSCounter.getDelta());
 		} else {
-			this.size.y = MathHelper.lerp(this.size.y, 1.5f, 0.25f * (float)TPSCounter.getDelta());
+			this.size.y = MathHelper.lerp(this.size.y, 1.65f, 0.25f * (float)TPSCounter.getDelta());
 		}
 		
 		if (crawling) {

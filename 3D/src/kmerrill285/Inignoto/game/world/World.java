@@ -29,6 +29,7 @@ import kmerrill285.Inignoto.game.world.chunk.MetaChunk;
 import kmerrill285.Inignoto.game.world.chunk.TileData;
 import kmerrill285.Inignoto.game.world.chunk.TilePos;
 import kmerrill285.Inignoto.game.world.chunk.generator.ChunkGenerator;
+import kmerrill285.Inignoto.game.world.chunk.generator.ContinentalChunkGenerator;
 import kmerrill285.Inignoto.resources.RayTraceResult;
 import kmerrill285.Inignoto.resources.RayTraceResult.RayTraceType;
 
@@ -62,7 +63,7 @@ public class World {
 		worldSaver.loadWorld();
 		
 		random = new Random(seed);
-		generator = new ChunkGenerator(this, seed);
+		generator = new ContinentalChunkGenerator(this, seed);
 		
 		this.setSeed(seed);
 		
@@ -88,7 +89,7 @@ public class World {
 	
 	public void addMetaChunk(int x, int y, int z) {
 		if (getMetaChunk(x, y, z) == null) {
-			MetaChunk meta = new MetaChunk();
+			MetaChunk meta = new MetaChunk(x, y, z);
 			metaChunks.put(x+","+y+","+z, meta);
 		}
 	}
@@ -121,6 +122,32 @@ public class World {
 	private Vector3i cp = new Vector3i(0);
 	
 	public void buildChunks() {
+		saveChunks();
+		
+		Chunk closest = findClosestChunk();
+		
+		if (closest != null) {
+			if (closest.mesh == null) {
+				buildChunk(closest);
+			}
+		}
+		chunksToBuild.clear();
+		
+		buildMetaChunks();
+	}
+	
+	public void buildMetaChunks() {
+		MetaChunk closest = findClosestMetaChunk();
+		if (closest != null) {
+			Chunk c = getChunk(closest.x, closest.y, closest.z);
+			if (c != null) {
+				applyMeta(c, closest, true);
+			}
+		}
+	}
+	
+	
+	private void saveChunks() {
 		try {
 			for (int i = 0; i < saveQueue.size(); i++) {
 				saveQueue.get(i).save();
@@ -129,83 +156,128 @@ public class World {
 			e.printStackTrace();
 		}
 		saveQueue.clear();
-		
-		for (int g = 0; g < 50; g++) {
-			int cx = (int)Math.floor(Camera.position.x / Chunk.SIZE);
-			int cy = (int)Math.floor(Camera.position.y / Chunk.SIZE_Y);
-			int cz = (int)Math.floor(Camera.position.z / Chunk.SIZE);
-			cp.x = cx;
-			cp.y = cy;
-			cp.z = cz;
-			double distance = Double.MAX_VALUE;
-			Chunk closest = null;
-			for (int i = 0; i < chunksToBuild.size(); i++) {
-				Chunk c = chunksToBuild.get(i);
-				if (c.generated == false) {
-					double dist = cp.distance(c.getX(), c.getY(), c.getZ());
-					if (dist < distance) {
-						distance = dist;
-						closest = c;
-					}
-				}
+	}
+	private void applyMeta(Chunk chunk, MetaChunk metachunk, boolean genMesh) {
+		if (!chunk.generated) {
+			buildChunk(chunk);
+		} else {
+			if (chunk.getTiles() == null) {
+				chunk.setTiles(new TileData[Chunk.SIZE * Chunk.SIZE * Chunk.SIZE_Y]);
 			}
+			this.getChunkGenerator().applyMeta(chunk, metachunk);
+			if (genMesh) {
+				chunk.mesh = ChunkBuilder.buildChunk(chunk);
+				chunk.waterMesh = ChunkBuilder.buildLiquidChunk(chunk);
+			}			
+		}
+	}
+	
+	private void buildChunk(Chunk chunk) {
+		World.pseudochunk.setPos(chunk.getX(), chunk.getY(), chunk.getZ());
+		World.pseudochunk.setWorld(this);
+		World.pseudochunk.setSavefile(null);
+		MetaChunk meta = null;
+		boolean setMesh = false;
+		if (chunk.isInActiveRange()) {
+			World.pseudochunk.setTiles(new TileData[Chunk.SIZE * Chunk.SIZE * Chunk.SIZE_Y]);
+			this.getChunkGenerator().generateChunk(World.pseudochunk, getMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ()), true);
+			chunk.setTiles( World.pseudochunk.getTiles());
+			setMesh = true;
+			meta = getMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ());
+		} else {
+			this.getChunkGenerator().generateChunk(World.pseudochunk, getMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ()), true);
+			setMesh = true;
+			meta = getMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ());
+		}
+		
+		if (setMesh) {
+			if (meta != null) {
+				chunk.generated = true;
+				this.applyMeta(chunk, meta, false);
+			}
+			chunk.mesh = ChunkBuilder.buildChunk(World.pseudochunk);
+			chunk.waterMesh = ChunkBuilder.buildLiquidChunk(World.pseudochunk);
 			
-			if (closest != null) {
-				if (closest.mesh == null) {
-					World.pseudochunk.setPos(closest.getX(), closest.getY(), closest.getZ());
-					World.pseudochunk.setWorld(this);
-					World.pseudochunk.setSavefile(null);
-					
-					if (closest.isInActiveRange()) {
-						World.pseudochunk.setTiles(new TileData[Chunk.SIZE * Chunk.SIZE * Chunk.SIZE_Y]);
-						this.getChunkGenerator().generateChunk(World.pseudochunk, getMetaChunk(closest.getX(), closest.getY(), closest.getZ()), true);
-						closest.mesh = ChunkBuilder.buildChunk(World.pseudochunk);
-						closest.waterMesh = ChunkBuilder.buildLiquidChunk(World.pseudochunk);
-						closest.setTiles( World.pseudochunk.getTiles());
-					} else {
-						this.getChunkGenerator().generateChunk(World.pseudochunk, getMetaChunk(closest.getX(), closest.getY(), closest.getZ()), true);
-						closest.mesh = ChunkBuilder.buildChunk(World.pseudochunk);
-						closest.waterMesh = ChunkBuilder.buildLiquidChunk(World.pseudochunk);
-					}
-					closest.generated = true;
-				}
-				chunksToBuild.remove(closest);
+		}
+		
+		chunk.generated = true;
+		
+	}
+	
+	private MetaChunk findClosestMetaChunk() {
+		int cx = (int)Math.floor(Camera.position.x / Chunk.SIZE);
+		int cy = (int)Math.floor(Camera.position.y / Chunk.SIZE_Y);
+		int cz = (int)Math.floor(Camera.position.z / Chunk.SIZE);
+		cp.x = cx;
+		cp.y = cy;
+		cp.z = cz;
+		double distance = Double.MAX_VALUE;
+		MetaChunk closest = null;
+		for (String str : metaChunks.keySet()) {
+			String[] data = str.split(",");
+			int x = Integer.parseInt(data[0]);
+			int y = Integer.parseInt(data[1]);
+			int z = Integer.parseInt(data[2]);
+			MetaChunk c = metaChunks.get(str);
+			double dist = cp.distance(x, y, z);
+			if (dist < distance) {
+				distance = dist;
+				closest = c;
 			}
 		}
-		chunksToBuild.clear();
-		
+		return closest;
+	}
+	
+	private Chunk findClosestChunk() {
+		int cx = (int)Math.floor(Camera.position.x / Chunk.SIZE);
+		int cy = (int)Math.floor(Camera.position.y / Chunk.SIZE_Y);
+		int cz = (int)Math.floor(Camera.position.z / Chunk.SIZE);
+		cp.x = cx;
+		cp.y = cy;
+		cp.z = cz;
+		double distance = Double.MAX_VALUE;
+		Chunk closest = null;
+		for (int i = 0; i < chunksToBuild.size(); i++) {
+			Chunk c = chunksToBuild.get(i);
+			if (c.generated == false) {
+				double dist = cp.distance(c.getX(), c.getY(), c.getZ());
+				if (dist < distance) {
+					distance = dist;
+					closest = c;
+				}
+			}
+		}
+		return closest;
 	}
 
 	private int mx, my, mz;
 	public void updateChunkManager() {
 		if (!adding) return;
 		
-		for (int a = 0; a < 10; a++) {
-			for (int i = 0; i < unloadedChunks.size(); i++ ) {
-				if (!activeChunks.contains(unloadedChunks.get(i))) {
-					Chunk m = unloadedChunks.get(i);
-					this.removeChunk(m.getX(), m.getY(), m.getZ());
+		for (int i = 0; i < unloadedChunks.size(); i++ ) {
+			if (!activeChunks.contains(unloadedChunks.get(i))) {
+				Chunk m = unloadedChunks.get(i);
+				this.removeChunk(m.getX(), m.getY(), m.getZ());
+			}
+		}
+		unloadedChunks.clear();
+		
+		activeChunks.clear();
+		
+		for (String str : chunks.keySet()) {
+			unloadedChunks.add(chunks.get(str));
+		}
+		
+		mx = (int)Math.floor(Camera.position.x / Chunk.SIZE);
+		my = (int)Math.floor(Camera.position.y / Chunk.SIZE_Y);
+		mz = (int)Math.floor(Camera.position.z / Chunk.SIZE);
+		for (int x = -Settings.VIEW_DISTANCE / 2; x < Settings.VIEW_DISTANCE / 2 + 1; x++) {
+			for (int z = -Settings.VIEW_DISTANCE / 2; z < Settings.VIEW_DISTANCE / 2 + 1; z++) {
+				for (int y = -Settings.VERTICAL_VIEW_DISTANCE / 2; y < Settings.VERTICAL_VIEW_DISTANCE / 2 + 1; y++) {
+					addChunk(x + mx, y + my, z + mz);
 				}
 			}
-			unloadedChunks.clear();
 			
-			activeChunks.clear();
-			
-			for (String str : chunks.keySet()) {
-				unloadedChunks.add(chunks.get(str));
-			}
-			
-			mx = (int)Math.floor(Camera.position.x / Chunk.SIZE);
-			my = (int)Math.floor(Camera.position.y / Chunk.SIZE_Y);
-			mz = (int)Math.floor(Camera.position.z / Chunk.SIZE);
-			for (int x = -Settings.VIEW_DISTANCE / 2; x < Settings.VIEW_DISTANCE / 2 + 1; x++) {
-				for (int z = -Settings.VIEW_DISTANCE / 2; z < Settings.VIEW_DISTANCE / 2 + 1; z++) {
-					for (int y = -Settings.VERTICAL_VIEW_DISTANCE / 2; y < Settings.VERTICAL_VIEW_DISTANCE / 2 + 1; y++) {
-						addChunk(x + mx, y + my, z + mz);
-					}
-				}
-				
-			}
 		}
 		adding = false;
 	}
@@ -465,31 +537,7 @@ public class World {
 		x -= mx * Chunk.SIZE;
 		y -= my * Chunk.SIZE_Y;
 		z -= mz * Chunk.SIZE;
-		try {
-			if (chunk == null) {
-				if (getMetaChunk(mx, my, mz) == null) {
-					addMetaChunk(mx, my, mz);
-					MetaChunk meta = getMetaChunk(mx, my, mz);
-					meta.setTileData(x, y, z, data);
-				} else {
-					MetaChunk meta = getMetaChunk(mx, my, mz);
-					meta.setTileData(x, y, z, data);
-				}
-			} else {
-				if (chunk.generated == false) {
-					if (getMetaChunk(mx, my, mz) == null) {
-						addMetaChunk(mx, my, mz);
-						MetaChunk meta = getMetaChunk(mx, my, mz);
-						meta.setTileData(x, y, z, data);
-					} else {
-						MetaChunk meta = getMetaChunk(mx, my, mz);
-						meta.setTileData(x, y, z, data);
-					}
-				}
-			}
-		}catch (Exception e) {
-			
-		}
+		
 		if (chunk == null) return false;
 		chunk.setTileData(x, y, z, data);
 		return true;
@@ -516,6 +564,54 @@ public class World {
 		return setTile(x, y, z, tile, true);
 	}
 	
+	public boolean setMetaData(int x, int y, int z, TileData tile) {
+		int mx = (int)Math.floor((float)x / Chunk.SIZE);
+		int my = (int)Math.floor((float)y / Chunk.SIZE_Y);
+		int mz = (int)Math.floor((float)z / Chunk.SIZE);
+		MetaChunk chunk = getMetaChunk(mx, my, mz);
+
+		x -= mx * Chunk.SIZE;
+		y -= my * Chunk.SIZE_Y;
+		z -= mz * Chunk.SIZE;
+		
+		if (chunk == null) {
+			addMetaChunk(x, y, z);
+			chunk = getMetaChunk(x, y, z);
+		}
+		
+		if (chunk != null) {
+			chunk.setTileData(x, y, z, tile);
+			return true;
+		}
+		return false;
+	}
+	
+	public boolean setMetaTile(TilePos pos, Tile tile, boolean sounds) {
+		return setMetaTile(pos.x, pos.y, pos.z, tile, sounds);
+	}
+	
+	public boolean setMetaTile(int x, int y, int z, Tile tile, boolean sounds) {
+		int mx = (int)Math.floor((float)x / Chunk.SIZE);
+		int my = (int)Math.floor((float)y / Chunk.SIZE_Y);
+		int mz = (int)Math.floor((float)z / Chunk.SIZE);
+		MetaChunk chunk = getMetaChunk(mx, my, mz);
+
+		x -= mx * Chunk.SIZE;
+		y -= my * Chunk.SIZE_Y;
+		z -= mz * Chunk.SIZE;
+		
+		if (chunk == null) {
+			addMetaChunk(mx, my, mz);
+			chunk = getMetaChunk(mx, my, mz);
+		}
+		
+		if (chunk != null) {
+			chunk.setTileData(x, y, z, new TileData(tile.getID()));
+			return true;
+		}
+		return false;
+	}
+	
 	public boolean setTile(int x, int y, int z, Tile tile, boolean sounds) {
 		int mx = (int)Math.floor((float)x / Chunk.SIZE);
 		int my = (int)Math.floor((float)y / Chunk.SIZE_Y);
@@ -525,31 +621,7 @@ public class World {
 		x -= mx * Chunk.SIZE;
 		y -= my * Chunk.SIZE_Y;
 		z -= mz * Chunk.SIZE;
-		try {
-			if (chunk == null) {
-				if (getMetaChunk(mx, my, mz) == null) {
-					addMetaChunk(mx, my, mz);
-					MetaChunk meta = getMetaChunk(mx, my, mz);
-					meta.setTileData(x, y, z, new TileData(tile.getID()));
-				} else {
-					MetaChunk meta = getMetaChunk(mx, my, mz);
-					meta.setTileData(x, y, z, new TileData(tile.getID()));
-				}
-			} else {
-				if (chunk.generated == false) {
-					if (getMetaChunk(mx, my, mz) == null) {
-						addMetaChunk(mx, my, mz);
-						MetaChunk meta = getMetaChunk(mx, my, mz);
-						meta.setTileData(x, y, z, new TileData(tile.getID()));
-					} else {
-						MetaChunk meta = getMetaChunk(mx, my, mz);
-						meta.setTileData(x, y, z, new TileData(tile.getID()));
-					}
-				}
-			}
-		}catch (Exception e) {
-			
-		}
+		
 		if (chunk != null) {
 			chunk.setLocalTile(x, y, z, tile);
 			chunk.markForRerender();

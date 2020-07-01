@@ -8,6 +8,7 @@ import kmerrill285.Inignoto.game.client.rendering.entity.PlayerRenderer;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tile;
+import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.resources.MathHelper;
 import kmerrill285.Inignoto.resources.PhysicsHelper;
@@ -329,15 +330,18 @@ public class ClientPlayerEntity extends PlayerEntity {
 		}
 		
 		float deltaMul = 7.0f;
+		if (this.isInLiquid() || world.getTile(getTilePos()).getRayTraceType() == TileRayTraceType.LIQUID) {
+			deltaMul = 6.5f;
+		}
 		if (onGround) {
 			if (isSneaking) motionMul = MathHelper.lerp(motionMul, 0.1f, 0.5f * (float)TPSCounter.getDelta() * deltaMul);
 			else
 			if (crawling) motionMul = MathHelper.lerp(motionMul, 0.1f, 0.5f * (float)TPSCounter.getDelta() * deltaMul);
 			else
-			if (running) motionMul = MathHelper.lerp(motionMul, 0.4f, 0.07f * (float)TPSCounter.getDelta() * deltaMul);
+			if (running) motionMul = MathHelper.lerp(motionMul, 0.38f, 0.07f * (float)TPSCounter.getDelta() * deltaMul);
 			else {
 				if (isMoving) {
-					motionMul = MathHelper.lerp(motionMul, 0.2f, 0.1f * (float)TPSCounter.getDelta() * deltaMul);
+					motionMul = MathHelper.lerp(motionMul, 0.22f, 0.1f * (float)TPSCounter.getDelta() * deltaMul);
 				} else {
 					motionMul = MathHelper.lerp(motionMul, 0.0f, 0.5f * (float)TPSCounter.getDelta() * deltaMul);
 				}
@@ -349,12 +353,24 @@ public class ClientPlayerEntity extends PlayerEntity {
 		}
 		
 		if (lastOnGround != onGround) {
-			motionMul *= 1.1f;
+			if (running) {
+				if (!isSneaking) {
+					motionMul *= 1.05f;
+				}
+				if (running) motionMul = MathHelper.lerp(motionMul, 0.44f, 0.07f * (float)TPSCounter.getDelta() * deltaMul);
+				
+			} else {
+				if (!crawling && !isSneaking) {
+					if (isMoving) {
+						if (!running) motionMul = MathHelper.lerp(motionMul, 0.22f, 0.5f * (float)TPSCounter.getDelta() * deltaMul);
+					}
+				}
+			}
 		}
 		
 		
 		if (Settings.JUMP.isPressed()) {
-			if (onGround && velocity.y <= 0)
+			if (onGround && velocity.y <= 0 || world.getTile(getTilePos().add(0, 1, 0)).getRayTraceType() == TileRayTraceType.LIQUID)
 			jump();
 			else if (Settings.JUMP.isJustPressed()) {
 				Vector3f forward = Camera.getForward();

@@ -7,6 +7,7 @@
 "Inignoto:smooth_stone" = "Smooth Stone"
 "Inignoto:water" = "Water"
 "Inignoto:sand" = "Sand"
+"Inignoto:malechite" = "Malechite"
 
 "Inignoto:input.jump" = "Jump"
 "Inignoto:input.sneak" = "Sneak"

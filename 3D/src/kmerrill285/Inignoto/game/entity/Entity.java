@@ -59,32 +59,11 @@ public class Entity {
 	}
 	
 	public void tick() {
+		float delta = (float)TPSCounter.getDelta() * 10;
 		
 		if (jumpDelay > 0) {
 			jumpDelay--;
 		}
-//		if (this.isRunning()) {
-//			if (this.onGround) {
-//				velocity.x *= 0.52f;
-//				velocity.z *= 0.52f;
-//			} else {
-//				velocity.x *= 0.62f;
-//				velocity.z *= 0.62f;
-//			}
-//		} else {
-//			if (this.isSneaking) {
-//				if (this.onGround) {
-//					velocity.x *= 0.5f;
-//					velocity.z *= 0.5f;
-//				} else {
-//					velocity.x *= 0.25f;
-//					velocity.z *= 0.25f;
-//				}
-//			} else {
-//				velocity.x *= 0.5f;
-//				velocity.z *= 0.5f;
-//			}
-//		}
 		
 		
 		lastOnGround = onGround;
@@ -108,10 +87,10 @@ public class Entity {
 		
 		if (velocity.x < 0) {
 			boolean collision = false;
-			if (doesCollisionOccur(position.x + velocity.x - bias, position.y, position.z)) collision = true;
-			if (doesCollisionOccur(position.x + velocity.x - bias, position.y, position.z + size.z)) collision = true;
-			if (doesCollisionOccur(position.x + velocity.x - bias, position.y + size.y, position.z)) collision = true;
-			if (doesCollisionOccur(position.x + velocity.x - bias, position.y + size.y, position.z + size.z)) collision = true;
+			if (doesCollisionOccur(position.x + velocity.x * delta - bias, position.y, position.z)) collision = true;
+			if (doesCollisionOccur(position.x + velocity.x * delta - bias, position.y, position.z + size.z)) collision = true;
+			if (doesCollisionOccur(position.x + velocity.x * delta - bias, position.y + size.y, position.z)) collision = true;
+			if (doesCollisionOccur(position.x + velocity.x * delta - bias, position.y + size.y, position.z + size.z)) collision = true;
 			if (collision) {
 				velocity.x = 0;
 				position.x = lastPos.x;
@@ -119,10 +98,10 @@ public class Entity {
 		}
 		if (velocity.x > 0) {
 			boolean collision = false;
-			if (doesCollisionOccur(position.x + velocity.x + size.x + bias, position.y, position.z)) collision = true;
-			if (doesCollisionOccur(position.x + velocity.x + size.x + bias, position.y, position.z + size.z)) collision = true;
-			if (doesCollisionOccur(position.x + velocity.x + size.x + bias, position.y + size.y, position.z)) collision = true;
-			if (doesCollisionOccur(position.x + velocity.x + size.x + bias, position.y + size.y, position.z + size.z)) collision = true;
+			if (doesCollisionOccur(position.x + velocity.x * delta + size.x + bias, position.y, position.z)) collision = true;
+			if (doesCollisionOccur(position.x + velocity.x * delta + size.x + bias, position.y, position.z + size.z)) collision = true;
+			if (doesCollisionOccur(position.x + velocity.x * delta + size.x + bias, position.y + size.y, position.z)) collision = true;
+			if (doesCollisionOccur(position.x + velocity.x * delta + size.x + bias, position.y + size.y, position.z + size.z)) collision = true;
 			if (collision) {
 				velocity.x = 0;
 				position.x = lastPos.x;
@@ -131,10 +110,10 @@ public class Entity {
 		
 		if (velocity.z < 0) {
 			boolean collision = false;
-			if (doesCollisionOccur(position.x, position.y, position.z + velocity.z - bias)) collision = true;
-			if (doesCollisionOccur(position.x + size.x, position.y, position.z + velocity.z - bias)) collision = true;
-			if (doesCollisionOccur(position.x, position.y + size.y, position.z + velocity.z - bias)) collision = true;
-			if (doesCollisionOccur(position.x + size.x, position.y + size.y, position.z + velocity.z - bias)) collision = true;
+			if (doesCollisionOccur(position.x, position.y, position.z + velocity.z * delta - bias)) collision = true;
+			if (doesCollisionOccur(position.x + size.x, position.y, position.z + velocity.z * delta - bias)) collision = true;
+			if (doesCollisionOccur(position.x, position.y + size.y, position.z + velocity.z * delta - bias)) collision = true;
+			if (doesCollisionOccur(position.x + size.x, position.y + size.y, position.z + velocity.z * delta - bias)) collision = true;
 			if (collision) {
 				velocity.z = 0;
 				position.z = lastPos.z;
@@ -143,10 +122,10 @@ public class Entity {
 		
 		if (velocity.z > 0) {
 			boolean collision = false;
-			if (doesCollisionOccur(position.x, position.y, position.z + velocity.z + bias + size.z)) collision = true;
-			if (doesCollisionOccur(position.x + size.x, position.y, position.z + velocity.z + bias + size.z)) collision = true;
-			if (doesCollisionOccur(position.x, position.y + size.y, position.z + velocity.z + bias + size.z)) collision = true;
-			if (doesCollisionOccur(position.x + size.x, position.y + size.y, position.z + velocity.z + bias + size.z)) collision = true;
+			if (doesCollisionOccur(position.x, position.y, position.z + velocity.z * delta + bias + size.z)) collision = true;
+			if (doesCollisionOccur(position.x + size.x, position.y, position.z + velocity.z * delta + bias + size.z)) collision = true;
+			if (doesCollisionOccur(position.x, position.y + size.y, position.z + velocity.z * delta + bias + size.z)) collision = true;
+			if (doesCollisionOccur(position.x + size.x, position.y + size.y, position.z + velocity.z * delta + bias + size.z)) collision = true;
 			if (collision) {
 				velocity.z = 0;
 				position.z = lastPos.z;
@@ -155,19 +134,19 @@ public class Entity {
 		
 		if (velocity.y < 0) {
 			boolean collision = false;
-			while (doesCollisionOccur(position.x, position.y + velocity.y - bias, position.z)) {
+			while (doesCollisionOccur(position.x, position.y + velocity.y * delta - bias, position.z)) {
 				velocity.y+=0.5f;
 				collision = true;
 			}
-			while (doesCollisionOccur(position.x + size.x, position.y + velocity.y - bias, position.z)) {
+			while (doesCollisionOccur(position.x + size.x, position.y + velocity.y * delta - bias, position.z)) {
 				velocity.y+=0.5f;
 				collision = true;
 			}
-			while (doesCollisionOccur(position.x + size.x, position.y + velocity.y - bias, position.z + size.z)) {
+			while (doesCollisionOccur(position.x + size.x, position.y + velocity.y * delta - bias, position.z + size.z)) {
 				velocity.y+=0.5f;
 				collision = true;
 			}
-			while (doesCollisionOccur(position.x, position.y + velocity.y - bias, position.z + size.z)) {
+			while (doesCollisionOccur(position.x, position.y + velocity.y * delta - bias, position.z + size.z)) {
 				velocity.y+=0.5f;
 				collision = true;
 			}
@@ -187,10 +166,10 @@ public class Entity {
 		
 		if (velocity.y > 0) {
 			boolean collision = false;
-			if (doesCollisionOccur(position.x, position.y + velocity.y + size.y + bias, position.z)) collision = true;
-			if (doesCollisionOccur(position.x + size.x, position.y + velocity.y + size.y + bias, position.z)) collision = true;
-			if (doesCollisionOccur(position.x + size.x, position.y + velocity.y + size.y + bias, position.z + size.z)) collision = true;
-			if (doesCollisionOccur(position.x, position.y + velocity.y + size.y + bias, position.z + size.z)) collision = true;
+			if (doesCollisionOccur(position.x, position.y + velocity.y * delta + size.y + bias, position.z)) collision = true;
+			if (doesCollisionOccur(position.x + size.x, position.y + velocity.y * delta + size.y + bias, position.z)) collision = true;
+			if (doesCollisionOccur(position.x + size.x, position.y + velocity.y * delta + size.y + bias, position.z + size.z)) collision = true;
+			if (doesCollisionOccur(position.x, position.y + velocity.y + size.y * delta + bias, position.z + size.z)) collision = true;
 			if (collision) {
 				velocity.y = 0;
 				position.y = lastPos.y;
@@ -224,7 +203,15 @@ public class Entity {
 			} else {
 				fallTimer = 0;
 				
-				PhysicsHelper.applyForce(velocity, new Vector3f(0, -PhysicsHelper.calculateGravity(mass), 0), mass);
+				if (!this.isInLiquid()) {
+					PhysicsHelper.applyForce(velocity, new Vector3f(0, -PhysicsHelper.calculateGravity(mass) * 1.25f, 0), mass);
+				} else {
+					if (this.isSneaking) {
+						PhysicsHelper.applyForce(velocity, new Vector3f(0, -PhysicsHelper.calculateGravity(mass) * 7f, 0), mass);
+					} else {
+						PhysicsHelper.applyForce(velocity, new Vector3f(0, -PhysicsHelper.calculateGravity(mass) * 0.5f, 0), mass);
+					}
+				}
 			}
 		} else {
 			fallTimer = 5;
@@ -239,15 +226,18 @@ public class Entity {
 		
 		isMoving = (int)(velocity.x * 10) != 0 && (int)(velocity.y * 10) != 0;
 		
-		PhysicsHelper.applyDrag(velocity, new Vector3f(size), mass, world.getTile(this.getTilePos()).getDensity());
+		if (world.getTile(getTilePos().add(0, 1, 0)).getRayTraceType() == TileRayTraceType.LIQUID) {
+			velocity.lerp(new Vector3f(velocity.x, 0, velocity.z), 0.3f);
+			velocity.lerp(new Vector3f(0, velocity.y, 0), 0.01f);
+		}
+		if (world.getTile(getTilePos()).getRayTraceType() == TileRayTraceType.LIQUID) {
+			velocity.lerp(new Vector3f(0, velocity.y, 0), 0.01f);
+		}
 		
 		if (ticksExisted > 100) {
-			
-			position.x += velocity.x;
-			position.y += velocity.y;
-			position.z += velocity.z;
-			
-			
+			position.x += velocity.x * delta;
+			position.y += velocity.y * delta;
+			position.z += velocity.z * delta;
 		}
 		
 		ticksExisted++;
@@ -256,6 +246,7 @@ public class Entity {
 				touchedGround=  true;
 			}
 		}
+		
 	}
 	
 	public void render(ShaderProgram shader) {
@@ -264,6 +255,11 @@ public class Entity {
 	
 	public void renderShadow(ShaderProgram shader, ShadowRenderer renderer) {
 		
+	}
+	
+	public boolean isInLiquid() {
+		return world.getTile(getTilePos().add(0, 1, 0)).getRayTraceType() == TileRayTraceType.LIQUID ||
+				world.getTile(getTilePos()).getRayTraceType() == TileRayTraceType.LIQUID;
 	}
 	
 	public float getGravity() {
@@ -276,7 +272,23 @@ public class Entity {
 	
 	public void jump() {
 		if (jumpDelay > 0) return;
-		velocity.y = 0.05f;
+		if (world.getTile(getTilePos().add(0, 1, 0)).getRayTraceType() != TileRayTraceType.LIQUID) {
+			velocity.y = 0.05f;
+		}
+		if (world.getTile(getTilePos().add(0, 1, 0)).getRayTraceType() == TileRayTraceType.LIQUID) {
+			if (velocity.y < 0) {
+				velocity.lerp(new Vector3f(velocity.x, 0.05f, velocity.z), 0.025f);
+			} else {
+				velocity.lerp(new Vector3f(velocity.x, 0.15f, velocity.z), 0.1f);
+			}
+			if (world.getTile(getTilePos().add(0, 2, 0)).getRayTraceType() != TileRayTraceType.LIQUID) {
+				velocity.lerp(new Vector3f(velocity.x, 0, velocity.z), 0.2f);
+			}
+		}
+		
+		
+		
+		
 	}
 	
 	public void dispose() {

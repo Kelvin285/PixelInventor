@@ -25,6 +25,19 @@ public class ChunkGenerator {
 		this.world = world;
 	}
 
+	public void applyMeta(Chunk chunk, MetaChunk metachunk) {
+		for (String str : metachunk.tiles.keySet()) {
+			String[] data = str.split(",");
+			int x = Integer.parseInt(data[0]);
+			int y = Integer.parseInt(data[1]);
+			int z = Integer.parseInt(data[2]);
+			chunk.setTileData(x, y, z, new TileData(metachunk.getTileData(x, y, z).getTile()));
+		}
+		chunk.needsToSave = true;
+		chunk.save();
+		chunk.getWorld().removeMetaChunk(metachunk.x, metachunk.y, metachunk.z);
+	}
+	
 	public void generateChunk(Chunk chunk, MetaChunk metachunk, boolean structures) {
 		if (chunk.load() == true) return;
 		if (chunk.getTiles() == null) {
@@ -97,10 +110,6 @@ public class ChunkGenerator {
 		}
 		
 		populateChunk(chunk, metachunk, true);
-		
-		if (metachunk != null) {
-			world.removeMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ());
-		}
 		
 		chunk.isGenerating = false;
 	}
@@ -188,9 +197,9 @@ public class ChunkGenerator {
 							if (topTile == Tiles.SAND) {
 								Structure.RIVER_ROCK.addToChunk(chunk, x, y, z, X, Y, Z);
 							}
-//							if (topTile == Tiles.GRASS) {
-//								Structure.TREE.addToChunk(chunk, x, y, z, X, Y, Z);
-//							}
+							if (topTile == Tiles.GRASS) {
+								Structure.BIG_TREE.addToChunk(chunk, x, y, z, X, Y, Z);
+							}
 						} 
 					}
 					
@@ -208,14 +217,6 @@ public class ChunkGenerator {
 										
 					if (Y == height + rivers && rivers < 0) {
 						Structure.RIVER_ROCK.addToChunk(chunk, x, y, z, X, Y, Z);
-					}
-					
-					if (metachunk != null) {
-						TileData data = metachunk.getTileData(x, y, z);
-						if (data != null) {
-							if (data.getTile() != Tiles.AIR.getID())
-							chunk.setTileData(x, y, z, new TileData(metachunk.getTileData(x, y, z).getTile()));
-						}
 					}
 					
 				}

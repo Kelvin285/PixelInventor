@@ -47,13 +47,15 @@ public class TPSCounter {
 	}
 
 	public static double getTrueDelta() {
-		
-		return delta;
+		double d = delta;
+		if (d > 0.012) d = 0.012;
+		if (d < Double.MIN_VALUE) d = Double.MIN_VALUE;
+		return d;
 	}
 	
 	public static double getDelta() {
-		double d = delta * 16.667 * 2.0;
-		if (d > 2.0) d = 2.0;
+		double d = delta * 16.667 * 1.0;
+		if (d > 0.012 * 16.667) d = 0.012 * 16.667;
 		if (d < Double.MIN_VALUE) d = Double.MIN_VALUE;
 		return d;
 	}
