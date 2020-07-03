@@ -108,10 +108,12 @@ public class Part {
 				U + size_z + size_x, V + size_z,
 				U + size_z + size_x, V + size_z + size_y,
 				//back
-				U + size_z + size_x + size_z, V + size_z + size_y,
-				U + size_z + size_x + size_z, V + size_z,
-				U + size_z + size_x + size_x + size_z, V + size_z,
-				U + size_z + size_x + size_x + size_z, V + size_z + size_y,
+
+				U + size_z + size_x + size_x + size_z, V + size_z + size_y, //4
+				U + size_z + size_x + size_x + size_z, V + size_z, //3
+				U + size_z + size_x + size_z, V + size_z, //2
+				U + size_z + size_x + size_z, V + size_z + size_y, //1
+				
 				//left
 				U, V + size_z + size_y,
 				U, V + size_z,

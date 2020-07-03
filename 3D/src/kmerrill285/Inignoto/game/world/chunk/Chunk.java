@@ -43,6 +43,9 @@ public class Chunk {
 	public Mesh mesh;
 	public Mesh waterMesh;
 	
+	public Mesh setMesh;
+	public Mesh setWaterMesh;
+	
 	public boolean needsToSave = false;
 	
 	public float loadValue = 1.0f;
@@ -120,6 +123,39 @@ public class Chunk {
 			if (tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y] == null) return Tiles.AIR;
 			return Tiles.getTile(tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y].getTile());
 		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (X == getX() && Y == getY() && Z == getZ()) return Tiles.AIR;
+			if (world.getChunk(X, Y, Z).generated) {
+				return world.getChunk(X, Y, Z).getLocalTile(x, y, z);
+			}
+		}
 		return Tiles.AIR;
 	}
 	
@@ -131,6 +167,39 @@ public class Chunk {
 			if (tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y] == null) return new TileData(Tiles.AIR.getID());
 			return tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y];
 		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (X == getX() && Y == getY() && Z == getZ()) new TileData(Tiles.AIR.getID());
+			if (world.getChunk(X, Y, Z).generated) {
+				return world.getChunk(X, Y, Z).getTileData(x, y, z, modifying);
+			}
+		}
 		return new TileData(Tiles.AIR.getID());
 	}
 	
@@ -141,6 +210,39 @@ public class Chunk {
 				return;
 			}
 			tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y] = data;
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (X == getX() && Y == getY() && Z == getZ()) return;
+			if (world.getChunk(X, Y, Z).generated) {
+				world.getChunk(X, Y, Z).setTileData(x, y, z, data);
+			}
 		}
 	}
 	
@@ -170,6 +272,39 @@ public class Chunk {
 				tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y].setTile(tile.getID());
 			}
 			
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (X == getX() && Y == getY() && Z == getZ()) return;
+			if (world.getChunk(X, Y, Z).generated) {
+				world.getChunk(X, Y, Z).setLocalTile(x, y, z, tile);
+			}
 		}
 	}
 
@@ -274,14 +409,12 @@ public class Chunk {
 	}
 	
 	public boolean canTick() {
-		if (voxels <= 0) return false;
 		int x = getX() * SIZE + SIZE / 2;
 		int z = getZ() * SIZE + SIZE / 2;
 		return Camera.position.distance(x, 0, z) <= SIZE * Constants.ACTIVE_CHUNK_DISTANCE;
 	}
 	
 	public boolean isActive() {
-		if (voxels <= 0) return false;
 		return isInActiveRange();
 	}
 	
@@ -320,6 +453,11 @@ public class Chunk {
 							if (data.getTile() == Tiles.AIR.getID())
 								continue;
 							Tile tile = Tiles.getTile(data.getTile());
+							
+							if (tile.getRayTraceType() == TileRayTraceType.LIQUID) {
+								tile.tick(getWorld(), pos, getWorld().getRandom());
+							}
+							
 							if (tile.getTickPercent() > 0)
 							if (getWorld().getRandom().nextDouble() * 100 <= tile.getTickPercent()) {
 								tile.tick(getWorld(), pos, getWorld().getRandom());
@@ -345,11 +483,9 @@ public class Chunk {
 	private boolean needsToRebuild = false;
 	boolean triedToLoad = false;
 	public void render(ShaderProgram shader) {
-		if (mesh == null) {
-			if (this.generated) {
-				if (this.tiles != null)
-				mesh = ChunkBuilder.buildChunk(this);
-			}
+		if (setMesh != null) {
+			mesh = setMesh;
+			setMesh = null;
 		}
 		
 		if (mesh != null) {
@@ -364,16 +500,16 @@ public class Chunk {
 				MeshRenderer.renderMesh(mesh, new Vector3f(getX() * SIZE, getY() * SIZE_Y, getZ() * SIZE), shader);
 				shader.setUniformFloat("loadValue", 0);
 			}
+		} else {
+			this.markForRerender();
 		}
 		this.testForActivation();
 	}
 	
 	public void renderWater(ShaderProgram shader) {
-		if (waterMesh == null) {
-			if (this.generated) {
-				if (this.tiles != null)
-				waterMesh = ChunkBuilder.buildLiquidChunk(this);
-			}
+		if (setWaterMesh != null) {
+			waterMesh = setWaterMesh;
+			setWaterMesh = null;
 		}
 		
 		if (waterMesh != null) {
@@ -399,11 +535,11 @@ public class Chunk {
 			if (this.mesh != null) this.mesh.dispose();
 			if (this.waterMesh != null) this.waterMesh.dispose();
 			needsToRebuild = false;
-			mesh = ChunkBuilder.buildChunk(this);
+			mesh = ChunkBuilder.buildChunk(this, true);
 			waterMesh = ChunkBuilder.buildLiquidChunk(this);
 
 		}
-		if (isActive() || this.mesh != null) {
+		if (isActive()) {
 			if (tiles == null) {
 				this.tiles = new TileData[NUM_TILES];
 				this.generated = false;

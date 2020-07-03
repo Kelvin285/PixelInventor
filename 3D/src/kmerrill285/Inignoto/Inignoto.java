@@ -128,8 +128,8 @@ public class Inignoto {
 			public void run() {
 				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
 					try {
-						if (GuiRenderer.currentScreen == null)
-						updateWorld();
+						world.tickChunks();
+						world.updateChunkManager();
 						world.buildChunks();
 					}catch (Exception e) {
 						e.printStackTrace();
@@ -175,23 +175,16 @@ public class Inignoto {
 			try {
 				FPSCounter.startUpdate();
 
-
-				
-				if (ticks == 0) {
-
-					if (guiRenderer.getOpenScreen() == null) {
-						updateLight();
-						updateLight();
-					}
-					Camera.update();
-					
-					Camera.updateView();
-					render();
-					
-				} else {
-					ticks++;
-					ticks %= Settings.frameSkip + 1;
+				if (guiRenderer.getOpenScreen() == null) {
+					updateLight();
+					updateLight();
 				}
+				Camera.update();
+				
+				Camera.updateView();
+				render();
+				
+				
 				boolean updateMouse = true;
 				if (guiRenderer.getOpenScreen() instanceof ModelerScreen) {
 					updateMouse = false;
@@ -376,11 +369,6 @@ public class Inignoto {
 		if (this.guiRenderer.getOpenScreen() instanceof MenuScreen == false)
 			world.tick();
 		
-	}
-	
-	public void updateWorld() {
-		world.updateChunkManager();
-		world.tickChunks();
 	}
 	
 	public void dispose() {

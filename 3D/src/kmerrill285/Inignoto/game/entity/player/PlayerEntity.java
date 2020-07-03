@@ -4,6 +4,7 @@ import org.joml.Vector3f;
 
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.entity.Entity;
+import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.resources.MathHelper;
 import kmerrill285.Inignoto.resources.TPSCounter;
@@ -53,7 +54,7 @@ public class PlayerEntity extends Entity {
 		}
 		
 		if (crawling) {
-			this.size.y = MathHelper.lerp(this.size.y, 0.7f, 0.25f * (float)TPSCounter.getDelta());
+			this.size.y = MathHelper.lerp(this.size.y, 0.1f, 0.25f * (float)TPSCounter.getDelta());
 		}
 		
 		if (onGround == false) {
@@ -62,7 +63,7 @@ public class PlayerEntity extends Entity {
 		
 		
 		if (rollTap > 30) {
-			this.size.y = MathHelper.lerp(this.size.y, 0.7f, 0.25f * (float)TPSCounter.getDelta());
+			this.size.y = MathHelper.lerp(this.size.y, 0.1f, 0.25f * (float)TPSCounter.getDelta());
 			float speed = 0.25f;
 			if (ZOOM != 2) {
 				if (running) {
@@ -85,6 +86,9 @@ public class PlayerEntity extends Entity {
 			if (rollTap < 25) 
 			{
 				rolling = false;
+				if (world.getTile(getTilePos().add(0, 1, 0)) == Tiles.AIR) {
+					crawling = false;
+				}
 			}
 			if (rollTap < 20) rollTap = 0;
 		}

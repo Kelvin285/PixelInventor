@@ -8,14 +8,25 @@ import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
 import kmerrill285.Inignoto.game.tile.Tiles;
+import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.Chunk;
 import kmerrill285.Inignoto.game.world.chunk.TileData;
 
 public class ChunkBuilder {
 
 	
-	public static Mesh buildChunk(Chunk chunk) {
-//		if (chunk.voxels <= 0) return null;
+	public static Mesh buildChunk(Chunk chunk, boolean cascade) {
+		
+		int x = chunk.getX();
+		int y = chunk.getY();
+		int z = chunk.getZ();
+		if (chunk.getWorld().getChunk(x - 1, y, z) == null) return null;
+		if (chunk.getWorld().getChunk(x + 1, y, z) == null) return null;
+		if (chunk.getWorld().getChunk(x, y - 1, z) == null) return null;
+		if (chunk.getWorld().getChunk(x, y + 1, z) == null) return null;
+		if (chunk.getWorld().getChunk(x, y, z - 1) == null) return null;
+		if (chunk.getWorld().getChunk(x, y, z + 1) == null) return null;
+		
 		ArrayList<Float> vertices = new ArrayList<Float>();
 		ArrayList<Integer> indices = new ArrayList<Integer>();
 		ArrayList<Float> texCoords = new ArrayList<Float>();
@@ -36,12 +47,14 @@ public class ChunkBuilder {
 		}
 		
 		Mesh mesh = new Mesh(v, t, i, Textures.TILES.texture);
+		
+		
+		
 		return mesh;
 	}
 	final int FULL = 16 * 16 * 16;
 	
 	public static int buildChunk(Chunk chunk, ArrayList<Float> vertices, ArrayList<Integer> indices, ArrayList<Float> texCoords, int index) {
-//		if (chunk.voxels <= 0) return index;
 		for (int i = 0; i < Chunk.SIZE_Y / Chunk.SIZE; i++) {
 				for (int x = 0; x < Chunk.SIZE; x++) {
 					for (int y = i * Chunk.SIZE; y < i * Chunk.SIZE + Chunk.SIZE; y++) {
@@ -66,7 +79,17 @@ public class ChunkBuilder {
 	
 	
 	public static Mesh buildLiquidChunk(Chunk chunk) {
-//		if (chunk.voxels <= 0) return null;
+		
+		int x = chunk.getX();
+		int y = chunk.getY();
+		int z = chunk.getZ();
+		if (chunk.getWorld().getChunk(x - 1, y, z) == null) return null;
+		if (chunk.getWorld().getChunk(x + 1, y, z) == null) return null;
+		if (chunk.getWorld().getChunk(x, y - 1, z) == null) return null;
+		if (chunk.getWorld().getChunk(x, y + 1, z) == null) return null;
+		if (chunk.getWorld().getChunk(x, y, z - 1) == null) return null;
+		if (chunk.getWorld().getChunk(x, y, z + 1) == null) return null;
+		
 		ArrayList<Float> vertices = new ArrayList<Float>();
 		ArrayList<Integer> indices = new ArrayList<Integer>();
 		ArrayList<Float> texCoords = new ArrayList<Float>();
@@ -87,7 +110,21 @@ public class ChunkBuilder {
 		}
 		
 		Mesh mesh = new Mesh(v, t, i, Textures.TILES.texture);
+		
+		
+		
 		return mesh;
+	}
+	
+	private static void cascade(int x, int y, int z, World world) {
+		Chunk c = world.getChunk(x, y, z);
+		if (c != null) {
+			if (c.generated) {
+				c.mesh = buildChunk(c, false);
+				c.waterMesh = buildLiquidChunk(c);
+				c.generated = true;
+			}
+		}
 	}
 	
 	public static int buildLiquidChunk(Chunk chunk, ArrayList<Float> vertices, ArrayList<Integer> indices, ArrayList<Float> texCoords, int index) {

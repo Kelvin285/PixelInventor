@@ -17,7 +17,6 @@ import kmerrill285.Inignoto.game.client.rendering.effects.lights.DirectionalLigh
 import kmerrill285.Inignoto.game.client.rendering.effects.lights.Fog;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
-import kmerrill285.Inignoto.game.client.rendering.textures.Texture;
 import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
 import kmerrill285.Inignoto.game.entity.Entity;
 import kmerrill285.Inignoto.game.settings.Settings;
@@ -29,7 +28,8 @@ import kmerrill285.Inignoto.game.world.chunk.MetaChunk;
 import kmerrill285.Inignoto.game.world.chunk.TileData;
 import kmerrill285.Inignoto.game.world.chunk.TilePos;
 import kmerrill285.Inignoto.game.world.chunk.generator.ChunkGenerator;
-import kmerrill285.Inignoto.game.world.chunk.generator.ContinentalChunkGenerator;
+import kmerrill285.Inignoto.game.world.chunk.generator.BiomeChunkGenerator;
+import kmerrill285.Inignoto.game.world.chunk.generator.FlatChunkGenerator;
 import kmerrill285.Inignoto.resources.RayTraceResult;
 import kmerrill285.Inignoto.resources.RayTraceResult.RayTraceType;
 
@@ -56,14 +56,15 @@ public class World {
 	public ArrayList<Chunk> unloadedChunks = new ArrayList<Chunk>();
 	public ArrayList<Chunk> activeChunks = new ArrayList<Chunk>();
 	public ArrayList<Chunk> rendering = new ArrayList<Chunk>();
-	private ArrayList<Chunk> chunksToBuild = new ArrayList<Chunk>();
+	
+	public WorldSettings worldSettings = new WorldSettings();
 	
 	public World(String worldName, long s) {
 		worldSaver = new WorldSaver(worldName, this, s);
 		worldSaver.loadWorld();
 		
 		random = new Random(seed);
-		generator = new ContinentalChunkGenerator(this, seed);
+		generator = new BiomeChunkGenerator(this, seed);
 		
 		this.setSeed(seed);
 		
@@ -106,16 +107,13 @@ public class World {
 		if (getChunk(x, y, z) == null) {
 			chunks.put(x+","+y+","+z,new Chunk(x, y, z, this));
 		}
-		activeChunks.add(getChunk(x, y, z));
 		Chunk chunk = getChunk(x, y, z);
-		markChunkForBuilding(chunk);
+
+		activeChunks.add(chunk);
 	}
 	
 	public void markChunkForBuilding(Chunk chunk) {
-		if (chunk.mesh == null) {
-			if (!chunksToBuild.contains(chunk));
-			chunksToBuild.add(chunk);
-		}
+		chunk.generated = false;
 	}
 	
 	public static Chunk pseudochunk = new Chunk(0, 0, 0, null);
@@ -123,17 +121,17 @@ public class World {
 	
 	public void buildChunks() {
 		saveChunks();
-		
-		Chunk closest = findClosestChunk();
-		
-		if (closest != null) {
-			if (closest.mesh == null) {
+		for (int i = 0; i < 15; i++) {
+			Chunk closest = findClosestChunk();
+			
+			if (closest != null) {
 				buildChunk(closest);
 			}
+			
+			buildMetaChunks();
 		}
-		chunksToBuild.clear();
 		
-		buildMetaChunks();
+		
 	}
 	
 	public void buildMetaChunks() {
@@ -166,8 +164,8 @@ public class World {
 			}
 			this.getChunkGenerator().applyMeta(chunk, metachunk);
 			if (genMesh) {
-				chunk.mesh = ChunkBuilder.buildChunk(chunk);
-				chunk.waterMesh = ChunkBuilder.buildLiquidChunk(chunk);
+				chunk.setMesh = ChunkBuilder.buildChunk(chunk, true);
+				chunk.setWaterMesh = ChunkBuilder.buildLiquidChunk(chunk);
 			}			
 		}
 	}
@@ -195,8 +193,8 @@ public class World {
 				chunk.generated = true;
 				this.applyMeta(chunk, meta, false);
 			}
-			chunk.mesh = ChunkBuilder.buildChunk(World.pseudochunk);
-			chunk.waterMesh = ChunkBuilder.buildLiquidChunk(World.pseudochunk);
+			chunk.setMesh = ChunkBuilder.buildChunk(World.pseudochunk, true);
+			chunk.setWaterMesh = ChunkBuilder.buildLiquidChunk(World.pseudochunk);
 			
 		}
 		
@@ -237,9 +235,9 @@ public class World {
 		cp.z = cz;
 		double distance = Double.MAX_VALUE;
 		Chunk closest = null;
-		for (int i = 0; i < chunksToBuild.size(); i++) {
-			Chunk c = chunksToBuild.get(i);
-			if (c.generated == false) {
+		for (int i = 0; i < activeChunks.size(); i++) {
+			Chunk c = activeChunks.get(i);
+			if (!c.generated) {
 				double dist = cp.distance(c.getX(), c.getY(), c.getZ());
 				if (dist < distance) {
 					distance = dist;
@@ -247,6 +245,7 @@ public class World {
 				}
 			}
 		}
+		
 		return closest;
 	}
 
@@ -271,6 +270,7 @@ public class World {
 		mx = (int)Math.floor(Camera.position.x / Chunk.SIZE);
 		my = (int)Math.floor(Camera.position.y / Chunk.SIZE_Y);
 		mz = (int)Math.floor(Camera.position.z / Chunk.SIZE);
+		
 		for (int x = -Settings.VIEW_DISTANCE / 2; x < Settings.VIEW_DISTANCE / 2 + 1; x++) {
 			for (int z = -Settings.VIEW_DISTANCE / 2; z < Settings.VIEW_DISTANCE / 2 + 1; z++) {
 				for (int y = -Settings.VERTICAL_VIEW_DISTANCE / 2; y < Settings.VERTICAL_VIEW_DISTANCE / 2 + 1; y++) {
@@ -282,10 +282,24 @@ public class World {
 		adding = false;
 	}
 	
+	public int ticks = 0;
+	
 	public void tickChunks() {
-		for (String str : chunks.keySet()) {
-			chunks.get(str).tick();
+		
+		if (this.worldSettings.tickSpeed <= 0) {
+			this.worldSettings.tickSpeed = 1;
 		}
+		if (ticks % this.worldSettings.tickSpeed == 0)
+		for (int i = 0; i < activeChunks.size(); i++) {
+			Chunk chunk = activeChunks.get(i);
+			if (chunk != null) 
+			{
+				chunk.tick();
+			}
+		}
+		
+		ticks++;
+		
 	}
 	
 	public void tick() {
@@ -347,16 +361,16 @@ public class World {
 		
 		if (!adding) {
 			rendering.clear();
-			for (String str : chunks.keySet()) {
-				Chunk c = chunks.get(str);
-				rendering.add(c);
+			for (int i = 0; i < activeChunks.size(); i++) {
+				rendering.add(activeChunks.get(i));
 			}
 		}
 
+		
+		
 		for (int i = 0; i < rendering.size(); i++) {
 			if (rendering.get(i) == null) continue;
 			try {
-				rendering.get(i).tick();
 				rendering.get(i).render(shader);
 			}catch (Exception e) {
 				

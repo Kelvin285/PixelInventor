@@ -38,7 +38,7 @@ public class Tiles {
 		LOG = new Tile("Inignoto:log", TileSound.wood).setHardness(2.5f).setDensity(2.6f);
 		LEAVES = new Tile("Inignoto:leaves", TileSound.leaves).setHardness(0.2f).setDensity(2.6f);
 		SMOOTH_STONE = new Tile("Inignoto:smooth_stone", TileSound.stone).setHardness(3.0f).setDensity(2.6f);
-		WATER = new Tile("Inignoto:water", null).setDensity(1.0f).setRayTraceType(TileRayTraceType.LIQUID).setBlocksMovement(false).setReplaceable();
+		WATER = new WaterTile("Inignoto:water", null).setDensity(1.0f).setRayTraceType(TileRayTraceType.LIQUID).setBlocksMovement(false).setReplaceable();
 		SAND = new FallingTile("Inignoto:sand", TileSound.sand).setHardness(0.8f).setDensity(2.6f);
 		MALECHITE = new Tile("Inignoto:malechite", TileSound.stone).setHardness(2.0f).setDensity(2.6f);
 

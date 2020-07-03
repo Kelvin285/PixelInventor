@@ -14,11 +14,11 @@ public class VoronoiMap {
 	}
 	
 	public Vector2f getPointFor(int x, int z, FastNoise noise) {
-		x += (noise.GetSimplex(x, z) * getSize());
-		z += (noise.GetSimplex(z, x) * getSize());
+		x += (noise.GetSimplex(x, z) * size);
+		z += (noise.GetSimplex(z, x) * size);
 		Vector2f point = new Vector2f((float)Math.floor(x / getSize()) * getSize(), (float)Math.floor(z / getSize()) * getSize());
-		point.x += (noise.GetWhiteNoise(point.x, point.y) * getSize());
-		point.y += (noise.GetWhiteNoise(point.y, point.x) * getSize());
+//		point.x += (noise.GetWhiteNoiseInt((int)point.x, (int)point.y) * getSize());
+//		point.y += (noise.GetWhiteNoiseInt((int)point.x, (int)point.y) * getSize());
 		
 		return point;
 	}
@@ -100,27 +100,30 @@ public class VoronoiMap {
 	}
 	
 	public float getTrueHeightForPoint(Vector2f point, FastNoise noise) {
+		float n = noise.GetCellular((int)(point.x * size), (int)(point.y * size));
 		if ((int)point.x / size == 0 && (int)point.y / size == 0) {
-			return Math.abs(noise.GetWhiteNoise(point.x, point.y));
+			return Math.abs(n);
 		}
-		return noise.GetWhiteNoise(point.x, point.y);
+		return n;
 	}
 	
 	public float getHeightForPoint(Vector2f point, FastNoise noise) {
-		float x = point.x;
-		float z = point.y;
-		float height = 0;
-		int i = 0;
-		for (int xx = -1; xx < 2; xx++) {
-			for (int zz = -1; zz < 2; zz++) {
-				height += getTrueHeightForPoint(new Vector2f(x + xx * (getSize() / 2), z + zz * (getSize() / 2)), noise);
-				i++;
-			}
-			i++;
-		}
-		height /= i;
+//		float x = point.x;
+//		float z = point.y;
+//		float height = 0;
+//		int i = 0;
+//		for (int xx = -1; xx < 2; xx++) {
+//			for (int zz = -1; zz < 2; zz++) {
+//				height += getTrueHeightForPoint(new Vector2f(x + xx * (getSize() / 2), z + zz * (getSize() / 2)), noise);
+//				i++;
+//			}
+//			i++;
+//		}
+//		height /= i;
+//				
+//		return height;
 		
-		return height;
+		return getTrueHeightForPoint(point, noise);
 	}
 	
 	public float getHeightAt(int x, int z, FastNoise noise) {

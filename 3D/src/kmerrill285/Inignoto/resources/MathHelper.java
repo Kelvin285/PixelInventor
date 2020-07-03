@@ -25,6 +25,12 @@ public class MathHelper {
 		return new javax.vecmath.Vector3f(vec.x, vec.y, vec.z);
 	}
 	
+	public static float average(float...heights) {
+		float height = 0;
+		for (float f : heights) height += f;
+		return height / heights.length;
+	}
+	
 	
 	//https://bits.stephan-brumme.com/roundUpToNextPowerOfTwo.html
 	public static int nextPowerOfTwo(int x) {

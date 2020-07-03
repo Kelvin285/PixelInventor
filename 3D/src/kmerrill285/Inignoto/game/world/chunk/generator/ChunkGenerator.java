@@ -26,6 +26,7 @@ public class ChunkGenerator {
 	}
 
 	public void applyMeta(Chunk chunk, MetaChunk metachunk) {
+		if (metachunk == null) return;
 		for (String str : metachunk.tiles.keySet()) {
 			String[] data = str.split(",");
 			int x = Integer.parseInt(data[0]);
