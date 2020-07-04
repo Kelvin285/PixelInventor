@@ -7,6 +7,7 @@ import java.util.Scanner;
 
 import org.joml.Vector3f;
 
+import custom_models.Model;
 import kmerrill285.Inignoto.game.client.rendering.BlockFace;
 import kmerrill285.Inignoto.game.entity.ItemDropEntity;
 import kmerrill285.Inignoto.game.settings.Translation;
@@ -34,6 +35,7 @@ public class Tile {
 	private String right_texture = "";
 	private String top_texture = "";
 	private String bottom_texture = "";
+	private String model = "";
 	private int width = 1;
 	private int height = 1;
 	
@@ -42,6 +44,9 @@ public class Tile {
 	
 	private float hardness;
 	private float density;
+	
+	public float offset_x, offset_y, offset_z;
+	
 	
 	private TileRayTraceType rayTraceType = TileRayTraceType.SOLID; 
 	
@@ -86,6 +91,10 @@ public class Tile {
 						if (a.equals("right")) right_texture = b;
 						if (a.equals("front")) front_texture = b;
 						if (a.equals("back")) back_texture = b;
+						if (a.equals("offset_x")) offset_x = Float.parseFloat(b);
+						if (a.equals("offset_y")) offset_y = Float.parseFloat(b);
+						if (a.equals("offset_z")) offset_z = Float.parseFloat(b);
+						if (a.equals("3dmodel")) model = b.split(":")[0]+":models/3dmodel/tiles/"+b.split(":")[1]+".3dmodel";
 					}
 				}
 				scanner.close();
@@ -184,6 +193,10 @@ public class Tile {
 	public void dropAsItem(World world, int x, int y, int z) {
 		ItemDropEntity drop = new ItemDropEntity(new Vector3f(x+0.5f, y+0.5f, z+0.5f), world, this);
 		world.entities.add(drop);
+	}
+	
+	public String getModel() {
+		return this.model;
 	}
 	
 	public String getTextureFor(BlockFace face) {

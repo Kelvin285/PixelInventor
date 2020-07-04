@@ -161,14 +161,14 @@ public class Input {
 					if (game.world.getTile(pos).isReplaceable())
 					if (Settings.USE.isJustPressed()) {
 						if (!stop) {
-							game.world.setTile(pos, Tiles.WATER);
+							game.world.setTile(pos, Tiles.SMOOTH_STONE_STAIRS);
 							Inignoto.game.player.setUseTime(5);
 						}
 					} else {
 						if (Inignoto.game.player.getUseTime() == 0)
 						{
 							if (!stop) {
-								game.world.setTile(pos, Tiles.WATER);
+								game.world.setTile(pos, Tiles.SMOOTH_STONE_STAIRS);
 								Inignoto.game.player.setUseTime(5);
 							}
 						}

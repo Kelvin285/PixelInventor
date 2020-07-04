@@ -1,6 +1,7 @@
 package kmerrill285.Inignoto.game.world.chunk.generator.biome;
 
 import imported.FastNoise;
+import kmerrill285.Inignoto.game.foliage.Foliage;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.world.World;
@@ -27,6 +28,13 @@ public class PlainsBiome extends Biome {
 	public void populate(int X, int Y, int Z, int x, int y, int z, Chunk chunk, World world, FastNoise noise) {
 		if (chunk.getLocalTile(x, y, z) == Tiles.GRASS) {
 			Structure.SIMPLE_TREE.addToChunk(chunk, x, y, z, X, Y, Z);
+			if (world.getRandom().nextInt(25) <= 5) {
+				if (world.getRandom().nextInt(25) <= 5) {
+					chunk.setFoliage(x, y + 1, z, Foliage.PURPLE_FLOWER);
+				} else {
+					chunk.setFoliage(x, y + 1, z, Foliage.TALL_GRASS);
+				}
+			}
 		}
 	}
 

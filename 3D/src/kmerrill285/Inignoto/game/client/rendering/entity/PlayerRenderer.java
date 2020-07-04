@@ -13,8 +13,8 @@ import kmerrill285.Inignoto.modelloader.AnimModel;
 import kmerrill285.Inignoto.modelloader.CustomModel;
 import kmerrill285.Inignoto.modelloader.ModelLoader;
 import kmerrill285.Inignoto.modelloader.animation.Animation;
-import kmerrill285.Inignoto.resources.FPSCounter;
 import kmerrill285.Inignoto.resources.MathHelper;
+import kmerrill285.Inignoto.resources.TPSCounter;
 
 public class PlayerRenderer extends EntityRenderer<PlayerEntity> {
 
@@ -185,7 +185,7 @@ public class PlayerRenderer extends EntityRenderer<PlayerEntity> {
 			roll = 0;
 		}
 
-		renderModel(body_model, currentAnimation, animationSpeed * (float)FPSCounter.getDelta(), -1, entity, shader);
+		renderModel(body_model, currentAnimation, animationSpeed * (float)TPSCounter.getDelta() * 15, -1, entity, shader);
 		renderModel(eyes_model, currentAnimation, 0, body_model.controller.time, entity, shader);
 		renderModel(hair_model, currentAnimation, 0, body_model.controller.time, entity, shader);
 		renderModel(shirt_model, currentAnimation, 0, body_model.controller.time, entity, shader);

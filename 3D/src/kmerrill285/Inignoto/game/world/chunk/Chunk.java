@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 
 import org.joml.Vector3f;
 import org.joml.Vector3i;
@@ -15,6 +16,7 @@ import kmerrill285.Inignoto.game.client.rendering.MeshRenderer;
 import kmerrill285.Inignoto.game.client.rendering.chunk.ChunkBuilder;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
+import kmerrill285.Inignoto.game.foliage.Foliage;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
@@ -52,6 +54,8 @@ public class Chunk {
 	
 	public boolean generated = false;
 	public boolean isGenerating = false;
+	
+	public HashMap<String, Foliage> foliage = new HashMap<String, Foliage>();
 
 	
 	public Chunk(int x, int y, int z, World world) {
@@ -246,6 +250,88 @@ public class Chunk {
 		}
 	}
 	
+	public void setFoliage(int x, int y, int z, Foliage foliage) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			if (foliage == null) {
+				this.foliage.remove(x+","+y+","+z);
+			} else {
+				this.foliage.put(x+","+y+","+z, foliage);
+			}
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (X == getX() && Y == getY() && Z == getZ()) return;
+			if (world.getChunk(X, Y, Z).generated) {
+				world.getChunk(X, Y, Z).setFoliage(x, y, z, foliage);
+			}
+		}
+	}
+	
+	public Foliage getFoliage(int x, int y, int z) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			return this.foliage.get(x+","+y+","+z);
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (X == getX() && Y == getY() && Z == getZ()) return null;
+			if (world.getChunk(X, Y, Z).generated) {
+				return world.getChunk(X, Y, Z).getFoliage(x, y, z);
+			}
+		}
+		return null;
+	}
 	
 	public void setLocalTile(int x, int y, int z, Tile tile) {
 		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
@@ -380,6 +466,8 @@ public class Chunk {
 				FileInputStream fis = new FileInputStream(savefile);
 				this.generated = false;
 				tiles = new TileData[SIZE * SIZE_Y * SIZE];
+				
+				
 				for (int i = 0; i < tiles.length; i++) {
 					tiles[i] = new TileData(fis.read());
 					tiles[i].setWaterLevel(fis.read());
@@ -445,6 +533,11 @@ public class Chunk {
 			for (int x = 0; x < SIZE; x++) {
 				for (int y = 0; y < SIZE_Y; y++) {
 					for (int z = 0; z < SIZE; z++) {
+						
+//						if (getFoliage(x, y, z) != null) { 
+//							getFoliage(x, y, z).tick(x, y, z, this);
+//						}
+						
 						pos.x = x + getX() * SIZE;
 						pos.y = y + getY() * SIZE_Y;
 						pos.z = z + getZ() * SIZE;
@@ -498,6 +591,16 @@ public class Chunk {
 				
 				shader.setUniformFloat("loadValue", loadValue);
 				MeshRenderer.renderMesh(mesh, new Vector3f(getX() * SIZE, getY() * SIZE_Y, getZ() * SIZE), shader);
+				
+				
+				for (String str : this.foliage.keySet()) {
+					String[] data = str.split(",");
+					int x = Integer.parseInt(data[0]);
+					int y = Integer.parseInt(data[1]);
+					int z = Integer.parseInt(data[2]);
+					this.foliage.get(str).render(x + getX() * SIZE, y + getY() * SIZE_Y, z + getZ() * SIZE, this, shader);
+				}
+				
 				shader.setUniformFloat("loadValue", 0);
 			}
 		} else {

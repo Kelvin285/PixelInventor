@@ -26,7 +26,9 @@ import kmerrill285.Inignoto.game.client.rendering.gui.ModelerScreen;
 import kmerrill285.Inignoto.game.client.rendering.postprocessing.FrameBuffer;
 import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
 import kmerrill285.Inignoto.game.client.rendering.textures.Fonts;
+import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
 import kmerrill285.Inignoto.game.entity.player.ClientPlayerEntity;
+import kmerrill285.Inignoto.game.foliage.Foliage;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.resources.Constants;
@@ -386,6 +388,8 @@ public class Inignoto {
 		shadowRenderer.dispose();
 		framebuffer.dispose();
 		world.dispose();
+		Foliage.disposeOfFoliage();
+		Textures.dispose();
 		
 		GLFW.glfwDestroyCursor(Utils.HAND_CURSOR);
 		GLFW.glfwDestroyCursor(Utils.HRESIZE_CURSOR);

@@ -1,9 +1,14 @@
 package kmerrill285.Inignoto.game.client.rendering.chunk;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
+import custom_models.CustomModelLoader;
+import custom_models.Model;
+import custom_models.Part;
 import kmerrill285.Inignoto.game.client.rendering.BlockFace;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
+import kmerrill285.Inignoto.game.client.rendering.textures.Texture;
 import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
@@ -61,6 +66,48 @@ public class ChunkBuilder {
 						for (int z = 0; z < Chunk.SIZE; z++) {
 							TileData data = chunk.getTileData(x, y, z, false);
 							Tile tile = Tiles.getTile(data.getTile());
+							
+							
+							if (!tile.getModel().isEmpty()) {
+								Model model = CustomModelLoader.getOrLoadModel(tile.getModel().split(":")[0], tile.getModel().split(":")[1], Textures.TILES.texture);
+								model.combine(Textures.TILES.texture);
+
+								
+								Mesh mesh = model.getParts().get(0).mesh;
+								
+								float[] tc = Arrays.copyOf(mesh.texCoords, mesh.texCoords.length);
+								
+								float f[] = {0, 0, 0, 1, 1, 1, 1, 0};
+								
+								
+								Textures.TILES.convertToUV(
+										f,
+										tile.getTextureFor(BlockFace.FRONT));
+								
+								for (int i1 = 0; i1 < tc.length / 2; i1++) {
+									int u = i1 * 2;
+									int v = i1 * 2 + 1;
+									texCoords.add(f[0] + tc[u]);
+									texCoords.add(f[1] + tc[v]);
+								}
+								int verts = vertices.size();
+								for (int i1 = 0; i1 < mesh.positions.length / 3; i1++) {
+									float X = mesh.positions[i1 * 3] * Part.SCALING + x + tile.offset_x;
+									float Y = mesh.positions[i1 * 3 + 1] * Part.SCALING + y + tile.offset_y;
+									float Z = mesh.positions[i1 * 3 + 2] * Part.SCALING + z + tile.offset_z;
+									vertices.add(X);
+									vertices.add(Y);
+									vertices.add(Z);
+								}
+								
+								for (int i1 = 0; i1 < mesh.indices.length; i1++) {
+									indices.add(mesh.indices[i1] + verts / 3);
+								}
+								
+								index += mesh.positions.length / 3;
+								continue;
+							}
+							
 							if (tile.isFullCube() && tile.isVisible() && tile.getRayTraceType() == TileRayTraceType.SOLID) {
 								if (chunk.isLocalTileNotFull(x - 1, y, z)) index = BlockBuilder.addFace(x, y, z, BlockFace.LEFT, data, vertices, texCoords, indices, index); 
 								if (chunk.isLocalTileNotFull(x + 1, y, z)) index = BlockBuilder.addFace(x, y, z, BlockFace.RIGHT, data, vertices, texCoords, indices, index);

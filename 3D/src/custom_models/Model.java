@@ -7,6 +7,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
+import org.joml.Vector3f;
+
+import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.textures.Texture;
 
@@ -19,7 +22,46 @@ public class Model {
 	public float currentTime = 0.0f;
 	public float animationSpeed = 1.0f / 30.0f;
 	
+	public Vector3f rotation = new Vector3f(0, 0, 0);
+	public Vector3f translation = new Vector3f(0, 0, 0);
+	public Vector3f scale = new Vector3f(1, 1, 1);
+	public Vector3f origin = new Vector3f(0.5f, 0.5f, 0.5f);
+	
 	private boolean playing = false;
+	
+	private boolean merged = false;
+	
+	public Model combine(Texture texture) {
+		if (merged) return this;
+		if (parts.size() > 1) {
+			Mesh mesh = parts.get(0).mesh;
+			
+			if (mesh == null) {
+				
+				parts.get(0).buildPart(texture);
+				mesh = parts.get(0).mesh;
+			}
+			
+			Vector3f offset = new Vector3f(parts.get(0).getPosition()).mul(-1);
+			
+			for (int i = 1; i < parts.size(); i++) {
+				Part part = parts.get(i);
+				if (part.mesh == null) {
+					part.buildPart(texture);
+				}
+				
+				mesh.combineWith(part.mesh, part.getPosition(), part.getScale(), part.getRotation(), offset);
+				
+			}
+			Part p = parts.get(0);
+			parts.clear();
+			parts.add(p);
+			p.locked = true;
+			merged = true;
+		}
+		
+		return this;
+	}
 	
 	public boolean isPlaying() {
 		return playing;
@@ -125,6 +167,7 @@ public class Model {
 			model.timeline.remove(model.timeline.size() - 1);
 		}
 		model.editMode = this.editMode;
+		
 		return model;
 	}
 	
@@ -149,10 +192,8 @@ public class Model {
 		}
 	}
 	
-	public void render(ShaderProgram shader) {
-		for (Part part : parts) {
-			part.renderInverted(shader);
-		}
+	public void render(ShaderProgram shader, boolean outlines) {
+		render(shader, outlines, null);
 	}
 	
 	public void changeTexture(Texture texture) {

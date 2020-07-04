@@ -1,6 +1,7 @@
 package kmerrill285.Inignoto.game.client.rendering;
 
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL11.GL_FLOAT;
+import static org.lwjgl.opengl.GL11.GL_LINES;
 import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
 import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
 import static org.lwjgl.opengl.GL11.GL_UNSIGNED_INT;
@@ -23,7 +24,10 @@ import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
 
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.system.MemoryUtil;
 
@@ -47,50 +51,139 @@ public class Mesh {
     
     private boolean disposed = false;
     private boolean setup = false;
-    private FloatBuffer verticesBuffer = null;
-    private FloatBuffer texBuffer = null;
-    private IntBuffer indicesBuffer = null;
-    private FloatBuffer normalBuffer = null;
+    
+    public float[] positions;
+    public float[] texCoords;
+    public int[] indices;
+    public float[] normals;
+    
+    public boolean locked = false;
+    
     public Mesh(float[] positions, float[] texCoords, int[] indices, Texture texture) {
         this.texture = texture;
         this.vertexCount = indices.length;
         
         float[] normals = {0, 1, 0};
         
-        verticesBuffer = MemoryUtil.memAllocFloat(positions.length);
-        vertexCount = indices.length;
-        verticesBuffer.put(positions).flip();
-        
-        texBuffer = MemoryUtil.memAllocFloat(texCoords.length);
-        texBuffer.put(texCoords).flip();
-        indicesBuffer = MemoryUtil.memAllocInt(indices.length);
-        indicesBuffer.put(indices).flip();
-        
-        normalBuffer = MemoryUtil.memAllocFloat(normals.length);
-        normalBuffer.put(normals).flip();
+        this.positions = positions;
+        this.texCoords = texCoords;
+        this.indices = indices;
+        this.normals = normals;
     }
     
     public Mesh(float[] positions, float[] texCoords, int[] indices, float[] normals, Texture texture) {
         this.texture = texture;
         this.vertexCount = indices.length;
         
+        this.positions = positions;
+        this.texCoords = texCoords;
+        this.indices = indices;
+        this.normals = normals;
+        
+    }
+    
+
+	public void combineWith(Mesh mesh, Vector3f position, Vector3f scale, Quaternionf rotation, Vector3f offset) {
+		
+
+		if (!mesh.isSetup()) {
+			int verts = positions.length / 3;
+			ArrayList<Float> pos = new ArrayList<Float>();
+			for (int i = 0; i < mesh.positions.length / 3; i++) {
+				int I = i * 3;
+				int x = I;
+				int y = I + 1;
+				int z = I + 2;
+				Vector3f vec = new Vector3f(mesh.positions[x], mesh.positions[y], mesh.positions[z]);
+
+				vec.rotate(rotation);
+				vec.mul(scale);
+				vec.add(position);
+				vec.add(offset);
+				
+				pos.add(vec.x);
+				pos.add(vec.y);
+				pos.add(vec.z);
+			}
+			for (int i = 0; i < positions.length; i++) {
+				pos.add(positions[i]);
+			}
+			
+			positions = new float[pos.size()];
+			for (int i = 0; i < pos.size(); i++) {
+				positions[i] = pos.get(i);
+			}
+			
+			mesh.positions = null;
+			
+			ArrayList<Float> tex = new ArrayList<Float>();
+			for (int i = 0; i < mesh.getTexCoords().length; i++) {
+				tex.add(mesh.getTexCoords()[i]);
+			}
+			for (int i = 0; i < getTexCoords().length; i++) {
+				tex.add(getTexCoords()[i]);
+			}
+			texCoords = new float[tex.size()];
+			for (int i = 0; i < tex.size(); i++) {
+				getTexCoords()[i] = tex.get(i);
+			}
+			mesh.texCoords = null;
+			
+			ArrayList<Float> norm = new ArrayList<Float>();
+			for (int i = 0; i < mesh.normals.length; i++) {
+				norm.add(mesh.normals[i]);
+			}
+			for (int i = 0; i < normals.length; i++) {
+				norm.add(normals[i]);
+			}
+			normals = new float[norm.size()];
+			for (int i = 0; i < norm.size(); i++) {
+				normals[i] = norm.get(i);
+			}
+			mesh.normals = null;
+			
+			ArrayList<Integer> ind = new ArrayList<Integer>();
+			for (int i = 0; i < mesh.indices.length; i++) {
+				ind.add(mesh.indices[i] + verts);
+			}
+			for (int i = 0; i < indices.length; i++) {
+				ind.add(indices[i]);
+			}
+			indices = new int[ind.size()];
+			for (int i = 0; i < ind.size(); i++) {
+				indices[i] = ind.get(i);
+			}
+			mesh.indices = null;
+			vertexCount += mesh.vertexCount;
+			mesh.vertexCount = 0;
+		}
+	}
+    
+    public void setup() {
+    	if (locked) return;
+        
+    	FloatBuffer verticesBuffer = null;
+    	FloatBuffer texBuffer = null;
+        IntBuffer indicesBuffer = null;
+        FloatBuffer normalBuffer = null;
+        
         verticesBuffer = MemoryUtil.memAllocFloat(positions.length);
         vertexCount = indices.length;
         verticesBuffer.put(positions).flip();
         
-        texBuffer = MemoryUtil.memAllocFloat(texCoords.length);
-        texBuffer.put(texCoords).flip();
+        texBuffer = MemoryUtil.memAllocFloat(getTexCoords().length);
+        texBuffer.put(getTexCoords()).flip();
         indicesBuffer = MemoryUtil.memAllocInt(indices.length);
         indicesBuffer.put(indices).flip();
         
         normalBuffer = MemoryUtil.memAllocFloat(normals.length);
         normalBuffer.put(normals).flip();
-    }
-    
-    public void setup() {
-    	
         
-           
+        positions = null;
+        indices = null;
+        texCoords = null;
+        normals = null;
+        
         vaoID = glGenVertexArrays();
         glBindVertexArray(vaoID);
 
@@ -121,6 +214,20 @@ public class Mesh {
         glBindVertexArray(0);         
         
         setup = true;
+        
+        if (verticesBuffer  != null) {
+            MemoryUtil.memFree(verticesBuffer);
+        }
+        if (texBuffer != null) {
+        	MemoryUtil.memFree(texBuffer);
+        }
+        if (indicesBuffer != null) {
+        	MemoryUtil.memFree(indicesBuffer);
+        }
+        if (normalBuffer != null) {
+        	MemoryUtil.memFree(normalBuffer);
+        }
+        
     }
 
     public int getVaoID() {
@@ -145,18 +252,7 @@ public class Mesh {
         glBindVertexArray(0);
         glDeleteVertexArrays(vaoID);
         disposed = true;
-        if (verticesBuffer  != null) {
-            MemoryUtil.memFree(verticesBuffer);
-        }
-        if (texBuffer != null) {
-        	MemoryUtil.memFree(texBuffer);
-        }
-        if (indicesBuffer != null) {
-        	MemoryUtil.memFree(indicesBuffer);
-        }
-        if (normalBuffer != null) {
-        	MemoryUtil.memFree(normalBuffer);
-        }
+        
     }
     
     public static int BUILT;
@@ -189,4 +285,9 @@ public class Mesh {
 	public boolean isSetup() {
 		return setup;
 	}
+
+	public float[] getTexCoords() {
+		return texCoords;
+	}
+
 }

@@ -8,6 +8,10 @@
 "Inignoto:water" = "Water"
 "Inignoto:sand" = "Sand"
 "Inignoto:malechite" = "Malechite"
+"Inignoto:smooth_stone_stairs" = "Smooth Stone Stairs"
+
+"Inignoto:foliage.tallgrass" = "Tall Grass"
+"Inignoto:foliage.purpleflower" = "Purple Flower"
 
 "Inignoto:input.jump" = "Jump"
 "Inignoto:input.sneak" = "Sneak"

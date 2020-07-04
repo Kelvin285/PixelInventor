@@ -14,12 +14,14 @@ import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.audio.SoundSource;
 import kmerrill285.Inignoto.game.client.audio.Sounds;
 import kmerrill285.Inignoto.game.client.rendering.gui.GuiRenderer;
+import kmerrill285.Inignoto.game.client.rendering.gui.MenuScreen;
 import kmerrill285.Inignoto.game.client.rendering.postprocessing.FrameBuffer;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
 import kmerrill285.Inignoto.game.client.rendering.textures.Fonts;
 import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
 import kmerrill285.Inignoto.game.entity.player.ClientPlayerEntity;
+import kmerrill285.Inignoto.game.foliage.Foliage;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.settings.Translation;
 import kmerrill285.Inignoto.game.tile.Tiles;
@@ -178,6 +180,8 @@ public class Utils {
 		Translation.loadTranslations("Inignoto");
 		
 		Textures.load();
+		Foliage.loadFoliage();
+
 		Inignoto.game.guiRenderer = new GuiRenderer(sprite_shader);
 		Inignoto.game.framebuffer = new FrameBuffer();
 		Inignoto.game.blurbuffer = new FrameBuffer();

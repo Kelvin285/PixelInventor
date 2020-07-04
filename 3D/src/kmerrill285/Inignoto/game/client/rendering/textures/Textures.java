@@ -1,5 +1,7 @@
 package kmerrill285.Inignoto.game.client.rendering.textures;
 
+import java.util.ArrayList;
+
 public class Textures {
 	
 	public static Texture TILE_SELECTION = loadTexture("Inignoto", "gui/tile_selection");
@@ -50,11 +52,22 @@ public class Textures {
 	
 	public static String MINING_LOCATION = "Inignoto:mining";
 	
+	private static ArrayList<Texture> textures = new ArrayList<Texture>();
+	
 	public static Texture loadTexture(String modId, String texture) {
-		return new Texture(modId, "textures/"+texture+".png");
+		if (textures == null) {
+			textures = new ArrayList<Texture>();
+		}
+		Texture t = new Texture(modId, "textures/"+texture+".png");
+		textures.add(t);
+		return t;
 	}
 	
 	public static void load() {
 //		TILES.addToImage("Inignoto","gui","mining");
+	}
+	
+	public static void dispose() {
+		for (Texture t : textures) t.dispose();
 	}
 }

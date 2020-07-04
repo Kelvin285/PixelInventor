@@ -2,6 +2,8 @@ package kmerrill285.Inignoto.game.client.rendering.chunk;
 
 import java.util.ArrayList;
 
+import custom_models.CustomModelLoader;
+import custom_models.Model;
 import kmerrill285.Inignoto.game.client.rendering.BlockFace;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
@@ -18,6 +20,7 @@ public class BlockBuilder {
 	private static ArrayList<Float> texCoords;
 	
 	public static Mesh buildMesh(Tile tile, float x, float y, float z) {
+		
 		if (vertices == null) {
 			vertices = new ArrayList<Float>();
 			indices = new ArrayList<Integer>();
@@ -29,13 +32,26 @@ public class BlockBuilder {
 		}
 		int index = 0;
 		TileData data = new TileData(tile.getID());
-		if (tile.isFullCube() && tile.isVisible()) {
-			index = addFace(x, y, z, BlockFace.LEFT, data, vertices, texCoords, indices, index);
-			index = addFace(x, y, z, BlockFace.RIGHT, data, vertices, texCoords, indices, index);
-			index = addFace(x, y, z, BlockFace.BACK, data, vertices, texCoords, indices, index);
-			index = addFace(x, y, z, BlockFace.FRONT, data, vertices, texCoords, indices, index);
-			index = addFace(x, y, z, BlockFace.DOWN, data, vertices, texCoords, indices, index);
-			index = addFace(x, y, z, BlockFace.UP, data, vertices, texCoords, indices, index);
+		if (tile.getModel().isEmpty()) {
+			if (tile.isFullCube() && tile.isVisible()) {
+				index = addFace(x, y, z, BlockFace.LEFT, data, vertices, texCoords, indices, index);
+				index = addFace(x, y, z, BlockFace.RIGHT, data, vertices, texCoords, indices, index);
+				index = addFace(x, y, z, BlockFace.BACK, data, vertices, texCoords, indices, index);
+				index = addFace(x, y, z, BlockFace.FRONT, data, vertices, texCoords, indices, index);
+				index = addFace(x, y, z, BlockFace.DOWN, data, vertices, texCoords, indices, index);
+				index = addFace(x, y, z, BlockFace.UP, data, vertices, texCoords, indices, index);
+			}
+		} else {
+			Model model = CustomModelLoader.getOrLoadModel(tile.getModel().split(":")[0], tile.getModel().split(":")[1], Textures.TILES.texture);
+			model.combine(Textures.TILES.texture);
+			float[] tc = model.getParts().get(0).mesh.getTexCoords();
+			float[] f = Textures.TILES.convertToUV(new float[] {0, 0, 0, 1, 1, 0, 1, 1}, tile.getTextureFor(BlockFace.FRONT));
+			for (int i = 0; i < tc.length / 2; i++) {
+				int u = i;
+				int v = i + 1;
+				tc[u] += f[0];
+				tc[v] += f[1];
+			}
 		}
 		
 		float[] v = new float[vertices.size()];
@@ -51,6 +67,9 @@ public class BlockBuilder {
 			i[j] = indices.get(j);
 		}
 		
+		
+		
+		
 		Mesh mesh = new Mesh(v, t, i, Textures.TILES.texture);
 		return mesh;
 	}
@@ -60,6 +79,7 @@ public class BlockBuilder {
 			index = addMiningFace((int)x, (int)y, (int)z, face, data.getMiningTime(), vertices, indices, texCoords, index);
 		}
 		Tile tile = Tiles.getTile(data.getTile());
+		
 		float[] vertices1 = new float[] {
 				x + 0.0f, y + 0.0f, z + 0.0f,
 				x + 0.0f, y + 1.0f, z + 0.0f,

@@ -15,7 +15,6 @@ import kmerrill285.Inignoto.game.client.rendering.MeshRenderer;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.textures.Texture;
 import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
-import kmerrill285.Inignoto.modelloader.Vertex;
 import kmerrill285.Inignoto.resources.raytracer.Raytracer;
 
 public class Part {
@@ -61,6 +60,7 @@ public class Part {
 			originMesh = part;
 		}
 	}
+	
 	
 	public static void copyModelPart(Part part, Part parent, Model model) {
 		Part p = new Part(model);
@@ -108,12 +108,10 @@ public class Part {
 				U + size_z + size_x, V + size_z,
 				U + size_z + size_x, V + size_z + size_y,
 				//back
-
-				U + size_z + size_x + size_x + size_z, V + size_z + size_y, //4
-				U + size_z + size_x + size_x + size_z, V + size_z, //3
-				U + size_z + size_x + size_z, V + size_z, //2
-				U + size_z + size_x + size_z, V + size_z + size_y, //1
-				
+				U + size_z + size_x + size_z, V + size_z + size_y,
+				U + size_z + size_x + size_z, V + size_z,
+				U + size_z + size_x + size_x + size_z, V + size_z,
+				U + size_z + size_x + size_x + size_z, V + size_z + size_y,
 				//left
 				U, V + size_z + size_y,
 				U, V + size_z,
@@ -385,18 +383,30 @@ public class Part {
 	
 	public void renderInverted(ShaderProgram shader, boolean outlines, Part selected) {
 		
+		Quaternionf rotation = new Quaternionf(getRotation());
+		Vector3f position = new Vector3f(0, 0, 0);
+		Vector3f scale = new Vector3f(getScale()).mul(SCALING).mul(1, 1, -1);
+
+		rotation.rotateLocalX(model.rotation.x);
+		rotation.rotateLocalY(model.rotation.y);
+		rotation.rotateLocalZ(model.rotation.z);
 		
+		
+		position = new Vector3f(Raytracer.rotateAround(position, model.origin, rotation));
+		position.add(new Vector3f(getPosition()).mul(SCALING));
+		
+		position.add(model.translation);
+		scale.mul(model.scale);
 		
 
 		if (this.mesh != null && this.visible)
-		MeshRenderer.renderMesh(mesh, new Vector3f(getPosition()).mul(SCALING), getRotation(), new Vector3f(getScale()).mul(SCALING).mul(1, 1, -1), shader);
+		MeshRenderer.renderMesh(mesh, position, rotation, scale, shader);
 		if (outlines) {
 			if (selected == this) {
 				this.outlineMesh.texture = Textures.WHITE_SQUARE;
 				
 				if (this != Part.originMesh) {
-					Vector3f o = new Vector3f(new Vector3f(this.getPosition()).add(new Vector3f(new Vector3f(this.origin).rotate(this.getRotation())))).mul(SCALING);
-					Vector3f dir = new Vector3f(new Vector3f(this.getPosition()).add(new Vector3f(new Vector3f(this.origin).rotate(this.getRotation())))).mul(SCALING).sub(Camera.position);
+					Vector3f dir = new Vector3f(new Vector3f(position).add(new Vector3f(new Vector3f(this.origin).rotate(this.getRotation())))).mul(SCALING).sub(Camera.position);
 					if (dir.length() > 0) {
 						dir.div(dir.length());
 					}
@@ -406,30 +416,47 @@ public class Part {
 			} else {
 				this.outlineMesh.texture = Textures.OUTLINE;
 			}
+			
+			Vector3f outlineScale = new Vector3f(getScale()).mul(SCALING * 2.0f);
+			outlineScale.mul(model.scale);
 			if (this.mesh != null && this.visible)
-				MeshRenderer.renderMesh(this.outlineMesh, new Vector3f(getPosition()).mul(SCALING), getRotation(), new Vector3f(getScale()).mul(SCALING * 2.0f), shader);
+				MeshRenderer.renderMesh(this.outlineMesh, position, rotation, outlineScale, shader);
 		}
 	}
 	
 	public void render(ShaderProgram shader, boolean outlines, Part selected) {
 		
+		Quaternionf rotation = new Quaternionf(getRotation());
+		Vector3f position = new Vector3f(0, 0, 0);
+		Vector3f scale = new Vector3f(getScale()).mul(SCALING);
+
+		
+		rotation.rotateLocalX(model.rotation.x);
+		rotation.rotateLocalY(model.rotation.y);
+		rotation.rotateLocalZ(model.rotation.z);
+		
+		position = new Vector3f(Raytracer.rotateAround(position, model.origin, rotation));
+		position.add(new Vector3f(getPosition()).mul(SCALING));
+
+		position.add(model.translation);
+		
+		
+		scale.mul(model.scale);
+		
 		if (this.mesh != null && this.visible)
-		MeshRenderer.renderMesh(mesh, new Vector3f(getPosition()).mul(SCALING), getRotation(), new Vector3f(getScale()).mul(SCALING), shader);
+		MeshRenderer.renderMesh(mesh, position, rotation, scale, shader);
 		if (outlines) {
 			if (selected == this) {
 				this.outlineMesh.texture = Textures.WHITE_SQUARE;
-				
-//				Vector3f dir = new Vector3f(this.getPosition().add(new Vector3f(this.origin.rotate(this.getRotation())))).sub(Camera.position);
-//				if (dir.length() > 0) {
-//					dir.div(dir.length());
-//				}
-//				MeshRenderer.renderMesh(Part.originMesh, new Vector3f(Camera.position).add(dir), new Vector3f(1.0f), shader);
-
 			} else {
 				this.outlineMesh.texture = Textures.OUTLINE;
 			}
+			
+			Vector3f outlineScale = new Vector3f(getScale()).mul(SCALING * 2.0f);
+			outlineScale.mul(model.scale);
+
 			if (this.mesh != null && this.visible)
-				MeshRenderer.renderMesh(this.outlineMesh, new Vector3f(getPosition()).mul(SCALING), getRotation(), new Vector3f(getScale()).mul(SCALING * 2.0f), shader);
+				MeshRenderer.renderMesh(this.outlineMesh, position, rotation, outlineScale, shader);
 		}
 	}
 	

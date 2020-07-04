@@ -17,9 +17,9 @@ public class Main {
 		if (!DEBUG)
 		try {
 			System.out.println("STARTING LOGGER");
-			File file = new File("PixelInventor/logs/latest.log");
+			File file = new File("Inignoto/logs/latest.log");
 			if (!file.exists()) {
-				String dir = "PixelInventor/logs/";
+				String dir = "Inignoto/logs/";
 				new File(dir).mkdir();
 				file.createNewFile();
 			} else {
@@ -31,9 +31,9 @@ public class Main {
 				scanner.close();
 				
 				int i = 0;
-				File f2 = new File("PixelInventor/logs/log"+i+".log");
+				File f2 = new File("Inignoto/logs/log"+i+".log");
 				while (f2.exists()) {
-					f2 = new File("PixelInventor/logs/log"+(i+1)+".log");
+					f2 = new File("Inignoto/logs/log"+(i+1)+".log");
 					i++;
 				}
 				f2.createNewFile();
@@ -43,8 +43,8 @@ public class Main {
 				file.delete();
 				file.createNewFile();
 			}
-			System.setOut(outputFile("PixelInventor/logs/latest.log"));
-			System.setErr(outputFile("PixelInventor/logs/latest.log"));
+			System.setOut(outputFile("Inignoto/logs/latest.log"));
+			System.setErr(outputFile("Inignoto/logs/latest.log"));
 			System.out.println("LOGGER STARTED!");
 		} catch (Exception e) {
 			e.printStackTrace();

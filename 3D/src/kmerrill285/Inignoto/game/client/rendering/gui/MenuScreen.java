@@ -88,22 +88,22 @@ public class MenuScreen extends GuiScreen {
 		double mx = Mouse.x * (1920.0 / Utils.FRAME_WIDTH);
 		double my = 1080 - Mouse.y * (1080.0 / Utils.FRAME_HEIGHT);
 
-		boolean hovered = false;
-		if (mx > 1920 - 48 - 64 && mx < 1920 - 48 + 64 - 64) {
-			if (my > 32 && my < 32 + 64) {
-				hovered = true;
-			}
-		}
-		if (!hovered) {
-			this.renderer.drawTexture(Textures.MODELER, 1920 - 48, 32, -64, 64, 0, new Vector4f(1, 1, 1, 1));
-		} else {
-			this.renderer.drawString(Translation.translateText("Inignoto:gui.model_creator"), (float)mx - Translation.translateText("Inignoto:gui.model_creator").length() * 15 * 2, (float)my, 2, new Vector4f(1, 1, 1, 1), true);
-
-			this.renderer.drawTexture(Textures.MODELER, 1920 - 48, 32, -64, 64, 0, new Vector4f(0, 1, 0, 1));
-			if (Settings.isMouseButtonJustDown(0)) {
-				this.renderer.openScreen(new NewModelerScreen(renderer));
-			}
-		}
+//		boolean hovered = false;
+//		if (mx > 1920 - 48 - 64 && mx < 1920 - 48 + 64 - 64) {
+//			if (my > 32 && my < 32 + 64) {
+//				hovered = true;
+//			}
+//		}
+//		if (!hovered) {
+//			this.renderer.drawTexture(Textures.MODELER, 1920 - 48, 32, -64, 64, 0, new Vector4f(1, 1, 1, 1));
+//		} else {
+//			this.renderer.drawString(Translation.translateText("Inignoto:gui.model_creator"), (float)mx - Translation.translateText("Inignoto:gui.model_creator").length() * 15 * 2, (float)my, 2, new Vector4f(1, 1, 1, 1), true);
+//
+//			this.renderer.drawTexture(Textures.MODELER, 1920 - 48, 32, -64, 64, 0, new Vector4f(0, 1, 0, 1));
+//			if (Settings.isMouseButtonJustDown(0)) {
+//				this.renderer.openScreen(new NewModelerScreen(renderer));
+//			}
+//		}
 		double dist = Math.sqrt(Math.pow(moon_x + 352 / 2 - mx, 2) + Math.pow(moon_y + 340 / 2 - my - 10, 2));
 		if (Settings.isMouseButtonDown(0)) {
 			if (dist <= 70) {

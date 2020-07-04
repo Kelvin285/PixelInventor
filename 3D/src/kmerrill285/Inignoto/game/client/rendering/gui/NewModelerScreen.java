@@ -357,10 +357,10 @@ public class NewModelerScreen extends ModelerScreen {
         
         this.image = (BufferedImage) texture_frame.createImage(500, 500);
         this.texture_frame.setVisible(false);
+        
 	}
 	
 	private Panel ANIMATION_PANEL;
-	private Label animation_panel_name;
 	private Panel TIMELINE;
 	private Button main_menu;
 	
@@ -827,7 +827,6 @@ public class NewModelerScreen extends ModelerScreen {
 			File selectedFile = fileChooser.getSelectedFile();
 			String f = selectedFile.getPath();
 			
-			System.out.println(f);
 			lastLoadDir = selectedFile.getParent();
 			ArrayList<Keyframe> timeline = Model.loadAnimation(selectedFile);
 			if (timeline.size() > 0) {
@@ -2850,6 +2849,7 @@ public class NewModelerScreen extends ModelerScreen {
 	}
 	
 	public void tick() {
+
 		if (Settings.isKeyJustDown(GLFW.GLFW_KEY_DELETE)) {
 			if (this.selectedPart != null) {
         		JFrame test = new JFrame();

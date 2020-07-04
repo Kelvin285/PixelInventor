@@ -171,30 +171,34 @@ public class World {
 	}
 	
 	private void buildChunk(Chunk chunk) {
-		World.pseudochunk.setPos(chunk.getX(), chunk.getY(), chunk.getZ());
-		World.pseudochunk.setWorld(this);
-		World.pseudochunk.setSavefile(null);
+		
 		MetaChunk meta = null;
 		boolean setMesh = false;
-		if (chunk.isInActiveRange()) {
-			World.pseudochunk.setTiles(new TileData[Chunk.SIZE * Chunk.SIZE * Chunk.SIZE_Y]);
-			this.getChunkGenerator().generateChunk(World.pseudochunk, getMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ()), true);
-			chunk.setTiles( World.pseudochunk.getTiles());
-			setMesh = true;
-			meta = getMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ());
-		} else {
-			this.getChunkGenerator().generateChunk(World.pseudochunk, getMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ()), true);
-			setMesh = true;
-			meta = getMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ());
-		}
+		boolean pseudo = false;
+//		if (chunk.isInActiveRange()) {
+//			
+//		} else {
+//			World.pseudochunk.setPos(chunk.getX(), chunk.getY(), chunk.getZ());
+//			World.pseudochunk.setWorld(this);
+//			World.pseudochunk.setSavefile(null);
+//			pseudo =true;
+//			this.getChunkGenerator().generateChunk(World.pseudochunk, getMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ()), true);
+//			setMesh = true;
+//			meta = getMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ());
+//		}
+		chunk.setWorld(this);
+		chunk.setTiles(new TileData[Chunk.SIZE * Chunk.SIZE * Chunk.SIZE_Y]);
+		this.getChunkGenerator().generateChunk(chunk, getMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ()), true);
+		setMesh = true;
+		meta = getMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ());
 		
 		if (setMesh) {
 			if (meta != null) {
 				chunk.generated = true;
 				this.applyMeta(chunk, meta, false);
 			}
-			chunk.setMesh = ChunkBuilder.buildChunk(World.pseudochunk, true);
-			chunk.setWaterMesh = ChunkBuilder.buildLiquidChunk(World.pseudochunk);
+			chunk.setMesh = ChunkBuilder.buildChunk(pseudo ? World.pseudochunk : chunk, true);
+			chunk.setWaterMesh = ChunkBuilder.buildLiquidChunk(pseudo ? World.pseudochunk : chunk);
 			
 		}
 		

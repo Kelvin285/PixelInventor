@@ -18,6 +18,11 @@ public class Texture {
 	private int textureId;
 	public int width, height;
 	
+	public Texture(int width, int height) {
+		this.width = width;
+		this.height = height;
+	}
+	
 	public Texture(File file) {
 		try {
 			PNGDecoder decoder = new PNGDecoder(new FileInputStream(file));

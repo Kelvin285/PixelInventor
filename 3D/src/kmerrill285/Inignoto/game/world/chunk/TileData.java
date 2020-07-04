@@ -8,6 +8,8 @@ public class TileData implements Serializable {
 	float miningTime;
 	int waterLevel;
 	float lastMiningTime;
+	
+	
 	public TileData(int tile) {
 		this.setTile(tile);
 	}
@@ -42,4 +44,5 @@ public class TileData implements Serializable {
 	public String toString() {
 		return tile + "," + waterLevel + "," + miningTime;
 	}
+	
 }
