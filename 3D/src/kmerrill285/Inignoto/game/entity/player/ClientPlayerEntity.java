@@ -86,7 +86,9 @@ public class ClientPlayerEntity extends PlayerEntity {
 
 		if (hopTap > 0) hopTap -=TPSCounter.getDelta() * 2;
 		else hopTap = 0;
-		if (rollTap > 0) rollTap-=TPSCounter.getDelta();
+		if (rollTap > 0) {
+			rollTap-=TPSCounter.getDelta() * 2;
+		}
 		else
 		{
 			rollTap = 0;

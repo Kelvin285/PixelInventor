@@ -1,15 +1,36 @@
 package kmerrill285.Inignoto.game.tile;
 
+import org.joml.Vector3f;
+
 import kmerrill285.Inignoto.game.entity.player.PlayerEntity;
 import kmerrill285.Inignoto.game.world.World;
+import kmerrill285.Inignoto.resources.raytracer.RayBox;
 
 public class StairTile extends Tile {
 
+	
+	
 	public static final int FORWARD = 0, LEFT = 1, RIGHT = 2, BACK = 3, TOP_FORWARD = 4, TOP_LEFT = 5, TOP_RIGHT = 6, TOP_BACK = 7;
 	
 	public StairTile(String name, int[] sound) {
 		super(name, sound);
 		this.setFullCube(false);
+		
+		
+		collisionBoxes = new RayBox[] {
+				new RayBox() {
+					{
+						min = new Vector3f(0, 0, 0);
+						max = new Vector3f(1, 0.5f, 1);
+					}
+				},
+				new RayBox() {
+					{
+						min = new Vector3f(0, 0.5f, 0.5f);
+						max = new Vector3f(1, 1, 1);
+					}
+				}
+		};
 	}
 	
 	public float getPitchForState(int state) {

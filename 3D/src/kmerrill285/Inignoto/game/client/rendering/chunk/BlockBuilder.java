@@ -1,9 +1,13 @@
 package kmerrill285.Inignoto.game.client.rendering.chunk;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+
+import org.joml.Vector3f;
 
 import custom_models.CustomModelLoader;
 import custom_models.Model;
+import custom_models.Part;
 import kmerrill285.Inignoto.game.client.rendering.BlockFace;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
@@ -20,6 +24,10 @@ public class BlockBuilder {
 	private static ArrayList<Float> texCoords;
 	
 	public static Mesh buildMesh(Tile tile, float x, float y, float z) {
+		return buildMesh(tile, x, y, z, 0, 0);
+	}
+	
+	public static Mesh buildMesh(Tile tile, float x, float y, float z, float pitch, float yaw) {
 		
 		if (vertices == null) {
 			vertices = new ArrayList<Float>();
@@ -34,24 +42,70 @@ public class BlockBuilder {
 		TileData data = new TileData(tile.getID());
 		if (tile.getModel().isEmpty()) {
 			if (tile.isFullCube() && tile.isVisible()) {
-				index = addFace(x, y, z, BlockFace.LEFT, data, vertices, texCoords, indices, index);
-				index = addFace(x, y, z, BlockFace.RIGHT, data, vertices, texCoords, indices, index);
-				index = addFace(x, y, z, BlockFace.BACK, data, vertices, texCoords, indices, index);
-				index = addFace(x, y, z, BlockFace.FRONT, data, vertices, texCoords, indices, index);
-				index = addFace(x, y, z, BlockFace.DOWN, data, vertices, texCoords, indices, index);
-				index = addFace(x, y, z, BlockFace.UP, data, vertices, texCoords, indices, index);
+				index = addFace(x, y, z, BlockFace.UP, data, vertices, texCoords, indices, index, pitch, yaw);
+				index = addFace(x, y, z, BlockFace.BACK, data, vertices, texCoords, indices, index, pitch, yaw);
+				index = addFace(x, y, z, BlockFace.LEFT, data, vertices, texCoords, indices, index, pitch, yaw);
+				index = addFace(x, y, z, BlockFace.RIGHT, data, vertices, texCoords, indices, index, pitch, yaw);
+				index = addFace(x, y, z, BlockFace.FRONT, data, vertices, texCoords, indices, index, pitch, yaw);
+				index = addFace(x, y, z, BlockFace.DOWN, data, vertices, texCoords, indices, index, pitch, yaw);
 			}
 		} else {
 			Model model = CustomModelLoader.getOrLoadModel(tile.getModel().split(":")[0], tile.getModel().split(":")[1], Textures.TILES.texture);
 			model.combine(Textures.TILES.texture);
-			float[] tc = model.getParts().get(0).mesh.getTexCoords();
-			float[] f = Textures.TILES.convertToUV(new float[] {0, 0, 0, 1, 1, 0, 1, 1}, tile.getTextureFor(BlockFace.FRONT));
-			for (int i = 0; i < tc.length / 2; i++) {
-				int u = i;
-				int v = i + 1;
-				tc[u] += f[0];
-				tc[v] += f[1];
+
+			
+			Mesh mesh = model.getParts().get(0).mesh;
+			
+			float[] tc = Arrays.copyOf(mesh.texCoords, mesh.texCoords.length);
+			
+			float f[] = {0, 0, 0, 1, 1, 1, 1, 0};
+			
+			
+			Textures.TILES.convertToUV(
+					f,
+					tile.getTextureFor(BlockFace.FRONT));
+			
+			for (int i1 = 0; i1 < tc.length / 2; i1++) {
+				int u = i1 * 2;
+				int v = i1 * 2 + 1;
+				texCoords.add(f[0] + tc[u]);
+				texCoords.add(f[1] + tc[v]);
 			}
+			
+			int verts = vertices.size();
+			Vector3f vec = new Vector3f();
+			for (int i1 = 0; i1 < mesh.positions.length / 3; i1++) {
+				float X = mesh.positions[i1 * 3] * Part.SCALING;
+				float Y = mesh.positions[i1 * 3 + 1] * Part.SCALING;
+				float Z = mesh.positions[i1 * 3 + 2] * Part.SCALING;
+				
+				vec.set(X, Y, Z);
+				vec.add(tile.offset_x, tile.offset_y, tile.offset_z);
+				vec.sub(0.5f, 0.5f, 0.5f);
+				
+				vec.rotateX((float)Math.toRadians(pitch));
+				vec.rotateY((float)Math.toRadians(yaw));
+
+				vec.add(0.5f, 0.5f, 0.5f);
+
+				
+				X = vec.x;
+				Y = vec.y;
+				Z = vec.z;
+				
+				X += x;
+				Y += y;
+				Z += z;
+				vertices.add(X);
+				vertices.add(Y);
+				vertices.add(Z);
+			}
+			
+			for (int i1 = 0; i1 < mesh.indices.length; i1++) {
+				indices.add(mesh.indices[i1] + verts / 3);
+			}
+			
+			index += mesh.positions.length / 3;
 		}
 		
 		float[] v = new float[vertices.size()];
@@ -75,6 +129,10 @@ public class BlockBuilder {
 	}
 	
 	public static int addFace(float x, float y, float z, BlockFace face, TileData data, ArrayList<Float> vertices, ArrayList<Float> texCoords, ArrayList<Integer> indices, int index) {
+		return addFace(x, y, z, face, data,vertices, texCoords, indices, index, 0, 0);
+	}
+	
+	public static int addFace(float x, float y, float z, BlockFace face, TileData data, ArrayList<Float> vertices, ArrayList<Float> texCoords, ArrayList<Integer> indices, int index, float pitch, float yaw) {
 		if (data.getMiningTime() > 0) {
 			index = addMiningFace((int)x, (int)y, (int)z, face, data.getMiningTime(), vertices, indices, texCoords, index);
 		}
@@ -86,6 +144,9 @@ public class BlockBuilder {
 				x + 1.0f, y + 1.0f, z + 0.0f,
 				x + 1.0f, y + 0.0f, z + 0.0f
 		};
+		
+		
+		
 		int[] indices1 = {0, 1, 2, 2, 3, 0};
 		float[] texCoords1 = new float[] {
 				1.0f, 1.0f,
@@ -108,18 +169,18 @@ public class BlockBuilder {
 			break;
 		case BACK:
 			vertices1 = new float[] {
-					x + 0.0f, y + 0.0f, z + 1.0f,
-					x + 0.0f, y + 1.0f, z + 1.0f,
+					x + 1.0f, y + 0.0f, z + 1.0f,
 					x + 1.0f, y + 1.0f, z + 1.0f,
-					x + 1.0f, y + 0.0f, z + 1.0f
+					x + 0.0f, y + 1.0f, z + 1.0f,
+					x + 0.0f, y + 0.0f, z + 1.0f
 			};
 			break;
 		case LEFT:
 			vertices1 = new float[] {
-					x + 0.0f, y + 0.0f, z + 0.0f,
-					x + 0.0f, y + 1.0f, z + 0.0f,
+					x + 0.0f, y + 0.0f, z + 1.0f,
 					x + 0.0f, y + 1.0f, z + 1.0f,
-					x + 0.0f, y + 0.0f, z + 1.0f
+					x + 0.0f, y + 1.0f, z + 0.0f,
+					x + 0.0f, y + 0.0f, z + 0.0f
 			};
 			scrollX = (int)z;
 			break;
@@ -134,10 +195,10 @@ public class BlockBuilder {
 			break;
 		case DOWN:
 			vertices1 = new float[] {
-					x + 0.0f, y + 0.0f, z + 0.0f,
-					x + 0.0f, y + 0.0f, z + 1.0f,
+					x + 1.0f, y + 0.0f, z + 0.0f,
 					x + 1.0f, y + 0.0f, z + 1.0f,
-					x + 1.0f, y + 0.0f, z + 0.0f
+					x + 0.0f, y + 0.0f, z + 1.0f,
+					x + 0.0f, y + 0.0f, z + 0.0f
 			};
 			scrollY = (int)z;
 			break;
@@ -151,7 +212,19 @@ public class BlockBuilder {
 			scrollY = (int)z;
 			break;
 		}
-		
+		for (int i = 0; i < vertices1.length / 3; i++) {
+			int I = i * 3;
+			Vector3f vec = new Vector3f(vertices1[I], vertices1[I + 1], vertices1[I + 2]);
+			vec.sub(x, y, z);
+			vec.sub(0.5f, 0.5f, 0.5f);
+			vec.rotateX((float)Math.toRadians(pitch));
+			vec.rotateY((float)Math.toRadians(yaw));
+			vec.add(x, y, z);
+			vec.add(0.5f, 0.5f, 0.5f);
+			vertices1[I] = vec.x;
+			vertices1[I + 1] = vec.y;
+			vertices1[I + 2] = vec.z;
+		}
 		
 		for (int i = 0; i < texCoords1.length; i+=2) {
 			texCoords1[i] /= (float)tile.getWidth();

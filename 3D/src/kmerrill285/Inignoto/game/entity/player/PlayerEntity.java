@@ -47,18 +47,16 @@ public class PlayerEntity extends Entity {
 			if (up) crawling = true;
 		}
 		
-		if (isSneaking) {
-			this.size.y = MathHelper.lerp(this.size.y, 1.25f, 0.25f * (float)TPSCounter.getDelta());
-		} else {
-			this.size.y = MathHelper.lerp(this.size.y, 1.65f, 0.25f * (float)TPSCounter.getDelta());
-		}
-		
-		if (crawling) {
-			this.size.y = MathHelper.lerp(this.size.y, 0.1f, 0.25f * (float)TPSCounter.getDelta());
-		}
-		
-		if (onGround == false) {
-			rollTap = 0;
+		if (rollTap < 25) {
+			if (isSneaking) {
+				this.size.y = MathHelper.lerp(this.size.y, 1.25f, 0.25f * (float)TPSCounter.getDelta());
+			} else {
+				this.size.y = MathHelper.lerp(this.size.y, 1.65f, 0.25f * (float)TPSCounter.getDelta());
+			}
+			
+			if (crawling) {
+				this.size.y = MathHelper.lerp(this.size.y, 0.1f, 0.25f * (float)TPSCounter.getDelta());
+			}
 		}
 		
 		
@@ -85,10 +83,13 @@ public class PlayerEntity extends Entity {
 		} else {
 			if (rollTap < 25) 
 			{
-				rolling = false;
-				if (world.getTile(getTilePos().add(0, 1, 0)) == Tiles.AIR) {
-					crawling = false;
+				if (rolling == true) {
+					if (world.getTile(getTilePos().add(0, 1, 0)) == Tiles.AIR) {
+						crawling = false;
+					}
 				}
+				rolling = false;
+				
 			}
 			if (rollTap < 20) rollTap = 0;
 		}

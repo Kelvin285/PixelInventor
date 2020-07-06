@@ -35,11 +35,14 @@ public class Model {
 		if (merged) return this;
 		if (parts.size() > 1) {
 			Mesh mesh = parts.get(0).mesh;
+			Mesh outline = parts.get(0).outlineMesh;
 			
 			if (mesh == null) {
 				
 				parts.get(0).buildPart(texture);
 				mesh = parts.get(0).mesh;
+				outline = Part.buildOutlineMesh(parts.get(0));
+				parts.get(0).outlineMesh = outline;
 			}
 			
 			Vector3f offset = new Vector3f(parts.get(0).getPosition()).mul(-1);
@@ -51,7 +54,7 @@ public class Model {
 				}
 				
 				mesh.combineWith(part.mesh, part.getPosition(), part.getScale(), part.getRotation(), offset);
-				
+				outline.combineWith(Part.buildOutlineMesh(part), part.getPosition(), part.getScale(), part.getRotation(), offset);
 			}
 			Part p = parts.get(0);
 			parts.clear();

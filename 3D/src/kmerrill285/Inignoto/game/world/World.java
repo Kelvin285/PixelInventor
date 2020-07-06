@@ -7,6 +7,8 @@ import java.util.Random;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
+import custom_models.CustomModelLoader;
+import custom_models.Model;
 import custom_models.Part;
 import kmerrill285.Inignoto.Inignoto;
 import kmerrill285.Inignoto.game.client.Camera;
@@ -27,11 +29,13 @@ import kmerrill285.Inignoto.game.world.chunk.Chunk;
 import kmerrill285.Inignoto.game.world.chunk.MetaChunk;
 import kmerrill285.Inignoto.game.world.chunk.TileData;
 import kmerrill285.Inignoto.game.world.chunk.TilePos;
-import kmerrill285.Inignoto.game.world.chunk.generator.ChunkGenerator;
 import kmerrill285.Inignoto.game.world.chunk.generator.BiomeChunkGenerator;
-import kmerrill285.Inignoto.game.world.chunk.generator.FlatChunkGenerator;
+import kmerrill285.Inignoto.game.world.chunk.generator.ChunkGenerator;
 import kmerrill285.Inignoto.resources.RayTraceResult;
 import kmerrill285.Inignoto.resources.RayTraceResult.RayTraceType;
+import kmerrill285.Inignoto.resources.raytracer.RayBox;
+import kmerrill285.Inignoto.resources.raytracer.RayIntersection;
+import kmerrill285.Inignoto.resources.raytracer.Raytracer;
 
 public class World {
 	
@@ -437,13 +441,7 @@ public class World {
 	private Mesh selection = null;
 	private void renderTileHover(ShaderProgram shader) {
 		
-		if (selection == null) {
-			Part part = new Part(null);
-			part.size = new Vector3i(2, 2, 2);
-			part.outlineMesh = Part.buildOutlineMesh(part);
-			part.outlineMesh.texture = Textures.WHITE_SQUARE;
-			this.selection = part.outlineMesh;
-		}
+		
 		
 		if (Camera.currentTile != null) {
 			
@@ -453,8 +451,16 @@ public class World {
 				
 				if (Camera.currentTile.getType() == RayTraceType.TILE) {
 					
-					MeshRenderer.renderMesh(selection, new Vector3f(pos.x - (size / 2.0f), pos.y - (size / 2.0f), pos.z - (size / 2.0f)).add(0.5f, 0.5f, 0.5f), new Vector3f(1.0f + size, 1.0f + size, 1.0f + size).mul(1.01f), shader);
 					
+					
+					
+					Part part = new Part(null);
+					part.size = new Vector3i(2, 2, 2);
+					part.outlineMesh = Part.buildOutlineMesh(part);
+					part.outlineMesh.texture = Textures.WHITE_SQUARE;
+					this.selection = part.outlineMesh;
+					MeshRenderer.renderMesh(selection, new Vector3f(pos.x - (size / 2.0f), pos.y - (size / 2.0f), pos.z - (size / 2.0f)).add(0.5f, 0.5f, 0.5f), new Vector3f(1.0f + size, 1.0f + size, 1.0f + size).mul(1.01f), shader);
+					this.selection.dispose();
 				}
 			}
 		}
@@ -495,11 +501,41 @@ public class World {
 			Vector3f n = new Vector3f(start).lerp(end, i / length);
 			pos.setPosition(n.x, n.y, n.z);
 			Tile tile = getTile(pos);
-			
+			TileData data = getTileData(pos, false);
 			if (tile != null) {
 				if (tile.isVisible()) {
 					if (tile.getRayTraceType() == type) {
-						return new RayTraceResult(RayTraceType.TILE, pos, new Vector3f(start).lerp(end, (i-inc) / length));
+						Vector3f dir = new Vector3f(end).sub(start);
+						dir.div(dir.length());
+						float min = Float.MAX_VALUE;
+						boolean hit = false;
+						for (RayBox box : tile.collisionBoxes) {
+							RayBox b2 = new RayBox();
+							b2.min = new Vector3f(box.min).add(pos.x, pos.y, pos.z);
+							b2.max = new Vector3f(box.max).add(pos.x, pos.y, pos.z);
+							
+							Vector3f center = new Vector3f(b2.min).add(b2.max).div(2);
+							center.sub(pos.x, pos.y, pos.z);
+							Vector3f c1 = new Vector3f(center);
+							center.sub(0.5f, 0.5f, 0.5f);							
+							Vector3f rotation = new Vector3f((float)Math.toRadians(tile.getPitchForState(data.getState())), (float)Math.toRadians(tile.getYawForState(data.getState())), 0);
+							center.rotateX(rotation.x);
+							center.rotateY(rotation.y + (float)Math.toRadians(180));
+							center.add(0.5f, 0.5f, 0.5f);
+							
+							b2.min.add(center).sub(c1);
+							b2.max.add(center).sub(c1);
+							if (Raytracer.doesCollisionOccur(start, dir, b2, rotation)) {
+								RayIntersection it = Raytracer.intersectBox(start, dir, b2, rotation);
+								if (it.lambda.x < min) {
+									min = it.lambda.x;
+									hit = true;
+								}
+							}
+						}
+						if (hit && min <= length) {
+							return new RayTraceResult(RayTraceType.TILE, pos, new Vector3f(start).add(dir.mul(min - 0.1f)));
+						}
 					}
 				}
 			}

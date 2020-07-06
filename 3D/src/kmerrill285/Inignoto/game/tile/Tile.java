@@ -13,6 +13,7 @@ import kmerrill285.Inignoto.game.entity.player.PlayerEntity;
 import kmerrill285.Inignoto.game.settings.Translation;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.TilePos;
+import kmerrill285.Inignoto.resources.raytracer.RayBox;
 
 public class Tile {
 	
@@ -46,6 +47,15 @@ public class Tile {
 	private float density;
 	
 	public float offset_x, offset_y, offset_z;
+	
+	public RayBox[] collisionBoxes = new RayBox[] {
+			new RayBox() {
+				{
+					min = new Vector3f(0, 0, 0);
+					max = new Vector3f(1, 1, 1);
+				}
+			}
+	};
 	
 	
 	private TileRayTraceType rayTraceType = TileRayTraceType.SOLID; 

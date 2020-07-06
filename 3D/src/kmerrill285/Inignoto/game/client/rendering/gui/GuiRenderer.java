@@ -11,12 +11,14 @@ import java.awt.image.BufferedImage;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
 import kmerrill285.Inignoto.Inignoto;
 import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.Mouse;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
+import kmerrill285.Inignoto.game.client.rendering.chunk.BlockBuilder;
 import kmerrill285.Inignoto.game.client.rendering.postprocessing.FrameBuffer;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.textures.Fonts;
@@ -24,6 +26,7 @@ import kmerrill285.Inignoto.game.client.rendering.textures.Texture;
 import kmerrill285.Inignoto.game.client.rendering.textures.TextureAtlas;
 import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
 import kmerrill285.Inignoto.game.settings.Settings;
+import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.resources.RayTraceResult;
 import kmerrill285.Inignoto.resources.RayTraceResult.RayTraceType;
 import kmerrill285.Inignoto.resources.Utils;
@@ -99,6 +102,10 @@ public class GuiRenderer {
 		
 		if (!(currentScreen instanceof MenuScreen)) {
 
+			Mesh mesh = BlockBuilder.buildMesh(Tiles.GRASS, 0, 0, 0, 30, 30);
+			this.drawMesh(Textures.TILES.texture, 505, 40, 40, 40, 0, new Vector4f(1, 1, 1, 1), mesh);
+			
+			
 			drawTexture(Textures.HOTBAR, 1920 / 2 - (382 * 3) / 2, 0, 382 * 3, 35 * 3, 0, new Vector4f(1, 1, 1, 1));
 			
 			for (int i = 0; i < 10; i++) {
@@ -126,6 +133,8 @@ public class GuiRenderer {
 		
 		
 		if (!(currentScreen instanceof MenuScreen)) {
+			
+			
 			if (Settings.POST_PROCESSING) {
 				drawTexture(Inignoto.game.framebuffer, Inignoto.game.blurbuffer, 1920, 1080, -1920, -1080, 0, new Vector4f(1, 1, 1, 1), true);
 			}
@@ -139,6 +148,8 @@ public class GuiRenderer {
 					drawTexture(Textures.WHITE_SQUARE, 0, 0, 1920, 1080, 0, new Vector4f(0, 0, 0, 1));
 				}
 			}
+			
+			
 		}
 	}
 	
@@ -202,6 +213,21 @@ public class GuiRenderer {
 	
 	public void drawTexture(FrameBuffer texture, FrameBuffer blur, float x, float y, float width, float height, float rotation, Vector4f color, boolean postProcessing) {
 		drawTexture(texture, blur, x, y, width, height, rotation, color, postProcessing, false);
+	}
+	
+	public void drawMesh(Texture texture, float x, float y, float width, float height, float rotation, Vector4f color, Mesh mesh) {
+//		GL11.glEnable(GL11.GL_CULL_FACE);
+//		GL11.glCullFace(GL11.GL_BACK);
+		mesh.texture = texture;
+		shader.setUniformInt("raycasting", 0);
+		shader.setUniformInt("post_processing", 0);
+        shader.setUniformVec4("color", color);
+		shader.setUniformInt("texture_sampler", 0);
+        shader.setUniformVec2("offset", new Vector2f(x, y));
+        shader.setUniformVec2("scale", new Vector2f(width, height));
+        shader.setUniformFloat("exposure", Settings.EXPOSURE);
+        mesh.render();
+//        GL11.glDisable(GL11.GL_CULL_FACE);
 	}
 	
 	public void drawTexture(Texture texture, float x, float y, float width, float height, float rotation, Vector4f color, boolean postProcessing, boolean raycasting) {
