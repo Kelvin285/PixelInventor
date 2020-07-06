@@ -7,9 +7,9 @@ import java.util.Scanner;
 
 import org.joml.Vector3f;
 
-import custom_models.Model;
 import kmerrill285.Inignoto.game.client.rendering.BlockFace;
 import kmerrill285.Inignoto.game.entity.ItemDropEntity;
+import kmerrill285.Inignoto.game.entity.player.PlayerEntity;
 import kmerrill285.Inignoto.game.settings.Translation;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.TilePos;
@@ -232,6 +232,19 @@ public class Tile {
 		}
 		return texture;
 	}
+	
+	public int getStateNumberWhenPlaced(int x, int y, int z, PlayerEntity placer, World world) {
+		return 0;
+	}
+	
+	public float getPitchForState(int state) {
+		return 0;
+	}
+	
+	public float getYawForState(int state) {
+		return 0;
+	}
+	
 	
 	public String getSideTexture() {
 		if (side_texture.isEmpty()) return texture;

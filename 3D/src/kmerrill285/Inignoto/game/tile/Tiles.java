@@ -42,7 +42,7 @@ public class Tiles {
 		WATER = new WaterTile("Inignoto:water", null).setDensity(1.0f).setRayTraceType(TileRayTraceType.LIQUID).setBlocksMovement(false).setReplaceable();
 		SAND = new FallingTile("Inignoto:sand", TileSound.sand).setHardness(0.8f).setDensity(2.6f);
 		MALECHITE = new Tile("Inignoto:malechite", TileSound.stone).setHardness(2.0f).setDensity(2.6f);
-		SMOOTH_STONE_STAIRS = new Tile("Inignoto:smooth_stone_stairs", TileSound.stone).setHardness(2.0f).setDensity(2.6f);
+		SMOOTH_STONE_STAIRS = new StairTile("Inignoto:smooth_stone_stairs", TileSound.stone).setHardness(2.0f).setDensity(2.6f);
 
 	}
 }

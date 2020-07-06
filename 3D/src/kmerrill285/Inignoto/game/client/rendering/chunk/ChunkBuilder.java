@@ -3,12 +3,13 @@ package kmerrill285.Inignoto.game.client.rendering.chunk;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.joml.Vector3f;
+
 import custom_models.CustomModelLoader;
 import custom_models.Model;
 import custom_models.Part;
 import kmerrill285.Inignoto.game.client.rendering.BlockFace;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
-import kmerrill285.Inignoto.game.client.rendering.textures.Texture;
 import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
@@ -16,6 +17,7 @@ import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.Chunk;
 import kmerrill285.Inignoto.game.world.chunk.TileData;
+import kmerrill285.Inignoto.resources.raytracer.Raytracer;
 
 public class ChunkBuilder {
 
@@ -60,6 +62,7 @@ public class ChunkBuilder {
 	final int FULL = 16 * 16 * 16;
 	
 	public static int buildChunk(Chunk chunk, ArrayList<Float> vertices, ArrayList<Integer> indices, ArrayList<Float> texCoords, int index) {
+		Vector3f vec = new Vector3f(0);
 		for (int i = 0; i < Chunk.SIZE_Y / Chunk.SIZE; i++) {
 				for (int x = 0; x < Chunk.SIZE; x++) {
 					for (int y = i * Chunk.SIZE; y < i * Chunk.SIZE + Chunk.SIZE; y++) {
@@ -90,11 +93,30 @@ public class ChunkBuilder {
 									texCoords.add(f[0] + tc[u]);
 									texCoords.add(f[1] + tc[v]);
 								}
+								
 								int verts = vertices.size();
 								for (int i1 = 0; i1 < mesh.positions.length / 3; i1++) {
-									float X = mesh.positions[i1 * 3] * Part.SCALING + x + tile.offset_x;
-									float Y = mesh.positions[i1 * 3 + 1] * Part.SCALING + y + tile.offset_y;
-									float Z = mesh.positions[i1 * 3 + 2] * Part.SCALING + z + tile.offset_z;
+									float X = mesh.positions[i1 * 3] * Part.SCALING;
+									float Y = mesh.positions[i1 * 3 + 1] * Part.SCALING;
+									float Z = mesh.positions[i1 * 3 + 2] * Part.SCALING;
+									
+									vec.set(X, Y, Z);
+									vec.add(tile.offset_x, tile.offset_y, tile.offset_z);
+									vec.sub(0.5f, 0.5f, 0.5f);
+									
+									vec.rotateX((float)Math.toRadians(tile.getPitchForState(data.getState())));
+									vec.rotateY((float)Math.toRadians(tile.getYawForState(data.getState())));
+
+									vec.add(0.5f, 0.5f, 0.5f);
+
+									
+									X = vec.x;
+									Y = vec.y;
+									Z = vec.z;
+									
+									X += x;
+									Y += y;
+									Z += z;
 									vertices.add(X);
 									vertices.add(Y);
 									vertices.add(Z);

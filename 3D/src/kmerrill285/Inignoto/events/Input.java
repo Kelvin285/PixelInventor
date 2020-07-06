@@ -158,20 +158,28 @@ public class Input {
 								}
 						}
 						
-					if (game.world.getTile(pos).isReplaceable())
-					if (Settings.USE.isJustPressed()) {
-						if (!stop) {
-							game.world.setTile(pos, Tiles.SMOOTH_STONE_STAIRS);
-							Inignoto.game.player.setUseTime(5);
-						}
-					} else {
-						if (Inignoto.game.player.getUseTime() == 0)
-						{
+					if (game.world.getTile(pos).isReplaceable()) {
+						boolean set = false;
+						if (Settings.USE.isJustPressed()) {
 							if (!stop) {
-								game.world.setTile(pos, Tiles.SMOOTH_STONE_STAIRS);
+								set = true;
 								Inignoto.game.player.setUseTime(5);
 							}
+						} else {
+							if (Inignoto.game.player.getUseTime() == 0)
+							{
+								if (!stop) {
+									set = true;
+									Inignoto.game.player.setUseTime(5);
+								}
+							}
 						}
+						
+						if (set == true) {
+							game.world.setTile(pos, Tiles.SMOOTH_STONE_STAIRS);
+							game.world.getTileData(pos, true).setState(game.world.getTile(pos).getStateNumberWhenPlaced(pos.x, pos.y, pos.z, Inignoto.game.player, game.world));
+						}
+						
 					}
 				}
 					

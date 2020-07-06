@@ -436,6 +436,7 @@ public class Chunk {
 				}
 				fos.write(tiles[i].getTile());
 				fos.write(tiles[i].getWaterLevel());
+				fos.write(tiles[i].getState());
 			}
 			fos.close();
 			this.needsToSave = false;
@@ -471,6 +472,7 @@ public class Chunk {
 				for (int i = 0; i < tiles.length; i++) {
 					tiles[i] = new TileData(fis.read());
 					tiles[i].setWaterLevel(fis.read());
+					tiles[i].setState(fis.read());
 				}
 				fis.close();
 				this.generated = true;
