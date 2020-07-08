@@ -14,7 +14,6 @@ import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.audio.SoundSource;
 import kmerrill285.Inignoto.game.client.audio.Sounds;
 import kmerrill285.Inignoto.game.client.rendering.gui.GuiRenderer;
-import kmerrill285.Inignoto.game.client.rendering.gui.MenuScreen;
 import kmerrill285.Inignoto.game.client.rendering.postprocessing.FrameBuffer;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
@@ -27,6 +26,7 @@ import kmerrill285.Inignoto.game.settings.Translation;
 import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.generator.feature.Structure;
+import kmerrill285.Inignoto.item.Items;
 
 public class Utils {
 	public static long window;
@@ -177,6 +177,7 @@ public class Utils {
 		GLFW.glfwSetWindowSizeCallback(window, Events::windowSize);
 		setupProjection(object_shader);
 		Tiles.loadTiles();
+		Items.loadItems();
 		Translation.loadTranslations("Inignoto");
 		
 		Textures.load();

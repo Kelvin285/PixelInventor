@@ -140,7 +140,7 @@ public class PlayerRenderer extends EntityRenderer<PlayerEntity> {
 			animationSpeed = 0.1f;
 		}
 		
-		if (!entity.onGround) {
+		if (!entity.lastOnGround) {
 			currentAnimation = JUMP;
 		}
 		

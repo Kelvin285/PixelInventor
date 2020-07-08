@@ -131,12 +131,12 @@ public class ChunkBuilder {
 							}
 							
 							if (tile.isFullCube() && tile.isVisible() && tile.getRayTraceType() == TileRayTraceType.SOLID) {
-								if (chunk.isLocalTileNotFull(x - 1, y, z)) index = BlockBuilder.addFace(x, y, z, BlockFace.LEFT, data, vertices, texCoords, indices, index); 
-								if (chunk.isLocalTileNotFull(x + 1, y, z)) index = BlockBuilder.addFace(x, y, z, BlockFace.RIGHT, data, vertices, texCoords, indices, index);
-								if (chunk.isLocalTileNotFull(x, y, z - 1)) index = BlockBuilder.addFace(x, y, z, BlockFace.FRONT, data, vertices, texCoords, indices, index);
-								if (chunk.isLocalTileNotFull(x, y, z + 1)) index = BlockBuilder.addFace(x, y, z, BlockFace.BACK, data, vertices, texCoords, indices, index);
-								if (chunk.isLocalTileNotFull(x, y + 1, z)) index = BlockBuilder.addFace(x, y, z, BlockFace.UP, data, vertices, texCoords, indices, index);
-								if (chunk.isLocalTileNotFull(x, y - 1, z)) index = BlockBuilder.addFace(x, y, z, BlockFace.DOWN, data, vertices, texCoords, indices, index);
+								if (chunk.isLocalTileNotFull(x - 1, y, z)) index = TileBuilder.addFace(x, y, z, BlockFace.LEFT, data, vertices, texCoords, indices, index); 
+								if (chunk.isLocalTileNotFull(x + 1, y, z)) index = TileBuilder.addFace(x, y, z, BlockFace.RIGHT, data, vertices, texCoords, indices, index);
+								if (chunk.isLocalTileNotFull(x, y, z - 1)) index = TileBuilder.addFace(x, y, z, BlockFace.FRONT, data, vertices, texCoords, indices, index);
+								if (chunk.isLocalTileNotFull(x, y, z + 1)) index = TileBuilder.addFace(x, y, z, BlockFace.BACK, data, vertices, texCoords, indices, index);
+								if (chunk.isLocalTileNotFull(x, y + 1, z)) index = TileBuilder.addFace(x, y, z, BlockFace.UP, data, vertices, texCoords, indices, index);
+								if (chunk.isLocalTileNotFull(x, y - 1, z)) index = TileBuilder.addFace(x, y, z, BlockFace.DOWN, data, vertices, texCoords, indices, index);
 							}
 						}
 					}
@@ -205,12 +205,12 @@ public class ChunkBuilder {
 							TileData data = chunk.getTileData(x, y, z, false);
 							Tile tile = Tiles.getTile(data.getTile());
 							if (tile.getRayTraceType() == TileRayTraceType.LIQUID) {
-								if (chunk.isLocalTileAir(x - 1, y, z)) index = BlockBuilder.addFace(x, y, z, BlockFace.LEFT, data, vertices, texCoords, indices, index); 
-								if (chunk.isLocalTileAir(x + 1, y, z)) index = BlockBuilder.addFace(x, y, z, BlockFace.RIGHT, data, vertices, texCoords, indices, index);
-								if (chunk.isLocalTileAir(x, y, z - 1)) index = BlockBuilder.addFace(x, y, z, BlockFace.FRONT, data, vertices, texCoords, indices, index);
-								if (chunk.isLocalTileAir(x, y, z + 1)) index = BlockBuilder.addFace(x, y, z, BlockFace.BACK, data, vertices, texCoords, indices, index);
-								if (chunk.isLocalTileAir(x, y + 1, z)) index = BlockBuilder.addFace(x, y, z, BlockFace.UP, data, vertices, texCoords, indices, index);
-								if (chunk.isLocalTileAir(x, y - 1, z)) index = BlockBuilder.addFace(x, y, z, BlockFace.DOWN, data, vertices, texCoords, indices, index);
+								if (chunk.isLocalTileAir(x - 1, y, z)) index = TileBuilder.addFace(x, y, z, BlockFace.LEFT, data, vertices, texCoords, indices, index); 
+								if (chunk.isLocalTileAir(x + 1, y, z)) index = TileBuilder.addFace(x, y, z, BlockFace.RIGHT, data, vertices, texCoords, indices, index);
+								if (chunk.isLocalTileAir(x, y, z - 1)) index = TileBuilder.addFace(x, y, z, BlockFace.FRONT, data, vertices, texCoords, indices, index);
+								if (chunk.isLocalTileAir(x, y, z + 1)) index = TileBuilder.addFace(x, y, z, BlockFace.BACK, data, vertices, texCoords, indices, index);
+								if (chunk.isLocalTileAir(x, y + 1, z)) index = TileBuilder.addFace(x, y, z, BlockFace.UP, data, vertices, texCoords, indices, index);
+								if (chunk.isLocalTileAir(x, y - 1, z)) index = TileBuilder.addFace(x, y, z, BlockFace.DOWN, data, vertices, texCoords, indices, index);
 							}
 						}
 					}

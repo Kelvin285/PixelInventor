@@ -7,9 +7,11 @@ public class Textures {
 	public static Texture TILE_SELECTION = loadTexture("Inignoto", "gui/tile_selection");
 	public static Texture FP_CURSOR = loadTexture("Inignoto", "gui/fp_cursor");
 	public static Texture VIGINETTE = loadTexture("Inignoto", "gui/viginette");
-	public static Texture HOTBAR = loadTexture("Inignoto", "gui/hotbar");
+	public static Texture HOTBAR = loadTexture("Inignoto", "gui/inventory/hotbar");
+	public static Texture HOTBAR_SLOT = loadTexture("Inignoto", "gui/inventory/hotbar_slot");
+	public static Texture HOTBAR_SELECTED = loadTexture("Inignoto", "gui/inventory/hotbar_selected");
+
 	public static Texture INVENTORY = loadTexture("Inignoto", "gui/inventory");
-	public static Texture HOTBAR_SELECTED = loadTexture("Inignoto", "gui/hotbar_selected");
 	public static Texture INVENTORY_SELECTED = loadTexture("Inignoto", "gui/inventory_selected");
 	public static Texture WHITE_SQUARE = loadTexture("Inignoto", "gui/white_square");
 	public static Texture HEALTHBAR = loadTexture("Inignoto", "gui/healthbar");

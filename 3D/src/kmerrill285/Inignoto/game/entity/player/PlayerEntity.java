@@ -4,6 +4,7 @@ import org.joml.Vector3f;
 
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.entity.Entity;
+import kmerrill285.Inignoto.game.inventory.PlayerInventory;
 import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.resources.MathHelper;
@@ -27,9 +28,12 @@ public class PlayerEntity extends Entity {
 	public boolean leftHop = false;
 	public boolean backHop = false;
 	
+	public final PlayerInventory inventory;
+	
 	
 	public PlayerEntity(Vector3f position, World world) {
 		super(position, new Vector3f(0.5f, 2, 0.5f), world, 70);
+		this.inventory = new PlayerInventory(this);
 	}
 	
 	@Override

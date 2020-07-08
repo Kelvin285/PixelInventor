@@ -4,14 +4,18 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import kmerrill285.Inignoto.game.client.Camera;
+import kmerrill285.Inignoto.game.client.rendering.Mesh;
+import kmerrill285.Inignoto.game.client.rendering.MeshRenderer;
 import kmerrill285.Inignoto.game.client.rendering.entity.PlayerRenderer;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
+import kmerrill285.Inignoto.game.inventory.InventorySlot;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.resources.MathHelper;
-import kmerrill285.Inignoto.resources.PhysicsHelper;
+import kmerrill285.Inignoto.resources.RayTraceResult;
+import kmerrill285.Inignoto.resources.RayTraceResult.RayTraceType;
 import kmerrill285.Inignoto.resources.TPSCounter;
 
 public class ClientPlayerEntity extends PlayerEntity {
@@ -59,7 +63,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 		}
 		
 		if (useTimer > 0) {
-			useTimer-=TPSCounter.getDelta()*0.5f;
+			useTimer-=TPSCounter.getDelta();
 		} else {
 			useTimer = 0;
 		}
@@ -404,6 +408,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 			float x = forward.x;
 			float y = forward.y;
 			float z = forward.z;
+			
 			if (!doesCollisionOccur(position.x + x, position.y + size.y, position.z + z)) {
 				if (doesCollisionOccur(position.x + x, position.y + size.y - 1f, position.z + z)) {
 					if (velocity.y < 0) {
@@ -442,88 +447,206 @@ public class ClientPlayerEntity extends PlayerEntity {
 		else
 			moveVel.mul(0.9f);
 		
-		if (isSneaking && onGround) {
-			if (velocity.x > 0) {
-				if (this.doesCollisionOccur(position.x, position.y - 0.5f, position.z + size.z / 2.0f))
-				if (!this.doesCollisionOccur(position.x + size.x / 8.0f, position.y - 0.5f, position.z + size.z / 2.0f)) {
-					position.x = lastPos.x;
-					velocity.x = 0;
-				}
-			}
-			if (velocity.x < 0) {
-				if (this.doesCollisionOccur(position.x + size.x, position.y - 0.5f, position.z + size.z / 2.0f))
-				if (!this.doesCollisionOccur(position.x + size.x - size.x / 8.0f, position.y - 0.5f, position.z + size.z / 2.0f)) {
-					position.x = lastPos.x;
-					velocity.x = 0;
-				}
-			}
+		if (isSneaking && nearGround) {
 			
-			if (velocity.z < 0) {
-				if (this.doesCollisionOccur(position.x + size.x / 2.0f, position.y - 0.5f, position.z + size.z)) {
-					if (!this.doesCollisionOccur(position.x + size.x / 2.0f, position.y - 0.5f, position.z + size.z - size.z / 8.0f)) {
-						position.z = lastPos.z;
-						velocity.z = 0;
+			boolean flagX = false;
+			boolean flagZ = false;
+			
+			{
+				Vector3f p1 = new Vector3f(position).add(0, 0, 0);
+				Vector3f p2 = new Vector3f(position).add(size.x, 0, size.z);
+				RayTraceResult result = world.rayTraceTiles(new Vector3f(p1), new Vector3f(p1).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+				if (result.getType() != RayTraceType.TILE) {
+					result = world.rayTraceTiles(new Vector3f(p2), new Vector3f(p2).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+					if (result.getType() == RayTraceType.TILE) {
+						if (velocity.x > 0) {
+							flagX = true;
+						}
+						if (velocity.z > 0) {
+							flagZ = true;
+						}
 					}
 				}
 			}
+			
+			{
+				Vector3f p1 = new Vector3f(position).add(0, 0, 0);
+				Vector3f p2 = new Vector3f(position).add(size.x, 0, size.z);
+				RayTraceResult result = world.rayTraceTiles(new Vector3f(p1), new Vector3f(p1).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+				if (result.getType() == RayTraceType.TILE) {
+					result = world.rayTraceTiles(new Vector3f(p2), new Vector3f(p2).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+					if (result.getType() != RayTraceType.TILE) {
+						if (velocity.x < 0) {
+							flagX = true;
+						}
+						if (velocity.z < 0) {
+							flagZ = true;
+						}
+					}
+				}
+			}
+			
+			{
+				Vector3f p1 = new Vector3f(position).add(size.x, 0, 0);
+				Vector3f p2 = new Vector3f(position).add(0, 0, size.z);
+				RayTraceResult result = world.rayTraceTiles(new Vector3f(p1), new Vector3f(p1).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+				if (result.getType() == RayTraceType.TILE) {
+					result = world.rayTraceTiles(new Vector3f(p2), new Vector3f(p2).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+					if (result.getType() != RayTraceType.TILE) {
+						if (velocity.x > 0) {
+							flagX = true;
+						}
+						if (velocity.z < 0) {
+							flagZ = true;
+						}
+					}
+				}
+			}
+			
+			{
+				Vector3f p1 = new Vector3f(position).add(0, 0, size.z);
+				Vector3f p2 = new Vector3f(position).add(size.x, 0, 0);
+				RayTraceResult result = world.rayTraceTiles(new Vector3f(p1), new Vector3f(p1).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+				if (result.getType() == RayTraceType.TILE) {
+					result = world.rayTraceTiles(new Vector3f(p2), new Vector3f(p2).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+					if (result.getType() != RayTraceType.TILE) {
+						if (velocity.x < 0) {
+							flagX = true;
+						}
+						if (velocity.z > 0) {
+							flagZ = true;
+						}
+					}
+				}
+			}
+			
+			if (!flagZ)
 			if (velocity.z > 0) {
-				if (this.doesCollisionOccur(position.x + size.x / 2.0f, position.y - 0.5f, position.z)) {
-					if (!this.doesCollisionOccur(position.x + size.x / 2.0f, position.y - 0.5f, position.z + size.z / 8.0f)) {
-						position.z = lastPos.z;
-						velocity.z = 0;
+				Vector3f p1 = new Vector3f(position).add(0, 0, size.z * 0.1f);
+				Vector3f p2 = new Vector3f(position).add(size.x / 2.0f, 0, size.z * 0.1f);
+				Vector3f p3 = new Vector3f(position).add(size.x, 0, size.z * 0.1f);
+				Vector3f p4 = new Vector3f(position).add(size.x / 2.0f, 0, size.z);
+				RayTraceResult result = world.rayTraceTiles(new Vector3f(p1), new Vector3f(p1).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+				if (result.getType() != RayTraceType.TILE) {
+					result = world.rayTraceTiles(new Vector3f(p2), new Vector3f(p2).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+					if (result.getType() != RayTraceType.TILE) {
+						result = world.rayTraceTiles(new Vector3f(p3), new Vector3f(p3).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+						if (result.getType() != RayTraceType.TILE) {
+							result = world.rayTraceTiles(new Vector3f(p4), new Vector3f(p4).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+							if (result.getType() != RayTraceType.TILE) {
+//								position.z -= velocity.z;
+								velocity.z *= -0.1f;
+							}
+						}
 					}
 				}
 			}
-			if (velocity.x < 0 && velocity.z < 0) {
-				if (this.doesCollisionOccur(position.x + size.x, position.y - 0.5f, position.z + size.z)) {
-					if (!this.doesCollisionOccur(position.x + size.x - size.x / 8.0f, position.y - 0.5f, position.z + size.z - size.z / 8.0f)) {
-						position.z = lastPos.z;
-						velocity.z = 0;
-						position.x = lastPos.x;
-						velocity.x = 0;
+			if (!flagZ)
+			if (velocity.z < 0) {
+				Vector3f p1 = new Vector3f(position).add(0, 0, size.z * 0.9f);
+				Vector3f p2 = new Vector3f(position).add(size.x / 2.0f, 0, size.z * 0.9f);
+				Vector3f p3 = new Vector3f(position).add(size.x, 0, size.z * 0.9f);
+				Vector3f p4 = new Vector3f(position).add(size.x / 2.0f, 0, 0);
+				RayTraceResult result = world.rayTraceTiles(new Vector3f(p1), new Vector3f(p1).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+				if (result.getType() != RayTraceType.TILE) {
+					result = world.rayTraceTiles(new Vector3f(p2), new Vector3f(p2).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+					if (result.getType() != RayTraceType.TILE) {
+						result = world.rayTraceTiles(new Vector3f(p3), new Vector3f(p3).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+						if (result.getType() != RayTraceType.TILE) {
+							result = world.rayTraceTiles(new Vector3f(p4), new Vector3f(p4).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+							if (result.getType() != RayTraceType.TILE) {
+//								position.z -= velocity.z;
+								velocity.z *= -0.1f;
+							}
+						}
 					}
 				}
 			}
-			if (velocity.x < 0 && velocity.z > 0) {
-				if (this.doesCollisionOccur(position.x + size.x, position.y - 0.5f, position.z)) {
-					if (!this.doesCollisionOccur(position.x + size.x - size.x / 8.0f, position.y - 0.5f, position.z + size.z / 8.0f)) {
-						position.z = lastPos.z;
-						velocity.z = 0;
-						position.x = lastPos.x;
-						velocity.x = 0;
+			if (!flagX)
+			if (velocity.x > 0) {
+				Vector3f p1 = new Vector3f(position).add(size.x * 0.1f, 0, 0);
+				Vector3f p2 = new Vector3f(position).add(size.x * 0.1f, 0, size.z / 2.0f);
+				Vector3f p3 = new Vector3f(position).add(size.x * 0.1f, 0, size.z);
+				Vector3f p4 = new Vector3f(position).add(size.x, 0, size.z / 2.0f);
+				RayTraceResult result = world.rayTraceTiles(new Vector3f(p1), new Vector3f(p1).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+				if (result.getType() != RayTraceType.TILE) {
+					result = world.rayTraceTiles(new Vector3f(p2), new Vector3f(p2).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+					if (result.getType() != RayTraceType.TILE) {
+						result = world.rayTraceTiles(new Vector3f(p3), new Vector3f(p3).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+						if (result.getType() != RayTraceType.TILE) {
+							result = world.rayTraceTiles(new Vector3f(p4), new Vector3f(p4).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+							if (result.getType() != RayTraceType.TILE) {
+//								position.x -= velocity.x;
+								velocity.x *= -0.1f;
+							}
+						}
 					}
 				}
 			}
-			if (velocity.x > 0 && velocity.z < 0) {
-				if (this.doesCollisionOccur(position.x, position.y - 0.5f, position.z + size.z)) {
-					if (!this.doesCollisionOccur(position.x + size.x / 8.0f, position.y - 0.5f, position.z + size.z - size.z / 8.0f)) {
-						position.z = lastPos.z;
-						velocity.z = 0;
-						position.x = lastPos.x;
-						velocity.x = 0;
-					}
-				}
-			}
-			if (velocity.x > 0 && velocity.z > 0) {
-				if (this.doesCollisionOccur(position.x, position.y - 0.5f, position.z)) {
-					if (!this.doesCollisionOccur(position.x + size.x / 8.0f, position.y - 0.5f, position.z + size.z / 8.0f)) {
-						position.z = lastPos.z;
-						velocity.z = 0;
-						position.x = lastPos.x;
-						velocity.x = 0;
+			if (!flagX)
+			if (velocity.x < 0) {
+				Vector3f p1 = new Vector3f(position).add(size.x * 0.9f, 0, 0);
+				Vector3f p2 = new Vector3f(position).add(size.x * 0.9f, 0, size.z / 2.0f);
+				Vector3f p3 = new Vector3f(position).add(size.x * 0.9f, 0, size.z);
+				Vector3f p4 = new Vector3f(position).add(0, 0, size.z / 2.0f);
+				RayTraceResult result = world.rayTraceTiles(new Vector3f(p1), new Vector3f(p1).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+				if (result.getType() != RayTraceType.TILE) {
+					result = world.rayTraceTiles(new Vector3f(p2), new Vector3f(p2).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+					if (result.getType() != RayTraceType.TILE) {
+						result = world.rayTraceTiles(new Vector3f(p3), new Vector3f(p3).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+						if (result.getType() != RayTraceType.TILE) {
+							result = world.rayTraceTiles(new Vector3f(p4), new Vector3f(p4).add(0, -step_height * 2, 0), TileRayTraceType.SOLID);
+							if (result.getType() != RayTraceType.TILE) {
+//								position.x -= velocity.x;
+								velocity.x *= -0.1f;
+							}
+						}
 					}
 				}
 			}
 			
+//			if (velocity.x > 0) {
+//				if (this.doesCollisionOccur(position.x, position.y - 0.5f, position.z + size.z / 2.0f))
+//				if (!this.doesCollisionOccur(position.x + size.x / 8.0f, position.y - 0.5f, position.z + size.z / 2.0f)) {
+//					position.x = lastPos.x;
+//					velocity.x = 0;
+//					onGround = true;
+//					lastOnGround = true;
+//				}
+//			}
+//			if (velocity.x < 0) {
+//				if (this.doesCollisionOccur(position.x + size.x, position.y - 0.5f, position.z + size.z / 2.0f))
+//				if (!this.doesCollisionOccur(position.x + size.x - size.x / 8.0f, position.y - 0.5f, position.z + size.z / 2.0f)) {
+//					position.x = lastPos.x;
+//					velocity.x = 0;
+//					onGround = true;
+//					lastOnGround = true;
+//				}
+//			}
+//			
+//			if (velocity.z < 0) {
+//				if (this.doesCollisionOccur(position.x + size.x / 2.0f, position.y - 0.5f, position.z + size.z)) {
+//					if (!this.doesCollisionOccur(position.x + size.x / 2.0f, position.y - 0.5f, position.z + size.z - size.z / 8.0f)) {
+//						position.z = lastPos.z;
+//						velocity.z = 0;
+//						onGround = true;
+//						lastOnGround = true;
+//					}
+//				}
+//			}
+//			if (velocity.z > 0) {
+//				if (this.doesCollisionOccur(position.x + size.x / 2.0f, position.y - 0.5f, position.z)) {
+//					if (!this.doesCollisionOccur(position.x + size.x / 2.0f, position.y - 0.5f, position.z + size.z / 8.0f)) {
+//						position.z = lastPos.z;
+//						velocity.z = 0;
+//						onGround = true;
+//						lastOnGround = true;
+//					}
+//				}
+//			}
+			
 			
 		}
-		
-		if (lastOnGround == true && onGround == false && isSneaking) {
-			position = new Vector3f(this.lastPos);
-			velocity.x = 0;
-			velocity.z = 0;
-		}
-		
 		
 	}
 	public float getUseTime() {
@@ -538,6 +661,8 @@ public class ClientPlayerEntity extends PlayerEntity {
 	private int soundCounter = 0;
 	private float zoom_dist = 0;
 
+	private Vector3f itemPosition = new Vector3f(0);
+	
 	@Override
 	public void render(ShaderProgram shader) {
 		super.render(shader);
@@ -690,6 +815,31 @@ public class ClientPlayerEntity extends PlayerEntity {
 				ZOOM = 0;
 				Camera.rotation.y += 180;
 				Camera.rotation.x *= -1;
+			}
+		}
+		
+		Vector3f swingPos = new Vector3f(0);
+		if (this.arm_swing > 0) {
+			swingPos.add(Camera.getUp().mul((float)Math.cos(arm_swing * Math.PI)));
+			swingPos.add(Camera.getForward().mul((float)Math.sin(arm_swing * Math.PI)));
+			this.arm_swing -= TPSCounter.getDelta();
+		} else {
+			this.arm_swing = 0;
+		}
+		
+		this.itemPosition.lerp(new Vector3f(Camera.position).add(Camera.getForward()).add(Camera.getRight()).add(Camera.getUp()).add(swingPos), 0.5f);
+		if (this.inventory != null) {
+			InventorySlot slot = this.inventory.hotbar[this.inventory.hotbarSelected];
+			if (slot.stack != null) {
+				Mesh mesh = slot.stack.item.mesh;
+				if (this.ZOOM == 0) {
+					if (this.arm_swing > 0) {
+						MeshRenderer.renderMesh(mesh, this.itemPosition, new Vector3f(Camera.rotation).mul(-1).add((float)Math.toDegrees(arm_swing * Math.PI + 180), 0, 0), new Vector3f(1), shader);
+					} else 
+					{
+						MeshRenderer.renderMesh(mesh, this.itemPosition, new Vector3f(Camera.rotation).mul(-1), new Vector3f(1), shader);
+					}
+				}
 			}
 		}
 		

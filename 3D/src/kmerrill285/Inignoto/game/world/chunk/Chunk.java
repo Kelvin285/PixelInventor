@@ -642,7 +642,6 @@ public class Chunk {
 			needsToRebuild = false;
 			mesh = ChunkBuilder.buildChunk(this, true);
 			waterMesh = ChunkBuilder.buildLiquidChunk(this);
-
 		}
 		if (isActive()) {
 			if (tiles == null) {

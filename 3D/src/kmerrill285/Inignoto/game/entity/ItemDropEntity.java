@@ -5,26 +5,27 @@ import org.joml.Vector3f;
 import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.MeshRenderer;
-import kmerrill285.Inignoto.game.client.rendering.chunk.BlockBuilder;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.entity.player.PlayerEntity;
-import kmerrill285.Inignoto.game.tile.Tile;
+import kmerrill285.Inignoto.game.inventory.InventoryItemStack;
 import kmerrill285.Inignoto.game.world.World;
+import kmerrill285.Inignoto.resources.TPSCounter;
 
 public class ItemDropEntity extends Entity {
 	
 	private Mesh mesh = null;
 	private Vector3f offset = new Vector3f(0, 0, 0);
-	public Tile tile;
+	public InventoryItemStack stack;
+	public float timer = 0;
 
-	public ItemDropEntity(Vector3f position, World world, Tile tile) {
-		super(position, new Vector3f(0.25f, 0.25f, 0.25f), world, tile.getDensity());
-		this.tile = tile;
+	public ItemDropEntity(Vector3f position, World world, InventoryItemStack stack) {
+		super(position, new Vector3f(0.25f, 0.25f, 0.25f), world, 1);
+		this.stack = stack;
 	}
 
 	public void tick() {
 		if (mesh == null) {
-			this.mesh = BlockBuilder.buildMesh(tile, -0.5f, -0.5f, -0.5f);
+			this.mesh = stack.item.mesh;
 		}
 		super.tick();
 		if (onGround == false) {
@@ -41,7 +42,7 @@ public class ItemDropEntity extends Entity {
 		
 		float distance = 2f;
 		PlayerEntity closest = null;
-		for (Entity entity : world.entities) {
+		for (Entity entity : world.players) {
 			if (entity instanceof PlayerEntity) {
 				if (entity.position.distance(position) <= distance) {
 					distance = entity.position.distance(position);
@@ -49,12 +50,21 @@ public class ItemDropEntity extends Entity {
 				}
 			}
 		}
-		if (closest != null) {
+		if (closest != null && timer <= 0) {
 			Vector3f a = new Vector3f(closest.position).add(0, 0.75f, 0);
 			position.lerp(a, 0.25f);
 			if (position.distance(a) <= 0.25f) {
-				this.isDead = true;
+				int val = closest.inventory.addStack(stack);
+				if (val == 0) {
+					this.isDead = true;
+				} else {
+					this.stack.size = val;
+					this.timer = 2;
+				}
 			}
+		}
+		if (timer > 0) {
+			timer -= TPSCounter.getTrueDelta();
 		}
 	}
 	

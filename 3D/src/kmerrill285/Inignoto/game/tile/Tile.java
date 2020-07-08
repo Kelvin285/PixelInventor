@@ -10,9 +10,12 @@ import org.joml.Vector3f;
 import kmerrill285.Inignoto.game.client.rendering.BlockFace;
 import kmerrill285.Inignoto.game.entity.ItemDropEntity;
 import kmerrill285.Inignoto.game.entity.player.PlayerEntity;
+import kmerrill285.Inignoto.game.inventory.InventoryItemStack;
 import kmerrill285.Inignoto.game.settings.Translation;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.TilePos;
+import kmerrill285.Inignoto.item.Items;
+import kmerrill285.Inignoto.resources.RayTraceResult;
 import kmerrill285.Inignoto.resources.raytracer.RayBox;
 
 public class Tile {
@@ -131,7 +134,7 @@ public class Tile {
 	}
 	
 	public String getTranslatedName() {
-		return Translation.translateText(getName());
+		return Translation.translateText(getName().split(":")[0]+":tiles."+getName().split(":")[1]);
 	}
 	
 	public float getHardness() {
@@ -201,7 +204,7 @@ public class Tile {
 	}
 	
 	public void dropAsItem(World world, int x, int y, int z) {
-		ItemDropEntity drop = new ItemDropEntity(new Vector3f(x+0.5f, y+0.5f, z+0.5f), world, this);
+		ItemDropEntity drop = new ItemDropEntity(new Vector3f(x+0.5f, y+0.5f, z+0.5f), world, new InventoryItemStack(Items.getItemForTile(this), 1));
 		world.entities.add(drop);
 	}
 	
@@ -243,7 +246,7 @@ public class Tile {
 		return texture;
 	}
 	
-	public int getStateNumberWhenPlaced(int x, int y, int z, PlayerEntity placer, World world) {
+	public int getStateNumberWhenPlaced(int x, int y, int z, RayTraceResult result, PlayerEntity placer, World world) {
 		return 0;
 	}
 	

@@ -4,6 +4,7 @@ import org.joml.Vector3f;
 
 import kmerrill285.Inignoto.game.entity.player.PlayerEntity;
 import kmerrill285.Inignoto.game.world.World;
+import kmerrill285.Inignoto.resources.RayTraceResult;
 import kmerrill285.Inignoto.resources.raytracer.RayBox;
 
 public class StairTile extends Tile {
@@ -48,7 +49,7 @@ public class StairTile extends Tile {
 		return 0;
 	}
 	
-	public int getStateNumberWhenPlaced(int x, int y, int z, PlayerEntity placer, World world) {
+	public int getStateNumberWhenPlaced(int x, int y, int z, RayTraceResult result, PlayerEntity placer, World world) {
 		final int VALUE = 360 / 4;
 		int rotation = (int)Math.round(placer.rotY / VALUE);
 		
@@ -72,10 +73,14 @@ public class StairTile extends Tile {
 		if (rotation == 3) {
 			RX = 2;
 		}
-		
-		if (placer.headPitch < 0) {
-			RX += 4;
+		if (result.getHit().y >= 0) {
+			if (Math.abs((int)(result.getHit().y * 2) % 2) == 1)
+				RX += 4;
+		} else {
+			if (Math.abs((int)(result.getHit().y * 2) % 2) == 0)
+				RX += 4;
 		}
+		
 		
 		return RX;
 	}

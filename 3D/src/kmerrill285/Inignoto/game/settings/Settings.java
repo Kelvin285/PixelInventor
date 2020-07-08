@@ -29,6 +29,8 @@ public class Settings {
 	
 	public static boolean DISTANCE_BLUR = false;
 	
+	public static int CHUNK_GENERATION_SPEED = 5;
+	
 	public static int frameSkip = 0;
 	
 	
@@ -49,7 +51,17 @@ public class Settings {
 	public static InputSetting CRAWLING = new InputSetting(GLFW.GLFW_KEY_C, false, "Inignoto:input.crawling");
 	public static InputSetting ZOOM_OUT = new InputSetting(GLFW.GLFW_KEY_F5, false, "Inignoto:input.zoom_out");
 	public static InputSetting DELETE = new InputSetting(GLFW.GLFW_KEY_DELETE, false, "Inignoto:input.delete");
-
+	public static InputSetting HOTBAR_1 = new InputSetting(GLFW.GLFW_KEY_1, false, "Inignoto:input.hotbar_1");
+	public static InputSetting HOTBAR_2 = new InputSetting(GLFW.GLFW_KEY_2, false, "Inignoto:input.hotbar_2");
+	public static InputSetting HOTBAR_3 = new InputSetting(GLFW.GLFW_KEY_3, false, "Inignoto:input.hotbar_3");
+	public static InputSetting HOTBAR_4 = new InputSetting(GLFW.GLFW_KEY_4, false, "Inignoto:input.hotbar_4");
+	public static InputSetting HOTBAR_5 = new InputSetting(GLFW.GLFW_KEY_5, false, "Inignoto:input.hotbar_5");
+	public static InputSetting HOTBAR_6 = new InputSetting(GLFW.GLFW_KEY_6, false, "Inignoto:input.hotbar_6");
+	public static InputSetting HOTBAR_7 = new InputSetting(GLFW.GLFW_KEY_7, false, "Inignoto:input.hotbar_7");
+	public static InputSetting HOTBAR_8 = new InputSetting(GLFW.GLFW_KEY_8, false, "Inignoto:input.hotbar_8");
+	public static InputSetting HOTBAR_9 = new InputSetting(GLFW.GLFW_KEY_9, false, "Inignoto:input.hotbar_9");
+	public static InputSetting HOTBAR_10 = new InputSetting(GLFW.GLFW_KEY_0, false, "Inignoto:input.hotbar_10");
+	
 	public static HashMap<Integer, Boolean> keys = new HashMap<Integer, Boolean>();
 	public static HashMap<Integer, Boolean> pressedKey = new HashMap<Integer, Boolean>();
 	public static HashMap<Integer, Boolean> buttons = new HashMap<Integer, Boolean>();
@@ -100,6 +112,9 @@ public class Settings {
 						}
 						if (a.contentEquals("VIEW_DISTANCE")) {
 							VIEW_DISTANCE = Integer.parseInt(b);
+						}
+						if (a.contentEquals("CHUNK_GENERATION_SPEED")) {
+							CHUNK_GENERATION_SPEED = Integer.parseInt(b);
 						}
 						if (a.contentEquals("VERTICAL_VIEW_DISTANCE")) {
 							VERTICAL_VIEW_DISTANCE = Integer.parseInt(b);
@@ -170,6 +185,36 @@ public class Settings {
 						if (a.contentEquals("DELETE")) {
 							DELETE.read(b);
 						}
+						if (a.contentEquals("HOTBAR_1")) {
+							HOTBAR_1.read(b);
+						}
+						if (a.contentEquals("HOTBAR_2")) {
+							HOTBAR_2.read(b);
+						}
+						if (a.contentEquals("HOTBAR_3")) {
+							HOTBAR_3.read(b);
+						}
+						if (a.contentEquals("HOTBAR_4")) {
+							HOTBAR_4.read(b);
+						}
+						if (a.contentEquals("HOTBAR_5")) {
+							HOTBAR_5.read(b);
+						}
+						if (a.contentEquals("HOTBAR_6")) {
+							HOTBAR_6.read(b);
+						}
+						if (a.contentEquals("HOTBAR_7")) {
+							HOTBAR_7.read(b);
+						}
+						if (a.contentEquals("HOTBAR_8")) {
+							HOTBAR_8.read(b);
+						}
+						if (a.contentEquals("HOTBAR_9")) {
+							HOTBAR_9.read(b);
+						}
+						if (a.contentEquals("HOTBAR_10")) {
+							HOTBAR_10.read(b);
+						}
 					}
 				}
 			}
@@ -198,6 +243,7 @@ public class Settings {
 			str += getSaveString("VIEW_DISTANCE", VIEW_DISTANCE);
 			str += getSaveString("VERTICAL_VIEW_DISTANCE", VERTICAL_VIEW_DISTANCE);
 			str += getSaveString("HEAD_BOB", HEAD_BOB);
+			str += getSaveString("CHUNK_GENERATION_SPEED", CHUNK_GENERATION_SPEED);
 //			str += getSaveString("SHADOWS", SHADOWS);
 			str += getSaveString("DISTANCE_BLUR", DISTANCE_BLUR);
 			str += getSaveString("REFLECTIONS", REFLECTIONS);
@@ -219,6 +265,16 @@ public class Settings {
 			str += getSaveString("CRAWLING", CRAWLING.write());
 			str += getSaveString("ZOOM_OUT", ZOOM_OUT.write());
 			str += getSaveString("DELETE", DELETE.write());
+			str += getSaveString("HOTBAR_1", HOTBAR_1.write());
+			str += getSaveString("HOTBAR_2", HOTBAR_2.write());
+			str += getSaveString("HOTBAR_3", HOTBAR_3.write());
+			str += getSaveString("HOTBAR_4", HOTBAR_4.write());
+			str += getSaveString("HOTBAR_5", HOTBAR_5.write());
+			str += getSaveString("HOTBAR_6", HOTBAR_6.write());
+			str += getSaveString("HOTBAR_7", HOTBAR_7.write());
+			str += getSaveString("HOTBAR_8", HOTBAR_8.write());
+			str += getSaveString("HOTBAR_9", HOTBAR_9.write());
+			str += getSaveString("HOTBAR_10", HOTBAR_10.write());
 
 			writer.write(str);
 			writer.close();

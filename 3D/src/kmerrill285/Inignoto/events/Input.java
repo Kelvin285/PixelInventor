@@ -1,7 +1,5 @@
 package kmerrill285.Inignoto.events;
 
-import java.awt.Rectangle;
-
 import kmerrill285.Inignoto.Inignoto;
 import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.Mouse;
@@ -9,13 +7,10 @@ import kmerrill285.Inignoto.game.client.rendering.gui.GuiRenderer;
 import kmerrill285.Inignoto.game.client.rendering.gui.IngameMenuScreen;
 import kmerrill285.Inignoto.game.client.rendering.gui.InventoryScreen;
 import kmerrill285.Inignoto.game.client.rendering.gui.MenuScreen;
-import kmerrill285.Inignoto.game.entity.Entity;
-import kmerrill285.Inignoto.game.entity.player.PlayerEntity;
+import kmerrill285.Inignoto.game.inventory.InventoryItemStack;
+import kmerrill285.Inignoto.game.inventory.PlayerInventory;
 import kmerrill285.Inignoto.game.settings.Settings;
-import kmerrill285.Inignoto.game.tile.Tiles;
-import kmerrill285.Inignoto.game.world.chunk.TilePos;
 import kmerrill285.Inignoto.resources.FPSCounter;
-import kmerrill285.Inignoto.resources.RayTraceResult.Direction;
 import kmerrill285.Inignoto.resources.RayTraceResult.RayTraceType;
 import kmerrill285.Inignoto.resources.TPSCounter;
 
@@ -107,7 +102,7 @@ public class Input {
 			if (Camera.rotation.x < -90) Camera.rotation.x = -90;
 			if (Camera.rotation.x > 90) Camera.rotation.x = 90;
 		}
-		
+				
 		if (Settings.ATTACK.isPressed()) {
 			Inignoto game = Inignoto.game;
 			if (Camera.currentTile != null) {
@@ -116,75 +111,98 @@ public class Input {
 						if (Settings.ATTACK.isJustPressed()) {
 							game.world.mineTile(Camera.currentTile.getPosition(), 5.0f);
 						} else {
-							if (Inignoto.game.player.getUseTime() == 0)
-							{
-								game.world.mineTile(Camera.currentTile.getPosition(), 5.0f);
+							if (Inignoto.game.player.arm_swing == 0) {
+								Inignoto.game.player.arm_swing = 1.0f;
+								game.world.mineTile(Camera.currentTile.getPosition(), 10.0f);
 							}
 						}
 				}
 			}
 		}
 		
+		
 		if (Settings.USE.isPressed()) {
-			Inignoto game = Inignoto.game;
-			if (Camera.currentTile != null) {
-				if (Camera.currentTile.getType() == RayTraceType.TILE) {
-					TilePos pos = new TilePos(Camera.currentTile.getPosition().x, Camera.currentTile.getPosition().y, Camera.currentTile.getPosition().z);
-					Direction direction = Camera.currentTile.getDirection();
-					if (direction != null) {
-						pos.x += direction.x;
-						pos.y += direction.y;
-						pos.z += direction.z;
-						boolean stop = false;
-						for (Entity e : game.world.entities) {
-							if (new Rectangle(pos.x , pos.z, 1, 1).intersects((e.position.x), (e.position.z), (e.size.x), e.size.z))
-								if (!(e instanceof PlayerEntity)) {
-									if (pos.y == e.getTilePos().y || pos.y == e.getTilePos().y + 1) {
-										stop = true;
-										break;
-									}
-								} else {
-									if (((PlayerEntity)e).isCrawling()) {
-										if (pos.y == e.getTilePos().y) {
-											stop = true;
-											break;
-										}
-									} else {
-										if (pos.y == e.getTilePos().y || pos.y == e.getTilePos().y + 1) {
-											stop = true;
-											break;
-										}
-									}
-								}
-						}
-						
-					if (game.world.getTile(pos).isReplaceable()) {
-						boolean set = false;
-						if (Settings.USE.isJustPressed()) {
-							if (!stop) {
-								set = true;
-								Inignoto.game.player.setUseTime(5);
-							}
-						} else {
-							if (Inignoto.game.player.getUseTime() == 0)
-							{
-								if (!stop) {
-									set = true;
-									Inignoto.game.player.setUseTime(5);
-								}
-							}
-						}
-						
-						if (set == true) {
-							game.world.setTile(pos, Tiles.SMOOTH_STONE_STAIRS);
-							game.world.getTileData(pos, true).setState(game.world.getTile(pos).getStateNumberWhenPlaced(pos.x, pos.y, pos.z, Inignoto.game.player, game.world));
-						}
-						
-					}
-				}
-					
+			boolean use = false;
+			
+			int use_time = 5;
+			
+			if (Settings.USE.isJustPressed()) {
+				use = true;
+				Inignoto.game.player.setUseTime(use_time);
+			} else {
+				if (Inignoto.game.player.getUseTime() == 0)
+				{
+					use = true;
+					Inignoto.game.player.setUseTime(use_time);
 				}
 			}
+			
+			if (use) {
+				PlayerInventory inventory = Inignoto.game.player.inventory;
+				if (inventory != null) {
+					InventoryItemStack stack = inventory.hotbar[inventory.hotbarSelected].stack;
+					if (stack != null) {
+						stack.item.rightClick(Inignoto.game.world, Inignoto.game.player, Camera.currentTile);
+						if (Inignoto.game.player.arm_swing == 0) {
+							Inignoto.game.player.arm_swing = 1.0f;
+						}
+					}
+				}
+			}
+			
 		}
+		
+
+		if (Settings.HOTBAR_1.isPressed()) {
+			if (Inignoto.game.player.inventory != null) {
+				Inignoto.game.player.inventory.hotbarSelected = 0;
+			}
+		}
+		if (Settings.HOTBAR_2.isPressed()) {
+			if (Inignoto.game.player.inventory != null) {
+				Inignoto.game.player.inventory.hotbarSelected = 1;
+			}
+		}
+		if (Settings.HOTBAR_3.isPressed()) {
+			if (Inignoto.game.player.inventory != null) {
+				Inignoto.game.player.inventory.hotbarSelected = 2;
+			}
+		}
+		if (Settings.HOTBAR_4.isPressed()) {
+			if (Inignoto.game.player.inventory != null) {
+				Inignoto.game.player.inventory.hotbarSelected = 3;
+			}
+		}
+		if (Settings.HOTBAR_5.isPressed()) {
+			if (Inignoto.game.player.inventory != null) {
+				Inignoto.game.player.inventory.hotbarSelected = 4;
+			}
+		}
+		if (Settings.HOTBAR_6.isPressed()) {
+			if (Inignoto.game.player.inventory != null) {
+				Inignoto.game.player.inventory.hotbarSelected = 5;
+			}
+		}
+		if (Settings.HOTBAR_7.isPressed()) {
+			if (Inignoto.game.player.inventory != null) {
+				Inignoto.game.player.inventory.hotbarSelected = 6;
+			}
+		}
+		if (Settings.HOTBAR_8.isPressed()) {
+			if (Inignoto.game.player.inventory != null) {
+				Inignoto.game.player.inventory.hotbarSelected = 7;
+			}
+		}
+		if (Settings.HOTBAR_9.isPressed()) {
+			if (Inignoto.game.player.inventory != null) {
+				Inignoto.game.player.inventory.hotbarSelected = 8;
+			}
+		}
+		if (Settings.HOTBAR_10.isPressed()) {
+			if (Inignoto.game.player.inventory != null) {
+				Inignoto.game.player.inventory.hotbarSelected = 9;
+			}
+		}
+		
 	}
 }

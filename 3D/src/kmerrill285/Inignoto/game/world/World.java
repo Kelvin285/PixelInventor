@@ -7,8 +7,6 @@ import java.util.Random;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
-import custom_models.CustomModelLoader;
-import custom_models.Model;
 import custom_models.Part;
 import kmerrill285.Inignoto.Inignoto;
 import kmerrill285.Inignoto.game.client.Camera;
@@ -21,6 +19,7 @@ import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.shadows.ShadowRenderer;
 import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
 import kmerrill285.Inignoto.game.entity.Entity;
+import kmerrill285.Inignoto.game.entity.player.PlayerEntity;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
@@ -48,6 +47,7 @@ public class World {
 	private WorldSaver worldSaver;
 	
 	public ArrayList<Entity> entities = new ArrayList<Entity>();
+	public ArrayList<Entity> players = new ArrayList<Entity>();
 	
 	private Fog fog;
 	private Fog shadowBlendFog;
@@ -125,7 +125,7 @@ public class World {
 	
 	public void buildChunks() {
 		saveChunks();
-		for (int i = 0; i < 15; i++) {
+		for (int i = 0; i < Settings.CHUNK_GENERATION_SPEED; i++) {
 			Chunk closest = findClosestChunk();
 			
 			if (closest != null) {
@@ -313,7 +313,14 @@ public class World {
 	public void tick() {
 				
 		for (int i = 0; i < entities.size(); i++) {
+			
 			Entity e = entities.get(i);
+			
+			if (e instanceof PlayerEntity) {
+				if (!players.contains(e)) {
+					players.add(e);
+				}
+			}
 			
 			int mx = (int)Math.floor((float)e.position.x / Chunk.SIZE);
 			int my = (int)Math.floor((float)e.position.y / Chunk.SIZE_Y);
@@ -716,6 +723,8 @@ public class World {
 			
 			if (data.getMiningTime() > 100.0) {
 				data.setMiningTime(0.0f);
+				Tile tile = chunk.getLocalTile(x, y, z);
+				tile.dropAsItem(this, x + mx * Chunk.SIZE, y + my * Chunk.SIZE_Y, z + mz * Chunk.SIZE);
 				chunk.setLocalTile(x, y, z, Tiles.AIR);
 				chunk.markForRerender();
 				chunk.markForSave();

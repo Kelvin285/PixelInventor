@@ -4,7 +4,7 @@ import org.joml.Vector3f;
 
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.MeshRenderer;
-import kmerrill285.Inignoto.game.client.rendering.chunk.BlockBuilder;
+import kmerrill285.Inignoto.game.client.rendering.chunk.TileBuilder;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.world.World;
@@ -18,7 +18,7 @@ public class FallingTileEntity extends Entity {
 	public FallingTileEntity(TilePos position, World world, Tile tile) {
 		super(new Vector3f(position.x, position.y-0.5f, position.z), new Vector3f(1, 1, 1), world, tile.getDensity());
 		this.tile = tile;
-		mesh = BlockBuilder.buildMesh(tile, 0, 0, 0);
+		mesh = TileBuilder.buildMesh(tile, 0, 0, 0);
 	}
 	
 	public void tick() {

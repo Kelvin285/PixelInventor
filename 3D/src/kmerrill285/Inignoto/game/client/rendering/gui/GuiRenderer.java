@@ -11,20 +11,20 @@ import java.awt.image.BufferedImage;
 import org.joml.Vector2f;
 import org.joml.Vector4f;
 import org.lwjgl.glfw.GLFW;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
 import kmerrill285.Inignoto.Inignoto;
 import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.Mouse;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
-import kmerrill285.Inignoto.game.client.rendering.chunk.BlockBuilder;
+import kmerrill285.Inignoto.game.client.rendering.chunk.TileBuilder;
 import kmerrill285.Inignoto.game.client.rendering.postprocessing.FrameBuffer;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.textures.Fonts;
 import kmerrill285.Inignoto.game.client.rendering.textures.Texture;
 import kmerrill285.Inignoto.game.client.rendering.textures.TextureAtlas;
 import kmerrill285.Inignoto.game.client.rendering.textures.Textures;
+import kmerrill285.Inignoto.game.inventory.PlayerInventory;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.resources.RayTraceResult;
@@ -102,15 +102,37 @@ public class GuiRenderer {
 		
 		if (!(currentScreen instanceof MenuScreen)) {
 
-			Mesh mesh = BlockBuilder.buildMesh(Tiles.GRASS, 0, 0, 0, 30, 30);
-			this.drawMesh(Textures.TILES.texture, 505, 40, 40, 40, 0, new Vector4f(1, 1, 1, 1), mesh);
 			
 			
-			drawTexture(Textures.HOTBAR, 1920 / 2 - (382 * 3) / 2, 0, 382 * 3, 35 * 3, 0, new Vector4f(1, 1, 1, 1));
 			
-			for (int i = 0; i < 10; i++) {
-				drawTexture(Textures.HEALTH_ICON, 7 * 5 + 1920 - 10 - 77 * 5 + 3 * 5 + i * 7 * 5, 10 + 3 * 5, -7 * 5, 7 * 5, 0, new Vector4f(52.0f / 255.0f, 224.0f / 255.0f, 81.0f / 255.0f, 1));
+			int HOTBAR_X = 1920 / 2 - (382 * 3) / 2;
+			int HOTBAR_Y = 0;
+			
+			if (Inignoto.game.player.inventory != null) {
+				PlayerInventory inventory = Inignoto.game.player.inventory;
+				for (int i = 0; i < 10; i++) {
+					if (inventory.hotbarSelected == i)
+					drawNormalTexture(Textures.HOTBAR_SELECTED, HOTBAR_X + 37 * 3 + i * 30 * 3 + i * 3 * 2, HOTBAR_Y + 2 * 3, Textures.HOTBAR_SELECTED.width * 3, Textures.HOTBAR_SELECTED.height * 3, 0, new Vector4f(1, 1, 1, 1));
+				}
+				drawNormalTexture(Textures.HOTBAR, HOTBAR_X, HOTBAR_Y, 382 * 3, 35 * 3, 0, new Vector4f(1, 1, 1, 1));
+				
+				for (int i = 0; i < 10; i++) {
+					if (inventory.hotbar[i].stack != null) {
+						this.drawString(inventory.hotbar[i].stack.size+"", 537 + i * 30 * 3 + i * 3 * 2, 100, 1.5f, new Vector4f(0.1f, 0.1f, 0.1f, 1), true);
+
+						if (inventory.hotbar[i].stack.item.mesh != null)
+							this.drawMesh(inventory.hotbar[i].stack.item.mesh.texture, 537 + i * 30 * 3 + i * 3 * 2, 67, 30, 30, 0, new Vector4f(1, 1, 1, 1), inventory.hotbar[i].stack.item.mesh);
+						drawNormalTexture(Textures.HOTBAR_SLOT, HOTBAR_X + 34 * 3 + i * 30 * 3 + i * 3 * 2, HOTBAR_Y + 8 * 3, 28 * 3, 27 * 3, 0, new Vector4f(1, 1, 1, 1));
+						
+//						Mesh mesh = BlockBuilder.buildMesh(Tiles.GRASS, 0, 0, 0, 30, 30);
+					}
+				}
+				
+				for (int i = 0; i < 10; i++) {
+					drawTexture(Textures.HEALTH_ICON, 7 * 5 + 1920 - 10 - 77 * 5 + 3 * 5 + i * 7 * 5, 10 + 3 * 5, -7 * 5, 7 * 5, 0, new Vector4f(52.0f / 255.0f, 224.0f / 255.0f, 81.0f / 255.0f, 1));
+				}
 			}
+			
 			
 			drawTexture(Textures.HEALTHBAR, 1920 - 10, 10, -77 * 5, 13 * 5, 0, new Vector4f(1, 1, 1, 1));
 			

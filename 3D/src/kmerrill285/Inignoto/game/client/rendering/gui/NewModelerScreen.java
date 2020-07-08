@@ -82,7 +82,7 @@ import kmerrill285.Inignoto.game.client.Camera;
 import kmerrill285.Inignoto.game.client.Mouse;
 import kmerrill285.Inignoto.game.client.rendering.Mesh;
 import kmerrill285.Inignoto.game.client.rendering.MeshRenderer;
-import kmerrill285.Inignoto.game.client.rendering.chunk.BlockBuilder;
+import kmerrill285.Inignoto.game.client.rendering.chunk.TileBuilder;
 import kmerrill285.Inignoto.game.client.rendering.shader.ShaderProgram;
 import kmerrill285.Inignoto.game.client.rendering.textures.Texture;
 import kmerrill285.Inignoto.game.client.rendering.textures.TextureAtlas;
@@ -184,9 +184,9 @@ public class NewModelerScreen extends ModelerScreen {
 		handle.buildPart(Textures.WHITE_SQUARE);
 		
 		createGrid();
-		block = BlockBuilder.buildMesh(Tiles.GRASS, 0, -1, 0);
-		cube = BlockBuilder.buildMesh(Tiles.GRASS, 0, 0, 0);
-		rotationHandle = BlockBuilder.buildMesh(Tiles.GRASS, -0.5f, -0.5f, -0.5f);
+		block = TileBuilder.buildMesh(Tiles.GRASS, 0, -1, 0);
+		cube = TileBuilder.buildMesh(Tiles.GRASS, 0, 0, 0);
+		rotationHandle = TileBuilder.buildMesh(Tiles.GRASS, -0.5f, -0.5f, -0.5f);
 
 		frame = new Frame(1920, 1080);
 		
