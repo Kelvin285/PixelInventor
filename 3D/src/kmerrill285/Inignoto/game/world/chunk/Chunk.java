@@ -120,6 +120,10 @@ public class Chunk {
 	}
 	
 	public Tile getLocalTile(int x, int y, int z) {
+		return getLocalTile(x, y, z, true);
+	}
+	
+	public Tile getLocalTile(int x, int y, int z, boolean cascade) {
 		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
 			if (tiles == null) {
 				return Tiles.AIR;
@@ -127,6 +131,7 @@ public class Chunk {
 			if (tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y] == null) return Tiles.AIR;
 			return Tiles.getTile(tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y].getTile());
 		}
+		if (!cascade) return Tiles.AIR;
 		int X = getX();
 		int Y = getY();
 		int Z = getZ();
@@ -405,7 +410,7 @@ public class Chunk {
 	}
 	
 	public boolean isLocalTileNotFull(int x, int y, int z) {
-		Tile local = getLocalTile(x, y, z);
+		Tile local = getLocalTile(x, y, z, false);
 		return !local.isFullCube() || !local.isVisible() || local.getRayTraceType() != TileRayTraceType.SOLID;
 	}
 
@@ -636,6 +641,7 @@ public class Chunk {
 	}
 	
 	public void testForActivation() {
+		
 		if (needsToRebuild) {
 			if (this.mesh != null) this.mesh.dispose();
 			if (this.waterMesh != null) this.waterMesh.dispose();
@@ -643,6 +649,7 @@ public class Chunk {
 			mesh = ChunkBuilder.buildChunk(this, true);
 			waterMesh = ChunkBuilder.buildLiquidChunk(this);
 		}
+		
 		if (isActive()) {
 			if (tiles == null) {
 				this.tiles = new TileData[NUM_TILES];

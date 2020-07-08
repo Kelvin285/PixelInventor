@@ -143,9 +143,6 @@ public class Input {
 					InventoryItemStack stack = inventory.hotbar[inventory.hotbarSelected].stack;
 					if (stack != null) {
 						stack.item.rightClick(Inignoto.game.world, Inignoto.game.player, Camera.currentTile);
-						if (Inignoto.game.player.arm_swing == 0) {
-							Inignoto.game.player.arm_swing = 1.0f;
-						}
 					}
 				}
 			}

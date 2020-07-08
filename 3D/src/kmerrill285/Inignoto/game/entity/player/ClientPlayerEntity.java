@@ -304,16 +304,15 @@ public class ClientPlayerEntity extends PlayerEntity {
 		}
 		
 		
-		
-		headBob += bobSpeed * TPSCounter.getDelta() * 0.5f;
-		headBobX += bobSpeedX * TPSCounter.getDelta() * 0.5f;
+		headBob += bobSpeed * TPSCounter.getDelta() * 2.0f;
+		headBobX += bobSpeedX * TPSCounter.getDelta() * 2.0f;
 		if (headBob > 360) headBob -= 360;
 		if (headBobX > 360) headBobX -= 360;
 		if (headBob < 0) headBob += 360;
 		if (headBobX < 0) headBobX += 360;
 		
 		if (isMoving == false || onGround == false) {
-			float resetSpeed = 0.18f;
+			float resetSpeed = 0.18f * (float)TPSCounter.getDelta() * 2.0f;
 			if (headBob > 90 && headBob < 270) {
 				headBob = MathHelper.lerp(headBob, 180, resetSpeed);
 			} else {
@@ -683,7 +682,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 		float bobX = bob * (float)Math.cos(Math.toRadians(Camera.rotation.y)) * bm;
 		float bobZ = bob * (float)Math.sin(Math.toRadians(Camera.rotation.y)) * bm;
 		float bobY = (float)Math.abs(Math.sin(Math.toRadians(headBob)) * 0.15f) * bm;
-		
+
 		if (soundCounter > 0) soundCounter--;
 
 		if (this.onGround) {
@@ -698,15 +697,18 @@ public class ClientPlayerEntity extends PlayerEntity {
 				}
 			}
 		}
-		
+
 		if (Float.isFinite(bobX) == false) bobX = 0;
 		if (Float.isFinite(bobY) == false) bobY = 0;
 		if (Float.isFinite(bobZ) == false) bobZ = 0;
 		if (Float.isFinite(headBobX) == false) headBobX = 0;
-		if (Float.isFinite(headBob) == false) headBob = 0;
-		if (Float.isFinite(bob) == false) bob = 0;
-		Vector3f vel = new Vector3f(moveVel);
-		vel.mul(0);
+		if (Float.isFinite(headBob) == false) {
+			headBob = 0;
+		}
+		if (Float.isFinite(bob) == false) { 
+			bob = 0;
+			}
+		
 		
 		double zoomDist = 4;
 		float dist = 0;
@@ -759,7 +761,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 		if (ZOOM == 0) {
 			zoom_dist = MathHelper.lerp(zoom_dist, dist, 0.7f);
 			Vector3f vec = Camera.getForward().mul(zoom_dist);
-			Camera.position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, this.eyeHeight, 0);
+			Camera.position = new Vector3f(lastPos).add(size.x / 2.0f, 0, size.z / 2.0f).sub(vec).add(0, this.eyeHeight, 0).add(Camera.getUp().mul(bob * 1.25f));
 		} else {
 			zoom_dist = MathHelper.lerp(zoom_dist, dist, 0.7f);
 			Vector3f vec = Camera.getForward().mul(zoom_dist);
@@ -822,12 +824,12 @@ public class ClientPlayerEntity extends PlayerEntity {
 		if (this.arm_swing > 0) {
 			swingPos.add(Camera.getUp().mul((float)Math.cos(arm_swing * Math.PI)));
 			swingPos.add(Camera.getForward().mul((float)Math.sin(arm_swing * Math.PI)));
-			this.arm_swing -= TPSCounter.getDelta();
+			this.arm_swing -= TPSCounter.getDelta() * 0.8f;
 		} else {
 			this.arm_swing = 0;
 		}
 		
-		this.itemPosition.lerp(new Vector3f(Camera.position).add(Camera.getForward()).add(Camera.getRight()).add(Camera.getUp()).add(swingPos), 0.5f);
+		this.itemPosition.lerp(new Vector3f(Camera.position).add(Camera.getForward()).add(Camera.getRight()).add(Camera.getUp()).add(swingPos), 0.25f);
 		if (this.inventory != null) {
 			InventorySlot slot = this.inventory.hotbar[this.inventory.hotbarSelected];
 			if (slot.stack != null) {

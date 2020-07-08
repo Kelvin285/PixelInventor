@@ -2,6 +2,7 @@ package kmerrill285.Inignoto.item;
 
 import java.awt.Rectangle;
 
+import kmerrill285.Inignoto.Inignoto;
 import kmerrill285.Inignoto.game.client.rendering.chunk.TileBuilder;
 import kmerrill285.Inignoto.game.entity.Entity;
 import kmerrill285.Inignoto.game.entity.player.PlayerEntity;
@@ -59,6 +60,8 @@ public class TileItem extends Item {
 					world.setTile(pos, this.tile);
 					world.getTileData(pos, true).setState(world.getTile(pos).getStateNumberWhenPlaced(pos.x, pos.y, pos.z, result, player, world));
 					player.inventory.hotbar[player.inventory.hotbarSelected].decrementStack(1);
+					player.arm_swing = 1.0f;
+
 				}
 			}
 				

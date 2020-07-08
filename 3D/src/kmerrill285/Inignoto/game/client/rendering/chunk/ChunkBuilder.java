@@ -70,13 +70,13 @@ public class ChunkBuilder {
 							TileData data = chunk.getTileData(x, y, z, false);
 							Tile tile = Tiles.getTile(data.getTile());
 							
-							
+							Mesh mesh = null;
 							if (!tile.getModel().isEmpty()) {
 								Model model = CustomModelLoader.getOrLoadModel(tile.getModel().split(":")[0], tile.getModel().split(":")[1], Textures.TILES.texture);
 								model.combine(Textures.TILES.texture);
 
 								
-								Mesh mesh = model.getParts().get(0).mesh;
+								mesh = model.getParts().get(0).mesh;
 								
 								float[] tc = Arrays.copyOf(mesh.texCoords, mesh.texCoords.length);
 								
@@ -183,17 +183,6 @@ public class ChunkBuilder {
 		
 		
 		return mesh;
-	}
-	
-	private static void cascade(int x, int y, int z, World world) {
-		Chunk c = world.getChunk(x, y, z);
-		if (c != null) {
-			if (c.generated) {
-				c.mesh = buildChunk(c, false);
-				c.waterMesh = buildLiquidChunk(c);
-				c.generated = true;
-			}
-		}
 	}
 	
 	public static int buildLiquidChunk(Chunk chunk, ArrayList<Float> vertices, ArrayList<Integer> indices, ArrayList<Float> texCoords, int index) {

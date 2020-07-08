@@ -311,7 +311,6 @@ public class World {
 	}
 	
 	public void tick() {
-				
 		for (int i = 0; i < entities.size(); i++) {
 			
 			Entity e = entities.get(i);
@@ -322,11 +321,7 @@ public class World {
 				}
 			}
 			
-			int mx = (int)Math.floor((float)e.position.x / Chunk.SIZE);
-			int my = (int)Math.floor((float)e.position.y / Chunk.SIZE_Y);
-			int mz = (int)Math.floor((float)e.position.x / Chunk.SIZE);
-			
-			if (this.getChunk(mx, my, mz) != null || e.ticksExisted > 10) {
+			if (e.ticksExisted > 10) {
 				e.tick();
 				if (e.isDead) {
 					entities.remove(i);
@@ -503,10 +498,23 @@ public class World {
 		
 		float length = end.distance(start);
 		
-		float inc = 0.001f;
-		for (float i = 0; i < length; i+=inc) {
-			Vector3f n = new Vector3f(start).lerp(end, i / length);
-			pos.setPosition(n.x, n.y, n.z);
+		Vector3f raypos = new Vector3f(start);
+		Vector3f raydir = new Vector3f(end).sub(start).div(length);
+		
+		float inc = 0.1f;
+		RayBox raybox = new RayBox();
+		raybox.min = new Vector3f(0);
+		raybox.max = new Vector3f(0);
+		for (;;) {
+			if (raypos.distance(start) > length) {
+				break;
+			}
+			pos.setPosition(Math.floor(raypos.x), Math.floor(raypos.y), Math.floor(raypos.z));
+			raybox.min.set(pos.x, pos.y, pos.z);
+			raybox.max.set(pos.x + 1, pos.y + 1, pos.z + 1);
+			RayIntersection intersection = Raytracer.intersectBox(start, raydir, raybox);
+			raypos.set(start);
+			raypos.add(new Vector3f(raydir).mul(intersection.lambda.y + 0.001f));
 			Tile tile = getTile(pos);
 			TileData data = getTileData(pos, false);
 			if (tile != null) {
@@ -713,7 +721,14 @@ public class World {
 		
 		if (chunk != null) {
 			TileData data = chunk.getTileData(x, y, z, false);
-			
+			{
+				Tile tile = Tiles.getTile(data.getTile());
+				if (tile.sound != null) {
+					
+					Camera.soundSource.setPosition(pos.x, pos.y, pos.z);
+					Camera.soundSource.play(tile.sound[getRandom().nextInt(tile.sound.length)]);
+				}
+			}
 			
 			data.setMiningTime(data.getMiningTime() + strength / Tiles.getTile(data.getTile()).getHardness());
 			int current = (int)(data.getMiningTime() / 20);
@@ -732,12 +747,6 @@ public class World {
 			else
 			if (current != last) {
 				chunk.markForRerender();
-				Tile tile = Tiles.getTile(data.getTile());
-				if (tile.sound != null) {
-					
-					Camera.soundSource.setPosition(pos.x, pos.y, pos.z);
-					Camera.soundSource.play(tile.sound[getRandom().nextInt(tile.sound.length)]);
-				}
 			}
 		}
 	}
