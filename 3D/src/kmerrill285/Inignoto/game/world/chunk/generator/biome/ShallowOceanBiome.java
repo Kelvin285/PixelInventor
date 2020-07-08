@@ -13,29 +13,20 @@ import kmerrill285.Inignoto.game.world.chunk.generator.biome.properties.BiomeTyp
 import kmerrill285.Inignoto.game.world.chunk.generator.feature.Structure;
 import kmerrill285.Inignoto.resources.MathHelper;
 
-public class PlainsBiome extends Biome {
+public class ShallowOceanBiome extends Biome {
 
-	public PlainsBiome() {
-		super(Tiles.GRASS, Tiles.DIRT, Tiles.SMOOTH_STONE, BiomeHumidity.MODERATE, BiomeTemperature.WARM, BiomeLocation.LAND, BiomeType.PLAINS);
+	public ShallowOceanBiome() {
+		super(Tiles.SAND, Tiles.SAND, Tiles.SMOOTH_STONE, BiomeHumidity.HUMID, BiomeTemperature.WARM, BiomeLocation.OCEAN, BiomeType.SHALLOW_OCEAN);
 	}
 
 	@Override
 	public float getHeightAt(float x, float y, float z, FastNoise noise) {
-		return MathHelper.average(noise.GetSimplex(x * 0.25f, z * 0.25f), noise.GetPerlinFractal(x, z)) * 10;
+		return -Math.abs((1.0f - Math.abs(noise.GetPerlinFractal(x * 2, z)) * 2) * 10 + noise.GetPerlinFractal(x, z) * 10) - 20;
 	}
 
 	@Override
 	public void populate(int X, int Y, int Z, int x, int y, int z, Chunk chunk, World world, FastNoise noise) {
-		if (chunk.getLocalTile(x, y, z) == Tiles.GRASS) {
-			Structure.SIMPLE_TREE.addToChunk(chunk, x, y, z, X, Y, Z);
-			if (world.getRandom().nextInt(25) <= 5) {
-				if (world.getRandom().nextInt(25) <= 5) {
-					chunk.setFoliage(x, y + 1, z, Foliage.PURPLE_FLOWER);
-				} else {
-					chunk.setFoliage(x, y + 1, z, Foliage.TALL_GRASS);
-				}
-			}
-		}
+		
 	}
 
 	@Override

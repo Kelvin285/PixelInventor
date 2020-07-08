@@ -501,11 +501,10 @@ public class World {
 		Vector3f raypos = new Vector3f(start);
 		Vector3f raydir = new Vector3f(end).sub(start).div(length);
 		
-		float inc = 0.1f;
 		RayBox raybox = new RayBox();
 		raybox.min = new Vector3f(0);
 		raybox.max = new Vector3f(0);
-		for (;;) {
+		for (int ii = 0; ii < 100; ii++) {
 			if (raypos.distance(start) > length) {
 				break;
 			}

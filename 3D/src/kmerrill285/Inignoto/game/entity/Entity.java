@@ -94,12 +94,12 @@ public class Entity {
 		if (velocity.x < 0) {
 			boolean collision = false;
 			
-			Vector3f pos = new Vector3f(position).add(0, step_height, 0);
+			Vector3f pos = new Vector3f(position).add(0, lastOnGround ? step_height : 0, 0);
 			RayTraceResult result = world.rayTraceTiles(pos, new Vector3f(pos).add(velocity.x * delta - bias, 0, 0), TileRayTraceType.SOLID);
 			if (result.getType() == RayTraceType.TILE) {
 				collision = true;
 			} else {
-				pos = new Vector3f(position).add(0, step_height, size.z);
+				pos = new Vector3f(position).add(0, lastOnGround ? step_height : 0, size.z);
 				result = world.rayTraceTiles(pos, new Vector3f(pos).add(velocity.x * delta - bias, 0, 0), TileRayTraceType.SOLID);
 				if (result.getType() == RayTraceType.TILE) {
 					collision = true;
@@ -125,12 +125,12 @@ public class Entity {
 		if (velocity.x > 0) {
 			boolean collision = false;
 			
-			Vector3f pos = new Vector3f(position).add(size.x, step_height, 0);
+			Vector3f pos = new Vector3f(position).add(size.x, lastOnGround ? step_height : 0, 0);
 			RayTraceResult result = world.rayTraceTiles(pos, new Vector3f(pos).add(velocity.x * delta + bias, 0, 0), TileRayTraceType.SOLID);
 			if (result.getType() == RayTraceType.TILE) {
 				collision = true;
 			} else {
-				pos = new Vector3f(position).add(size.x, step_height, size.z);
+				pos = new Vector3f(position).add(size.x, lastOnGround ? step_height : 0, size.z);
 				result = world.rayTraceTiles(pos, new Vector3f(pos).add(velocity.x * delta + bias, 0, 0), TileRayTraceType.SOLID);
 				if (result.getType() == RayTraceType.TILE) {
 					collision = true;
@@ -157,12 +157,12 @@ public class Entity {
 		if (velocity.z < 0) {
 			boolean collision = false;
 			
-			Vector3f pos = new Vector3f(position).add(0, step_height, 0);
+			Vector3f pos = new Vector3f(position).add(0, lastOnGround ? step_height : 0, 0);
 			RayTraceResult result = world.rayTraceTiles(pos, new Vector3f(pos).add(0, 0, velocity.z * delta - bias), TileRayTraceType.SOLID);
 			if (result.getType() == RayTraceType.TILE) {
 				collision = true;
 			} else {
-				pos = new Vector3f(position).add(size.x, step_height, 0);
+				pos = new Vector3f(position).add(size.x, lastOnGround ? step_height : 0, 0);
 				result = world.rayTraceTiles(pos, new Vector3f(pos).add(0, 0, velocity.z * delta - bias), TileRayTraceType.SOLID);
 				if (result.getType() == RayTraceType.TILE) {
 					collision = true;
@@ -189,12 +189,12 @@ public class Entity {
 		if (velocity.z > 0) {
 			boolean collision = false;
 			
-			Vector3f pos = new Vector3f(position).add(0, step_height, size.z);
+			Vector3f pos = new Vector3f(position).add(0, lastOnGround ? step_height : 0, size.z);
 			RayTraceResult result = world.rayTraceTiles(pos, new Vector3f(pos).add(0, 0, velocity.z * delta + bias), TileRayTraceType.SOLID);
 			if (result.getType() == RayTraceType.TILE) {
 				collision = true;
 			} else {
-				pos = new Vector3f(position).add(size.x, step_height, size.z);
+				pos = new Vector3f(position).add(size.x, lastOnGround ? step_height : 0, size.z);
 				result = world.rayTraceTiles(pos, new Vector3f(pos).add(0, 0, velocity.z * delta + bias), TileRayTraceType.SOLID);
 				if (result.getType() == RayTraceType.TILE) {
 					collision = true;

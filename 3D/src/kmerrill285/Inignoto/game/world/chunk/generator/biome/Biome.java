@@ -28,7 +28,7 @@ public abstract class Biome {
 		this.type = type;
 	}
 	
-	public abstract float getHeightAt(float WORLD_X, float WORLD_Z, FastNoise noise);
+	public abstract float getHeightAt(float WORLD_X, float WORLD_Y, float WORLD_Z, FastNoise noise);
 	public abstract void populate(int WORLD_X, int WORLD_Y, int WORLD_Z, int chunk_x, int chunk_y, int chunk_z, Chunk chunk, World world, FastNoise noise);
 	
 	public abstract boolean hasRivers();

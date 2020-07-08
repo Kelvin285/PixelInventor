@@ -250,6 +250,19 @@ public class ChunkGenerator {
 		
 		return (Math.abs(river) - 0.08f) * 50;
 	}
+	public float getBaseHeight(float x,float y, float z) {
+		x += noise.GetSimplex(x * 0.1f, z) * 50;
+		z += noise.GetSimplex(z, z * 0.1f) * 50;
+		
+		x += noise.GetSimplexFractal(x * 0.5f, z) * 50;
+		z += noise.GetSimplexFractal(x, z * 0.5f) * 50;
+		
+		float base = noise.GetSimplex(x * 0.1f, z * 0.1f) * 10;
+		
+		base += noise.GetPerlin(x * 0.5f, z * 0.5f) * 2;
+				
+		return base;
+	}
 	public float getBaseHeight(float x, float z) {
 		x += noise.GetSimplex(x * 0.1f, z) * 50;
 		z += noise.GetSimplex(z, z * 0.1f) * 50;

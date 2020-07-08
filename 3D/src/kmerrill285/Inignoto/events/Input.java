@@ -109,7 +109,7 @@ public class Input {
 				if (Camera.currentTile.getType() == RayTraceType.TILE) {
 					if (Inignoto.game.player != null)
 						if (Settings.ATTACK.isJustPressed()) {
-							game.world.mineTile(Camera.currentTile.getPosition(), 5.0f);
+							game.world.mineTile(Camera.currentTile.getPosition(), 10.0f);
 						} else {
 							if (Inignoto.game.player.arm_swing == 0) {
 								Inignoto.game.player.arm_swing = 1.0f;

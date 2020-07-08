@@ -13,15 +13,15 @@ import kmerrill285.Inignoto.game.world.chunk.generator.biome.properties.BiomeTyp
 import kmerrill285.Inignoto.game.world.chunk.generator.feature.Structure;
 import kmerrill285.Inignoto.resources.MathHelper;
 
-public class PlainsBiome extends Biome {
+public class HillsBiome extends Biome {
 
-	public PlainsBiome() {
-		super(Tiles.GRASS, Tiles.DIRT, Tiles.SMOOTH_STONE, BiomeHumidity.MODERATE, BiomeTemperature.WARM, BiomeLocation.LAND, BiomeType.PLAINS);
+	public HillsBiome() {
+		super(Tiles.GRASS, Tiles.DIRT, Tiles.SMOOTH_STONE, BiomeHumidity.MODERATE, BiomeTemperature.COOL, BiomeLocation.LAND, BiomeType.HILLS);
 	}
 
 	@Override
 	public float getHeightAt(float x, float y, float z, FastNoise noise) {
-		return MathHelper.average(noise.GetSimplex(x * 0.25f, z * 0.25f), noise.GetPerlinFractal(x, z)) * 10;
+		return Math.abs(MathHelper.average(noise.GetPerlinFractal(x * 0.25f, z * 0.25f), noise.GetPerlinFractal(x, z))) * 80;
 	}
 
 	@Override
