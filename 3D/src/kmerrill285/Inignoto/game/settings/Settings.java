@@ -29,7 +29,7 @@ public class Settings {
 	
 	public static boolean DISTANCE_BLUR = false;
 	
-	public static int CHUNK_GENERATION_SPEED = 5;
+	public static int CHUNK_GENERATION_SPEED = 15;
 	
 	public static int frameSkip = 0;
 	

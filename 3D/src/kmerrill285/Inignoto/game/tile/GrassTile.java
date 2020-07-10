@@ -15,7 +15,7 @@ public class GrassTile extends Tile {
 		final int x = pos.x, y = pos.y, z = pos.z;
 		if (world.getRandom().nextInt(100) <= 25) {
 			pos.setPosition(x, y + 1, z);
-			if (world.getTile(pos).isFullCube()) {
+			if (world.getTileState(pos, false).isFullCube()) {
 				pos.setPosition(x, y, z);
 				world.setTile(pos, Tiles.DIRT);
 				return;
@@ -27,7 +27,7 @@ public class GrassTile extends Tile {
 						if (world.getRandom().nextBoolean()) {
 							pos.setPosition(x + xx, y + yy + 1, z + zz);
 							
-							if (world.getTile(pos).isFullCube() == false) {
+							if (world.getTileState(pos, false).isFullCube() == false) {
 								pos.setPosition(x + xx, y + yy, z + zz);
 								if (world.getTile(pos) == Tiles.DIRT)
 								world.setTile(pos, this);

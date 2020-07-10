@@ -3,10 +3,10 @@ package kmerrill285.Inignoto.game.world.chunk.generator;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
+import kmerrill285.Inignoto.game.tile.data.TileState;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.Chunk;
 import kmerrill285.Inignoto.game.world.chunk.MetaChunk;
-import kmerrill285.Inignoto.game.world.chunk.TileData;
 import kmerrill285.Inignoto.game.world.chunk.generator.feature.Structure;
 import kmerrill285.Inignoto.resources.MathHelper;
 
@@ -19,7 +19,7 @@ public class FlatChunkGenerator extends ChunkGenerator {
 	public void generateChunk(Chunk chunk, MetaChunk metachunk, boolean structures) {
 		if (chunk.load() == true) return;
 		if (chunk.getTiles() == null) {
-			chunk.setTiles(new TileData[Chunk.SIZE * Chunk.SIZE_Y * Chunk.SIZE]);
+			chunk.setTiles(new TileState[Chunk.SIZE * Chunk.SIZE_Y * Chunk.SIZE]);
 		}
 		chunk.isGenerating = true;
 

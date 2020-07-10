@@ -130,9 +130,9 @@ public class Inignoto {
 			public void run() {
 				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
 					try {
+						world.buildChunks();
 						world.tickChunks();
 						world.updateChunkManager();
-						world.buildChunks();
 					}catch (Exception e) {
 						e.printStackTrace();
 						System.exit(0);
@@ -149,7 +149,6 @@ public class Inignoto {
 			
 		};
 		thread.start();
-		
 		
 		new Thread() {
 			public void run() {

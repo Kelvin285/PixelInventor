@@ -1,9 +1,6 @@
 package kmerrill285.Inignoto.game.tile;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.Random;
-import java.util.Scanner;
 
 import org.joml.Vector3f;
 
@@ -12,6 +9,8 @@ import kmerrill285.Inignoto.game.entity.ItemDropEntity;
 import kmerrill285.Inignoto.game.entity.player.PlayerEntity;
 import kmerrill285.Inignoto.game.inventory.InventoryItemStack;
 import kmerrill285.Inignoto.game.settings.Translation;
+import kmerrill285.Inignoto.game.tile.data.TileState;
+import kmerrill285.Inignoto.game.tile.data.TileStateHolder;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.TilePos;
 import kmerrill285.Inignoto.item.Items;
@@ -26,30 +25,15 @@ public class Tile {
 	
 	private String name;
 	
-	private boolean fullCube = true;
-	private boolean visible = true;
-	private boolean blocksMovement = true;
-	private boolean isReplaceable = false;
 	
-	private String texture = "";
-	private String side_texture = "";
-	private String front_texture = "";
-	private String back_texture = "";
-	private String left_texture = "";
-	private String right_texture = "";
-	private String top_texture = "";
-	private String bottom_texture = "";
-	private String model = "";
-	private int width = 1;
-	private int height = 1;
-	
+
 	private static int CURRENT_ID = 0;
 	private int ID;
 	
-	private float hardness;
-	private float density;
 	
-	public float offset_x, offset_y, offset_z;
+	
+	
+	protected final TileStateHolder stateHolder;
 	
 	public RayBox[] collisionBoxes = new RayBox[] {
 			new RayBox() {
@@ -61,7 +45,6 @@ public class Tile {
 	};
 	
 	
-	private TileRayTraceType rayTraceType = TileRayTraceType.SOLID; 
 	
 	public int[] sound;
 	
@@ -69,61 +52,21 @@ public class Tile {
 		this.sound = sound;
 		this.name = name;
 		Tiles.REGISTRY.put(this.name, this);
-		File file = new File("assets/"+name.split(":")[0]+"/models/tiles/"+name.split(":")[1]+".model");
-		if (file.exists()) {
-			try {
-				Scanner scanner = new Scanner(file);
-				while (scanner.hasNext()) {
-					String str = scanner.nextLine();
-					String[] data = str.split("=");
-					boolean start = false;
-					String a = "";
-					String b = "";
-					
-					for (char c : data[0].toCharArray()) {
-						if (start == true && c == '"') break;
-						if (start == true) a += c;
-						if (c == '"') start = true;
-					}
-					
-					start = false;
-					for (char c : data[1].toCharArray()) {
-						if (start == true && c == '"') break;
-						if (start == true) b += c;
-						if (c == '"') start = true;
-					}
-					
-					if (!a.isEmpty() && !b.isEmpty()) {
-						if (a.equals("num_x")) width = Integer.parseInt(b);
-						if (a.equals("num_y")) height = Integer.parseInt(b);
-						if (a.equals("texture")) texture = b;
-						if (a.equals("side")) side_texture = b;
-						if (a.equals("top")) top_texture = b;
-						if (a.equals("bottom")) bottom_texture = b;
-						if (a.equals("left")) left_texture = b;
-						if (a.equals("right")) right_texture = b;
-						if (a.equals("front")) front_texture = b;
-						if (a.equals("back")) back_texture = b;
-						if (a.equals("offset_x")) offset_x = Float.parseFloat(b);
-						if (a.equals("offset_y")) offset_y = Float.parseFloat(b);
-						if (a.equals("offset_z")) offset_z = Float.parseFloat(b);
-						if (a.equals("3dmodel")) model = b.split(":")[0]+":models/3dmodel/tiles/"+b.split(":")[1]+".3dmodel";
-					}
-				}
-				scanner.close();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
-			
-		}
 		
 		
 		ID = CURRENT_ID++;
+		this.stateHolder = new TileStateHolder(this);
 	}
 	
-	public TileRayTraceType getRayTraceType() {
-		return this.rayTraceType;
+	public final int getNumberOfStates() {
+		return getStateHolder().num_states;
 	}
+	
+	public TileStateHolder getStateHolder() {
+		return this.stateHolder;
+	}
+	
+	
 	
 	public int getID() {
 		return this.ID;
@@ -137,70 +80,46 @@ public class Tile {
 		return Translation.translateText(getName().split(":")[0]+":tiles."+getName().split(":")[1]);
 	}
 	
-	public float getHardness() {
-		return this.hardness;
+	public TileRayTraceType getRayTraceType(TileState data) {
+		return data.getRayTraceType();
 	}
 	
-	public float getDensity() {
-		return this.density;
+	public float getHardness(TileState data) {
+		return data.getHardness();
 	}
 	
-	public Tile setDensity(float density) {
-		this.density = density;
-		return this;
+	public float getDensity(TileState data) {
+		return data.getDensity();
+	}
+	public boolean isFullCube(TileState data) {
+		return data.isFullCube();
 	}
 	
-	public Tile setHardness(float hardness) {
-		this.hardness = hardness;
-		return this;
+	public boolean blocksMovement(TileState data) {
+		return data.blocksMovement();
 	}
 	
-	public Tile setFullCube(boolean fullCube) {
-		this.fullCube = fullCube;
-		return this;
+	public boolean isVisible(TileState data) {
+		return data.isVisible();
 	}
 	
-	public Tile setReplaceable() {
-		this.isReplaceable = true;
-		return this;
+	public int getWidth(TileState data) {
+		return data.getWidth();
+	}
+	public int getHeight(TileState data) {
+		return data.getHeight();
 	}
 	
-	public boolean isReplaceable() {
-		return this.isReplaceable;
+	public String getModel(TileState data) {
+		return data.getModel();
 	}
 	
-	public Tile setBlocksMovement(boolean blocksMovement) {
-		this.blocksMovement = blocksMovement;
-		return this;
+	public String getTextureFor(BlockFace face, TileState data) {
+		return data.getTextureFor(face);
 	}
 	
-	public Tile setRayTraceType(TileRayTraceType rayTraceType) {
-		this.rayTraceType = rayTraceType;
-		return this;
-	}
-	
-	public Tile setVisible(boolean visible) {
-		this.visible = visible;
-		return this;
-	}
-	
-	public boolean isFullCube() {
-		return this.fullCube;
-	}
-	
-	public boolean blocksMovement() {
-		return this.blocksMovement;
-	}
-	
-	public boolean isVisible() {
-		return this.visible;
-	}
-	
-	public int getWidth() {
-		return this.width;
-	}
-	public int getHeight() {
-		return this.height;
+	public String getSideTexture(TileState data) {
+		return data.getSideTexture();
 	}
 	
 	public void dropAsItem(World world, int x, int y, int z) {
@@ -208,63 +127,25 @@ public class Tile {
 		world.entities.add(drop);
 	}
 	
-	public String getModel() {
-		return this.model;
+	
+	public TileState getDefaultState() {
+		return this.stateHolder.getStateFor(0);
 	}
 	
-	public String getTextureFor(BlockFace face) {
-		if (face == BlockFace.LEFT) 
-		{
-			if (left_texture.isEmpty()) return getSideTexture();
-			return left_texture;
-		}
-		if (face == BlockFace.RIGHT) 
-		{
-			if (right_texture.isEmpty()) return getSideTexture();
-			return right_texture;
-		}
-		if (face == BlockFace.FRONT) 
-		{
-			if (front_texture.isEmpty()) return getSideTexture();
-			return front_texture;
-		}
-		if (face == BlockFace.BACK) 
-		{
-			if (back_texture.isEmpty()) return getSideTexture();
-			return back_texture;
-		}
-		if (face == BlockFace.UP) 
-		{
-			if (top_texture.isEmpty()) return texture;
-			return top_texture;
-		}
-		if (face == BlockFace.DOWN) 
-		{
-			if (bottom_texture.isEmpty()) return texture;
-			return bottom_texture;
-		}
-		return texture;
+	public TileState getStateWhenPlaced(int x, int y, int z, RayTraceResult result, PlayerEntity placer, World world) {
+		return getDefaultState();
 	}
 	
-	public int getStateNumberWhenPlaced(int x, int y, int z, RayTraceResult result, PlayerEntity placer, World world) {
-		return 0;
+	public float getPitch(TileState state) {
+		return state.getPitch();
 	}
 	
-	public float getPitchForState(int state) {
-		return 0;
-	}
-	
-	public float getYawForState(int state) {
-		return 0;
+	public float getYaw(TileState state) {
+		return state.getYaw();
 	}
 	
 	
-	public String getSideTexture() {
-		if (side_texture.isEmpty()) return texture;
-		return side_texture;
-	}
-	
-	public void tick(World world, TilePos pos, Random random) {
+	public void tick(World world, TilePos pos, Random random, TileState state) {
 		
 	}
 	

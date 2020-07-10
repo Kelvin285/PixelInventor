@@ -15,7 +15,7 @@ public class WaterTile extends Tile {
 		final int x = pos.x, y = pos.y, z = pos.z;
 
 		pos.setPosition(x, y - 1, z);
-		if (world.getTile(pos).getRayTraceType() == TileRayTraceType.GAS) {
+		if (world.getTileState(pos, false).getRayTraceType() == TileRayTraceType.GAS) {
 			if (world.getChunkAt(pos) != null) 
 			{
 				if (world.getChunkAt(pos).generated) {

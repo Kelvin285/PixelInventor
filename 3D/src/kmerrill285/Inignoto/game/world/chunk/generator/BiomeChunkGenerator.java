@@ -2,10 +2,10 @@ package kmerrill285.Inignoto.game.world.chunk.generator;
 
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tiles;
+import kmerrill285.Inignoto.game.tile.data.TileState;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.Chunk;
 import kmerrill285.Inignoto.game.world.chunk.MetaChunk;
-import kmerrill285.Inignoto.game.world.chunk.TileData;
 import kmerrill285.Inignoto.game.world.chunk.generator.biome.Biome;
 import kmerrill285.Inignoto.game.world.chunk.generator.biome.Biomes;
 
@@ -21,11 +21,11 @@ public class BiomeChunkGenerator extends ChunkGenerator {
 	public void generateChunk(Chunk chunk, MetaChunk metachunk, boolean structures) {
 		if (chunk.load() == true) return;
 		if (chunk.getTiles() == null) {
-			chunk.setTiles(new TileData[Chunk.SIZE * Chunk.SIZE_Y * Chunk.SIZE]);
+			chunk.setTiles(new TileState[Chunk.SIZE * Chunk.SIZE_Y * Chunk.SIZE]);
 		}
 		chunk.isGenerating = true;
 
-		float[][][] heights = new float[Chunk.SIZE][Chunk.SIZE_Y][Chunk.SIZE];
+		float[][] heights = new float[Chunk.SIZE][Chunk.SIZE];
 		Biome[][][] biomes = new Biome[Chunk.SIZE][Chunk.SIZE_Y][Chunk.SIZE];
 		int nx = chunk.getX() * Chunk.SIZE;
 		int ny = chunk.getY() * Chunk.SIZE_Y;
@@ -34,11 +34,11 @@ public class BiomeChunkGenerator extends ChunkGenerator {
 			for (int z = 0; z < Chunk.SIZE; z++) {
 				int X = nx + x;
 				int Z = nz + z;
-				
+				heights[x][z] = getBaseHeight(X, 0, Z);
+
 				for (int y = 0; y < Chunk.SIZE_Y; y++) {
 					int Y = ny + y;
 					chunk.setLocalTile(x, y, z, Tiles.AIR);
-					heights[x][y][z] = getBaseHeight(X, Y, Z);
 					biomes[x][y][z] = Biomes.getSurfaceBiomeForLocation(X, Y, Z, BIOME_SIZE, noise);
 				}
 			}
@@ -51,10 +51,10 @@ public class BiomeChunkGenerator extends ChunkGenerator {
 				int Z = nz + z;
 				
 				
-				
+				float height = heights[x][z];
+
 				for (int y = 0; y < Chunk.SIZE_Y; y++) {
 					int Y = ny + y;
-					float height = heights[x][y][z];
 					
 					Biome biome = biomes[x][y][z];
 
@@ -68,9 +68,10 @@ public class BiomeChunkGenerator extends ChunkGenerator {
 		}
 		populateChunk(chunk, metachunk, structures, heights, biomes);
 		chunk.isGenerating = false;
+		chunk.generated = true;
 	}
 
-	public void populateChunk(Chunk chunk, MetaChunk metachunk, boolean structures, float[][][] heights, Biome[][][] biomes) {
+	public void populateChunk(Chunk chunk, MetaChunk metachunk, boolean structures, float[][] heights, Biome[][][] biomes) {
 		
 		int nx = chunk.getX() * Chunk.SIZE;
 		int ny = chunk.getY() * Chunk.SIZE_Y;
@@ -109,14 +110,12 @@ public class BiomeChunkGenerator extends ChunkGenerator {
 		float height = 0;
 		int i = 0;
 		int size = 3;
-		for (int x1 = -size; x1 < size + 1; x1++) {
-			for (int z1 = -size; z1 < size + 1; z1++) {
-				for (int y1 = -size; y1 < size + 1; y1++) {
-					Biome biome = Biomes.getSurfaceBiomeForLocation((int)x + x1, (int)y + y1, (int)z + z1, BIOME_SIZE, noise);
-					
-					height += biome.getHeightAt(x + x1, y + y1, z + z1, noise);
-					i++;
-				}
+		for (int x1 = -1; x1 < 2 + 1; x1++) {
+			for (int z1 = -1; z1 < 2 + 1; z1++) {
+				Biome biome = Biomes.getSurfaceBiomeForLocation((int)x + x1 * size, 0, (int)z + z1 * size, BIOME_SIZE, noise);
+				
+				height += biome.getHeightAt(x + x1 * size, 0, z + z1 * size, noise);
+				i++;
 			}
 			i++;
 		}

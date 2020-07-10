@@ -21,7 +21,7 @@ public class DesertBiome extends Biome {
 
 	@Override
 	public float getHeightAt(float x, float y, float z, FastNoise noise) {
-		return (1.0f - Math.abs(noise.GetPerlinFractal(x * 2, z)) * 2) * 10 + noise.GetPerlinFractal(x, z) * 10;
+		return (1.0f - Math.abs(noise.GetSimplexFractal(x * 2, z)) * 2) * 10 + noise.GetSimplexFractal(x, z) * 10;
 	}
 
 	@Override

@@ -24,6 +24,7 @@ import kmerrill285.Inignoto.game.foliage.Foliage;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.settings.Translation;
 import kmerrill285.Inignoto.game.tile.Tiles;
+import kmerrill285.Inignoto.game.tile.data.TileStateHolder;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.generator.feature.Structure;
 import kmerrill285.Inignoto.item.Items;
@@ -178,6 +179,7 @@ public class Utils {
 		setupProjection(object_shader);
 		Tiles.loadTiles();
 		Items.loadItems();
+		TileStateHolder.initialize();
 		Translation.loadTranslations("Inignoto");
 		
 		Textures.load();
@@ -189,12 +191,10 @@ public class Utils {
 		Inignoto.game.shadowRenderer = new ShadowRenderer();
 		
 		Inignoto.game.world = new World("World", new Random().nextLong());
-		Inignoto.game.player = new ClientPlayerEntity(new Vector3f(0.5f, Inignoto.game.world.getChunkGenerator().getBaseHeight(0,0, 0), 0.5f), Inignoto.game.world);
+		Inignoto.game.player = new ClientPlayerEntity(new Vector3f(0.5f, Inignoto.game.world.getChunkGenerator().getBaseHeight(0,0,0) + 10, 0.5f), Inignoto.game.world);
 		
 		Settings.loadSettings();
-		
-		Structure.structures = Structure.loadAll();
-		
+				
 		Camera.soundSource = new SoundSource();
 		
 		Fonts.loadFonts();

@@ -402,11 +402,11 @@ public class Entity {
 		
 		isMoving = (int)(velocity.x * 10) != 0 && (int)(velocity.y * 10) != 0;
 		
-		if (world.getTile(getTilePos().add(0, 1, 0)).getRayTraceType() == TileRayTraceType.LIQUID) {
+		if (world.getTileState(getTilePos().add(0, 1, 0), false).getRayTraceType() == TileRayTraceType.LIQUID) {
 			velocity.lerp(new Vector3f(velocity.x, 0, velocity.z), 0.3f);
 			velocity.lerp(new Vector3f(0, velocity.y, 0), 0.01f);
 		}
-		if (world.getTile(getTilePos()).getRayTraceType() == TileRayTraceType.LIQUID) {
+		if (world.getTileState(getTilePos(), false).getRayTraceType() == TileRayTraceType.LIQUID) {
 			velocity.lerp(new Vector3f(0, velocity.y, 0), 0.01f);
 		}
 		
@@ -434,8 +434,8 @@ public class Entity {
 	}
 	
 	public boolean isInLiquid() {
-		return world.getTile(getTilePos().add(0, 1, 0)).getRayTraceType() == TileRayTraceType.LIQUID ||
-				world.getTile(getTilePos()).getRayTraceType() == TileRayTraceType.LIQUID;
+		return world.getTileState(getTilePos().add(0, 1, 0), false).getRayTraceType() == TileRayTraceType.LIQUID ||
+				world.getTileState(getTilePos(), false).getRayTraceType() == TileRayTraceType.LIQUID;
 	}
 	
 	public float getGravity() {
@@ -452,16 +452,16 @@ public class Entity {
 	
 	public void jump() {
 		if (jumpDelay > 0) return;
-		if (world.getTile(getTilePos().add(0, 1, 0)).getRayTraceType() != TileRayTraceType.LIQUID) {
+		if (world.getTileState(getTilePos().add(0, 1, 0), false).getRayTraceType() != TileRayTraceType.LIQUID) {
 			velocity.y = 0.05f;
 		}
-		if (world.getTile(getTilePos().add(0, 1, 0)).getRayTraceType() == TileRayTraceType.LIQUID) {
+		if (world.getTileState(getTilePos().add(0, 1, 0), false).getRayTraceType() == TileRayTraceType.LIQUID) {
 			if (velocity.y < 0) {
 				velocity.lerp(new Vector3f(velocity.x, 0.05f, velocity.z), 0.025f);
 			} else {
 				velocity.lerp(new Vector3f(velocity.x, 0.15f, velocity.z), 0.1f);
 			}
-			if (world.getTile(getTilePos().add(0, 2, 0)).getRayTraceType() != TileRayTraceType.LIQUID) {
+			if (world.getTileState(getTilePos().add(0, 2, 0), false).getRayTraceType() != TileRayTraceType.LIQUID) {
 				velocity.lerp(new Vector3f(velocity.x, 0, velocity.z), 0.2f);
 			}
 		}
@@ -483,7 +483,7 @@ public class Entity {
 		
 		TilePos pos = new TilePos(x, y, z);
 		
-		if (world.getTile(pos).blocksMovement()) {
+		if (world.getTileState(pos, false).blocksMovement()) {
 			return true;
 		}
 		return false;

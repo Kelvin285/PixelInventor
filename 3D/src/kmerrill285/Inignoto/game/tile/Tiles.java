@@ -31,18 +31,18 @@ public class Tiles {
 	}
 	
 	public static void loadTiles() {
-		AIR = new Tile("Inignoto:air", null).setFullCube(false).setRayTraceType(TileRayTraceType.GAS).setBlocksMovement(false).setReplaceable().setDensity(1.225f / 1000.0f);
-		DIRT = new FallingTile("Inignoto:dirt", TileSound.dirt).setHardness(1.0f).setDensity(2.6f);
-		GRASS = new GrassTile("Inignoto:grass", TileSound.grass).setHardness(1.5f).setDensity(2.6f);
-		STONE = new Tile("Inignoto:stone", TileSound.stone).setHardness(3.0f).setDensity(2.6f);
-		PURPLE_GRASS = new GrassTile("Inignoto:purple_grass", TileSound.grass).setHardness(GRASS.getHardness()).setDensity(2.6f);
-		LOG = new Tile("Inignoto:log", TileSound.wood).setHardness(2.5f).setDensity(2.6f);
-		LEAVES = new Tile("Inignoto:leaves", TileSound.leaves).setHardness(0.2f).setDensity(2.6f).setFullCube(false);
-		SMOOTH_STONE = new Tile("Inignoto:smooth_stone", TileSound.stone).setHardness(3.0f).setDensity(2.6f);
-		WATER = new WaterTile("Inignoto:water", null).setDensity(1.0f).setRayTraceType(TileRayTraceType.LIQUID).setBlocksMovement(false).setReplaceable();
-		SAND = new FallingTile("Inignoto:sand", TileSound.sand).setHardness(0.8f).setDensity(2.6f);
-		MALECHITE = new Tile("Inignoto:malechite", TileSound.stone).setHardness(2.0f).setDensity(2.6f);
-		SMOOTH_STONE_STAIRS = new StairTile("Inignoto:smooth_stone_stairs", TileSound.stone).setHardness(2.0f).setDensity(2.6f);
+		AIR = new Tile("Inignoto:air", null);
+		DIRT = new FallingTile("Inignoto:dirt", TileSound.dirt);
+		GRASS = new GrassTile("Inignoto:grass", TileSound.grass);
+		STONE = new Tile("Inignoto:stone", TileSound.stone);
+		PURPLE_GRASS = new GrassTile("Inignoto:purple_grass", TileSound.grass);
+		LOG = new Tile("Inignoto:log", TileSound.wood);
+		LEAVES = new Tile("Inignoto:leaves", TileSound.leaves);
+		SMOOTH_STONE = new Tile("Inignoto:smooth_stone", TileSound.stone);
+		WATER = new WaterTile("Inignoto:water", null);
+		SAND = new FallingTile("Inignoto:sand", TileSound.sand);
+		MALECHITE = new Tile("Inignoto:malechite", TileSound.stone);
+		SMOOTH_STONE_STAIRS = new StairTile("Inignoto:smooth_stone_stairs", TileSound.stone);
 
 	}
 }

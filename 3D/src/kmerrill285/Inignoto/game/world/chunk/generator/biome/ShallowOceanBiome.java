@@ -21,7 +21,7 @@ public class ShallowOceanBiome extends Biome {
 
 	@Override
 	public float getHeightAt(float x, float y, float z, FastNoise noise) {
-		return -Math.abs((1.0f - Math.abs(noise.GetPerlinFractal(x * 2, z)) * 2) * 10 + noise.GetPerlinFractal(x, z) * 10) - 20;
+		return -Math.abs((1.0f - Math.abs(noise.GetPerlinFractal(x * 2, z)) * 2) * 10 + noise.GetPerlinFractal(x, z) * 10) - 5;
 	}
 
 	@Override

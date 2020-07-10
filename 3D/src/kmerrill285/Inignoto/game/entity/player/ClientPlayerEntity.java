@@ -335,7 +335,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 		}
 		
 		float deltaMul = 7.0f;
-		if (this.isInLiquid() || world.getTile(getTilePos()).getRayTraceType() == TileRayTraceType.LIQUID) {
+		if (this.isInLiquid() || world.getTileState(getTilePos(), false).getRayTraceType() == TileRayTraceType.LIQUID) {
 			deltaMul = 6.5f;
 		}
 		if (onGround) {
@@ -375,7 +375,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 		
 		
 		if (Settings.JUMP.isPressed()) {
-			if (onGround && velocity.y <= 0 || world.getTile(getTilePos().add(0, 1, 0)).getRayTraceType() == TileRayTraceType.LIQUID)
+			if (onGround && velocity.y <= 0 || world.getTileState(getTilePos().add(0, 1, 0), false).getRayTraceType() == TileRayTraceType.LIQUID)
 			jump();
 			else if (Settings.JUMP.isJustPressed()) {
 				Vector3f forward = Camera.getForward();

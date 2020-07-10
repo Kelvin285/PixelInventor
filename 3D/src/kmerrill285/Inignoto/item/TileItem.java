@@ -20,7 +20,7 @@ public class TileItem extends Item {
 	public TileItem(Tile tile) {
 		super(tile.getName(), 64);
 		this.tile = tile;
-		this.mesh = TileBuilder.buildMesh(tile, -0.5f, -0.5f, -0.5f, 30, 30);
+		this.mesh = TileBuilder.buildMesh(tile.getDefaultState(), -0.5f, -0.5f, -0.5f, 30, 30);
 	}
 	
 	public boolean rightClick(World world, PlayerEntity player, RayTraceResult result) {
@@ -56,9 +56,8 @@ public class TileItem extends Item {
 					}
 					
 					if (!stop)
-				if (world.getTile(pos).isReplaceable()) {					
-					world.setTile(pos, this.tile);
-					world.getTileData(pos, true).setState(world.getTile(pos).getStateNumberWhenPlaced(pos.x, pos.y, pos.z, result, player, world));
+				if (world.getTileState(pos).isReplaceable()) {					
+					world.setTileState(pos, tile.getStateWhenPlaced(pos.x, pos.y, pos.z, result, player, world), true);
 					player.inventory.hotbar[player.inventory.hotbarSelected].decrementStack(1);
 					player.arm_swing = 1.0f;
 

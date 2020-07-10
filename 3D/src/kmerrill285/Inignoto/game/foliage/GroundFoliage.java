@@ -23,7 +23,7 @@ public class GroundFoliage extends Foliage {
 
 	@Override
 	public void tick(int x, int y, int z, Chunk chunk) {
-		if (chunk.getLocalTile(x, y - 1, z).getRayTraceType() == TileRayTraceType.SOLID) {
+		if (chunk.getTileState(x, y - 1, z).getRayTraceType() == TileRayTraceType.SOLID) {
 			chunk.setFoliage(x, y, z, null);
 		}
 	}
@@ -42,7 +42,7 @@ public class GroundFoliage extends Foliage {
 
 	@Override
 	public void render(float x, float y, float z, Chunk chunk, ShaderProgram shader) {
-		if (Camera.position.distance(x, y, z) >= 50) {
+		if (Camera.position.distance(x, y, z) >= 100) {
 			return;
 		}
 		

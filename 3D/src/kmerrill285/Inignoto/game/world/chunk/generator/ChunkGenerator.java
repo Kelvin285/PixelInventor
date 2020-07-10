@@ -5,11 +5,11 @@ import java.util.Random;
 import imported.FastNoise;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
+import kmerrill285.Inignoto.game.tile.data.TileState;
 import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.Chunk;
 import kmerrill285.Inignoto.game.world.chunk.MetaChunk;
-import kmerrill285.Inignoto.game.world.chunk.TileData;
 import kmerrill285.Inignoto.game.world.chunk.generator.feature.Structure;
 import kmerrill285.Inignoto.resources.MathHelper;
 
@@ -32,17 +32,15 @@ public class ChunkGenerator {
 			int x = Integer.parseInt(data[0]);
 			int y = Integer.parseInt(data[1]);
 			int z = Integer.parseInt(data[2]);
-			chunk.setTileData(x, y, z, new TileData(metachunk.getTileData(x, y, z).getTile()));
+			chunk.setTileState(x, y, z, metachunk.getTileState(x, y, z));
 		}
-		chunk.needsToSave = true;
-		chunk.save();
 		chunk.getWorld().removeMetaChunk(metachunk.x, metachunk.y, metachunk.z);
 	}
 	
 	public void generateChunk(Chunk chunk, MetaChunk metachunk, boolean structures) {
 		if (chunk.load() == true) return;
 		if (chunk.getTiles() == null) {
-			chunk.setTiles(new TileData[Chunk.SIZE * Chunk.SIZE_Y * Chunk.SIZE]);
+			chunk.setTiles(new TileState[Chunk.SIZE * Chunk.SIZE_Y * Chunk.SIZE]);
 		}
 		chunk.isGenerating = true;
 
@@ -176,7 +174,7 @@ public class ChunkGenerator {
 					
 					if (Y < height){
 						if (Y < height - 2){
-							if (chunk.getLocalTile(x, y, z).getRayTraceType() == TileRayTraceType.SOLID) {
+							if (chunk.getTileState(x, y, z, false).getRayTraceType() == TileRayTraceType.SOLID) {
 								if (rivers < 0 && Y >= height + rivers - 3) {
 									chunk.setLocalTile(x, y, z, Tiles.STONE);
 								} else {

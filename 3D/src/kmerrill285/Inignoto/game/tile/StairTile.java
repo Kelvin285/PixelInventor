@@ -3,6 +3,8 @@ package kmerrill285.Inignoto.game.tile;
 import org.joml.Vector3f;
 
 import kmerrill285.Inignoto.game.entity.player.PlayerEntity;
+import kmerrill285.Inignoto.game.tile.data.TileState;
+import kmerrill285.Inignoto.game.tile.data.TileStateHolder;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.resources.RayTraceResult;
 import kmerrill285.Inignoto.resources.raytracer.RayBox;
@@ -14,9 +16,7 @@ public class StairTile extends Tile {
 	public static final int FORWARD = 0, LEFT = 1, RIGHT = 2, BACK = 3, TOP_FORWARD = 4, TOP_LEFT = 5, TOP_RIGHT = 6, TOP_BACK = 7;
 	
 	public StairTile(String name, int[] sound) {
-		super(name, sound);
-		this.setFullCube(false);
-		
+		super(name, sound);		
 		
 		collisionBoxes = new RayBox[] {
 				new RayBox() {
@@ -34,22 +34,7 @@ public class StairTile extends Tile {
 		};
 	}
 	
-	public float getPitchForState(int state) {
-		if (state / 4 == 1) return 180;
-		return 0;
-	}
-	
-	public float getYawForState(int state) {
-		switch (state % 4) {
-		case FORWARD: return 0 + getPitchForState(state);
-		case LEFT: return -90 + getPitchForState(state);
-		case RIGHT: return 90 + getPitchForState(state);
-		case BACK: return 180 + getPitchForState(state);
-	}
-		return 0;
-	}
-	
-	public int getStateNumberWhenPlaced(int x, int y, int z, RayTraceResult result, PlayerEntity placer, World world) {
+	public TileState getStateWhenPlaced(int x, int y, int z, RayTraceResult result, PlayerEntity placer, World world) {
 		final int VALUE = 360 / 4;
 		int rotation = (int)Math.round(placer.rotY / VALUE);
 		
@@ -82,7 +67,7 @@ public class StairTile extends Tile {
 		}
 		
 		
-		return RX;
+		return this.getStateHolder().getStateFor(RX);
 	}
 
 }

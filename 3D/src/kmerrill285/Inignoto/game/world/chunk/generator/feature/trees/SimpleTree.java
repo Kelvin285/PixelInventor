@@ -1,6 +1,5 @@
 package kmerrill285.Inignoto.game.world.chunk.generator.feature.trees;
 
-import java.awt.Color;
 import java.util.Random;
 
 import kmerrill285.Inignoto.game.tile.Tiles;
@@ -8,17 +7,10 @@ import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.game.world.chunk.Chunk;
 import kmerrill285.Inignoto.game.world.chunk.TilePos;
 import kmerrill285.Inignoto.game.world.chunk.generator.feature.Structure;
-import kmerrill285.Inignoto.game.world.chunk.generator.feature.LSystem.LSystem;
-import kmerrill285.Inignoto.game.world.chunk.generator.feature.LSystem.LSystemPos;
 
 public class SimpleTree extends Structure {
-	private static final long serialVersionUID = -6518038958304776167L;
 	
 	Random random = new Random();
-	public SimpleTree() {
-		super(1, 1, 1);
-		this.getLocalTile(0, 0, 0).setTile(Tiles.AIR.getID());
-	}
 	
 	public boolean addToChunk(Chunk chunk, int x, int y, int z, int X, int Y, int Z) {
 		random.setSeed(X * Y * Z);

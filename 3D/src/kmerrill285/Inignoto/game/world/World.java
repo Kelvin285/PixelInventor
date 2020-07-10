@@ -23,10 +23,10 @@ import kmerrill285.Inignoto.game.entity.player.PlayerEntity;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
+import kmerrill285.Inignoto.game.tile.data.TileState;
 import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.world.chunk.Chunk;
 import kmerrill285.Inignoto.game.world.chunk.MetaChunk;
-import kmerrill285.Inignoto.game.world.chunk.TileData;
 import kmerrill285.Inignoto.game.world.chunk.TilePos;
 import kmerrill285.Inignoto.game.world.chunk.generator.BiomeChunkGenerator;
 import kmerrill285.Inignoto.game.world.chunk.generator.ChunkGenerator;
@@ -126,16 +126,12 @@ public class World {
 	public void buildChunks() {
 		saveChunks();
 		for (int i = 0; i < Settings.CHUNK_GENERATION_SPEED; i++) {
-			Chunk closest = findClosestChunk();
-			
+			Chunk closest = findClosestChunk();		
 			if (closest != null) {
 				buildChunk(closest);
-			}
-			
+			}	
 			buildMetaChunks();
 		}
-		
-		
 	}
 	
 	public void buildMetaChunks() {
@@ -164,13 +160,13 @@ public class World {
 			buildChunk(chunk);
 		} else {
 			if (chunk.getTiles() == null) {
-				chunk.setTiles(new TileData[Chunk.SIZE * Chunk.SIZE * Chunk.SIZE_Y]);
+				chunk.setTiles(new TileState[Chunk.SIZE * Chunk.SIZE * Chunk.SIZE_Y]);
 			}
 			this.getChunkGenerator().applyMeta(chunk, metachunk);
 			if (genMesh) {
 				chunk.setMesh = ChunkBuilder.buildChunk(chunk, true);
 				chunk.setWaterMesh = ChunkBuilder.buildLiquidChunk(chunk);
-			}			
+			}	
 		}
 	}
 	
@@ -178,20 +174,9 @@ public class World {
 		
 		MetaChunk meta = null;
 		boolean setMesh = false;
-		boolean pseudo = false;
-//		if (chunk.isInActiveRange()) {
-//			
-//		} else {
-//			World.pseudochunk.setPos(chunk.getX(), chunk.getY(), chunk.getZ());
-//			World.pseudochunk.setWorld(this);
-//			World.pseudochunk.setSavefile(null);
-//			pseudo =true;
-//			this.getChunkGenerator().generateChunk(World.pseudochunk, getMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ()), true);
-//			setMesh = true;
-//			meta = getMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ());
-//		}
+		
 		chunk.setWorld(this);
-		chunk.setTiles(new TileData[Chunk.SIZE * Chunk.SIZE * Chunk.SIZE_Y]);
+		chunk.setTiles(new TileState[Chunk.SIZE * Chunk.SIZE * Chunk.SIZE_Y]);
 		this.getChunkGenerator().generateChunk(chunk, getMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ()), true);
 		setMesh = true;
 		meta = getMetaChunk(chunk.getX(), chunk.getY(), chunk.getZ());
@@ -201,9 +186,8 @@ public class World {
 				chunk.generated = true;
 				this.applyMeta(chunk, meta, false);
 			}
-			chunk.setMesh = ChunkBuilder.buildChunk(pseudo ? World.pseudochunk : chunk, true);
-			chunk.setWaterMesh = ChunkBuilder.buildLiquidChunk(pseudo ? World.pseudochunk : chunk);
-			
+			chunk.setMesh = ChunkBuilder.buildChunk(chunk, true);
+			chunk.setWaterMesh = ChunkBuilder.buildLiquidChunk(chunk);
 		}
 		
 		chunk.generated = true;
@@ -225,11 +209,14 @@ public class World {
 			int y = Integer.parseInt(data[1]);
 			int z = Integer.parseInt(data[2]);
 			MetaChunk c = metaChunks.get(str);
-			double dist = cp.distance(x, y, z);
-			if (dist < distance) {
-				distance = dist;
-				closest = c;
+			if (c != null) {
+				double dist = cp.distance(x, y, z);
+				if (dist < distance) {
+					distance = dist;
+					closest = c;
+				}
 			}
+			
 		}
 		return closest;
 	}
@@ -244,8 +231,10 @@ public class World {
 		double distance = Double.MAX_VALUE;
 		Chunk closest = null;
 		for (int i = 0; i < activeChunks.size(); i++) {
+			
 			Chunk c = activeChunks.get(i);
-			if (!c.generated) {
+			if (c != null)
+			if (c.generated == false || c.getTiles() == null) {
 				double dist = cp.distance(c.getX(), c.getY(), c.getZ());
 				if (dist < distance) {
 					distance = dist;
@@ -253,7 +242,6 @@ public class World {
 				}
 			}
 		}
-		
 		return closest;
 	}
 
@@ -515,10 +503,10 @@ public class World {
 			raypos.set(start);
 			raypos.add(new Vector3f(raydir).mul(intersection.lambda.y + 0.001f));
 			Tile tile = getTile(pos);
-			TileData data = getTileData(pos, false);
+			TileState data = getTileState(pos, false);
 			if (tile != null) {
-				if (tile.isVisible()) {
-					if (tile.getRayTraceType() == type) {
+				if (data.isVisible()) {
+					if (data.getRayTraceType() == type) {
 						Vector3f dir = new Vector3f(end).sub(start);
 						dir.div(dir.length());
 						float min = Float.MAX_VALUE;
@@ -532,7 +520,7 @@ public class World {
 							center.sub(pos.x, pos.y, pos.z);
 							Vector3f c1 = new Vector3f(center);
 							center.sub(0.5f, 0.5f, 0.5f);							
-							Vector3f rotation = new Vector3f((float)Math.toRadians(tile.getPitchForState(data.getState())), (float)Math.toRadians(tile.getYawForState(data.getState())), 0);
+							Vector3f rotation = new Vector3f((float)Math.toRadians(data.getPitch()), (float)Math.toRadians(data.getYaw()), 0);
 							center.rotateX(rotation.x);
 							center.rotateY(rotation.y + (float)Math.toRadians(180));
 							center.add(0.5f, 0.5f, 0.5f);
@@ -573,7 +561,11 @@ public class World {
 		return chunk.getLocalTile(x, y, z);
 	}
 	
-	public TileData getTileData(TilePos pos, boolean modifying) {
+	public TileState getTileState(TilePos pos) {
+		return getTileState(pos, false);
+	}
+	
+	public TileState getTileState(TilePos pos, boolean modifying) {
 		int mx = (int)Math.floor((float)pos.x / Chunk.SIZE);
 		int my = (int)Math.floor((float)pos.y / Chunk.SIZE_Y);
 		int mz = (int)Math.floor((float)pos.z / Chunk.SIZE);
@@ -584,17 +576,23 @@ public class World {
 		x -= mx * Chunk.SIZE;
 		y -= my * Chunk.SIZE_Y;
 		z -= mz * Chunk.SIZE;
-		if (chunk == null) return new TileData(Tiles.AIR.getID());
-		return chunk.getTileData(x, y, z, modifying);
+		if (chunk == null) return Tiles.AIR.getDefaultState();
+		return chunk.getTileState(x, y, z, modifying);
 	}
 	
-	public boolean setTileData(TilePos pos, TileData data) {
-		return setTileData(pos.x, pos.y, pos.z, data);
+	public boolean setTileState(TilePos pos, TileState data) {
+		return setTileState(pos.x, pos.y, pos.z, data);
 	}
 	
+	public boolean setTileState(TilePos pos, TileState data, boolean modifying) {
+		return setTileState(pos.x, pos.y, pos.z, data, modifying);
+	}
 	
+	private boolean setTileState(int x1, int y1, int z1, TileState data) {
+		return setTileState(x1, y1, z1, data, false);
+	}
 	
-	private boolean setTileData(int x1, int y1, int z1, TileData data) {
+	private boolean setTileState(int x1, int y1, int z1, TileState data, boolean modifying) {
 		int mx = (int)Math.floor((float)x1 / Chunk.SIZE);
 		int my = (int)Math.floor((float)y1 / Chunk.SIZE_Y);
 		int mz = (int)Math.floor((float)z1 / Chunk.SIZE);
@@ -607,7 +605,9 @@ public class World {
 		z -= mz * Chunk.SIZE;
 		
 		if (chunk == null) return false;
-		chunk.setTileData(x, y, z, data);
+		chunk.setTileState(x, y, z, data);
+		chunk.markForRerender();
+		chunk.markForSave();
 		return true;
 	}
 	
@@ -632,7 +632,7 @@ public class World {
 		return setTile(x, y, z, tile, true);
 	}
 	
-	public boolean setMetaData(int x, int y, int z, TileData tile) {
+	public boolean setMetaState(int x, int y, int z, TileState tile) {
 		int mx = (int)Math.floor((float)x / Chunk.SIZE);
 		int my = (int)Math.floor((float)y / Chunk.SIZE_Y);
 		int mz = (int)Math.floor((float)z / Chunk.SIZE);
@@ -648,7 +648,7 @@ public class World {
 		}
 		
 		if (chunk != null) {
-			chunk.setTileData(x, y, z, tile);
+			chunk.setTileState(x, y, z, tile);
 			return true;
 		}
 		return false;
@@ -674,7 +674,7 @@ public class World {
 		}
 		
 		if (chunk != null) {
-			chunk.setTileData(x, y, z, new TileData(tile.getID()));
+			chunk.setTileState(x, y, z, tile.getDefaultState());
 			return true;
 		}
 		return false;
@@ -719,7 +719,7 @@ public class World {
 		z -= mz * Chunk.SIZE;
 		
 		if (chunk != null) {
-			TileData data = chunk.getTileData(x, y, z, false);
+			TileState data = chunk.getTileState(x, y, z, false);
 			{
 				Tile tile = Tiles.getTile(data.getTile());
 				if (tile.sound != null) {
@@ -729,14 +729,14 @@ public class World {
 				}
 			}
 			
-			data.setMiningTime(data.getMiningTime() + strength / Tiles.getTile(data.getTile()).getHardness());
-			int current = (int)(data.getMiningTime() / 20);
-			int last = (int)(data.getLastMiningTime() / 20);
+			chunk.setMiningTime(x, y, z, chunk.getMiningTime(x, y, z) + strength / data.getHardness());
+			int current = (int)(chunk.getMiningTime(x, y, z) / 20);
+			int last = (int)(chunk.getLastMiningTime(x, y, z) / 20);
 			
 			
 			
-			if (data.getMiningTime() > 100.0) {
-				data.setMiningTime(0.0f);
+			if (chunk.getMiningTime(x, y, z) > 100.0) {
+				chunk.setMiningTime(x, y, z, 0.0f);
 				Tile tile = chunk.getLocalTile(x, y, z);
 				tile.dropAsItem(this, x + mx * Chunk.SIZE, y + my * Chunk.SIZE_Y, z + mz * Chunk.SIZE);
 				chunk.setLocalTile(x, y, z, Tiles.AIR);

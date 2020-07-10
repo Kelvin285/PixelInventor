@@ -10,13 +10,8 @@ import kmerrill285.Inignoto.game.world.chunk.TilePos;
 import kmerrill285.Inignoto.game.world.chunk.generator.feature.Structure;
 
 public class RiverRock extends Structure {
-	private static final long serialVersionUID = -6518038958304776167L;
 	
 	Random random = new Random();
-	public RiverRock() {
-		super(1, 1, 1);
-		this.getLocalTile(0, 0, 0).setTile(Tiles.AIR.getID());
-	}
 	
 	public boolean addToChunk(Chunk chunk, int x, int y, int z, int X, int Y, int Z) {
 		random.setSeed(X * Y * Z);

@@ -20,6 +20,7 @@ import kmerrill285.Inignoto.game.foliage.Foliage;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
+import kmerrill285.Inignoto.game.tile.data.TileState;
 import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.resources.Constants;
@@ -40,7 +41,7 @@ public class Chunk {
 	
 	public int voxels = 0;
 	
-	private TileData[] tiles;
+	private TileState[] tiles;
 	
 	public Mesh mesh;
 	public Mesh waterMesh;
@@ -56,8 +57,9 @@ public class Chunk {
 	public boolean isGenerating = false;
 	
 	public HashMap<String, Foliage> foliage = new HashMap<String, Foliage>();
+	public HashMap<String, Float> mining_time = new HashMap<String, Float>();
+	public HashMap<String, Float> last_mining_time = new HashMap<String, Float>();
 
-	
 	public Chunk(int x, int y, int z, World world) {
 		this.x = x;
 		this.y = y;
@@ -104,11 +106,11 @@ public class Chunk {
 		return voxels <= 0;
 	}
 
-	public TileData[] getTiles() {
+	public TileState[] getTiles() {
 		return tiles;
 	}
 
-	public void setTiles(TileData[] tiles) {
+	public void setTiles(TileState[] tiles) {
 		this.tiles = tiles;
 	}
 	
@@ -168,12 +170,16 @@ public class Chunk {
 		return Tiles.AIR;
 	}
 	
-	public TileData getTileData(int x, int y, int z, boolean modifying) {
+	public TileState getTileState(int x, int y, int z) {
+		return getTileState(x, y, z, false);
+	}
+	
+	public TileState getTileState(int x, int y, int z, boolean modifying) {
 		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
 			if (tiles == null) {
-				return new TileData(Tiles.AIR.getID());
+				return Tiles.AIR.getDefaultState();
 			}
-			if (tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y] == null) return new TileData(Tiles.AIR.getID());
+			if (tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y] == null) return Tiles.AIR.getDefaultState();
 			return tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y];
 		}
 		int X = getX();
@@ -204,15 +210,15 @@ public class Chunk {
 			Z--;
 		}
 		if (world.getChunk(X, Y, Z) != null) {
-			if (X == getX() && Y == getY() && Z == getZ()) new TileData(Tiles.AIR.getID());
+			if (X == getX() && Y == getY() && Z == getZ()) Tiles.AIR.getDefaultState();
 			if (world.getChunk(X, Y, Z).generated) {
-				return world.getChunk(X, Y, Z).getTileData(x, y, z, modifying);
+				return world.getChunk(X, Y, Z).getTileState(x, y, z, modifying);
 			}
 		}
-		return new TileData(Tiles.AIR.getID());
+		return Tiles.AIR.getDefaultState();
 	}
 	
-	public void setTileData(int x, int y, int z, TileData data) {
+	public void setTileState(int x, int y, int z, TileState data) {
 		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
 			
 			if (tiles == null) {
@@ -250,7 +256,7 @@ public class Chunk {
 		if (world.getChunk(X, Y, Z) != null) {
 			if (X == getX() && Y == getY() && Z == getZ()) return;
 			if (world.getChunk(X, Y, Z).generated) {
-				world.getChunk(X, Y, Z).setTileData(x, y, z, data);
+				world.getChunk(X, Y, Z).setTileState(x, y, z, data);
 			}
 		}
 	}
@@ -355,12 +361,12 @@ public class Chunk {
 			}
 			if (tiles == null) 
 			{
-				tiles = new TileData[Chunk.SIZE * Chunk.SIZE_Y * Chunk.SIZE];
+				tiles = new TileState[Chunk.SIZE * Chunk.SIZE_Y * Chunk.SIZE];
 			}
 			if (tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y] == null) {
-				tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y] = new TileData(tile.getID());
+				tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y] = tile.getDefaultState();
 			} else {
-				tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y].setTile(tile.getID());
+				tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y] = tile.getDefaultState();
 			}
 			
 		}
@@ -398,6 +404,167 @@ public class Chunk {
 			}
 		}
 	}
+	
+	public float getMiningTime(int x, int y, int z) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			Float mining_time = this.mining_time.get(x+","+y+","+z);
+			return mining_time != null ? mining_time : 0;
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (X == getX() && Y == getY() && Z == getZ()) return 0;
+			if (world.getChunk(X, Y, Z).generated) {
+				return world.getChunk(X, Y, Z).getMiningTime(x, y, z);
+			}
+		}
+		return 0;
+	}
+	
+	public float getLastMiningTime(int x, int y, int z) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			Float mining_time = this.last_mining_time.get(x+","+y+","+z);
+			return mining_time != null ? mining_time : 0;
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (X == getX() && Y == getY() && Z == getZ()) return 0;
+			if (world.getChunk(X, Y, Z).generated) {
+				return world.getChunk(X, Y, Z).getLastMiningTime(x, y, z);
+			}
+		}
+		return 0;
+	}
+	
+	public void setLastMiningTime(int x, int y, int z, float mining_time) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			this.last_mining_time.put(x+","+y+","+z, mining_time);
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (X == getX() && Y == getY() && Z == getZ()) return;
+			if (world.getChunk(X, Y, Z).generated) {
+				world.getChunk(X, Y, Z).setLastMiningTime(x, y, z, mining_time);
+			}
+		}
+	}
+	
+	public void setMiningTime(int x, int y, int z, float mining_time) {
+		setLastMiningTime(x, y, z, mining_time);
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			this.mining_time.put(x+","+y+","+z, mining_time);
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (X == getX() && Y == getY() && Z == getZ()) return;
+			if (world.getChunk(X, Y, Z).generated) {
+				world.getChunk(X, Y, Z).setMiningTime(x, y, z, mining_time);
+			}
+		}
+	}
 
 	public boolean isLocalTileNotSame(int x, int y, int z, Tile tile) {
 		Tile local = getLocalTile(x, y, z);
@@ -410,7 +577,7 @@ public class Chunk {
 	}
 	
 	public boolean isLocalTileNotFull(int x, int y, int z) {
-		Tile local = getLocalTile(x, y, z, false);
+		TileState local = this.getTileState(x, y, z, false);
 		return !local.isFullCube() || !local.isVisible() || local.getRayTraceType() != TileRayTraceType.SOLID;
 	}
 
@@ -437,10 +604,9 @@ public class Chunk {
 			FileOutputStream fos = new FileOutputStream(savefile);
 			for (int i = 0; i < tiles.length; i++) {
 				if (tiles[i] == null) {
-					tiles[i] = new TileData(Tiles.AIR.getID());
+					tiles[i] = Tiles.AIR.getDefaultState();
 				}
 				fos.write(tiles[i].getTile());
-				fos.write(tiles[i].getWaterLevel());
 				fos.write(tiles[i].getState());
 			}
 			fos.close();
@@ -471,29 +637,14 @@ public class Chunk {
 			try {
 				FileInputStream fis = new FileInputStream(savefile);
 				this.generated = false;
-				tiles = new TileData[SIZE * SIZE_Y * SIZE];
+				tiles = new TileState[SIZE * SIZE_Y * SIZE];
 				
 				
 				for (int i = 0; i < tiles.length; i++) {
-					tiles[i] = new TileData(fis.read());
-					tiles[i].setWaterLevel(fis.read());
-					tiles[i].setState(fis.read());
+					tiles[i] = Tiles.getTile(fis.read()).getStateHolder().getStateFor(fis.read());
 				}
 				fis.close();
 				this.generated = true;
-//				ObjectInputStream ois = new ObjectInputStream(fis);
-//				TileData[] t = (TileData[])ois.readObject();
-//				ois.close();
-//				fis.close();
-//				tiles = t;
-//				for (int i = 0; i < t.length; i++) {
-//					if (t[i] == null) {
-//						t[i] = new TileData(Tiles.AIR.getID());
-//					}
-//					if (t[i].getTile() != Tiles.AIR.getID()) {
-//						voxels++;
-//					}
-//				}
 				return true;
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -548,30 +699,32 @@ public class Chunk {
 						pos.x = x + getX() * SIZE;
 						pos.y = y + getY() * SIZE_Y;
 						pos.z = z + getZ() * SIZE;
-						TileData data = getTileData(x, y, z, false);
+						TileState data = getTileState(x, y, z, false);
 						if (data != null) {
 							if (data.getTile() == Tiles.AIR.getID())
 								continue;
 							Tile tile = Tiles.getTile(data.getTile());
 							
-							if (tile.getRayTraceType() == TileRayTraceType.LIQUID) {
-								tile.tick(getWorld(), pos, getWorld().getRandom());
+							if (data.getRayTraceType() == TileRayTraceType.LIQUID) {
+								tile.tick(getWorld(), pos, getWorld().getRandom(), data);
 							}
 							
 							if (tile.getTickPercent() > 0)
 							if (getWorld().getRandom().nextDouble() * 100 <= tile.getTickPercent()) {
-								tile.tick(getWorld(), pos, getWorld().getRandom());
+								tile.tick(getWorld(), pos, getWorld().getRandom(), data);
 							}
-							if (data.getMiningTime() > 0) {
+							if (getMiningTime(x, y, z) > 0) {
 								if (getWorld().getRandom().nextInt(100) <= 75) {
-									data.setMiningTime(data.getMiningTime() - 0.1f);
+									setMiningTime(x, y, z, getMiningTime(x, y, z) - 0.1f);
 									this.markForRerender();
 								}
-								if (data.getMiningTime() < 0) {
-									data.setMiningTime(0);
-									if ((int)data.getMiningTime() / 20 != (int)data.lastMiningTime / 20) {
+								if (getMiningTime(x, y, z) < 0) {
+									this.mining_time.remove(x+","+y+","+z);
+									this.last_mining_time.remove(x+","+y+","+z);
+									if ((int)getMiningTime(x, y, z) / 20 != (int)getLastMiningTime(x, y, z) / 20) {
 										this.markForRerender();
 									}
+									
 								}
 							}
 						}
@@ -587,9 +740,11 @@ public class Chunk {
 			mesh = setMesh;
 			setMesh = null;
 		}
-		
+		A:
 		if (mesh != null) {
 			if (canRender()) {
+				if (this.generated == false) break A;
+				
 				if (loadValue > 0) {
 					loadValue -= 0.02f * FPSCounter.getDelta();
 				} else {
@@ -651,16 +806,16 @@ public class Chunk {
 		}
 		
 		if (isActive()) {
-			if (tiles == null) {
-				this.tiles = new TileData[NUM_TILES];
+			if (tiles == null) {				
 				this.generated = false;
 				this.world.markChunkForBuilding(this);
 			}
-		} else {
+		} 
+		else {
 			if (mesh != null) {
-				
 				if (!needsToSave && generated) {
 					tiles = null;
+					
 				}
 			}
 		}
