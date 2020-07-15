@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.joml.Vector3f;
@@ -20,8 +22,8 @@ import kmerrill285.Inignoto.game.foliage.Foliage;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
-import kmerrill285.Inignoto.game.tile.data.TileState;
 import kmerrill285.Inignoto.game.tile.Tiles;
+import kmerrill285.Inignoto.game.tile.data.TileState;
 import kmerrill285.Inignoto.game.world.World;
 import kmerrill285.Inignoto.resources.Constants;
 import kmerrill285.Inignoto.resources.FPSCounter;
@@ -56,10 +58,21 @@ public class Chunk {
 	public boolean generated = false;
 	public boolean isGenerating = false;
 	
-	public HashMap<String, Foliage> foliage = new HashMap<String, Foliage>();
-	public HashMap<String, Float> mining_time = new HashMap<String, Float>();
-	public HashMap<String, Float> last_mining_time = new HashMap<String, Float>();
-
+	public HashMap<Short, Foliage> foliage = new HashMap<Short, Foliage>();
+	public HashMap<Short, Float> mining_time = new HashMap<Short, Float>();
+	public HashMap<Short, Float> last_mining_time = new HashMap<Short, Float>();
+	public short[][][] lightMap = new short[Chunk.SIZE_Y][Chunk.SIZE][Chunk.SIZE];
+	
+	public ArrayList<Short> lightBfsQueue;
+	public ArrayList<Short> lightRemovalBfsQueue;
+	public ArrayList<Short> sunlightBfsQueue;
+	public ArrayList<Short> sunlightRemovalBfsQueue;
+	public ArrayList<Short> redRemovalBfsQueue;
+	public ArrayList<Short> greenRemovalBfsQueue;
+	public ArrayList<Short> blueRemovalBfsQueue;
+	public ArrayList<Short> redBfsQueue;
+	public ArrayList<Short> greenBfsQueue;
+	public ArrayList<Short> blueBfsQueue;
 	public Chunk(int x, int y, int z, World world) {
 		this.x = x;
 		this.y = y;
@@ -71,6 +84,16 @@ public class Chunk {
 		pos = new Vector3i(X, Y, Z);
 		
 		this.world = world;
+		this.lightBfsQueue = new ArrayList<Short>();
+		this.lightRemovalBfsQueue = new ArrayList<Short>();
+		this.sunlightBfsQueue = new ArrayList<Short>();
+		this.sunlightRemovalBfsQueue = new ArrayList<Short>();
+		this.redBfsQueue = new ArrayList<Short>();
+		this.greenBfsQueue = new ArrayList<Short>();
+		this.blueBfsQueue = new ArrayList<Short>();
+		this.redRemovalBfsQueue = new ArrayList<Short>();
+		this.greenRemovalBfsQueue = new ArrayList<Short>();
+		this.blueRemovalBfsQueue = new ArrayList<Short>();
 	}
 	
 	public void setPos(int x, int y, int z) {
@@ -119,6 +142,647 @@ public class Chunk {
 			return true;
 		}
 		return false;
+	}
+	
+	// bits XXXX0000
+	public int getSunlightValue(int x, int y, int z) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			return (lightMap[y][z][x] >> 4) & 0xF;
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			return world.getChunk(X, Y, Z).getSunlightValue(x, y, z);
+		}
+		return 1;
+	}
+
+
+	public void updateSunlight(int x, int y, int z) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			short index = (short) (y * Chunk.SIZE * Chunk.SIZE_Y + z * Chunk.SIZE + x);
+			sunlightBfsQueue.add(index);
+		}
+	}
+	
+	
+	public void setSunlightValue(int x, int y, int z, int light) {
+		this.setSunlightValue(x, y, z, light, true);
+	}
+	// bits XXXX0000
+	public void setSunlightValue(int x, int y, int z, int light, boolean cascade) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			try {
+				lightMap[y][z][x] = (short) ((lightMap[y][z][x] & 0xF) | (light << 4));
+				short index = (short) (y * Chunk.SIZE * Chunk.SIZE_Y + z * Chunk.SIZE + x);
+				sunlightBfsQueue.add(index);
+			} catch (Exception e) {
+				
+			}
+			
+			return;
+		}
+		if (!cascade) return;
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (world.getChunk(X, Y, Z).generated) {
+				world.getChunk(X, Y, Z).setSunlightValue(x, y, z, light, true);
+			}
+		}
+	}
+	
+	public void removeSunlight(int x, int y, int z) {
+		this.removeSunlight(x, y, z, true);
+	}
+	// bits XXXX0000
+	public void removeSunlight(int x, int y, int z, boolean cascade) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			short index = (short) (y * Chunk.SIZE * Chunk.SIZE_Y + z * Chunk.SIZE + x);
+			sunlightRemovalBfsQueue.add(index);
+			return;
+		}
+		if (!cascade) return;
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (world.getChunk(X, Y, Z).generated) {
+				world.getChunk(X, Y, Z).removeSunlight(x, y, z, true);
+			}
+		}
+	}
+	
+	//bits 0000XXXX
+	public int getTorchlight(int x, int y, int z) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			return lightMap[y][z][x] & 0xF;
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			return world.getChunk(X, Y, Z).getTorchlight(x, y, z);
+		}
+		return 0;
+	}
+	
+	public void setTorchlight(int x, int y, int z, int light) {
+		setTorchlight(x, y, z, light, true);
+	}
+	//bits 0000XXXX;
+	public void setTorchlight(int x, int y, int z, int light, boolean cascade) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			lightMap[y][z][x] = (short) ((lightMap[y][z][x] & 0xF0) | light);
+			short index = (short) (y * Chunk.SIZE * Chunk.SIZE_Y + z * Chunk.SIZE + x);
+			lightBfsQueue.add(index);
+			return;
+		}
+		if (!cascade) return;
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (world.getChunk(X, Y, Z).generated) {
+				world.getChunk(X, Y, Z).setTorchlight(x, y, z, light, true);
+			}
+		}
+	}
+	
+	public void removeTorchlight(int x, int y, int z) {
+		removeTorchlight(x, y, z, true);
+	}
+	//bits 0000XXXX;
+	public void removeTorchlight(int x, int y, int z, boolean cascade) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			short index = (short) (y * Chunk.SIZE * Chunk.SIZE_Y + z * Chunk.SIZE + x);
+			lightRemovalBfsQueue.add(index);
+			return;
+		}
+		if (!cascade) return;
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (world.getChunk(X, Y, Z).generated) {
+				world.getChunk(X, Y, Z).removeTorchlight(x, y, z, true);
+			}
+		}
+	}
+	
+	public int getRed(int x, int y, int z) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			return (lightMap[y][z][x] >> 8) & 0xF;
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			return world.getChunk(X, Y, Z).getRed(x, y, z);
+		}
+		return 0;
+	}
+	
+	public int getGreen(int x, int y, int z) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			return (lightMap[y][z][x] >> 4) & 0xF;
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			return world.getChunk(X, Y, Z).getGreen(x, y, z);
+		}
+		return 0;
+	}
+	
+	public int getBlue(int x, int y, int z) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			return lightMap[y][z][x] & 0xF;
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			return world.getChunk(X, Y, Z).getBlue(x, y, z);
+		}
+		return 0;
+	}
+	
+	public void removeRed(int x, int y, int z) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			short index = (short) (y * Chunk.SIZE * Chunk.SIZE_Y + z * Chunk.SIZE + x);
+			redRemovalBfsQueue.add(index);
+			return;
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (world.getChunk(X, Y, Z).generated) {
+				world.getChunk(X, Y, Z).removeRed(x, y, z);
+			}
+		}
+	}
+	
+	public void removeGreen(int x, int y, int z) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			short index = (short) (y * Chunk.SIZE * Chunk.SIZE_Y + z * Chunk.SIZE + x);
+			greenRemovalBfsQueue.add(index);
+			return;
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (world.getChunk(X, Y, Z).generated) {
+				world.getChunk(X, Y, Z).removeGreen(x, y, z);
+			}
+		}
+	}
+	
+	public void removeBlue(int x, int y, int z) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			short index = (short) (y * Chunk.SIZE * Chunk.SIZE_Y + z * Chunk.SIZE + x);
+			blueRemovalBfsQueue.add(index);
+			return;
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (world.getChunk(X, Y, Z).generated) {
+				world.getChunk(X, Y, Z).removeBlue(x, y, z);
+			}
+		}
+	}
+		
+	public void setRed(int x, int y, int z, int val) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			this.lightMap[y][z][x] = (short) ((lightMap[y][z][x] & 0xF0FF) | (val << 8));
+			short index = (short) (y * Chunk.SIZE * Chunk.SIZE_Y + z * Chunk.SIZE + x);
+			redBfsQueue.add(index);
+			return;
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (world.getChunk(X, Y, Z).generated) {
+				world.getChunk(X, Y, Z).setRed(x, y, z, val);
+			}
+		}
+	}
+	
+	public void setGreen(int x, int y, int z, int val) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			this.lightMap[y][z][x] = (short) ((lightMap[y][z][x] & 0xFF0F) | (val << 4));
+			short index = (short) (y * Chunk.SIZE * Chunk.SIZE_Y + z * Chunk.SIZE + x);
+			greenBfsQueue.add(index);
+			return;
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (world.getChunk(X, Y, Z).generated) {
+				world.getChunk(X, Y, Z).setGreen(x, y, z, val);
+			}
+		}
+	}
+	
+	public void setBlue(int x, int y, int z, int val) {
+		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
+			this.lightMap[y][z][x] = (short) ((lightMap[y][z][x] & 0xFFF0) | (val));
+			short index = (short) (y * Chunk.SIZE * Chunk.SIZE_Y + z * Chunk.SIZE + x);
+			blueBfsQueue.add(index);
+			return;
+		}
+		int X = getX();
+		int Y = getY();
+		int Z = getZ();
+		while (x >= Chunk.SIZE) {
+			x -= Chunk.SIZE;
+			X++;
+		}
+		while (x < 0) {
+			x += Chunk.SIZE;
+			X--;
+		}
+		while (y >= Chunk.SIZE_Y) {
+			y -= Chunk.SIZE_Y;
+			Y++;
+		}
+		while (y < 0) {
+			y += Chunk.SIZE_Y;
+			Y--;
+		}
+		while (z >= Chunk.SIZE) {
+			z -= Chunk.SIZE;
+			Z++;
+		}
+		while (z < 0) {
+			z += Chunk.SIZE;
+			Z--;
+		}
+		if (world.getChunk(X, Y, Z) != null) {
+			if (world.getChunk(X, Y, Z).generated) {
+				world.getChunk(X, Y, Z).setBlue(x, y, z, val);
+			}
+		}
+	}
+	
+	
+		
+	public Vector3f getLight(float x, float y, float z) {
+		int torchlight = getTorchlight((int)x, (int)y, (int)z);
+		int sunlight = getSunlightValue((int)x, (int)y, (int)z);
+		int light = torchlight + sunlight;
+		if (light > 15) light = 15;
+		
+		float r = getRed((int)x, (int)y, (int)z);
+		float g = getGreen((int)x, (int)y, (int)z);
+		float b = getBlue((int)x, (int)y, (int)z);
+		
+		return new Vector3f(light / 15.0f);
 	}
 	
 	public Tile getLocalTile(int x, int y, int z) {
@@ -224,7 +888,9 @@ public class Chunk {
 			if (tiles == null) {
 				return;
 			}
+			getLocalTile(x, y, z).updateLightWhenRemovedFromWorld(x, y, z, this, getTileState(x, y, z));
 			tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y] = data;
+			Tiles.getTile(data.getTile()).updateLightWhenAddedToWorld(x, y, z, this, data);
 		}
 		int X = getX();
 		int Y = getY();
@@ -264,9 +930,11 @@ public class Chunk {
 	public void setFoliage(int x, int y, int z, Foliage foliage) {
 		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
 			if (foliage == null) {
-				this.foliage.remove(x+","+y+","+z);
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+				this.foliage.remove(index);
 			} else {
-				this.foliage.put(x+","+y+","+z, foliage);
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+				this.foliage.put(index, foliage);
 			}
 		}
 		int X = getX();
@@ -306,7 +974,8 @@ public class Chunk {
 	
 	public Foliage getFoliage(int x, int y, int z) {
 		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
-			return this.foliage.get(x+","+y+","+z);
+			short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+			return this.foliage.get(index);
 		}
 		int X = getX();
 		int Y = getY();
@@ -363,13 +1032,17 @@ public class Chunk {
 			{
 				tiles = new TileState[Chunk.SIZE * Chunk.SIZE_Y * Chunk.SIZE];
 			}
+			
+
 			if (tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y] == null) {
 				tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y] = tile.getDefaultState();
 			} else {
+				getLocalTile(x, y, z).updateLightWhenRemovedFromWorld(x, y, z, this, getTileState(x, y, z));
 				tiles[x + y * Chunk.SIZE + z * Chunk.SIZE * Chunk.SIZE_Y] = tile.getDefaultState();
 			}
-			
+			tile.updateLightWhenAddedToWorld(x, y, z, this, tile.getDefaultState());
 		}
+		
 		int X = getX();
 		int Y = getY();
 		int Z = getZ();
@@ -407,7 +1080,8 @@ public class Chunk {
 	
 	public float getMiningTime(int x, int y, int z) {
 		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
-			Float mining_time = this.mining_time.get(x+","+y+","+z);
+			short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+			Float mining_time = this.mining_time.get(index);
 			return mining_time != null ? mining_time : 0;
 		}
 		int X = getX();
@@ -448,7 +1122,8 @@ public class Chunk {
 	
 	public float getLastMiningTime(int x, int y, int z) {
 		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
-			Float mining_time = this.last_mining_time.get(x+","+y+","+z);
+			short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+			Float mining_time = this.last_mining_time.get(index);
 			return mining_time != null ? mining_time : 0;
 		}
 		int X = getX();
@@ -489,7 +1164,8 @@ public class Chunk {
 	
 	public void setLastMiningTime(int x, int y, int z, float mining_time) {
 		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
-			this.last_mining_time.put(x+","+y+","+z, mining_time);
+			short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+			this.last_mining_time.put(index, mining_time);
 		}
 		int X = getX();
 		int Y = getY();
@@ -529,7 +1205,8 @@ public class Chunk {
 	public void setMiningTime(int x, int y, int z, float mining_time) {
 		setLastMiningTime(x, y, z, mining_time);
 		if (x >= 0 && y >= 0 && z >= 0 && x < Chunk.SIZE && y < Chunk.SIZE_Y && z < Chunk.SIZE) {
-			this.mining_time.put(x+","+y+","+z, mining_time);
+			short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+			this.mining_time.put(index, mining_time);
 		}
 		int X = getX();
 		int Y = getY();
@@ -602,12 +1279,20 @@ public class Chunk {
 	
 		try {
 			FileOutputStream fos = new FileOutputStream(savefile);
-			for (int i = 0; i < tiles.length; i++) {
-				if (tiles[i] == null) {
-					tiles[i] = Tiles.AIR.getDefaultState();
+			int i = 0;
+			for (int x = 0; x < Chunk.SIZE; x++) {
+				for (int y = 0; y < Chunk.SIZE_Y; y++) {
+					for (int z = 0; z < Chunk.SIZE; z++) {
+						if (tiles[i] == null) {
+							tiles[i] = Tiles.AIR.getDefaultState();
+						}
+						fos.write(tiles[i].getTile());
+						fos.write(tiles[i].getState());
+						fos.write(getTorchlight(x, y, z));
+						fos.write(getSunlightValue(x, y, z));
+						i++;
+					}
 				}
-				fos.write(tiles[i].getTile());
-				fos.write(tiles[i].getState());
 			}
 			fos.close();
 			this.needsToSave = false;
@@ -639,10 +1324,18 @@ public class Chunk {
 				this.generated = false;
 				tiles = new TileState[SIZE * SIZE_Y * SIZE];
 				
-				
-				for (int i = 0; i < tiles.length; i++) {
-					tiles[i] = Tiles.getTile(fis.read()).getStateHolder().getStateFor(fis.read());
+				int i = 0;
+				for (int x = 0; x < Chunk.SIZE; x++) {
+					for (int y = 0; y < Chunk.SIZE_Y; y++) {
+						for (int z = 0; z < Chunk.SIZE; z++) {
+							tiles[i] = Tiles.getTile(fis.read()).getStateHolder().getStateFor(fis.read());
+							setTorchlight(x, y, z, fis.read());
+							setSunlightValue(x, y, z, fis.read());
+							i++;
+						}
+					}
 				}
+				
 				fis.close();
 				this.generated = true;
 				return true;
@@ -684,26 +1377,30 @@ public class Chunk {
 		if (Camera.frustum.intersects(pos.x, pos.y, SIZE, SIZE) || Camera.downFrustum.intersects(pos.x, pos.y, SIZE, SIZE)) return true;
 		return Camera.position.distance(x, 0, z) <= SIZE * Settings.VIEW_DISTANCE || new Vector3f(Camera.position).mul(0, 1, 0).distance(0, y, 0) <= SIZE_Y * Settings.VERTICAL_VIEW_DISTANCE * 1.5;
 	}
-
+	
 	public void tick() {
+
 		if (this.canTick()) {
 			TilePos pos = new TilePos(0, 0, 0);
 			for (int x = 0; x < SIZE; x++) {
 				for (int y = 0; y < SIZE_Y; y++) {
 					for (int z = 0; z < SIZE; z++) {
 						
-//						if (getFoliage(x, y, z) != null) { 
-//							getFoliage(x, y, z).tick(x, y, z, this);
-//						}
-						
 						pos.x = x + getX() * SIZE;
 						pos.y = y + getY() * SIZE_Y;
 						pos.z = z + getZ() * SIZE;
+						
 						TileState data = getTileState(x, y, z, false);
+						
+						
 						if (data != null) {
-							if (data.getTile() == Tiles.AIR.getID())
-								continue;
 							Tile tile = Tiles.getTile(data.getTile());
+							
+							if (data.getTile() == Tiles.AIR.getID())
+							{
+								continue;
+							}
+							
 							
 							if (data.getRayTraceType() == TileRayTraceType.LIQUID) {
 								tile.tick(getWorld(), pos, getWorld().getRandom(), data);
@@ -719,8 +1416,10 @@ public class Chunk {
 									this.markForRerender();
 								}
 								if (getMiningTime(x, y, z) < 0) {
-									this.mining_time.remove(x+","+y+","+z);
-									this.last_mining_time.remove(x+","+y+","+z);
+									short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+
+									this.mining_time.remove(index);
+									this.last_mining_time.remove(index);
 									if ((int)getMiningTime(x, y, z) / 20 != (int)getLastMiningTime(x, y, z) / 20) {
 										this.markForRerender();
 									}
@@ -733,57 +1432,713 @@ public class Chunk {
 			}
 		}
 	}
+	
+	public void updateLights() {
+		try {
+		boolean cu = false, cd = false, cl = false, cr = false, cb = false, cf = false;
+		boolean rerender = false;
+		while (sunlightBfsQueue.isEmpty() == false) {
+			rerender = true;
+			short node = sunlightBfsQueue.get(0);
+			sunlightBfsQueue.remove(0);
+			
+			int x = node % Chunk.SIZE;
+			int y = node / (Chunk.SIZE * Chunk.SIZE_Y);
+			int z = (node % (Chunk.SIZE * Chunk.SIZE_Y)) / Chunk.SIZE;
+			
+			if (x - 1 <= 0 || x + 1 >= Chunk.SIZE - 1) {
+				if (x - 1 <= 0) cl = true;
+				else cr = true;
+			}
+			if (y - 1 <= 0 || y + 1 >= Chunk.SIZE - 1) {
+				if (y - 1 <= 0) cd = true;
+				else
+					cu = true;
+			}
+			if (z - 1 <= 0 || z + 1 >= Chunk.SIZE - 1) {
+				if (z - 1 <= 0) cb = true;
+				else cf = true;
+			}
+			
+			int lightLevel = this.getSunlightValue(x, y, z);
+
+			if (getTileState(x - 1, y, z).isOpaque() == false && 
+					getSunlightValue(x - 1, y, z) + 2 <= lightLevel) {
+				setSunlightValue(x - 1, y, z, lightLevel - 1);
+			}
+			if (getTileState(x + 1, y, z).isOpaque() == false && 
+					getSunlightValue(x + 1, y, z) + 2 <= lightLevel) {
+				setSunlightValue(x + 1, y, z, lightLevel - 1);
+			}
+			if (getTileState(x, y + 1, z).isOpaque() == false && 
+					getSunlightValue(x, y + 1, z) + 2 <= lightLevel) {
+				setSunlightValue(x, y + 1, z, lightLevel - 1);
+			}
+			if (getTileState(x, y - 1, z).isOpaque() == false && 
+					getSunlightValue(x, y - 1, z) + 2 <= lightLevel) {
+				setSunlightValue(x, y - 1, z, lightLevel == 15 ? lightLevel : lightLevel - 1);
+			}
+			if (getTileState(x, y, z - 1).isOpaque() == false && 
+					getSunlightValue(x, y, z - 1) + 2 <= lightLevel) {
+				setSunlightValue(x, y, z - 1, lightLevel - 1);
+			}
+			if (getTileState(x, y, z + 1).isOpaque() == false && 
+					getSunlightValue(x, y, z + 1) + 2 <= lightLevel) {
+				setSunlightValue(x, y, z + 1, lightLevel - 1);
+			}
+		}
+		while (sunlightRemovalBfsQueue.isEmpty() == false) {
+			rerender = true;
+			short node = sunlightRemovalBfsQueue.get(0);
+			sunlightRemovalBfsQueue.remove(0);
+			
+			int x = node % Chunk.SIZE;
+			int y = node / (Chunk.SIZE * Chunk.SIZE_Y);
+			int z = (node % (Chunk.SIZE * Chunk.SIZE_Y)) / Chunk.SIZE;
+			int lightLevel = this.getSunlightValue(x, y, z);
+			setSunlightValue(x, y, z, 0);
+			
+			if (x - 1 <= 0 || x + 1 >= Chunk.SIZE - 1) {
+				if (x - 1 <= 0) cl = true;
+				else cr = true;
+			}
+			if (y - 1 <= 0 || y + 1 >= Chunk.SIZE - 1) {
+				if (y - 1 <= 0) cd = true;
+				else
+					cu = true;
+			}
+			if (z - 1 <= 0 || z + 1 >= Chunk.SIZE - 1) {
+				if (z - 1 <= 0) cb = true;
+				else cf = true;
+			}
+			
+			
+			int neighborLevel = getSunlightValue(x - 1, y, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeSunlight(x - 1, y, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + (x - 1));
+				sunlightBfsQueue.add(index);
+			}
+			
+			neighborLevel = getSunlightValue(x + 1, y, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeSunlight(x + 1, y, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + (x + 1));
+				sunlightBfsQueue.add(index);
+			}
+			
+			neighborLevel = getSunlightValue(x, y + 1, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeSunlight(x, y + 1, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) ((y + 1) * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+				sunlightBfsQueue.add(index);
+			}
+			
+			neighborLevel = getSunlightValue(x, y - 1, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel || lightLevel == 15) {
+				removeSunlight(x, y - 1, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) ((y - 1) * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+				sunlightBfsQueue.add(index);
+			}
+			
+			neighborLevel = getSunlightValue(x, y, z - 1);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeSunlight(x, y, z - 1);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + (z - 1) * Chunk.SIZE + x);
+				sunlightBfsQueue.add(index);
+			}
+			
+			neighborLevel = getSunlightValue(x, y, z + 1);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeSunlight(x, y, z + 1);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + (z + 1) * Chunk.SIZE + x);
+				sunlightBfsQueue.add(index);
+			}
+		}
+		
+		while (blueBfsQueue.isEmpty() == false) {
+			rerender = true;
+			short node = blueBfsQueue.get(0);
+			blueBfsQueue.remove(0);
+			
+			int x = node % Chunk.SIZE;
+			int y = node / (Chunk.SIZE * Chunk.SIZE_Y);
+			int z = (node % (Chunk.SIZE * Chunk.SIZE_Y)) / Chunk.SIZE;
+			
+			if (x - 1 <= 0 || x + 1 >= Chunk.SIZE - 1) {
+				if (x - 1 <= 0) cl = true;
+				else cr = true;
+			}
+			if (y - 1 <= 0 || y + 1 >= Chunk.SIZE - 1) {
+				if (y - 1 <= 0) cd = true;
+				else
+					cu = true;
+			}
+			if (z - 1 <= 0 || z + 1 >= Chunk.SIZE - 1) {
+				if (z - 1 <= 0) cb = true;
+				else cf = true;
+			}
+			
+			int lightLevel = this.getBlue(x, y, z);
+
+			if (getTileState(x - 1, y, z).isOpaque() == false && 
+					getBlue(x - 1, y, z) + 2 <= lightLevel) {
+				setBlue(x - 1, y, z, lightLevel - 1);
+			}
+			if (getTileState(x + 1, y, z).isOpaque() == false && 
+					getBlue(x + 1, y, z) + 2 <= lightLevel) {
+				setBlue(x + 1, y, z, lightLevel - 1);
+			}
+			if (getTileState(x, y + 1, z).isOpaque() == false && 
+					getBlue(x, y + 1, z) + 2 <= lightLevel) {
+				setBlue(x, y + 1, z, lightLevel - 1);
+			}
+			if (getTileState(x, y - 1, z).isOpaque() == false && 
+					getBlue(x, y - 1, z) + 2 <= lightLevel) {
+				setBlue(x, y - 1, z, lightLevel - 1);
+			}
+			if (getTileState(x, y, z - 1).isOpaque() == false && 
+					getBlue(x, y, z - 1) + 2 <= lightLevel) {
+				setBlue(x, y, z - 1, lightLevel - 1);
+			}
+			if (getTileState(x, y, z + 1).isOpaque() == false && 
+					getBlue(x, y, z + 1) + 2 <= lightLevel) {
+				setBlue(x, y, z + 1, lightLevel - 1);
+			}
+		}
+		
+		
+		while (greenBfsQueue.isEmpty() == false) {
+			rerender = true;
+			short node = greenBfsQueue.get(0);
+			greenBfsQueue.remove(0);
+			
+			int x = node % Chunk.SIZE;
+			int y = node / (Chunk.SIZE * Chunk.SIZE_Y);
+			int z = (node % (Chunk.SIZE * Chunk.SIZE_Y)) / Chunk.SIZE;
+			
+			if (x - 1 <= 0 || x + 1 >= Chunk.SIZE - 1) {
+				if (x - 1 <= 0) cl = true;
+				else cr = true;
+			}
+			if (y - 1 <= 0 || y + 1 >= Chunk.SIZE - 1) {
+				if (y - 1 <= 0) cd = true;
+				else
+					cu = true;
+			}
+			if (z - 1 <= 0 || z + 1 >= Chunk.SIZE - 1) {
+				if (z - 1 <= 0) cb = true;
+				else cf = true;
+			}
+			
+			int lightLevel = this.getGreen(x, y, z);
+
+			if (getTileState(x - 1, y, z).isOpaque() == false && 
+					getGreen(x - 1, y, z) + 2 <= lightLevel) {
+				setGreen(x - 1, y, z, lightLevel - 1);
+			}
+			if (getTileState(x + 1, y, z).isOpaque() == false && 
+					getGreen(x + 1, y, z) + 2 <= lightLevel) {
+				setGreen(x + 1, y, z, lightLevel - 1);
+			}
+			if (getTileState(x, y + 1, z).isOpaque() == false && 
+					getGreen(x, y + 1, z) + 2 <= lightLevel) {
+				setGreen(x, y + 1, z, lightLevel - 1);
+			}
+			if (getTileState(x, y - 1, z).isOpaque() == false && 
+					getGreen(x, y - 1, z) + 2 <= lightLevel) {
+				setGreen(x, y - 1, z, lightLevel - 1);
+			}
+			if (getTileState(x, y, z - 1).isOpaque() == false && 
+					getGreen(x, y, z - 1) + 2 <= lightLevel) {
+				setGreen(x, y, z - 1, lightLevel - 1);
+			}
+			if (getTileState(x, y, z + 1).isOpaque() == false && 
+					getGreen(x, y, z + 1) + 2 <= lightLevel) {
+				setGreen(x, y, z + 1, lightLevel - 1);
+			}
+		}
+		
+		while (redBfsQueue.isEmpty() == false) {
+			rerender = true;
+			short node = redBfsQueue.get(0);
+			redBfsQueue.remove(0);
+			
+			int x = node % Chunk.SIZE;
+			int y = node / (Chunk.SIZE * Chunk.SIZE_Y);
+			int z = (node % (Chunk.SIZE * Chunk.SIZE_Y)) / Chunk.SIZE;
+			
+			if (x - 1 <= 0 || x + 1 >= Chunk.SIZE - 1) {
+				if (x - 1 <= 0) cl = true;
+				else cr = true;
+			}
+			if (y - 1 <= 0 || y + 1 >= Chunk.SIZE - 1) {
+				if (y - 1 <= 0) cd = true;
+				else
+					cu = true;
+			}
+			if (z - 1 <= 0 || z + 1 >= Chunk.SIZE - 1) {
+				if (z - 1 <= 0) cb = true;
+				else cf = true;
+			}
+			
+			int lightLevel = this.getRed(x, y, z);
+
+			if (getTileState(x - 1, y, z).isOpaque() == false && 
+					getRed(x - 1, y, z) + 2 <= lightLevel) {
+				setRed(x - 1, y, z, lightLevel - 1);
+			}
+			if (getTileState(x + 1, y, z).isOpaque() == false && 
+					getRed(x + 1, y, z) + 2 <= lightLevel) {
+				setRed(x + 1, y, z, lightLevel - 1);
+			}
+			if (getTileState(x, y + 1, z).isOpaque() == false && 
+					getRed(x, y + 1, z) + 2 <= lightLevel) {
+				setRed(x, y + 1, z, lightLevel - 1);
+			}
+			if (getTileState(x, y - 1, z).isOpaque() == false && 
+					getRed(x, y - 1, z) + 2 <= lightLevel) {
+				setRed(x, y - 1, z, lightLevel - 1);
+			}
+			if (getTileState(x, y, z - 1).isOpaque() == false && 
+					getRed(x, y, z - 1) + 2 <= lightLevel) {
+				setRed(x, y, z - 1, lightLevel - 1);
+			}
+			if (getTileState(x, y, z + 1).isOpaque() == false && 
+					getRed(x, y, z + 1) + 2 <= lightLevel) {
+				setRed(x, y, z + 1, lightLevel - 1);
+			}
+		}
+		
+		while (blueRemovalBfsQueue.isEmpty() == false) {
+			rerender = true;
+			short node = blueRemovalBfsQueue.get(0);
+			blueRemovalBfsQueue.remove(0);
+			
+			int x = node % Chunk.SIZE;
+			int y = node / (Chunk.SIZE * Chunk.SIZE_Y);
+			int z = (node % (Chunk.SIZE * Chunk.SIZE_Y)) / Chunk.SIZE;
+			int lightLevel = this.getBlue(x, y, z);
+			setBlue(x, y, z, 0);
+			
+			if (x - 1 <= 0 || x + 1 >= Chunk.SIZE - 1) {
+				if (x - 1 <= 0) cl = true;
+				else cr = true;
+			}
+			if (y - 1 <= 0 || y + 1 >= Chunk.SIZE - 1) {
+				if (y - 1 <= 0) cd = true;
+				else
+					cu = true;
+			}
+			if (z - 1 <= 0 || z + 1 >= Chunk.SIZE - 1) {
+				if (z - 1 <= 0) cb = true;
+				else cf = true;
+			}
+			
+			int neighborLevel = getBlue(x - 1, y, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeBlue(x - 1, y, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + (x - 1));
+				blueBfsQueue.add(index);
+			}
+			
+			neighborLevel = getBlue(x + 1, y, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeTorchlight(x + 1, y, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + (x + 1));
+				blueBfsQueue.add(index);
+			}
+			
+			neighborLevel = getBlue(x, y + 1, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeBlue(x, y + 1, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) ((y + 1) * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+				blueBfsQueue.add(index);
+			}
+			
+			neighborLevel = getBlue(x, y - 1, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeBlue(x, y - 1, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) ((y - 1) * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+				blueBfsQueue.add(index);
+			}
+			
+			neighborLevel = getBlue(x, y, z - 1);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeBlue(x, y, z - 1);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + (z - 1) * Chunk.SIZE + x);
+				blueBfsQueue.add(index);
+			}
+			
+			neighborLevel = getBlue(x, y, z + 1);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeBlue(x, y, z + 1);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + (z + 1) * Chunk.SIZE + x);
+				blueBfsQueue.add(index);
+			}
+		}
+		
+		while (greenRemovalBfsQueue.isEmpty() == false) {
+			rerender = true;
+			short node = greenRemovalBfsQueue.get(0);
+			greenRemovalBfsQueue.remove(0);
+			
+			int x = node % Chunk.SIZE;
+			int y = node / (Chunk.SIZE * Chunk.SIZE_Y);
+			int z = (node % (Chunk.SIZE * Chunk.SIZE_Y)) / Chunk.SIZE;
+			int lightLevel = this.getGreen(x, y, z);
+			setGreen(x, y, z, 0);
+			
+			if (x - 1 <= 0 || x + 1 >= Chunk.SIZE - 1) {
+				if (x - 1 <= 0) cl = true;
+				else cr = true;
+			}
+			if (y - 1 <= 0 || y + 1 >= Chunk.SIZE - 1) {
+				if (y - 1 <= 0) cd = true;
+				else
+					cu = true;
+			}
+			if (z - 1 <= 0 || z + 1 >= Chunk.SIZE - 1) {
+				if (z - 1 <= 0) cb = true;
+				else cf = true;
+			}
+			
+			int neighborLevel = getGreen(x - 1, y, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeGreen(x - 1, y, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + (x - 1));
+				greenBfsQueue.add(index);
+			}
+			
+			neighborLevel = getGreen(x + 1, y, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeTorchlight(x + 1, y, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + (x + 1));
+				greenBfsQueue.add(index);
+			}
+			
+			neighborLevel = getGreen(x, y + 1, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeGreen(x, y + 1, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) ((y + 1) * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+				greenBfsQueue.add(index);
+			}
+			
+			neighborLevel = getGreen(x, y - 1, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeGreen(x, y - 1, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) ((y - 1) * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+				greenBfsQueue.add(index);
+			}
+			
+			neighborLevel = getGreen(x, y, z - 1);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeGreen(x, y, z - 1);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + (z - 1) * Chunk.SIZE + x);
+				greenBfsQueue.add(index);
+			}
+			
+			neighborLevel = getGreen(x, y, z + 1);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeGreen(x, y, z + 1);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + (z + 1) * Chunk.SIZE + x);
+				greenBfsQueue.add(index);
+			}
+		}
+		
+		while (redRemovalBfsQueue.isEmpty() == false) {
+			rerender = true;
+			short node = redRemovalBfsQueue.get(0);
+			redRemovalBfsQueue.remove(0);
+			
+			int x = node % Chunk.SIZE;
+			int y = node / (Chunk.SIZE * Chunk.SIZE_Y);
+			int z = (node % (Chunk.SIZE * Chunk.SIZE_Y)) / Chunk.SIZE;
+			int lightLevel = this.getRed(x, y, z);
+			setRed(x, y, z, 0);
+			
+			if (x - 1 <= 0 || x + 1 >= Chunk.SIZE - 1) {
+				if (x - 1 <= 0) cl = true;
+				else cr = true;
+			}
+			if (y - 1 <= 0 || y + 1 >= Chunk.SIZE - 1) {
+				if (y - 1 <= 0) cd = true;
+				else
+					cu = true;
+			}
+			if (z - 1 <= 0 || z + 1 >= Chunk.SIZE - 1) {
+				if (z - 1 <= 0) cb = true;
+				else cf = true;
+			}
+			
+			int neighborLevel = getRed(x - 1, y, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeRed(x - 1, y, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + (x - 1));
+				redBfsQueue.add(index);
+			}
+			
+			neighborLevel = getRed(x + 1, y, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeTorchlight(x + 1, y, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + (x + 1));
+				redBfsQueue.add(index);
+			}
+			
+			neighborLevel = getRed(x, y + 1, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeRed(x, y + 1, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) ((y + 1) * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+				redBfsQueue.add(index);
+			}
+			
+			neighborLevel = getRed(x, y - 1, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeRed(x, y - 1, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) ((y - 1) * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+				redBfsQueue.add(index);
+			}
+			
+			neighborLevel = getRed(x, y, z - 1);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeRed(x, y, z - 1);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + (z - 1) * Chunk.SIZE + x);
+				redBfsQueue.add(index);
+			}
+			
+			neighborLevel = getRed(x, y, z + 1);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeRed(x, y, z + 1);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + (z + 1) * Chunk.SIZE + x);
+				redBfsQueue.add(index);
+			}
+		}
+		
+		while (lightBfsQueue.isEmpty() == false) {
+			rerender = true;
+			short node = lightBfsQueue.get(0);
+			lightBfsQueue.remove(0);
+			
+			int x = node % Chunk.SIZE;
+			int y = node / (Chunk.SIZE * Chunk.SIZE_Y);
+			int z = (node % (Chunk.SIZE * Chunk.SIZE_Y)) / Chunk.SIZE;
+			
+			if (x - 1 <= 0 || x + 1 >= Chunk.SIZE - 1) {
+				if (x - 1 <= 0) cl = true;
+				else cr = true;
+			}
+			if (y - 1 <= 0 || y + 1 >= Chunk.SIZE - 1) {
+				if (y - 1 <= 0) cd = true;
+				else
+					cu = true;
+			}
+			if (z - 1 <= 0 || z + 1 >= Chunk.SIZE - 1) {
+				if (z - 1 <= 0) cb = true;
+				else cf = true;
+			}
+			
+			int lightLevel = this.getTorchlight(x, y, z);
+
+			if (getTileState(x - 1, y, z).isOpaque() == false && 
+					getTorchlight(x - 1, y, z) + 2 <= lightLevel) {
+				setTorchlight(x - 1, y, z, lightLevel - 1);
+			}
+			if (getTileState(x + 1, y, z).isOpaque() == false && 
+					getTorchlight(x + 1, y, z) + 2 <= lightLevel) {
+				setTorchlight(x + 1, y, z, lightLevel - 1);
+			}
+			if (getTileState(x, y + 1, z).isOpaque() == false && 
+					getTorchlight(x, y + 1, z) + 2 <= lightLevel) {
+				setTorchlight(x, y + 1, z, lightLevel - 1);
+			}
+			if (getTileState(x, y - 1, z).isOpaque() == false && 
+					getTorchlight(x, y - 1, z) + 2 <= lightLevel) {
+				setTorchlight(x, y - 1, z, lightLevel - 1);
+			}
+			if (getTileState(x, y, z - 1).isOpaque() == false && 
+					getTorchlight(x, y, z - 1) + 2 <= lightLevel) {
+				setTorchlight(x, y, z - 1, lightLevel - 1);
+			}
+			if (getTileState(x, y, z + 1).isOpaque() == false && 
+					getTorchlight(x, y, z + 1) + 2 <= lightLevel) {
+				setTorchlight(x, y, z + 1, lightLevel - 1);
+			}
+		}
+		while (lightRemovalBfsQueue.isEmpty() == false) {
+			rerender = true;
+			short node = lightRemovalBfsQueue.get(0);
+			lightRemovalBfsQueue.remove(0);
+			
+			int x = node % Chunk.SIZE;
+			int y = node / (Chunk.SIZE * Chunk.SIZE_Y);
+			int z = (node % (Chunk.SIZE * Chunk.SIZE_Y)) / Chunk.SIZE;
+			int lightLevel = this.getTorchlight(x, y, z);
+			setTorchlight(x, y, z, 0);
+			
+			if (x - 1 <= 0 || x + 1 >= Chunk.SIZE - 1) {
+				if (x - 1 <= 0) cl = true;
+				else cr = true;
+			}
+			if (y - 1 <= 0 || y + 1 >= Chunk.SIZE - 1) {
+				if (y - 1 <= 0) cd = true;
+				else
+					cu = true;
+			}
+			if (z - 1 <= 0 || z + 1 >= Chunk.SIZE - 1) {
+				if (z - 1 <= 0) cb = true;
+				else cf = true;
+			}
+			
+			int neighborLevel = getTorchlight(x - 1, y, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeTorchlight(x - 1, y, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + (x - 1));
+				lightBfsQueue.add(index);
+			}
+			
+			neighborLevel = getTorchlight(x + 1, y, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeTorchlight(x + 1, y, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + (x + 1));
+				lightBfsQueue.add(index);
+			}
+			
+			neighborLevel = getTorchlight(x, y + 1, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeTorchlight(x, y + 1, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) ((y + 1) * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+				lightBfsQueue.add(index);
+			}
+			
+			neighborLevel = getTorchlight(x, y - 1, z);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeTorchlight(x, y - 1, z);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) ((y - 1) * Chunk.SIZE_Y * Chunk.SIZE + z * Chunk.SIZE + x);
+				lightBfsQueue.add(index);
+			}
+			
+			neighborLevel = getTorchlight(x, y, z - 1);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeTorchlight(x, y, z - 1);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + (z - 1) * Chunk.SIZE + x);
+				lightBfsQueue.add(index);
+			}
+			
+			neighborLevel = getTorchlight(x, y, z + 1);
+			if (neighborLevel != 0 && neighborLevel < lightLevel) {
+				removeTorchlight(x, y, z + 1);
+			} else if (neighborLevel >= lightLevel) {
+				short index = (short) (y * Chunk.SIZE_Y * Chunk.SIZE + (z + 1) * Chunk.SIZE + x);
+				lightBfsQueue.add(index);
+			}
+		}
+		if (rerender) {
+			if (this.mesh != null) meshesToDispose.add(this.mesh);
+			if (this.waterMesh != null) meshesToDispose.add(this.waterMesh);
+			mesh = ChunkBuilder.buildChunk(this, cl, cr, cu, cd, cf, cb);
+			waterMesh = ChunkBuilder.buildLiquidChunk(this);
+		}
+		}catch (Exception e) {
+//			e.printStackTrace();
+		}
+	}
+	
+	public ArrayList<Mesh> meshesToDispose = new ArrayList<Mesh>();
 	private boolean needsToRebuild = false;
 	boolean triedToLoad = false;
 	public void render(ShaderProgram shader) {
-		if (setMesh != null) {
-			mesh = setMesh;
-			setMesh = null;
+		
+		if (mesh == null) {
+			markForRerender();
 		}
-		A:
-		if (mesh != null) {
-			if (canRender()) {
-				if (this.generated == false) break A;
-				
-				if (loadValue > 0) {
-					loadValue -= 0.02f * FPSCounter.getDelta();
-				} else {
-					loadValue = 0;
-				}
-				
-				shader.setUniformFloat("loadValue", loadValue);
-				MeshRenderer.renderMesh(mesh, new Vector3f(getX() * SIZE, getY() * SIZE_Y, getZ() * SIZE), shader);
-				
-				
-				for (String str : this.foliage.keySet()) {
-					String[] data = str.split(",");
-					int x = Integer.parseInt(data[0]);
-					int y = Integer.parseInt(data[1]);
-					int z = Integer.parseInt(data[2]);
-					this.foliage.get(str).render(x + getX() * SIZE, y + getY() * SIZE_Y, z + getZ() * SIZE, this, shader);
-				}
-				
-				shader.setUniformFloat("loadValue", 0);
+		
+		if (needsToRebuild) {
+			
+			if (this.mesh != null) this.meshesToDispose.add(mesh);
+			if (this.waterMesh != null) this.meshesToDispose.add(waterMesh);
+			needsToRebuild = false;
+			mesh = ChunkBuilder.buildChunk(this, true);
+			waterMesh = ChunkBuilder.buildLiquidChunk(this);
+			if(setMesh != null) {
+				meshesToDispose.add(setMesh);
 			}
+			if (setWaterMesh != null) {
+				meshesToDispose.add(setWaterMesh);
+			}
+			setMesh = null;
+			setWaterMesh = null;
 		} else {
-			this.markForRerender();
+			if (setWaterMesh != null) {
+				if (this.waterMesh != null) this.meshesToDispose.add(waterMesh);
+				waterMesh = setWaterMesh;
+				setWaterMesh = null;
+			}
+			if (setMesh != null) {
+				if (this.mesh != null) this.meshesToDispose.add(mesh);
+				mesh = setMesh;
+				setMesh = null;
+			}
 		}
-		this.testForActivation();
+		if (generated) {
+			if (loadValue > 0) {
+				loadValue -= 0.2f * FPSCounter.getDelta();
+			} else {
+				loadValue = 0;
+			}
+			
+			shader.setUniformFloat("loadValue", loadValue);
+			MeshRenderer.renderMesh(mesh, new Vector3f(getX() * SIZE, getY() * SIZE_Y, getZ() * SIZE), shader);
+			if (mesh == null && setMesh != null) {
+				MeshRenderer.renderMesh(setMesh, new Vector3f(getX() * SIZE, getY() * SIZE_Y, getZ() * SIZE), shader);
+			}
+			
+			for (short node : this.foliage.keySet()) {
+				int x = node % Chunk.SIZE;
+				int y = node / (Chunk.SIZE * Chunk.SIZE_Y);
+				int z = (node % (Chunk.SIZE * Chunk.SIZE_Y)) / Chunk.SIZE;
+				this.foliage.get(node).render(x + getX() * SIZE, y + getY() * SIZE_Y, z + getZ() * SIZE, this, shader);
+			}
+			
+			shader.setUniformFloat("loadValue", 0);
+		}
+		
+		
 	}
 	
 	public void renderWater(ShaderProgram shader) {
-		if (setWaterMesh != null) {
-			waterMesh = setWaterMesh;
-			setWaterMesh = null;
-		}
 		
-		if (waterMesh != null) {
-			if (canRender()) {
-				shader.setUniformFloat("loadValue", loadValue);
-				MeshRenderer.renderMesh(waterMesh, new Vector3f(getX() * SIZE, getY() * SIZE_Y, getZ() * SIZE), shader);
-				shader.setUniformFloat("loadValue", 0);
-			}
-		}
+		shader.setUniformFloat("loadValue", loadValue);
+		MeshRenderer.renderMesh(waterMesh, new Vector3f(getX() * SIZE, getY() * SIZE_Y, getZ() * SIZE), shader);
+		shader.setUniformFloat("loadValue", 0);
 	}
 	
 
@@ -795,15 +2150,17 @@ public class Chunk {
 		}
 	}
 	
-	public void testForActivation() {
+	public void performFrameUpdates() {
 		
-		if (needsToRebuild) {
-			if (this.mesh != null) this.mesh.dispose();
-			if (this.waterMesh != null) this.waterMesh.dispose();
-			needsToRebuild = false;
-			mesh = ChunkBuilder.buildChunk(this, true);
-			waterMesh = ChunkBuilder.buildLiquidChunk(this);
+		
+		for (int i = 0; i < meshesToDispose.size(); i++) {
+			if (meshesToDispose.get(i) != null) {
+				meshesToDispose.get(i).dispose();
+			}
 		}
+		meshesToDispose.clear();
+				
+		
 		
 		if (isActive()) {
 			if (tiles == null) {				
@@ -822,6 +2179,12 @@ public class Chunk {
 	}
 	
 	public void dispose() {
+		for (int i = 0; i < meshesToDispose.size(); i++) {
+			if (meshesToDispose.get(i) != null) {
+				meshesToDispose.get(i).dispose();
+			}
+		}
+		meshesToDispose.clear();
 		if (mesh != null) mesh.dispose();
 		if (waterMesh != null) waterMesh.dispose();
 		if (needsToSave) this.save();
@@ -837,6 +2200,7 @@ public class Chunk {
 
 	public void markForRerender() {
 		this.setNeedsToRebuild(true);
+//		this.needsToCalculateLights = true;
 	}
 	
 	public void markForSave() {

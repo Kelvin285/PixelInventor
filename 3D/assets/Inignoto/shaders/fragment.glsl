@@ -13,6 +13,7 @@ struct Fog
 in vec2 outTexCoord;
 in vec3 mvVertexPos;
 in vec3 vertexPos;
+in vec3 vertexColor;
 
 in vec4 mlightviewVertexPos;
 in mat4 outModelViewMatrix;
@@ -41,6 +42,8 @@ uniform vec3 cameraPos;
 uniform vec3 sunPos;
 uniform vec3 sunDirection;
 uniform vec3 sunColor;
+
+uniform int noColor;
 
 uniform int hasShadows;
 uniform int cascadedShadows;
@@ -119,7 +122,7 @@ void main()
 	gl_FragDepth = gl_FragCoord.z;
 	depthColor = vec4(vec3(pow(gl_FragCoord.z, 1000)), 1.0);
 	
-	fragColor = vec4(clamp(fragColor.xyz * 1.1f, 0, 1), fragColor.w);
+	fragColor = vec4(clamp(fragColor.xyz * 1.1f, 0, 1), fragColor.w) * vec4(vertexColor, 1.0f);
 	
 	//float shadow = calcShadow(mlightviewVertexPos.xyz, secondLightVertexPos.xyz, thirdLightVertexPos.xyz, fourthLightVertexPos.xyz);
 	//fragColor = vec4(clamp(fragColor.xyz * shadow, 0, 1), fragColor.w);

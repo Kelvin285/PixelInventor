@@ -39,8 +39,10 @@ public class FPSCounter {
 	}
 
 	public static double getDelta() {
-		
-		return delta * 16.667 * 10.0;
+		double d = delta * 16.667 * 1.0;
+//		if (d > 0.012 * 16.667) d = 0.012 * 16.667;
+//		if (d < Double.MIN_VALUE) d = Double.MIN_VALUE;
+		return d;
 	}
 	
 	public static int getFPS() {

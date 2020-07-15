@@ -3,3 +3,4 @@
 "blocks_movement"="false"
 "replaceable"="true"
 "density"="0.001225f"
+"opaque"="false"

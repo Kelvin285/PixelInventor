@@ -30,37 +30,26 @@ public class BiomeChunkGenerator extends ChunkGenerator {
 		int nx = chunk.getX() * Chunk.SIZE;
 		int ny = chunk.getY() * Chunk.SIZE_Y;
 		int nz = chunk.getZ() * Chunk.SIZE;
+		
 		for (int x = 0; x < Chunk.SIZE; x++) {
 			for (int z = 0; z < Chunk.SIZE; z++) {
 				int X = nx + x;
 				int Z = nz + z;
 				heights[x][z] = getBaseHeight(X, 0, Z);
-
-				for (int y = 0; y < Chunk.SIZE_Y; y++) {
-					int Y = ny + y;
-					chunk.setLocalTile(x, y, z, Tiles.AIR);
-					biomes[x][y][z] = Biomes.getSurfaceBiomeForLocation(X, Y, Z, BIOME_SIZE, noise);
-				}
-			}
-		}
-		
-		
-		for (int x = 0; x < Chunk.SIZE; x++) {
-			for (int z = 0; z < Chunk.SIZE; z++) {
-				int X = nx + x;
-				int Z = nz + z;
-				
 				
 				float height = heights[x][z];
 
 				for (int y = 0; y < Chunk.SIZE_Y; y++) {
 					int Y = ny + y;
-					
+					biomes[x][y][z] = Biomes.getSurfaceBiomeForLocation(X, Y, Z, BIOME_SIZE, noise);
 					Biome biome = biomes[x][y][z];
 
 					Tile tile = biome.getTileAt(Y, height);
 					
 					chunk.setLocalTile(x, y, z, tile);
+					if (tile == Tiles.AIR) {
+						chunk.setSunlightValue(x, y, z, 15);
+					}
 					
 				}
 				
@@ -93,7 +82,7 @@ public class BiomeChunkGenerator extends ChunkGenerator {
 				
 			}
 		}
-		
+//		chunk.recalculateLights();
 	}
 	
 	

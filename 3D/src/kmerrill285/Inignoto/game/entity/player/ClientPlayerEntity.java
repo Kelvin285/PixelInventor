@@ -13,6 +13,7 @@ import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
 import kmerrill285.Inignoto.game.world.World;
+import kmerrill285.Inignoto.resources.FPSCounter;
 import kmerrill285.Inignoto.resources.MathHelper;
 import kmerrill285.Inignoto.resources.RayTraceResult;
 import kmerrill285.Inignoto.resources.RayTraceResult.RayTraceType;
@@ -824,7 +825,7 @@ public class ClientPlayerEntity extends PlayerEntity {
 		if (this.arm_swing > 0) {
 			swingPos.add(Camera.getUp().mul((float)Math.cos(arm_swing * Math.PI)));
 			swingPos.add(Camera.getForward().mul((float)Math.sin(arm_swing * Math.PI)));
-			this.arm_swing -= TPSCounter.getDelta() * 0.8f;
+			this.arm_swing -= FPSCounter.getDelta() * 0.8f;
 		} else {
 			this.arm_swing = 0;
 		}

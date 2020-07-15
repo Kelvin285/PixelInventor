@@ -40,6 +40,7 @@ public class Mesh {
     private int texID;
     private int indexID;
     private int normalID;
+    private int colorID;
 
     private int vertexCount;
     
@@ -56,6 +57,7 @@ public class Mesh {
     public float[] texCoords;
     public int[] indices;
     public float[] normals;
+    public float[] colors;
     
     public boolean locked = false;
     
@@ -69,9 +71,26 @@ public class Mesh {
         this.texCoords = texCoords;
         this.indices = indices;
         this.normals = normals;
+        this.colors = new float[positions.length];
+        for (int i = 0; i < colors.length; i++) {
+        	colors[i] = 1;
+        }
     }
     
-    public Mesh(float[] positions, float[] texCoords, int[] indices, float[] normals, Texture texture) {
+    public Mesh(float[] positions, float[] texCoords, int[] indices, float[] colors, Texture texture) {
+        this.texture = texture;
+        this.vertexCount = indices.length;
+        
+        float[] normals = new float[] {0, 1, 0};
+        
+        this.positions = positions;
+        this.texCoords = texCoords;
+        this.indices = indices;
+        this.normals = normals;
+        this.colors = colors;
+    }
+    
+    public Mesh(float[] positions, float[] texCoords, int[] indices, float[] normals, float[] colors, Texture texture) {
         this.texture = texture;
         this.vertexCount = indices.length;
         
@@ -79,7 +98,10 @@ public class Mesh {
         this.texCoords = texCoords;
         this.indices = indices;
         this.normals = normals;
-        
+        this.colors = new float[positions.length];
+        for (int i = 0; i < colors.length; i++) {
+        	colors[i] = 1;
+        }
     }
     
 
@@ -129,6 +151,19 @@ public class Mesh {
 			}
 			mesh.texCoords = null;
 			
+			ArrayList<Float> col = new ArrayList<Float>();
+			for (int i = 0; i < mesh.getColors().length; i++) {
+				col.add(mesh.getColors()[i]);
+			}
+			for (int i = 0; i < getColors().length; i++) {
+				col.add(getColors()[i]);
+			}
+			colors = new float[col.size()];
+			for (int i = 0; i < col.size(); i++) {
+				getColors()[i] = col.get(i);
+			}
+			mesh.colors = null;
+			
 			ArrayList<Float> norm = new ArrayList<Float>();
 			for (int i = 0; i < mesh.normals.length; i++) {
 				norm.add(mesh.normals[i]);
@@ -162,11 +197,13 @@ public class Mesh {
     public void setup() {
     	if (locked) return;
         
+    	
     	FloatBuffer verticesBuffer = null;
     	FloatBuffer texBuffer = null;
         IntBuffer indicesBuffer = null;
         FloatBuffer normalBuffer = null;
-        
+        FloatBuffer colorBuffer = null;
+
         verticesBuffer = MemoryUtil.memAllocFloat(positions.length);
         vertexCount = indices.length;
         verticesBuffer.put(positions).flip();
@@ -175,6 +212,9 @@ public class Mesh {
         texBuffer.put(getTexCoords()).flip();
         indicesBuffer = MemoryUtil.memAllocInt(indices.length);
         indicesBuffer.put(indices).flip();
+        
+        colorBuffer = MemoryUtil.memAllocFloat(getColors().length);
+        colorBuffer.put(getColors()).flip();
         
         normalBuffer = MemoryUtil.memAllocFloat(normals.length);
         normalBuffer.put(normals).flip();
@@ -190,7 +230,8 @@ public class Mesh {
         vboID = glGenBuffers();
         texID = glGenBuffers();
         normalID = glGenBuffers();
-        
+        colorID = glGenBuffers();
+
         glBindBuffer(GL_ARRAY_BUFFER, vboID);
         glBufferData(GL_ARRAY_BUFFER, verticesBuffer, GL_STATIC_DRAW);            
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
@@ -203,6 +244,9 @@ public class Mesh {
         glBufferData(GL_ARRAY_BUFFER, normalBuffer, GL_STATIC_DRAW);
         glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, 0);
         
+        glBindBuffer(GL_ARRAY_BUFFER, colorID);
+        glBufferData(GL_ARRAY_BUFFER, colorBuffer, GL_STATIC_DRAW);
+        glVertexAttribPointer(3, 3, GL_FLOAT, false, 0, 0);
 
         indexID = glGenBuffers();
         
@@ -227,7 +271,9 @@ public class Mesh {
         if (normalBuffer != null) {
         	MemoryUtil.memFree(normalBuffer);
         }
-        
+        if (colorBuffer != null) {
+        	MemoryUtil.memFree(colorBuffer);
+        }
     }
 
     public int getVaoID() {
@@ -248,6 +294,7 @@ public class Mesh {
         glDeleteBuffers(texID);
         glDeleteBuffers(indexID);
         glDeleteBuffers(normalID);
+        glDeleteBuffers(colorID);
 
         glBindVertexArray(0);
         glDeleteVertexArrays(vaoID);
@@ -274,8 +321,12 @@ public class Mesh {
     	glEnableVertexAttribArray(0);
     	glEnableVertexAttribArray(1);
     	glEnableVertexAttribArray(2);
+    	glEnableVertexAttribArray(3);
+
         glDrawElements(outlines ? GL_LINES : GL_TRIANGLES, getVertexCount(), GL_UNSIGNED_INT, 0);
-    	glEnableVertexAttribArray(2);
+        
+        glDisableVertexAttribArray(3);
+    	glDisableVertexAttribArray(2);
         glDisableVertexAttribArray(1);
     	glDisableVertexAttribArray(0);
     	glBindVertexArray(0);
@@ -289,5 +340,7 @@ public class Mesh {
 	public float[] getTexCoords() {
 		return texCoords;
 	}
-
+	public float[] getColors() {
+		return colors;
+	}
 }

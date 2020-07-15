@@ -4,3 +4,4 @@
 "ray_trace_type"="liquid"
 "blocks_movement"="false"
 "replaceable"="true"
+"opaque"="false"

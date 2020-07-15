@@ -12,6 +12,7 @@ import kmerrill285.Inignoto.game.settings.Translation;
 import kmerrill285.Inignoto.game.tile.data.TileState;
 import kmerrill285.Inignoto.game.tile.data.TileStateHolder;
 import kmerrill285.Inignoto.game.world.World;
+import kmerrill285.Inignoto.game.world.chunk.Chunk;
 import kmerrill285.Inignoto.game.world.chunk.TilePos;
 import kmerrill285.Inignoto.item.Items;
 import kmerrill285.Inignoto.resources.RayTraceResult;
@@ -132,6 +133,94 @@ public class Tile {
 		return this.stateHolder.getStateFor(0);
 	}
 	
+	public void updateLightWhenAddedToWorld(int x, int y, int z, Chunk chunk, TileState state) {
+		if (state.getLightIntensity() > 0) {
+			chunk.setTorchlight(x, y, z, state.getLightIntensity());
+		}
+		
+//		if (state.getLightColor().x > 0) {
+//			chunk.setRed(x, y, z, (int)state.getLightColor().x);
+//		}
+//		if (state.getLightColor().y > 0) {
+//			chunk.setGreen(x, y, z, (int)state.getLightColor().y);
+//		}
+//		if (state.getLightColor().z > 0) {
+//			chunk.setBlue(x, y, z, (int)state.getLightColor().z);
+//		}
+		
+		if (chunk.generated)
+		if (state.isOpaque()) {
+			if (chunk.getSunlightValue(x, y, z) > 0) {
+				chunk.removeSunlight(x, y, z);
+			}
+		} else {
+			if (chunk.getSunlightValue(x, y + 1, z) > 0) {
+				chunk.setSunlightValue(x, y, z, chunk.getSunlightValue(x, y + 1, z));
+			} else {
+				if (chunk.getSunlightValue(x, y - 1, z) > 0) {
+					chunk.setSunlightValue(x, y, z, chunk.getSunlightValue(x, y - 1, z) - 1);
+				}
+				else
+					if (chunk.getSunlightValue(x - 1, y, z) > 0) {
+						chunk.setSunlightValue(x, y, z, chunk.getSunlightValue(x - 1, y, z) - 1);
+					}
+					else
+						if (chunk.getSunlightValue(x + 1, y, z) > 0) {
+							chunk.setSunlightValue(x, y, z, chunk.getSunlightValue(x + 1, y, z) - 1);
+						}
+						else
+							if (chunk.getSunlightValue(x, y, z - 1) > 0) {
+								chunk.setSunlightValue(x, y, z, chunk.getSunlightValue(x, y, z - 1) - 1);
+							}
+							else
+								if (chunk.getSunlightValue(x, y, z + 1) > 0) {
+									chunk.setSunlightValue(x, y, z, chunk.getSunlightValue(x, y, z + 1) - 1);
+								}
+			}
+		}
+	}
+
+	public void updateLightWhenRemovedFromWorld(int x, int y, int z, Chunk chunk, TileState state) {
+		if (state.getLightIntensity() > 0) {
+			chunk.removeTorchlight(x, y, z);
+		}
+//		if (state.getLightColor().x > 0) {
+//			chunk.removeRed(x, y, z);
+//		}
+//		if (state.getLightColor().y > 0) {
+//			chunk.removeGreen(x, y, z);
+//		}
+//		if (state.getLightColor().z > 0) {
+//			chunk.removeBlue(x, y, z);
+//		}
+		if (chunk.generated)
+		if (state.isOpaque()) {
+			if (chunk.getSunlightValue(x, y + 1, z) > 0) {
+				chunk.setSunlightValue(x, y, z, chunk.getSunlightValue(x, y + 1, z));
+			} else {
+				if (chunk.getSunlightValue(x, y - 1, z) > 0) {
+					chunk.setSunlightValue(x, y, z, chunk.getSunlightValue(x, y - 1, z) - 1);
+				}
+				else
+					if (chunk.getSunlightValue(x - 1, y, z) > 0) {
+						chunk.setSunlightValue(x, y, z, chunk.getSunlightValue(x - 1, y, z) - 1);
+					}
+					else
+						if (chunk.getSunlightValue(x + 1, y, z) > 0) {
+							chunk.setSunlightValue(x, y, z, chunk.getSunlightValue(x + 1, y, z) - 1);
+						}
+						else
+							if (chunk.getSunlightValue(x, y, z - 1) > 0) {
+								chunk.setSunlightValue(x, y, z, chunk.getSunlightValue(x, y, z - 1) - 1);
+							}
+							else
+								if (chunk.getSunlightValue(x, y, z + 1) > 0) {
+									chunk.setSunlightValue(x, y, z, chunk.getSunlightValue(x, y, z + 1) - 1);
+								}
+			}
+		}
+	}
+	
 	public TileState getStateWhenPlaced(int x, int y, int z, RayTraceResult result, PlayerEntity placer, World world) {
 		return getDefaultState();
 	}
@@ -152,5 +241,6 @@ public class Tile {
 	public double getTickPercent() {
 		return 0;
 	}
+
 	
 }

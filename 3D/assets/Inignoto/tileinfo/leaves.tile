@@ -7,3 +7,4 @@
 "offset_z"="0.5"
 "hardness"="0.2f"
 "full_cube"="false"
+"opaque"="false"

@@ -150,6 +150,8 @@ public class Inignoto {
 		};
 		thread.start();
 		
+		
+		
 		new Thread() {
 			public void run() {
 				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
@@ -162,6 +164,20 @@ public class Inignoto {
 						System.exit(0);
 					}
 					TPSCounter.endUpdate();
+				}
+			}
+		}.start();
+		
+		new Thread() {
+			public void run() {
+				while (!GLFW.glfwWindowShouldClose(Utils.window)) {
+					world.updateLights();
+					try {
+						Thread.sleep(5);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+						System.exit(0);
+					}
 				}
 			}
 		}.start();

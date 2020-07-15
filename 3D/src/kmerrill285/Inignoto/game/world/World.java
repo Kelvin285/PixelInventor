@@ -23,8 +23,8 @@ import kmerrill285.Inignoto.game.entity.player.PlayerEntity;
 import kmerrill285.Inignoto.game.settings.Settings;
 import kmerrill285.Inignoto.game.tile.Tile;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
-import kmerrill285.Inignoto.game.tile.data.TileState;
 import kmerrill285.Inignoto.game.tile.Tiles;
+import kmerrill285.Inignoto.game.tile.data.TileState;
 import kmerrill285.Inignoto.game.world.chunk.Chunk;
 import kmerrill285.Inignoto.game.world.chunk.MetaChunk;
 import kmerrill285.Inignoto.game.world.chunk.TilePos;
@@ -131,6 +131,19 @@ public class World {
 				buildChunk(closest);
 			}	
 			buildMetaChunks();
+		}
+	}
+	
+	public void updateLights() {
+		try {
+			for (int i = 0; i < activeChunks.size(); i++) {
+				Chunk chunk = activeChunks.get(i);
+				if (chunk != null) {
+					chunk.updateLights();
+				}
+			}
+		}catch (Exception e) {
+			
 		}
 	}
 	
@@ -356,16 +369,16 @@ public class World {
 	
 	private boolean adding = false;
 	public void renderChunks(ShaderProgram shader) {
-		
+		renderTileHover(shader);
+
 		if (!adding) {
 			rendering.clear();
 			for (int i = 0; i < activeChunks.size(); i++) {
 				rendering.add(activeChunks.get(i));
+				activeChunks.get(i).performFrameUpdates();
 			}
+			
 		}
-
-		
-		
 		for (int i = 0; i < rendering.size(); i++) {
 			if (rendering.get(i) == null) continue;
 			try {
@@ -384,8 +397,8 @@ public class World {
 			}
 		}
 		
+		
 		adding = true;
-		renderTileHover(shader);
 	}
 	
 	public void renderChunksShadow(ShaderProgram shader, ShadowRenderer renderer) {
@@ -431,26 +444,23 @@ public class World {
 	private Mesh selection = null;
 	private void renderTileHover(ShaderProgram shader) {
 		
-		
+		if (selection == null) {
+			Part part = new Part(null);
+			part.size = new Vector3i(2, 2, 2);
+			part.outlineMesh = Part.buildOutlineMesh(part);
+			part.outlineMesh.texture = Textures.WHITE_SQUARE;
+			this.selection = part.outlineMesh;
+		}
 		
 		if (Camera.currentTile != null) {
 			
 			TilePos pos = Camera.currentTile.getPosition();
 			if (pos != null) {
 				float size = 0.01f;
-				
 				if (Camera.currentTile.getType() == RayTraceType.TILE) {
-					
-					
-					
-					
-					Part part = new Part(null);
-					part.size = new Vector3i(2, 2, 2);
-					part.outlineMesh = Part.buildOutlineMesh(part);
-					part.outlineMesh.texture = Textures.WHITE_SQUARE;
-					this.selection = part.outlineMesh;
-					MeshRenderer.renderMesh(selection, new Vector3f(pos.x - (size / 2.0f), pos.y - (size / 2.0f), pos.z - (size / 2.0f)).add(0.5f, 0.5f, 0.5f), new Vector3f(1.0f + size, 1.0f + size, 1.0f + size).mul(1.01f), shader);
-					this.selection.dispose();
+
+					MeshRenderer.renderMesh(selection, new Vector3f(pos.x - (size / 2.0f), pos.y - (size / 2.0f), pos.z - (size / 2.0f)).add(0.5f, 0.5f, 0.5f), new Vector3f(1.0f + size, 1.0f + size, 1.0f + size).mul(1.05f), shader);
+
 				}
 			}
 		}
@@ -458,7 +468,8 @@ public class World {
 	}
 	
 	public void dispose() {
-		
+		if (this.selection != null)
+		this.selection.dispose();
 		worldSaver.saveWorld();
 		for (Entity e : entities) {
 			e.dispose();
@@ -536,7 +547,7 @@ public class World {
 							}
 						}
 						if (hit && min <= length) {
-							return new RayTraceResult(RayTraceType.TILE, pos, new Vector3f(start).add(dir.mul(min - 0.1f)));
+							return new RayTraceResult(RayTraceType.TILE, pos, new Vector3f(start).add(dir.mul(min - 0.01f)));
 						}
 					}
 				}

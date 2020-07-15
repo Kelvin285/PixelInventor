@@ -4,9 +4,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
 
+import org.joml.Vector3f;
+
 import kmerrill285.Inignoto.game.client.rendering.BlockFace;
-import kmerrill285.Inignoto.game.tile.Tiles;
 import kmerrill285.Inignoto.game.tile.Tile.TileRayTraceType;
+import kmerrill285.Inignoto.game.tile.Tiles;
 
 public class TileState {
 	private final int tile;
@@ -16,6 +18,7 @@ public class TileState {
 	private boolean visible = true;
 	private boolean blocksMovement = true;
 	private boolean isReplaceable = false;
+	private boolean opaque = true;
 	
 	private String texture = "";
 	private String side_texture = "";
@@ -30,9 +33,12 @@ public class TileState {
 	private float yaw = 0;
 	private int width = 1;
 	private int height = 1;
+	private Vector3f light_color = new Vector3f(0, 0, 0);
 	
 	private float hardness = 1.0f;
 	private float density = 1.0f;
+	
+	private int light_intensity = 0;
 	
 	public float offset_x, offset_y, offset_z;
 
@@ -88,12 +94,21 @@ public class TileState {
 						if (a.equals("visible")) visible = Boolean.parseBoolean(b);
 						if (a.equals("blocks_movement")) blocksMovement = Boolean.parseBoolean(b);
 						if (a.equals("replaceable")) isReplaceable = Boolean.parseBoolean(b);
+						if (a.equals("opaque")) opaque = Boolean.parseBoolean(b);
+						if (a.equals("light_intensity")) light_intensity = Integer.parseInt(b);
 						if (a.equals("hardness")) hardness = Float.parseFloat(b);
 						if (a.equals("density")) density = Float.parseFloat(b);
 						if (a.equals("pitch")) pitch = Float.parseFloat(b);
 						if (a.equals("yaw")) yaw = Float.parseFloat(b);
 						if (a.equals("ray_trace_type")) this.rayTraceType = 
 								b.equals("solid")?TileRayTraceType.SOLID:b.equals("liquid")?TileRayTraceType.LIQUID:b.equals("gas")?TileRayTraceType.GAS:TileRayTraceType.SOLID;
+						if (a.equals("light")) {
+							String[] s = b.split(",");
+							float x = Float.parseFloat(s[0]);
+							float y = Float.parseFloat(s[1]);
+							float z = Float.parseFloat(s[2]);
+							this.light_color = new Vector3f(x, y, z);
+						}
 
 					}
 				}
@@ -207,6 +222,22 @@ public class TileState {
 	
 	public float getYaw() {
 		return this.yaw;
+	}
+
+	public boolean isOpaque() {
+		return this.opaque;
+	}
+	
+	public Vector3f getLightColor() {
+		return this.light_color;
+	}
+	
+	/**
+	 * returns a clamped light intensity between 0 and 15
+	 * @return
+	 */
+	public int getLightIntensity() {
+		return this.light_intensity < 0 ? 0 : this.light_intensity > 15 ? 15 : this.light_intensity;
 	}
 	
 }
