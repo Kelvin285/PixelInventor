@@ -3,13 +3,15 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Inignoto.Graphics.Mesh
 {
-    class Mesh
+    public class Mesh
     {
         Matrix worldMatrix;
         readonly VertexPositionColorTexture[] triangleVertices;
         VertexBuffer vertexBuffer;
 
-        public Mesh(GraphicsDevice device, VertexPositionColorTexture[] triangleVertices)
+        public readonly bool lines;
+
+        public Mesh(GraphicsDevice device, VertexPositionColorTexture[] triangleVertices, bool lines = false)
         {
             this.triangleVertices = triangleVertices;
             vertexBuffer = new VertexBuffer(device, typeof(
@@ -19,6 +21,7 @@ namespace Inignoto.Graphics.Mesh
             vertexBuffer.SetData(this.triangleVertices);
 
             worldMatrix = Matrix.CreateWorld(new Vector3(0, 0, 0), Vector3.Forward, Vector3.Up);
+            this.lines = lines;
         }
 
         public void SetPosition(Vector3 position)
@@ -39,7 +42,7 @@ namespace Inignoto.Graphics.Mesh
                 effect.Parameters["Texture"].SetValue(texture);
                 pass.Apply();
 
-                device.DrawPrimitives(PrimitiveType.TriangleList, 0, Length);
+                device.DrawPrimitives(lines ? PrimitiveType.LineList : PrimitiveType.TriangleList, 0, Length);
             }
         }
 

@@ -2,7 +2,7 @@
 
 namespace Inignoto.Math
 {
-    class Vector3f
+    public class Vector3f
     {
         private Vector3 vector;
 

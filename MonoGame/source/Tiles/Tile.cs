@@ -4,7 +4,7 @@ using static Inignoto.Math.Raytracing;
 
 namespace Inignoto.Tiles
 {
-    class Tile
+    public class Tile
     {
         public enum TileRayTraceType
         {
@@ -29,9 +29,9 @@ namespace Inignoto.Tiles
         public readonly bool solid = true;
 
         private TileRayTraceType rayTraceType = TileRayTraceType.BLOCK;
-        private bool blocksMovement = false;
+        private bool blocksMovement = true;
         private bool visible = true;
-        private bool replaceable = true;
+        private bool replaceable = false;
 
         public Tile(string name, int[] sound, bool solid = true, int hits = 1)
         {

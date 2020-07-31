@@ -3,7 +3,7 @@
 //This is a c# simplified version of the JOML (Java Opengl Math Library) Quaternionf class
 namespace Inignoto.Math
 {
-    class Quaternionf
+    public class Quaternionf
     {
         private Quaternion rotation;
         public Quaternionf()

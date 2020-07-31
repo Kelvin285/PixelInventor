@@ -4,7 +4,7 @@ using Inignoto.Utilities;
 
 namespace Inignoto.Graphics.World
 {
-    class ChunkRenderer
+    public class ChunkRenderer
     {
         public ChunkRenderer()
         {

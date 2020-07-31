@@ -7,12 +7,15 @@ using System.Threading.Tasks;
 
 namespace Inignoto.World
 {
-    class WorldProperties
+    public class WorldProperties
     {
         public readonly ChunkGenerator generator;
+        public readonly float gravity;
+
         public WorldProperties()
         {
             generator = new ChunkGenerator();
+            gravity = 9.81f;
         }
     }
 }

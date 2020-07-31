@@ -3,10 +3,11 @@ using Inignoto.Tiles.Data;
 using Inignoto.Tiles;
 using System;
 using Inignoto.Graphics.Mesh;
+using Inignoto.Graphics.World;
 
 namespace Inignoto.World.Chunks
 {
-    class Chunk
+    public class Chunk
     {
         private readonly TileData[] voxels;
 
@@ -95,12 +96,12 @@ namespace Inignoto.World.Chunks
             if (yy >= Constants.CHUNK_SIZE)
             {
                 y -= Constants.CHUNK_SIZE;
-                Y--;
+                Y++;
             }
             if (y < 0)
             {
                 y += Constants.CHUNK_SIZE;
-                Y++;
+                Y--;
             }
             if (zz >= Constants.CHUNK_SIZE)
             {
@@ -167,5 +168,6 @@ namespace Inignoto.World.Chunks
         {
             generated = true;
         }
+
     }
 }

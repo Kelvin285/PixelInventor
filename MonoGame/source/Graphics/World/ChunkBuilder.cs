@@ -9,7 +9,7 @@ using Inignoto.Tiles;
 
 namespace Inignoto.Graphics.World
 {
-    class ChunkBuilder
+    public class ChunkBuilder
     {
 
         public static Mesh.Mesh BuildMeshForChunk(GraphicsDevice device, Chunk chunk)

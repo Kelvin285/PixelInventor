@@ -2,13 +2,18 @@
 using Inignoto.Math;
 using System;
 using Microsoft.Xna.Framework.Input;
+using static Inignoto.World.World;
+using Inignoto.Entities.Client.Player;
+using Inignoto.World.RaytraceResult;
 
 namespace Inignoto.Client
 {
-    class Camera
+    public class Camera
     {
         public Vector3f position;
         public Vector3f rotation;
+
+        public TileRaytraceResult highlightedTile;
 
         public Camera()
         {
@@ -52,52 +57,13 @@ namespace Inignoto.Client
 
         public void Update(GameTime gameTime)
         {
-            
-            Point mousePos = Inignoto.game.mousePos;
-            Point lastMousePos = Inignoto.game.lastMousePos;
+            World.World world = Inignoto.game.world;
+            ClientPlayerEntity player = Inignoto.game.player;
 
-            if (mousePos.X != lastMousePos.X)
-            {
-                float rot = -(mousePos.X - lastMousePos.X);
-                rotation.Y += rot * GameSettings.Settings.MOUSE_SENSITIVITY;
-            }
-            if (mousePos.Y != lastMousePos.Y)
-            {
-                float rot = -(mousePos.Y - lastMousePos.Y);
-                rotation.X += rot * GameSettings.Settings.MOUSE_SENSITIVITY;
-            }
-            
-            if (Keyboard.GetState().IsKeyDown(Keys.Space))
-            {
-                position.Y += 0.1f;
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.LeftControl))
-            {
-                position.Y -= 0.1f;
-            }
+            Vector3f eyePosition = player.GetEyePosition();
 
-            if (Keyboard.GetState().IsKeyDown(Keys.W))
-            {
-                position.Add(ForwardMotionVector.Vector * new Vector3(0.1f, 0.0f, 0.1f));
-            }
+            highlightedTile = world.RayTraceTiles(eyePosition, new Vector3f(eyePosition).Add(Forward.Mul(player.ReachDistance)), Tiles.Tile.TileRayTraceType.BLOCK);
 
-            if (Keyboard.GetState().IsKeyDown(Keys.S))
-            {
-                position.Add(ForwardMotionVector.Vector * new Vector3(0.1f, 0.0f, 0.1f) * -1f);
-            }
-
-            if (Keyboard.GetState().IsKeyDown(Keys.A))
-            {
-                position.Add(RightMotionVector.Vector * new Vector3(0.1f, 0.0f, 0.1f) * -1f);
-            }
-
-            if (Keyboard.GetState().IsKeyDown(Keys.D))
-            {
-                position.Add(RightMotionVector.Vector * new Vector3(0.1f, 0.0f, 0.1f));
-            }
-
-            if (rotation.X >= 85) rotation.X = 85;
-            if (rotation.X <= -85) rotation.X = -85;
         }
     }
 }

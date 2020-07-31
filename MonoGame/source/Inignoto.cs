@@ -12,6 +12,8 @@ using Inignoto.World.Chunks;
 using System.Threading;
 using System;
 using Inignoto.GameSettings;
+using Inignoto.Entities.Client.Player;
+using Inignoto.Graphics.Gui;
 
 namespace Inignoto
 {
@@ -29,15 +31,18 @@ namespace Inignoto
 
         public bool mouse_captured = true;
 
-        Matrix projectionMatrix;
-        Camera camera;
+        private Matrix projectionMatrix;
+        public Camera camera;
 
-        BasicEffect basicEffect;
+        private BasicEffect basicEffect;
 
-        World.World world;
+        public World.World world;
+        public ClientPlayerEntity player;
 
         public Thread world_thread;
         private bool running = true;
+
+        public GuiScreen guiScreen;
 
         public Inignoto()
         {
@@ -66,7 +71,7 @@ namespace Inignoto
             projectionMatrix = Matrix.CreatePerspectiveFieldOfView(
                                MathHelper.ToRadians(Settings.FIELD_OF_VIEW),
                                GraphicsDevice.DisplayMode.AspectRatio,
-                1f, 1000f);
+                0.01f, 1000f);
             
             
 
@@ -83,8 +88,6 @@ namespace Inignoto
             Vector3f d = new Vector3f(20, 20, 0);
 
             GameResources.LoadResources();
-
-            world = new World.World();
 
             ThreadStart world_thread_start = new ThreadStart(UpdateWorldGeneration);
             world_thread = new Thread(world_thread_start);
@@ -138,6 +141,15 @@ namespace Inignoto
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
+
+            int width = Window.ClientBounds.Right - Window.ClientBounds.Left;
+            int height = Window.ClientBounds.Top - Window.ClientBounds.Bottom;
+
+            projectionMatrix = Matrix.CreatePerspectiveFieldOfView(
+                               MathHelper.ToRadians(Settings.FIELD_OF_VIEW),
+                               GraphicsDevice.DisplayMode.AspectRatio,
+                0.01f, 1000f);
+
             mousePos = Mouse.GetState().Position;
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back ==
                ButtonState.Pressed || Keyboard.GetState().IsKeyDown(
@@ -147,14 +159,14 @@ namespace Inignoto
                 this.IsMouseVisible = true;
             }
             camera.Update(gameTime);
-            
+
+            world.Update(camera.position.Vector, gameTime);
+
             base.Update(gameTime);
             lastMousePos = new Point(mousePos.X, mousePos.Y);
 
             if (mouse_captured)
             {
-                int width = Window.ClientBounds.Right - Window.ClientBounds.Left;
-                int height = Window.ClientBounds.Top - Window.ClientBounds.Bottom;
                 Mouse.SetPosition(width / 2, -height / 2);
                 mousePos = new Point(width / 2, -height / 2);
                 lastMousePos = new Point(width / 2, -height / 2);
@@ -185,9 +197,20 @@ namespace Inignoto
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             GraphicsDevice.SamplerStates[0] = SamplerState.PointClamp;
 
-            world.Update(camera.position.Vector);
-
             world.Render(GraphicsDevice, basicEffect);
+
+
+            int width = Window.ClientBounds.Right - Window.ClientBounds.Left;
+            int height = Window.ClientBounds.Bottom - Window.ClientBounds.Top;
+
+
+            spriteBatch.Begin(SpriteSortMode.Deferred,
+      BlendState.NonPremultiplied,
+      SamplerState.PointClamp);
+
+            guiScreen.Render(GraphicsDevice, spriteBatch, width, height, gameTime);
+
+            spriteBatch.End();
 
             base.Draw(gameTime);
         }

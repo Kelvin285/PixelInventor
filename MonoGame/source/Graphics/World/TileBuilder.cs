@@ -8,7 +8,7 @@ using Inignoto.Graphics.Textures;
 
 namespace Inignoto.Graphics.World
 {
-    class TileBuilder
+    public class TileBuilder
     {
         private static readonly Vector3f[] LEFT = new Vector3f[]
                 {
@@ -54,6 +54,31 @@ namespace Inignoto.Graphics.World
                     new Vector3f(1, 0, 1),
                     new Vector3f(1, 0, 0)
                 };
+
+        public static Mesh.Mesh BuildTile(int x, int y, int z, TileData data, GraphicsDevice device)
+        {
+            List<VertexPositionColorTexture> vpct = new List<VertexPositionColorTexture>();
+
+            List<Vector3> vertices = new List<Vector3>();
+            List<Color> colors = new List<Color>();
+            List<Vector2> textures = new List<Vector2>();
+            List<int> indices = new List<int>();
+            int index = 0;
+
+            index = BuildFace(x, y, z, data, TileFace.LEFT, vertices, colors, textures, indices, index);
+            index = BuildFace(x, y, z, data, TileFace.RIGHT, vertices, colors, textures, indices, index);
+            index = BuildFace(x, y, z, data, TileFace.FRONT, vertices, colors, textures, indices, index);
+            index = BuildFace(x, y, z, data, TileFace.BACK, vertices, colors, textures, indices, index);
+            index = BuildFace(x, y, z, data, TileFace.TOP, vertices, colors, textures, indices, index);
+            index = BuildFace(x, y, z, data, TileFace.BOTTOM, vertices, colors, textures, indices, index);
+
+            for (int i = 0; i < indices.Count; i++)
+            {
+                int ind = indices[i];
+                vpct.Add(new VertexPositionColorTexture(vertices[ind], colors[ind], textures[ind]));
+            }
+            return new Mesh.Mesh(device, vpct.ToArray());
+        }
 
         public static int BuildFace(int x, int y, int z, TileData data, TileFace face, List<Vector3> vertices, List<Color> colors, List<Vector2> textures, List<int> indices, int index)
         {

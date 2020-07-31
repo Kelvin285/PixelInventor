@@ -2,7 +2,7 @@
 
 namespace Inignoto.Tiles
 {
-    class TileManager
+    public class TileManager
     {
         public static Dictionary<string, Tile> REGISTRY = new Dictionary<string, Tile>();
 
@@ -29,7 +29,7 @@ namespace Inignoto.Tiles
 
         public static void Loadtiles()
         {
-            AIR = new Tile("Inignoto:air", null).SetRayTraceType(Tile.TileRayTraceType.GAS).SetVisible(false).SetBlocksMovement(false).SetReplaceable(true);
+            AIR = new Tile("Inignoto:air", null, false).SetRayTraceType(Tile.TileRayTraceType.GAS).SetVisible(false).SetBlocksMovement(false).SetReplaceable(true);
             DIRT = new Tile("Inignoto:dirt", null);
             GRASS = new Tile("Inignoto:grass", null);
 

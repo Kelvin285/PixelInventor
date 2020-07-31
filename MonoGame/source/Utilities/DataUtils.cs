@@ -2,7 +2,7 @@
 
 namespace Inignoto.Utilities
 {
-    class DataUtils
+    public class DataUtils
     {
         public static Dictionary<string, string> GetDataList(string file_contents)
         {

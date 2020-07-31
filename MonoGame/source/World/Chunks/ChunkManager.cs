@@ -8,7 +8,7 @@ using Inignoto.World.Generator;
 
 namespace Inignoto.World.Chunks
 {
-    class ChunkManager
+    public class ChunkManager
     {
         private readonly ChunkRenderer chunkRenderer;
 

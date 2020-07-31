@@ -4,7 +4,7 @@ using static Inignoto.Tiles.Tile;
 
 namespace Inignoto.Tiles.Data
 {
-    class TileData
+    public class TileData
     {
         public readonly int tile_id;
         public readonly int state;

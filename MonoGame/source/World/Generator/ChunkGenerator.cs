@@ -3,10 +3,11 @@ using Inignoto.GameSettings;
 using Inignoto.Utilities;
 using Inignoto.Tiles;
 using Inignoto.Imported;
+using Microsoft.Xna.Framework;
 
 namespace Inignoto.World.Generator
 {
-    class ChunkGenerator
+    public class ChunkGenerator
     {
         public readonly FastNoise noise;
         public ChunkGenerator()
@@ -22,7 +23,7 @@ namespace Inignoto.World.Generator
                     int x = chunk_x + chunk.GetX() * Constants.CHUNK_SIZE;
                     int z = chunk_z + chunk.GetZ() * Constants.CHUNK_SIZE;
 
-                    float height = noise.GetPerlinFractal(x, z) * 10;
+                    float height = GetHeight(x, z);
 
                     int voxel_height = (int)height;
 
@@ -47,6 +48,12 @@ namespace Inignoto.World.Generator
                 }
             }
             chunk.MarkForRebuild();
+        }
+
+        public float GetHeight(float x, float z)
+        {
+            float height = noise.GetPerlinFractal(x, z) * 10;
+            return height;
         }
     }
 }

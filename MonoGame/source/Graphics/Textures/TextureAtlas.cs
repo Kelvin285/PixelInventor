@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace Inignoto.Graphics.Textures
 {
-    class TextureAtlas
+    public class TextureAtlas
     {
         private readonly int width, height;
         private readonly Texture2D texture;

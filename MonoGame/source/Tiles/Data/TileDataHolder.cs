@@ -3,7 +3,7 @@ using Inignoto.Utilities;
 
 namespace Inignoto.Tiles.Data
 {
-    class TileDataHolder
+    public class TileDataHolder
     {
         public static List<TileData> REGISTRY = new List<TileData>();
         public static TileData NO_DATA;

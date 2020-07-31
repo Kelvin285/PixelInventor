@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Inignoto.Math
 {
-    class IMathHelper
+    public class IMathHelper
     {
         public static float Fma(float a, float b, float c)
         {

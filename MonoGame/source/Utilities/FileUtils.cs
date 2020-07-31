@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Inignoto.Utilities
 {
-    class FileUtils
+    public class FileUtils
     {
 
         public static string GetResourcePath(ResourcePath resource_path)

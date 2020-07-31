@@ -1,6 +1,6 @@
 ﻿namespace Inignoto.Utilities
 {
-    class ResourcePath
+    public class ResourcePath
     {
         public readonly string modid, path, root;
         public ResourcePath(string modid, string path, string root)

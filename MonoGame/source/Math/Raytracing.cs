@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 namespace Inignoto.Math
 {
-    class Raytracing
+    public class Raytracing
     {
         public struct RayBox
         {
