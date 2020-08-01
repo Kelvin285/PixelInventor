@@ -1,6 +1,7 @@
 ﻿using Inignoto.Tiles.Data;
 using Inignoto.Math;
 using static Inignoto.Math.Raytracing;
+using Microsoft.Xna.Framework.Audio;
 
 namespace Inignoto.Tiles
 {
@@ -23,7 +24,7 @@ namespace Inignoto.Tiles
 
         public readonly TileDataHolder stateHolder;
 
-        public readonly int[] sound;
+        public readonly SoundEffect[] step_sound;
 
         public readonly int hits = 1;
         public readonly bool solid = true;
@@ -33,9 +34,9 @@ namespace Inignoto.Tiles
         private bool visible = true;
         private bool replaceable = false;
 
-        public Tile(string name, int[] sound, bool solid = true, int hits = 1)
+        public Tile(string name, SoundEffect[] sound, bool solid = true, int hits = 1)
         {
-            this.sound = sound;
+            this.step_sound = sound;
             this.name = name;
             TileManager.REGISTRY.Add(this.name, this);
 

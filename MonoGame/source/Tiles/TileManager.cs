@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Inignoto.Audio;
+using System.Collections.Generic;
 
 namespace Inignoto.Tiles
 {
@@ -30,8 +31,8 @@ namespace Inignoto.Tiles
         public static void Loadtiles()
         {
             AIR = new Tile("Inignoto:air", null, false).SetRayTraceType(Tile.TileRayTraceType.GAS).SetVisible(false).SetBlocksMovement(false).SetReplaceable(true);
-            DIRT = new Tile("Inignoto:dirt", null);
-            GRASS = new Tile("Inignoto:grass", null);
+            DIRT = new Tile("Inignoto:dirt", SoundEffects.step_soil);
+            GRASS = new Tile("Inignoto:grass", SoundEffects.step_grass);
 
         }
     }

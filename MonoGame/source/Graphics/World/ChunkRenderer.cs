@@ -13,8 +13,19 @@ namespace Inignoto.Graphics.World
 
         public void RenderChunk(GraphicsDevice device, BasicEffect effect, Chunk chunk)
         {
+            if (chunk.secondMesh != null)
+                chunk.secondMesh.Draw(Textures.Textures.tiles.GetTexture(), effect, device);
             if (chunk.mesh != null)
-            chunk.mesh.Draw(Textures.Textures.tiles.GetTexture(), effect, device);
+            {
+                if (chunk.mesh.IsDisposed)
+                {
+                    if (chunk.secondMesh != null)
+                    {
+                        chunk.mesh = chunk.secondMesh;
+                    }
+                }
+                chunk.mesh.Draw(Textures.Textures.tiles.GetTexture(), effect, device);
+            }
         }
     }
 }

@@ -5,6 +5,7 @@ using Inignoto.GameSettings;
 using Microsoft.Xna.Framework.Graphics;
 using Inignoto.Graphics.World;
 using Inignoto.World.Generator;
+using Inignoto.Graphics.Mesh;
 
 namespace Inignoto.World.Chunks
 {
@@ -70,14 +71,15 @@ namespace Inignoto.World.Chunks
 
                     if (chunk.NeedsToRebuild())
                     {
+                        chunk.secondMesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, chunk);
+                        if (chunk.secondMesh != null)
+                            chunk.secondMesh.SetPosition(new Microsoft.Xna.Framework.Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
+                        chunk.FinishRebuilding();
                         if (chunk.mesh != null)
                         {
                             chunk.mesh.Dispose();
                         }
-                        chunk.mesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, chunk);
-                        if (chunk.mesh != null)
-                            chunk.mesh.SetPosition(new Microsoft.Xna.Framework.Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
-                        chunk.FinishRebuilding();
+                        
                     }
                 }
                 chunksToRerender.Remove(chunksToRerender[i]);
@@ -166,6 +168,7 @@ namespace Inignoto.World.Chunks
                 chunkRenderer.RenderChunk(device, effect, rendering[i]);
                 TryUnloadChunk(rendering[i].GetX(), rendering[i].GetY(), rendering[i].GetZ());
             }
+            
         }
 
     }

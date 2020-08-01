@@ -13,6 +13,7 @@ namespace Inignoto.Graphics.Textures
         public static Texture2D fp_cursor;
         public static Texture2D hud;
         public static Texture2D viginette;
+        public static Texture2D white_square;
 
         private static List<Texture> textures = new List<Texture>();
 
@@ -22,7 +23,7 @@ namespace Inignoto.Graphics.Textures
             fp_cursor = LoadTexture(new ResourcePath("Inignoto", "textures/gui/fp_cursor.png", "assets"));
             hud = LoadTexture(new ResourcePath("Inignoto", "textures/gui/hud.png", "assets"));
             viginette = LoadTexture(new ResourcePath("Inignoto", "textures/gui/viginette.png", "assets"));
-
+            white_square = LoadTexture(new ResourcePath("Inignoto", "textures/gui/white_square.png", "assets"));
         }
 
         public static Texture2D LoadTexture(ResourcePath path)

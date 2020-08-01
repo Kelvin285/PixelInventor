@@ -14,6 +14,8 @@ using System;
 using Inignoto.GameSettings;
 using Inignoto.Entities.Client.Player;
 using Inignoto.Graphics.Gui;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Media;
 
 namespace Inignoto
 {
@@ -22,6 +24,7 @@ namespace Inignoto
     /// </summary>
     public class Inignoto : Game
     {
+        
         public static Inignoto game;
         private GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
@@ -130,6 +133,7 @@ namespace Inignoto
         {
             running = false;
             Settings.SaveSettings();
+            GameResources.Dispose();
             base.OnExiting(sender, args);
         }
 
@@ -141,7 +145,7 @@ namespace Inignoto
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-
+            SoundEffect.MasterVolume = Settings.MASTER_VOLUME / 100.0f;
             int width = Window.ClientBounds.Right - Window.ClientBounds.Left;
             int height = Window.ClientBounds.Top - Window.ClientBounds.Bottom;
 
@@ -186,6 +190,7 @@ namespace Inignoto
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
+            
             basicEffect.Projection = projectionMatrix;
             basicEffect.View = camera.ViewMatrix;
             

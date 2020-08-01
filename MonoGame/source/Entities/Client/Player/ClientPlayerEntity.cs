@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Inignoto.Audio;
 using Inignoto.Client;
 using Inignoto.Entities.Player;
 using Inignoto.Math;
@@ -10,6 +11,7 @@ using Inignoto.Tiles;
 using Inignoto.World;
 using Inignoto.World.RaytraceResult;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using static Inignoto.Tiles.Tile;
@@ -19,14 +21,28 @@ namespace Inignoto.Entities.Client.Player
 {
     public class ClientPlayerEntity : PlayerEntity
     {
+        private double CameraShakeTime = 0;
+        private float CameraShakeIntensity = 0;
+
+        private double LastTappedSpace = 0;
+        private bool pressedSpace = false;
+
+        private GameSound wind_instance;
+        private GameSound fabric_wind_instance;
+
         public ClientPlayerEntity(World.World world, Vector3f position) : base(world, position)
         {
+            wind_instance = new GameSound(SoundEffects.ambient_wind.CreateInstance(), SoundType.AMBIENT);
+            fabric_wind_instance = new GameSound(SoundEffects.ambient_fabric_in_wind.CreateInstance(), SoundType.AMBIENT);
         }
 
         public override void Update(GameTime time)
         {
             base.Update(time);
+
+            if (health > 0)
             UpdateCamera();
+            
             switch (gamemode)
             {
                 case Gamemode.SURVIVAL:
@@ -58,11 +74,60 @@ namespace Inignoto.Entities.Client.Player
             float moveLerp = 0.1f;
 
             Camera camera = Inignoto.game.camera;
-            
-            if (Keyboard.GetState().IsKeyDown(Keys.Space) && OnGround)
+
+            bool flyMovement = false;
+
+            if (Crouching && Flying)
             {
-                velocity.Y = 0.15f;
-                Jumping = true;
+                velocity.Y = -0.15f;
+                flyMovement = true;
+            }
+            
+            if (Keyboard.GetState().IsKeyDown(Keys.Space))
+            {
+                if (OnGround)
+                {
+                    velocity.Y = 0.15f;
+                    Jumping = true;
+                }
+
+                if (Flying)
+                {
+                    velocity.Y = 0.15f;
+                    flyMovement = true;
+                    if (Crouching) flyMovement = false;
+                }
+
+                if (!pressedSpace)
+                {
+
+                    if (gamemode == Gamemode.SANDBOX && LastTappedSpace > 0)
+                    {
+                        Flying = !Flying;
+                    }
+
+                    if (LastTappedSpace == 0)
+                    {
+                        LastTappedSpace = Inignoto.game.world.gameTime.TotalGameTime.TotalMilliseconds;
+                    }
+
+                    pressedSpace = true;
+                }
+
+            } else
+            {
+                pressedSpace = false;
+            }
+            if (OnGround) Flying = false;
+
+            if (Flying && !flyMovement)
+            {
+                velocity.Y = 0;
+            }
+
+            if (Inignoto.game.world.gameTime.TotalGameTime.TotalMilliseconds > LastTappedSpace + 250)
+            {
+                LastTappedSpace = 0;
             }
 
             bool walking = false;
@@ -96,8 +161,30 @@ namespace Inignoto.Entities.Client.Player
                 walking = true;
             }
 
+            Walking = walking;
+
             Running = Keyboard.GetState().IsKeyDown(Keys.LeftShift);
             Crouching = Keyboard.GetState().IsKeyDown(Keys.LeftControl);
+
+            if (walking)
+            {
+                float speed = 450;
+                if (Crouching || Crawling)
+                {
+                    speed = 750;
+                }
+                if (Running)
+                {
+                    speed = 350;
+                }
+                
+
+                if (Inignoto.game.world.gameTime.TotalGameTime.TotalMilliseconds > WalkCycle + speed)
+                {
+                    WalkCycle = Inignoto.game.world.gameTime.TotalGameTime.TotalMilliseconds;
+                    PlayStepSound(SoundType.PLAYERS);
+                }
+            }
             
             if (Keyboard.GetState().IsKeyDown(Keys.C))
             {
@@ -181,10 +268,51 @@ namespace Inignoto.Entities.Client.Player
         public void NormalMotion()
         {
 
-            if (!OnGround)
+            if (!OnGround && !Flying)
             {
                 velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.01f);
+
+                float d = System.Math.Abs(FallStart - position.Y);
+
+                if (d < 2) d = 0;
+
+                float wv = d;
+                if (wv > 1000) wv = 1000;
+                wv /= 1000;
+                wind_instance.Volume = wv;
+
+                float fv = d;
+                if (fv > 25) fv = 25;
+                fv /= 25;
+                fabric_wind_instance.Volume = fv;
+                
+
+                if (wind_instance.State != SoundState.Playing)
+                {
+                    wind_instance.IsLooped = true;
+                    wind_instance.Play();
+                }
+                if (fabric_wind_instance.State != SoundState.Playing)
+                {
+                    fabric_wind_instance.IsLooped = true;
+                    fabric_wind_instance.Play();
+                }
+            } else
+            {
+                fabric_wind_instance.Stop();
+                wind_instance.Stop();
             }
+
+            if (health <= 0) return;
+
+            if (health < 100)
+            {
+                health += 0.01f;
+            } else
+            {
+                health = 100;
+            }
+
 
             DoInputControls();
 
@@ -232,6 +360,7 @@ namespace Inignoto.Entities.Client.Player
                         {
                             if (TileManager.GetTile(result.data.tile_id).BlocksMovement())
                             {
+                                if (!LastOnGround) PlayStepSound(SoundType.PLAYERS, -1);
                                 position.Y = result.hit.Y;
                                 velocity.Y = 0;
                                 OnGround = true;
@@ -243,8 +372,6 @@ namespace Inignoto.Entities.Client.Player
                     }
                 }
             }
-                
-
 
             if (velocity.Y > 0)
             for (float sx = 0; sx < 2; sx++)
@@ -272,7 +399,7 @@ namespace Inignoto.Entities.Client.Player
             {
                 Vector3f collision_p1 = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * sz);
                 Vector3f collision_p2 = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * sz).Add(velocity.X, 0, 0).Add(size.X * 0.52f * velocity.X / System.Math.Abs(velocity.X), 0, 0);
-                for (float h = StepHeight; h < 2 - 0.2f; h += 0.1f)
+                for (float h = StepHeight; h < size.Y - 0.2f; h += 0.1f)
                 {
                     collision_p1.Y = position.Y + h;
                     collision_p2.Y = position.Y + h;
@@ -293,7 +420,7 @@ namespace Inignoto.Entities.Client.Player
             {
                 Vector3f collision_p1 = new Vector3f(position).Add(size.X * sx, 0, size.Z * 0.5f);
                 Vector3f collision_p2 = new Vector3f(position).Add(size.X * sx, 0, size.Z * 0.5f).Add(0, 0, velocity.Z).Add(0, 0, size.Z * 0.52f * velocity.Z / System.Math.Abs(velocity.Z));
-                for (float h = StepHeight; h < 2 - 0.2f; h += 0.1f)
+                for (float h = StepHeight; h < size.Y - 0.2f; h += 0.1f)
                 {
                     collision_p1.Y = position.Y + h;
                     collision_p2.Y = position.Y + h;
@@ -504,7 +631,7 @@ namespace Inignoto.Entities.Client.Player
                     }
             }
 
-
+            
             position.Add(velocity);
         }
 
@@ -562,13 +689,74 @@ namespace Inignoto.Entities.Client.Player
             if (camera.rotation.X <= -85) camera.rotation.X = -85;
 
             camera.position.Set(position.X + size.X * 0.5f, position.Y + GetEyeHeight(), position.Z + size.Z * 0.5f);
+            if (Inignoto.game.world.gameTime.TotalGameTime.TotalMilliseconds < CameraShakeTime)
+            {
+                Random random = new Random();
+                double x = random.NextDouble() - 0.5;
+                double y = random.NextDouble() - 0.5;
+                double z = random.NextDouble() - 0.5;
+                x *= 2;
+                y *= 2;
+                z *= 2;
+                camera.position.Add(new Vector3((float)x * CameraShakeIntensity, (float)y * CameraShakeIntensity, (float)z * CameraShakeIntensity));
+            }
         }
 
-
+        
 
         public override void Render(GraphicsDevice device, BasicEffect effect)
         {
 
         }
+
+        public override void DamageEntity(float damage)
+        {
+            base.DamageEntity(damage);
+            
+            if (damage > 0)
+            {
+                float d = damage > 100 ? 100 : damage;
+
+                SoundEffects.player_hit.Play(d / 100.0f, 0.0f, 0.0f);
+
+                CameraShakeIntensity = d / 1000;
+
+
+                CameraShakeTime = Inignoto.game.world.gameTime.TotalGameTime.TotalMilliseconds + 250;
+            }
+        }
+       
+
+        public override float GetMovementSpeed()
+        {
+            if (Flying && !Crouching)
+            {
+                if (Running) return 0.2f;
+                return 0.1f;
+            }
+            return base.GetMovementSpeed();
+        }
+
+        public override void PlayStepSound(SoundType soundType, float y_offset = 0)
+        {
+            TilePos pos = GetTilePos();
+            if (y_offset != 0)
+            {
+                pos = new TilePos(pos.x, (float)System.Math.Round(pos.y + y_offset), pos.z);
+            }
+            SoundEffect[] sounds = TileManager.GetTile(world.GetVoxel(pos).tile_id).step_sound;
+            if (sounds != null)
+            {
+                SoundEffect effect = sounds[world.random.Next(sounds.Length)];
+                GameSound sound = new GameSound(effect.CreateInstance(), soundType);
+                sound.Volume = 0.5f;
+                if (Running) sound.Volume = 0.75f;
+                if (Crouching) sound.Volume = 0.25f;
+                if (Crawling) sound.Volume = 0.1f;
+                sound.Play();
+                SoundsToDispose.Add(sound);
+            }
+        }
+
     }
 }

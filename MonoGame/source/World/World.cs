@@ -54,12 +54,17 @@ namespace Inignoto.World
         public readonly WorldProperties properties;
         public readonly List<Entity> entities;
 
+        public GameTime gameTime { get; private set; }
+
+        public readonly Random random;
+
 
         public World()
         {
             chunkManager = new ChunkManager(this);
             properties = new WorldProperties();
             entities = new List<Entity>();
+            random = new Random();
         }
 
         public void UpdateChunkGeneration()
@@ -69,6 +74,7 @@ namespace Inignoto.World
 
         public void Update(Vector3 camera_position, GameTime time)
         {
+            this.gameTime = time;
             chunkManager.BeginUpdate(camera_position);
             for (int i = 0; i < entities.Count; i++)
             {

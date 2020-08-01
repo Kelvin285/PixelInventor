@@ -10,6 +10,15 @@ namespace Inignoto.GameSettings
         public static float MOUSE_SENSITIVITY = 0.05f;
 
 
+        public static float MASTER_VOLUME = 100;
+        public static float PLAYER_VOLUME = 100;
+        public static float CREATURE_VOLUME = 100;
+        public static float ENEMY_VOLUME = 100;
+        public static float BLOCK_VOLUME = 100;
+        public static float AMBIENT_VOLUME = 100;
+        public static float MUSIC_VOLUME = 100;
+
+
         public static void LoadSettings()
         {
             ResourcePath path = new ResourcePath("Inignoto:settings.txt", "data");
@@ -34,6 +43,41 @@ namespace Inignoto.GameSettings
                     {
                         float.TryParse(b, out MOUSE_SENSITIVITY);
                     }
+                    if (a.Equals("MASTER_VOLUME"))
+                    {
+                        float.TryParse(b, out MASTER_VOLUME);
+                        MASTER_VOLUME = System.Math.Max(System.Math.Min(MASTER_VOLUME, 100), 0);
+                    }
+                    if (a.Equals("PLAYER_VOLUME"))
+                    {
+                        float.TryParse(b, out PLAYER_VOLUME);
+                        PLAYER_VOLUME = System.Math.Max(System.Math.Min(PLAYER_VOLUME, 100), 0);
+                    }
+                    if (a.Equals("CREATURE_VOLUME"))
+                    {
+                        float.TryParse(b, out CREATURE_VOLUME);
+                        CREATURE_VOLUME = System.Math.Max(System.Math.Min(CREATURE_VOLUME, 100), 0);
+                    }
+                    if (a.Equals("ENEMY_VOLUME"))
+                    {
+                        float.TryParse(b, out ENEMY_VOLUME);
+                        ENEMY_VOLUME = System.Math.Max(System.Math.Min(ENEMY_VOLUME, 100), 0);
+                    }
+                    if (a.Equals("BLOCK_VOLUME"))
+                    {
+                        float.TryParse(b, out BLOCK_VOLUME);
+                        BLOCK_VOLUME = System.Math.Max(System.Math.Min(BLOCK_VOLUME, 100), 0);
+                    }
+                    if (a.Equals("AMBIENT_VOLUME"))
+                    {
+                        float.TryParse(b, out AMBIENT_VOLUME);
+                        AMBIENT_VOLUME = System.Math.Max(System.Math.Min(AMBIENT_VOLUME, 100), 0);
+                    }
+                    if (a.Equals("MUSIC_VOLUME"))
+                    {
+                        float.TryParse(b, out MUSIC_VOLUME);
+                        MUSIC_VOLUME = System.Math.Max(System.Math.Min(MUSIC_VOLUME, 100), 0);
+                    }
                 }
             }
         }
@@ -48,6 +92,15 @@ namespace Inignoto.GameSettings
             str += GetSaveString("VERTICAL_VIEW", "" + VERTICAL_VIEW);
             str += GetSaveString("FIELD_OF_VIEW", "" + FIELD_OF_VIEW);
             str += GetSaveString("MOUSE_SENSITIVITY", "" + MOUSE_SENSITIVITY);
+
+            str += GetSaveString("MASTER_VOLUME", "" + MASTER_VOLUME);
+
+            str += GetSaveString("PLAYER_VOLUME", "" + PLAYER_VOLUME);
+            str += GetSaveString("CREATURE_VOLUME", "" + CREATURE_VOLUME);
+            str += GetSaveString("ENEMY_VOLUME", "" + ENEMY_VOLUME);
+            str += GetSaveString("BLOCK_VOLUME", "" + BLOCK_VOLUME);
+            str += GetSaveString("AMBIENT_VOLUME", "" + AMBIENT_VOLUME);
+            str += GetSaveString("MUSIC_VOLUME", "" + MUSIC_VOLUME);
 
             ResourcePath path = new ResourcePath("Inignoto:settings.txt", "data");
             ResourcePath directory = new ResourcePath("Inignoto:", "data");

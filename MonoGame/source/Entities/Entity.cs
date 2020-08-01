@@ -1,7 +1,12 @@
-﻿using Inignoto.Math;
+﻿using Inignoto.Audio;
+using Inignoto.Math;
+using Inignoto.Tiles;
 using Inignoto.World;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
+using System.Collections.Generic;
+using static Inignoto.World.World;
 
 namespace Inignoto.Entities
 {
@@ -14,6 +19,7 @@ namespace Inignoto.Entities
         public Vector3f size;
         
         public bool OnGround { get; protected set; }
+        public bool LastOnGround { get; protected set; }
 
         public bool Running { get; protected set; }
         public bool Crouching { get; protected set; }
@@ -36,6 +42,10 @@ namespace Inignoto.Entities
         public float stamina = 100.0f;
         public float defense = 0.0f;
 
+        protected List<GameSound> SoundsToDispose = new List<GameSound>();
+
+        protected double WalkCycle;
+
 
         public Entity(World.World world, Vector3f position)
         {
@@ -55,10 +65,20 @@ namespace Inignoto.Entities
             if (OnGround)
             {
                 Jumping = false;
+                if (!LastOnGround)
                 LandOnGround();
                 FallStart = position.Y;
             }
             TicksExisted++;
+            for (int i = 0; i < SoundsToDispose.Count; i++)
+            {
+                if (SoundsToDispose[i].State != SoundState.Playing)
+                {
+                    SoundsToDispose[i].Dispose();
+                    SoundsToDispose.Remove(SoundsToDispose[i]);
+                }
+            }
+            LastOnGround = OnGround;
         }
 
         public void DoPhysicsUpdates(GameTime time)
@@ -80,13 +100,18 @@ namespace Inignoto.Entities
         {
             if (Crawling) return 0.025f;
             if (Crouching) return 0.035f;
-            if (Running) return 0.12f;
-            return 0.065f;
+            if (Running) return 0.11f;
+            return 0.055f;
         }
 
         public virtual Vector3f GetEyePosition()
         {
             return new Vector3f(position).Add(size.X * 0.5f, GetEyeHeight(), size.Z * 0.5f);
+        }
+
+        public TilePos GetTilePos()
+        {
+            return new TilePos(position.X + size.X * 0.5f, position.Y, position.Z + size.Z * 0.5f);
         }
 
         public virtual void DamageEntity(float damage)
@@ -104,6 +129,24 @@ namespace Inignoto.Entities
             if (damage > 1)
             {
                 DamageEntity(damage * damage * damage * 5);
+            }
+        }
+
+        public virtual void PlayStepSound(SoundType soundType, float y_offset = 0)
+        {
+            TilePos pos = GetTilePos();
+            if (y_offset != 0)
+            {
+                pos = new TilePos(pos.x, (float)System.Math.Round(pos.y + y_offset), pos.z);
+            }
+            SoundEffect[] sounds = TileManager.GetTile(world.GetVoxel(pos).tile_id).step_sound;
+            if (sounds != null)
+            {
+                SoundEffect effect = sounds[world.random.Next(sounds.Length)];
+                GameSound sound = new GameSound(effect.CreateInstance(), soundType);
+                sound.Volume = 1.0f;
+                sound.Play();
+                SoundsToDispose.Add(sound);
             }
         }
     }

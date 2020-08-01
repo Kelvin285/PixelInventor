@@ -18,6 +18,7 @@ namespace Inignoto.World.Chunks
         private bool generated;
 
         public Mesh mesh;
+        public Mesh secondMesh;
 
         public Chunk(int x, int y, int z, World world)
         {
