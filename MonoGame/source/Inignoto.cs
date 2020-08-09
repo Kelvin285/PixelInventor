@@ -45,7 +45,10 @@ namespace Inignoto
         public Thread world_thread;
         private bool running = true;
 
-        public GuiScreen guiScreen;
+        public Hud hud;
+
+        public long currentFrame = 0;
+        public long lastFrame = 0;
 
         public Inignoto()
         {
@@ -155,13 +158,9 @@ namespace Inignoto
                 0.01f, 1000f);
 
             mousePos = Mouse.GetState().Position;
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back ==
-               ButtonState.Pressed || Keyboard.GetState().IsKeyDown(
-               Keys.Escape))
-            {
-                mouse_captured = false;
-                this.IsMouseVisible = true;
-            }
+
+            UpdateInput(gameTime);
+
             camera.Update(gameTime);
 
             world.Update(camera.position.Vector, gameTime);
@@ -169,17 +168,35 @@ namespace Inignoto
             base.Update(gameTime);
             lastMousePos = new Point(mousePos.X, mousePos.Y);
 
+            mouse_captured = Hud.openGui == null;
+
+            if (!IsActive) mouse_captured = false;
+
             if (mouse_captured)
             {
                 Mouse.SetPosition(width / 2, -height / 2);
                 mousePos = new Point(width / 2, -height / 2);
                 lastMousePos = new Point(width / 2, -height / 2);
+                IsMouseVisible = false;
             } else
             {
-                if (Mouse.GetState().LeftButton == ButtonState.Pressed)
+                IsMouseVisible = true;
+            }
+            lastFrame = currentFrame;
+            currentFrame++;
+        }
+
+        private void UpdateInput(GameTime gameTime)
+        {
+            InputSetting.Update();
+            if (Settings.INVENTORY.IsJustPressed())
+            {
+                if (Hud.openGui == null)
                 {
-                    mouse_captured = true;
-                    this.IsMouseVisible = false;
+                    Hud.openGui = new InventoryGui();
+                } else
+                {
+                    Hud.openGui.Close();
                 }
             }
         }
@@ -213,7 +230,7 @@ namespace Inignoto
       BlendState.NonPremultiplied,
       SamplerState.PointClamp);
 
-            guiScreen.Render(GraphicsDevice, spriteBatch, width, height, gameTime);
+            hud.Render(GraphicsDevice, spriteBatch, width, height, gameTime);
 
             spriteBatch.End();
 

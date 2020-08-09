@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using System.IO;
 using Inignoto.Utilities;
 using System.Collections.Generic;
+using Inignoto.Graphics.Fonts;
 
 namespace Inignoto.Graphics.Textures
 {
@@ -14,6 +15,10 @@ namespace Inignoto.Graphics.Textures
         public static Texture2D hud;
         public static Texture2D viginette;
         public static Texture2D white_square;
+        public static Texture2D inventory_row;
+        public static Texture2D inventory;
+        public static Texture2D font_mandrill_regular;
+        public static Texture2D font_mandrill_bold;
 
         private static List<Texture> textures = new List<Texture>();
 
@@ -24,6 +29,12 @@ namespace Inignoto.Graphics.Textures
             hud = LoadTexture(new ResourcePath("Inignoto", "textures/gui/hud.png", "assets"));
             viginette = LoadTexture(new ResourcePath("Inignoto", "textures/gui/viginette.png", "assets"));
             white_square = LoadTexture(new ResourcePath("Inignoto", "textures/gui/white_square.png", "assets"));
+            inventory_row = LoadTexture(new ResourcePath("Inignoto", "textures/gui/inventory_row.png", "assets"));
+            inventory = LoadTexture(new ResourcePath("Inignoto", "textures/gui/inventory.png", "assets"));
+            font_mandrill_regular = LoadTexture(new ResourcePath("Inignoto", "fonts/mandrill/mandrill_regular_48.png", "assets"));
+            font_mandrill_bold = LoadTexture(new ResourcePath("Inignoto", "fonts/mandrill/mandrill_bold_48.png", "assets"));
+
+            FontManager.LoadFonts();
         }
 
         public static Texture2D LoadTexture(ResourcePath path)

@@ -18,7 +18,7 @@ namespace Inignoto.Utilities
 
             Inignoto.game.world = new World.World();
             Inignoto.game.player = new Entities.Client.Player.ClientPlayerEntity(Inignoto.game.world, new Math.Vector3f(0, 10, 0));
-            Inignoto.game.guiScreen = new Graphics.Gui.GuiScreen();
+            Inignoto.game.hud = new Graphics.Gui.Hud();
         }
 
         public static void Dispose()

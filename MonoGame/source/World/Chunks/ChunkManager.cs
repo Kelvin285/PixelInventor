@@ -39,8 +39,20 @@ namespace Inignoto.World.Chunks
         {
             float distance = float.MaxValue;
             Chunk closest = null;
+
+            int H_VIEW = GameSettings.Settings.HORIZONTAL_VIEW;
+            int V_VIEW = GameSettings.Settings.VERTICAL_VIEW;
+
             for (int i = 0; i < chunksToBuild.Count; i++)
             {
+                Chunk c = chunksToBuild[i];
+                if (c == null) continue;
+                if (System.Math.Abs(c.GetX() - current_x) > H_VIEW ||
+                    System.Math.Abs(c.GetY() - current_y) > V_VIEW ||
+                    System.Math.Abs(c.GetZ() - current_z) > H_VIEW) {
+                    chunksToBuild.Remove(c);
+                    continue;
+                }
                 if (chunksToBuild[i].NeedsToGenerate())
                 {
                     //generator.GenerateChunk(chunksToBuild[i]);
@@ -168,7 +180,6 @@ namespace Inignoto.World.Chunks
                 chunkRenderer.RenderChunk(device, effect, rendering[i]);
                 TryUnloadChunk(rendering[i].GetX(), rendering[i].GetY(), rendering[i].GetZ());
             }
-            
         }
 
     }

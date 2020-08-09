@@ -52,6 +52,10 @@ namespace Inignoto.Utilities
                     }
                     last = c;
                 }
+                while(data.ContainsKey(a))
+                {
+                    a += " ";
+                }
                 data.Add(a, b);
             }
             return data;

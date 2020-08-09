@@ -38,6 +38,10 @@ namespace Inignoto.Entities.Player
             position.Y = world.properties.generator.GetHeight(position.X, position.Z) + 1;
             ReachDistance = 4.0f;
             SpawnPosition = new Vector3f(position);
+
+            Name = "Test Username 1234";
+
+            Name = Name.Substring(0, System.Math.Min(Name.Length, 18));
         }
 
         public override void Update(GameTime time)
@@ -49,10 +53,20 @@ namespace Inignoto.Entities.Player
             {
                 size.Y = 1.75f;
             }
-            else if (Crawling)
+            if (Crawling)
             {
                 size.Y = 0.5f;
+                StepHeight = 0.1f;
+            } else
+            {
+                StepHeight = 0.55f;
             }
+            if (!OnGround) Crawling = false;
+            else
+            {
+                if (BlockAboveHead) Crawling = true;
+            }
+
             if (UseTimer > 0) UseTimer--;
             else UseTimer = 0;
 

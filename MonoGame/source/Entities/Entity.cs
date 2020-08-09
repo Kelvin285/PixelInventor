@@ -35,6 +35,10 @@ namespace Inignoto.Entities
 
         public float FallStart { get; protected set; }
 
+        public bool BlockAboveHead { get; protected set; }
+
+        public string Name { get; protected set; }
+
         public float moveSpeed = 0.1f;
 
         public float health = 100.0f;
@@ -56,7 +60,7 @@ namespace Inignoto.Entities
             
             world.entities.Add(this);
 
-            StepHeight = 0.5f;
+            StepHeight = 0.55f;
         }
 
         public virtual void Update(GameTime time)

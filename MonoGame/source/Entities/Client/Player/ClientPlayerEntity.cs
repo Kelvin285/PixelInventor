@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Inignoto.Audio;
 using Inignoto.Client;
 using Inignoto.Entities.Player;
+using Inignoto.Graphics.Gui;
 using Inignoto.Math;
 using Inignoto.Tiles;
 using Inignoto.World;
@@ -40,9 +41,11 @@ namespace Inignoto.Entities.Client.Player
         {
             base.Update(time);
 
+            Camera camera = Inignoto.game.camera;
+
             if (health > 0)
-            UpdateCamera();
-            
+                UpdateCamera();
+                        
             switch (gamemode)
             {
                 case Gamemode.SURVIVAL:
@@ -83,7 +86,7 @@ namespace Inignoto.Entities.Client.Player
                 flyMovement = true;
             }
             
-            if (Keyboard.GetState().IsKeyDown(Keys.Space))
+            if (GameSettings.Settings.JUMP.IsPressed())
             {
                 if (OnGround)
                 {
@@ -189,6 +192,7 @@ namespace Inignoto.Entities.Client.Player
             if (Keyboard.GetState().IsKeyDown(Keys.C))
             {
                 if (!justPressedC) Crawling = !Crawling;
+                if (BlockAboveHead) Crawling = true;
                 justPressedC = true;
             }
             else justPressedC = false;
@@ -213,6 +217,7 @@ namespace Inignoto.Entities.Client.Player
 
         public void DoItemActions()
         {
+            if (Hud.openGui != null) return;
             Camera camera = Inignoto.game.camera;
             TileRaytraceResult result = camera.highlightedTile;
 
@@ -220,14 +225,14 @@ namespace Inignoto.Entities.Client.Player
             {
                 if (UseTimer == 0)
                 {
-                    if (Mouse.GetState().LeftButton == ButtonState.Pressed)
+                    if (GameSettings.Settings.ATTACK.IsPressed())
                     {
                         world.SetVoxel(result.pos, TileManager.AIR.DefaultData);
                         UseTimer = 10;
                     }
                 }
 
-                if (Mouse.GetState().RightButton == ButtonState.Pressed)
+                if (GameSettings.Settings.USE.IsPressed())
                 {
                     if (PlaceTimer == 0)
                     {
@@ -373,26 +378,36 @@ namespace Inignoto.Entities.Client.Player
                 }
             }
 
-            if (velocity.Y > 0)
+            BlockAboveHead = false;
             for (float sx = 0; sx < 2; sx++)
             {
                 for (float sz = 0; sz < 2; sz++)
                 {
-                    Vector3f collision_p1 = new Vector3f(position).Add(size.X * sx, size.Y, size.Z * sz);
-                    Vector3f collision_p2 = new Vector3f(position).Add(size.X * sx, size.Y + velocity.Y, size.Z * sz);
+                    Vector3f collision_p1 = new Vector3f(position).Add(size.X * sx, size.Y - 0.1f, size.Z * sz);
+                    Vector3f collision_p2 = new Vector3f(position).Add(size.X * sx, size.Y + velocity.Y + 0.1f, size.Z * sz);
 
                     TileRaytraceResult result = world.RayTraceTiles(collision_p1, collision_p2, Tiles.Tile.TileRayTraceType.BLOCK);
                     if (result != null)
                     {
                         if (TileManager.GetTile(result.data.tile_id).BlocksMovement())
                         {
-                            velocity.Y = 0;
+                            if (velocity.Y > 0)
+                            {
+                                velocity.Y = 0.0f;
+                                position.Y = result.hit.Y - size.Y - 0.1f;
+                            }
+                            BlockAboveHead = true;
                                 break;
                         }
 
                     }
 
                 }
+            }
+            
+            if (TileManager.GetTile(world.GetVoxel(new TilePos(position.X + 0.5f, position.Y + size.Y, position.Z + 0.5f)).tile_id).BlocksMovement())
+            {
+                BlockAboveHead = true;
             }
 
             for (float sz = 0; sz < 2; sz++)
@@ -670,25 +685,30 @@ namespace Inignoto.Entities.Client.Player
 
         public void UpdateCamera()
         {
+
             Camera camera = Inignoto.game.camera;
             Point mousePos = Inignoto.game.mousePos;
             Point lastMousePos = Inignoto.game.lastMousePos;
 
-            if (mousePos.X != lastMousePos.X)
+            if (Inignoto.game.mouse_captured)
             {
-                float rot = -(mousePos.X - lastMousePos.X);
-                camera.rotation.Y += rot * GameSettings.Settings.MOUSE_SENSITIVITY;
-            }
-            if (mousePos.Y != lastMousePos.Y)
-            {
-                float rot = -(mousePos.Y - lastMousePos.Y);
-                camera.rotation.X += rot * GameSettings.Settings.MOUSE_SENSITIVITY;
+                if (mousePos.X != lastMousePos.X)
+                {
+                    float rot = -(mousePos.X - lastMousePos.X);
+                    camera.rotation.Y += rot * GameSettings.Settings.MOUSE_SENSITIVITY;
+                }
+                if (mousePos.Y != lastMousePos.Y)
+                {
+                    float rot = -(mousePos.Y - lastMousePos.Y);
+                    camera.rotation.X += rot * GameSettings.Settings.MOUSE_SENSITIVITY;
+                }
+
+                if (camera.rotation.X >= 85) camera.rotation.X = 85;
+                if (camera.rotation.X <= -85) camera.rotation.X = -85;
             }
 
-            if (camera.rotation.X >= 85) camera.rotation.X = 85;
-            if (camera.rotation.X <= -85) camera.rotation.X = -85;
-
-            camera.position.Set(position.X + size.X * 0.5f, position.Y + GetEyeHeight(), position.Z + size.Z * 0.5f);
+            Vector3f cpos = new Vector3f();
+            cpos.Set(position.X + size.X * 0.5f, position.Y + GetEyeHeight(), position.Z + size.Z * 0.5f);
             if (Inignoto.game.world.gameTime.TotalGameTime.TotalMilliseconds < CameraShakeTime)
             {
                 Random random = new Random();
@@ -698,8 +718,9 @@ namespace Inignoto.Entities.Client.Player
                 x *= 2;
                 y *= 2;
                 z *= 2;
-                camera.position.Add(new Vector3((float)x * CameraShakeIntensity, (float)y * CameraShakeIntensity, (float)z * CameraShakeIntensity));
+                cpos.Add(new Vector3((float)x * CameraShakeIntensity, (float)y * CameraShakeIntensity, (float)z * CameraShakeIntensity));
             }
+            camera.position.Set(Vector3.Lerp(camera.position.Vector, cpos.Vector, 0.5f));
         }
 
         

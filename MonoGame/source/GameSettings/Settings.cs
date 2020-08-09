@@ -1,4 +1,5 @@
 ﻿using Inignoto.Utilities;
+using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
 namespace Inignoto.GameSettings
 {
@@ -17,6 +18,17 @@ namespace Inignoto.GameSettings
         public static float BLOCK_VOLUME = 100;
         public static float AMBIENT_VOLUME = 100;
         public static float MUSIC_VOLUME = 100;
+
+        public static InputSetting FORWARD = new InputSetting(Keys.W, false);
+        public static InputSetting BACKWARD = new InputSetting(Keys.S, false);
+        public static InputSetting LEFT = new InputSetting(Keys.A, false);
+        public static InputSetting RIGHT = new InputSetting(Keys.D, false);
+        public static InputSetting JUMP = new InputSetting(Keys.Space, false);
+        public static InputSetting SNEAK = new InputSetting(Keys.LeftControl, false);
+        public static InputSetting CRAWL = new InputSetting(Keys.C, false);
+        public static InputSetting INVENTORY = new InputSetting(Keys.Escape, false);
+        public static InputSetting ATTACK = new InputSetting(0, true);
+        public static InputSetting USE = new InputSetting(1, true);
 
 
         public static void LoadSettings()
@@ -78,6 +90,46 @@ namespace Inignoto.GameSettings
                         float.TryParse(b, out MUSIC_VOLUME);
                         MUSIC_VOLUME = System.Math.Max(System.Math.Min(MUSIC_VOLUME, 100), 0);
                     }
+                    if (a.Equals("FORWARD"))
+                    {
+                        FORWARD.Read(b);
+                    }
+                    if (a.Equals("BACKWARD"))
+                    {
+                        BACKWARD.Read(b);
+                    }
+                    if (a.Equals("LEFT"))
+                    {
+                        LEFT.Read(b);
+                    }
+                    if (a.Equals("RIGHT"))
+                    {
+                        RIGHT.Read(b);
+                    }
+                    if (a.Equals("JUMP"))
+                    {
+                        JUMP.Read(b);
+                    }
+                    if (a.Equals("SNEAK"))
+                    {
+                        SNEAK.Read(b);
+                    }
+                    if (a.Equals("CRAWL"))
+                    {
+                        CRAWL.Read(b);
+                    }
+                    if (a.Equals("ATTACK"))
+                    {
+                        ATTACK.Read(b);
+                    }
+                    if (a.Equals("USE"))
+                    {
+                        USE.Read(b);
+                    }
+                    if (a.Equals("INVENTORY"))
+                    {
+                        INVENTORY.Read(b);
+                    }
                 }
             }
         }
@@ -101,6 +153,17 @@ namespace Inignoto.GameSettings
             str += GetSaveString("BLOCK_VOLUME", "" + BLOCK_VOLUME);
             str += GetSaveString("AMBIENT_VOLUME", "" + AMBIENT_VOLUME);
             str += GetSaveString("MUSIC_VOLUME", "" + MUSIC_VOLUME);
+
+            str += GetSaveString("FORWARD", FORWARD.Write());
+            str += GetSaveString("BACKWARD", BACKWARD.Write());
+            str += GetSaveString("LEFT", LEFT.Write());
+            str += GetSaveString("RIGHT", RIGHT.Write());
+            str += GetSaveString("JUMP", JUMP.Write());
+            str += GetSaveString("SNEAK", SNEAK.Write());
+            str += GetSaveString("CRAWL", CRAWL.Write());
+            str += GetSaveString("ATTACK", ATTACK.Write());
+            str += GetSaveString("USE", USE.Write());
+            str += GetSaveString("INVENTORY", INVENTORY.Write());
 
             ResourcePath path = new ResourcePath("Inignoto:settings.txt", "data");
             ResourcePath directory = new ResourcePath("Inignoto:", "data");
