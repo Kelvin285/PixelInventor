@@ -35,6 +35,8 @@ namespace Inignoto.Audio
 
     public void Play()
         {
+            sound.Volume = sound.Volume;
+            
             sound.Play();
         }
 
@@ -64,6 +66,8 @@ namespace Inignoto.Audio
                     return GameSettings.Settings.MUSIC_VOLUME / 100.0f;
                 case SoundType.BLOCKS:
                     return GameSettings.Settings.BLOCK_VOLUME / 100.0f;
+                case SoundType.GUI:
+                    return GameSettings.Settings.GUI_VOLUME / 100.0f;
             }
             return 1;
         }

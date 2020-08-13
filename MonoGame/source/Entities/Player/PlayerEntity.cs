@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Inignoto.Client;
+using Inignoto.Inventory;
 using Inignoto.Math;
 using Inignoto.World;
 using Microsoft.Xna.Framework;
@@ -20,8 +21,6 @@ namespace Inignoto.Entities.Player
 
         public Gamemode gamemode = Gamemode.SURVIVAL;
 
-        public float ReachDistance { get; protected set; }
-
         public Vector3f SpawnPosition { get; protected set; }
 
         public bool Flying { get; protected set; }
@@ -31,7 +30,7 @@ namespace Inignoto.Entities.Player
         public float UseTimer = 0;
         public float PlaceTimer = 0;
 
-
+        public PhysicalInventory inventory { get; protected set; }
 
         public PlayerEntity(World.World world, Vector3f position) : base(world, position)
         {
@@ -42,6 +41,7 @@ namespace Inignoto.Entities.Player
             Name = "Test Username 1234";
 
             Name = Name.Substring(0, System.Math.Min(Name.Length, 18));
+            inventory = new PhysicalInventory(this);
         }
 
         public override void Update(GameTime time)

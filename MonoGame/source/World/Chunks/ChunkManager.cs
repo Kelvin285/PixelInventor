@@ -47,9 +47,9 @@ namespace Inignoto.World.Chunks
             {
                 Chunk c = chunksToBuild[i];
                 if (c == null) continue;
-                if (System.Math.Abs(c.GetX() - current_x) > H_VIEW ||
-                    System.Math.Abs(c.GetY() - current_y) > V_VIEW ||
-                    System.Math.Abs(c.GetZ() - current_z) > H_VIEW) {
+                if (System.Math.Abs(c.GetX() - current_x) > H_VIEW + 1 ||
+                    System.Math.Abs(c.GetY() - current_y) > V_VIEW + 1 ||
+                    System.Math.Abs(c.GetZ() - current_z) > H_VIEW + 1) {
                     chunksToBuild.Remove(c);
                     continue;
                 }

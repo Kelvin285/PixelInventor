@@ -8,6 +8,6 @@ namespace Inignoto.Audio
 {
     public enum SoundType
     {
-        PLAYERS, CREATURES, ENEMIES, AMBIENT, MUSIC, BLOCKS
+        PLAYERS, CREATURES, ENEMIES, AMBIENT, MUSIC, BLOCKS, GUI
     }
 }

@@ -7,6 +7,8 @@ using Inignoto.Audio;
 using Inignoto.Client;
 using Inignoto.Entities.Player;
 using Inignoto.Graphics.Gui;
+using Inignoto.Inventory;
+using Inignoto.Items;
 using Inignoto.Math;
 using Inignoto.Tiles;
 using Inignoto.World;
@@ -50,17 +52,17 @@ namespace Inignoto.Entities.Client.Player
             {
                 case Gamemode.SURVIVAL:
                     {
-                        NormalMotion();
+                        NormalMotion(time);
                         break;
                     }
                 case Gamemode.FREECAM:
                     {
-                        FreecamMotion();
+                        FreecamMotion(time);
                         break;
                     }
                 case Gamemode.SANDBOX:
                     {
-                        NormalMotion();
+                        NormalMotion(time);
                         break;
                     }
 
@@ -70,7 +72,7 @@ namespace Inignoto.Entities.Client.Player
 
         private bool justPressedC = false;
 
-        public void DoInputControls()
+        public void DoInputControls(GameTime time)
         {
 
             float friction = 0.2f;
@@ -204,7 +206,7 @@ namespace Inignoto.Entities.Client.Player
                     velocity.Set(Vector3.Lerp(velocity.Vector, new Vector3(0, velocity.Y, 0), friction));
                 } else
                 {
-                    velocity.Set(Vector3.Lerp(velocity.Vector, new Vector3(0, velocity.Y, 0), friction * 0.25f));
+                    velocity.Set(Vector3.Lerp(velocity.Vector, new Vector3(0, velocity.Y, 0), friction * 0.1f));
                 }
             } else if (trueMotion.Vector.Length() > 0)
             {
@@ -212,10 +214,10 @@ namespace Inignoto.Entities.Client.Player
                 trueMotion.Mul(GetMovementSpeed());
                 velocity.Set(Vector3.Lerp(velocity.Vector, new Vector3(trueMotion.X, velocity.Y, trueMotion.Z), moveLerp));
             }
-            DoItemActions();
+            DoItemActions(time);
         }
 
-        public void DoItemActions()
+        public void DoItemActions(GameTime time)
         {
             if (Hud.openGui != null) return;
             Camera camera = Inignoto.game.camera;
@@ -227,55 +229,101 @@ namespace Inignoto.Entities.Client.Player
                 {
                     if (GameSettings.Settings.ATTACK.IsPressed())
                     {
+                        Tile tile = TileManager.GetTile(world.GetVoxel(result.pos).tile_id);
+                        bool add = false;
+                        ItemStack it = new ItemStack(tile, 1);
+                        for (int i = 0; i < 10; i++)
+                        {
+                            if (inventory.hotbar[i] == null)
+                            {
+                                inventory.hotbar[i] = it;
+                                add = true;
+                                break;
+                            }
+                            int n = inventory.TryAddToStack(inventory.hotbar[i], it, out it, PhysicalInventory.SlotType.NORMAL);
+                            if (n != -1)
+                            {
+                                add = true;
+                                break;
+                            }
+                        }
+                        if (!add)
+                        {
+                            for (int i = 0; i < 30; i++)
+                            {
+                                if (inventory.inventory[i] == null)
+                                {
+                                    inventory.inventory[i] = it;
+                                    add = true;
+                                    break;
+                                }
+                                int n = inventory.TryAddToStack(inventory.inventory[i], it, out it, PhysicalInventory.SlotType.NORMAL);
+                                if (n != -1)
+                                {
+                                    add = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        SoundEffect[] sounds = tile.step_sound;
+                        if (sounds != null)
+                        {
+                            SoundEffect effect = sounds[world.random.Next(sounds.Length)];
+                            GameSound sound = new GameSound(effect.CreateInstance(), SoundType.PLAYERS);
+                            sound.Play();
+                            Inignoto.game.SoundsToDispose.Add(sound);
+                        }
+
                         world.SetVoxel(result.pos, TileManager.AIR.DefaultData);
+
+
+
                         UseTimer = 10;
                     }
                 }
 
                 if (GameSettings.Settings.USE.IsPressed())
                 {
-                    if (PlaceTimer == 0)
+                    if (inventory.hotbar[inventory.selected] != null)
                     {
-                        Vector3f normal = result.intersection.normal;
-                        
-                        TilePos pos = new World.World.TilePos(result.pos.x + normal.X, result.pos.y + normal.Y, result.pos.z + normal.Z);
-                        if (TileManager.GetTile(world.GetVoxel(pos).tile_id).IsReplaceable())
-                        {
-                            bool intersects = false;
-                            foreach (Entity e in world.entities)
-                            {
-                                Rectangle b1 = new Rectangle(pos.x * 16, pos.y * 16, 16, 16);
-                                Rectangle b2 = new Rectangle(pos.x * 16, pos.z * 16, 16, 16);
-
-                                Rectangle p1 = new Rectangle((int)(e.position.X * 16) + 1, (int)(e.position.Y * 16) + 1, (int)(e.size.X * 16) - 2, (int)(e.size.Y * 16) - 2);
-                                Rectangle p2 = new Rectangle((int)(e.position.X * 16) + 1, (int)(e.position.Z * 16) + 1, (int)(e.size.X * 16) - 2, (int)(e.size.Z * 16) - 2);
-
-                                if (b1.Intersects(p1) && b2.Intersects(p2))
-                                {
-                                    intersects = true;
-                                    break;
-                                }
-                            }
-                            if (!intersects)
-                            {
-                                world.SetVoxel(pos, TileManager.DIRT.DefaultData);
-                                PlaceTimer = 10;
-                            }
-                        }
+                        inventory.hotbar[inventory.selected].item.TryUse(this, time);
+                    }
+                } else
+                {
+                    if (inventory.hotbar[inventory.selected] != null)
+                    {
+                        inventory.hotbar[inventory.selected].item.TryStopUsing(this, time);
                     }
                 }
-                else PlaceTimer = 0;
 
             }
             
         }
 
-        public void NormalMotion()
+        public void NormalMotion(GameTime time)
         {
 
             if (!OnGround && !Flying)
             {
-                velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.01f);
+                if (velocity.Y > 0)
+                {
+                    if (GameSettings.Settings.JUMP.IsPressed())
+                    {
+                        velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.0075f);
+                    } else
+                    {
+                        velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.01f);
+                    }
+                } else
+                {
+                    if (GameSettings.Settings.SNEAK.IsPressed())
+                    {
+                        velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.0125f);
+                    }
+                    else
+                        velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.01f);
+                }
 
                 float d = System.Math.Abs(FallStart - position.Y);
 
@@ -319,7 +367,7 @@ namespace Inignoto.Entities.Client.Player
             }
 
 
-            DoInputControls();
+            DoInputControls(time);
 
             
             OnGround = false;
@@ -414,7 +462,7 @@ namespace Inignoto.Entities.Client.Player
             {
                 Vector3f collision_p1 = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * sz);
                 Vector3f collision_p2 = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * sz).Add(velocity.X, 0, 0).Add(size.X * 0.52f * velocity.X / System.Math.Abs(velocity.X), 0, 0);
-                for (float h = StepHeight; h < size.Y - 0.2f; h += 0.1f)
+                for (float h = OnGround ? StepHeight : 0; h < size.Y - 0.2f; h += 0.1f)
                 {
                     collision_p1.Y = position.Y + h;
                     collision_p2.Y = position.Y + h;
@@ -435,7 +483,7 @@ namespace Inignoto.Entities.Client.Player
             {
                 Vector3f collision_p1 = new Vector3f(position).Add(size.X * sx, 0, size.Z * 0.5f);
                 Vector3f collision_p2 = new Vector3f(position).Add(size.X * sx, 0, size.Z * 0.5f).Add(0, 0, velocity.Z).Add(0, 0, size.Z * 0.52f * velocity.Z / System.Math.Abs(velocity.Z));
-                for (float h = StepHeight; h < size.Y - 0.2f; h += 0.1f)
+                for (float h = OnGround ? StepHeight : 0; h < size.Y - 0.2f; h += 0.1f)
                 {
                     collision_p1.Y = position.Y + h;
                     collision_p2.Y = position.Y + h;
@@ -650,7 +698,7 @@ namespace Inignoto.Entities.Client.Player
             position.Add(velocity);
         }
 
-        public void FreecamMotion()
+        public void FreecamMotion(GameTime time)
         {
             Camera camera = Inignoto.game.camera;
             if (Keyboard.GetState().IsKeyDown(Keys.Space))
@@ -695,17 +743,20 @@ namespace Inignoto.Entities.Client.Player
                 if (mousePos.X != lastMousePos.X)
                 {
                     float rot = -(mousePos.X - lastMousePos.X);
-                    camera.rotation.Y += rot * GameSettings.Settings.MOUSE_SENSITIVITY;
+                    look.Y += rot * GameSettings.Settings.MOUSE_SENSITIVITY;
                 }
                 if (mousePos.Y != lastMousePos.Y)
                 {
                     float rot = -(mousePos.Y - lastMousePos.Y);
-                    camera.rotation.X += rot * GameSettings.Settings.MOUSE_SENSITIVITY;
+                    look.X += rot * GameSettings.Settings.MOUSE_SENSITIVITY;
                 }
 
-                if (camera.rotation.X >= 85) camera.rotation.X = 85;
-                if (camera.rotation.X <= -85) camera.rotation.X = -85;
+                if (look.X >= 85) look.X = 85;
+                if (look.X <= -85) look.X = -85;
             }
+
+            camera.rotation.Set(look.X, look.Y, look.Z);
+
 
             Vector3f cpos = new Vector3f();
             cpos.Set(position.X + size.X * 0.5f, position.Y + GetEyeHeight(), position.Z + size.Z * 0.5f);

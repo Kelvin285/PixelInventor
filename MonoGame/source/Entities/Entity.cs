@@ -39,6 +39,8 @@ namespace Inignoto.Entities
 
         public string Name { get; protected set; }
 
+        public float ReachDistance { get; protected set; }
+
         public float moveSpeed = 0.1f;
 
         public float health = 100.0f;
@@ -49,6 +51,13 @@ namespace Inignoto.Entities
         protected List<GameSound> SoundsToDispose = new List<GameSound>();
 
         protected double WalkCycle;
+
+        public Vector3f look = new Vector3f(0, 0, 0);
+
+        public Vector3f ForwardLook
+        {
+            get => new Vector3f(Vector3.Forward).Rotate(Quaternion.CreateFromYawPitchRoll(look.Y * (float)System.Math.PI / 180, look.X * (float)System.Math.PI / 180, look.Z * (float)System.Math.PI / 180));
+        }
 
 
         public Entity(World.World world, Vector3f position)
@@ -61,6 +70,7 @@ namespace Inignoto.Entities
             world.entities.Add(this);
 
             StepHeight = 0.55f;
+            ReachDistance = 4.0f;
         }
 
         public virtual void Update(GameTime time)

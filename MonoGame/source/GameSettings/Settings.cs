@@ -18,6 +18,7 @@ namespace Inignoto.GameSettings
         public static float BLOCK_VOLUME = 100;
         public static float AMBIENT_VOLUME = 100;
         public static float MUSIC_VOLUME = 100;
+        public static float GUI_VOLUME = 100;
 
         public static InputSetting FORWARD = new InputSetting(Keys.W, false);
         public static InputSetting BACKWARD = new InputSetting(Keys.S, false);
@@ -30,9 +31,17 @@ namespace Inignoto.GameSettings
         public static InputSetting ATTACK = new InputSetting(0, true);
         public static InputSetting USE = new InputSetting(1, true);
 
+        public static InputSetting[] HOTBAR_KEYS = new InputSetting[10];
+
 
         public static void LoadSettings()
         {
+            for (int i = 0; i < 10; i++)
+            {
+                int I = i != 9 ? i + 1 : 0;
+                HOTBAR_KEYS[i] = new InputSetting(Keys.D0 + I, false);
+            }
+
             ResourcePath path = new ResourcePath("Inignoto:settings.txt", "data");
             Dictionary<string, string> data = FileUtils.LoadFileAsDataList(path);
             foreach (string a in data.Keys)
@@ -90,6 +99,11 @@ namespace Inignoto.GameSettings
                         float.TryParse(b, out MUSIC_VOLUME);
                         MUSIC_VOLUME = System.Math.Max(System.Math.Min(MUSIC_VOLUME, 100), 0);
                     }
+                    if (a.Equals("GUI_VOLUME"))
+                    {
+                        float.TryParse(b, out GUI_VOLUME);
+                        GUI_VOLUME = System.Math.Max(System.Math.Min(GUI_VOLUME, 100), 0);
+                    }
                     if (a.Equals("FORWARD"))
                     {
                         FORWARD.Read(b);
@@ -130,6 +144,13 @@ namespace Inignoto.GameSettings
                     {
                         INVENTORY.Read(b);
                     }
+                    for (int i = 0; i < 10; i++)
+                    {
+                        if (a.Equals("HOTBAR_KEY"+i))
+                        {
+                            HOTBAR_KEYS[i].Read(b);
+                        }
+                    }
                 }
             }
         }
@@ -153,6 +174,7 @@ namespace Inignoto.GameSettings
             str += GetSaveString("BLOCK_VOLUME", "" + BLOCK_VOLUME);
             str += GetSaveString("AMBIENT_VOLUME", "" + AMBIENT_VOLUME);
             str += GetSaveString("MUSIC_VOLUME", "" + MUSIC_VOLUME);
+            str += GetSaveString("GUI_VOLUME", "" + GUI_VOLUME);
 
             str += GetSaveString("FORWARD", FORWARD.Write());
             str += GetSaveString("BACKWARD", BACKWARD.Write());
@@ -164,6 +186,11 @@ namespace Inignoto.GameSettings
             str += GetSaveString("ATTACK", ATTACK.Write());
             str += GetSaveString("USE", USE.Write());
             str += GetSaveString("INVENTORY", INVENTORY.Write());
+
+            for (int i = 0; i < 10; i++)
+            {
+                str += GetSaveString("HOTBAR_KEY" + i, HOTBAR_KEYS[i].Write());
+            }
 
             ResourcePath path = new ResourcePath("Inignoto:settings.txt", "data");
             ResourcePath directory = new ResourcePath("Inignoto:", "data");

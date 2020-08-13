@@ -1,5 +1,8 @@
 ﻿using Inignoto.Audio;
+using Inignoto.GameSettings;
 using Inignoto.Graphics.Fonts;
+using Inignoto.Inventory;
+using Inignoto.Items;
 using Inignoto.Math;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
@@ -9,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Inignoto.Inventory.PhysicalInventory;
 
 namespace Inignoto.Graphics.Gui
 {
@@ -17,19 +21,45 @@ namespace Inignoto.Graphics.Gui
         private float DropdownAnimation = 1.0f;
         private bool closing = false;
 
+        public static GameSound open_sound;
+        public static GameSound close_sound;
 
-        public InventoryGui()
+        private PhysicalInventory inventory;
+
+
+        public InventoryGui(PhysicalInventory inventory)
         {
             OverrideHealthbar = true;
+            if (open_sound == null)
+            {
+                open_sound = new GameSound(SoundEffects.inventory_open.CreateInstance(), SoundType.GUI);
+                close_sound = new GameSound(SoundEffects.inventory_close.CreateInstance(), SoundType.GUI);
+
+                open_sound.Volume = 0.75f;
+                close_sound.Volume = 0.75f;
+            }
+            open_sound.Play();
+
+            this.inventory = inventory;
         }
 
         public override void Close()
         {
             closing = true;
+            close_sound.Play();
+        }
+
+        private bool MouseInSpace(int mx, int my, Rectangle rect)
+        {
+            return rect.Contains(mx, my);
         }
 
         public override void Render(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime time)
         {
+            int mouse_x = (int)(Inignoto.game.mousePos.X * (1920.0 / width));
+            int mouse_y = (int)(Inignoto.game.mousePos.Y * (1080.0 / height));
+
+
             if (!closing)
             {
                 DropdownAnimation = MathHelper.Lerp(DropdownAnimation, 0.0f, 0.1f);
@@ -75,7 +105,6 @@ namespace Inignoto.Graphics.Gui
             //40, 44, 20, 19 <- Backpack
             //63, 44, 22, 19 <- computer
 
-            Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(236 * 3, 258 * 3 + drop, 14 * 3, 18 * 3), new Rectangle(57, 342, 14, 18), Color.White);
             Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(264 * 3, 262 * 3 + drop, 13 * 3, 11 * 3), new Rectangle(73, 347, 13, 11), Color.White);
             Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(63 * 3, 115 * 3 + drop, 16 * 3, 18 * 3), new Rectangle(89, 340, 16, 18), Color.White);
             Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(63 * 3, 152 * 3 + drop, 17 * 3, 16 * 3), new Rectangle(107, 340, 17, 16), Color.White);
@@ -92,8 +121,156 @@ namespace Inignoto.Graphics.Gui
             //126, 340, 13, 15 <- Leggings Slot (65, 188)
             //141, 337, 17, 21 <- Shield Slot (166, 174)
             //160, 340, 14, 14 <- Accessory Slot (168, 105), (168, 141)
+
+
+            //228, 105 <- First inventory slot
+            //Horizontal spacing: 1 px
+            //Vertical Spacing: 24 px
+
+            for (int i = 0; i < 10; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    int x = 228 + i * 31;
+                    int y = 105 + j * (30 + 24);
+                    ItemStack stack = inventory.inventory[i + j * 10];
+
+                    if (MouseInSpace(mouse_x, mouse_y, new Rectangle(x * 3, y * 3 + drop, 90, 90)))
+                    {
+                        //24, 330
+                        Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(x * 3, y * 3 + drop, 90, 90), new Rectangle(24, 330, 30, 30), Color.White);
+
+                    }
+
+                    if (stack != null)
+                    {
+                        if (stack.item.GetRenderTexture() != null)
+                            DrawItem(spriteBatch, width, height, stack, x * 3, y * 3 + drop, 0.75f, 0.75f);
+
+                    }
+                }
+            }
+
+            if (MouseInSpace(mouse_x, mouse_y, new Rectangle(228 * 3, 252 * 3 + drop, 90, 90)))
+            {
+                Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(228 * 3, 252 * 3 + drop, 90, 90), new Rectangle(24, 330, 30, 30), Color.White);
+            }
+
+            if (inventory.trashStack != null)
+            {
+
+                
+                if (inventory.trashStack.item.GetRenderTexture() != null)
+                {
+                    //228 * 3, 252 * 3 + drop
+                    DrawItem(spriteBatch, width, height, inventory.trashStack, 228 * 3, 252 * 3 + drop, 0.75f, 0.75f);
+                }
+            } else
+            {
+                Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(236 * 3, 258 * 3 + drop, 14 * 3, 18 * 3), new Rectangle(57, 342, 14, 18), Color.White);
+            }
+
+            if (inventory.grabStack != null)
+            {
+                if (inventory.grabStack.item.GetRenderTexture() != null)
+                {
+                    DrawItem(spriteBatch, width, height, inventory.grabStack, mouse_x - 15 * 3, mouse_y - 15 * 3, 0.75f, 0.75f);
+                }
+            }
+
+            
         }
 
+        protected override void UpdateKeys()
+        {
+            
+        }
+        
+        public override void Update(GameTime time, int width, int height)
+        {
+            UpdateKeys();
+            int mouse_x = (int)(Inignoto.game.mousePos.X * (1920.0 / width));
+            int mouse_y = (int)(Inignoto.game.mousePos.Y * (1080.0 / height));
+            int drop = -(int)(DropdownAnimation * 360 * 3);
+
+            for (int i = 0; i < 10; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    int x = 228 + i * 31;
+                    int y = 105 + j * (30 + 24);
+
+                    if (MouseInSpace(mouse_x, mouse_y, new Rectangle(x * 3, y * 3 + drop, 90, 90)))
+                    {
+                        UpdateSlot(mouse_x, mouse_y, drop, inventory.inventory[i + j * 10], out inventory.inventory[i + j * 10], SlotType.NORMAL);
+                    }
+                }
+            }
+
+            if (MouseInSpace(mouse_x, mouse_y, new Rectangle(228 * 3, 252 * 3 + drop, 90, 90))) //Trash slot
+            {
+                UpdateSlot(mouse_x, mouse_y, drop, inventory.trashStack, out inventory.trashStack, SlotType.TRASH);
+            }
+
+            for (int i = 0; i < 10; i++)
+            {
+                int x = (7 + i * 31) * 3 + 1920 / 2 - (324 * 3) / 2;
+                int y = 5 * 3 + 1080 - 40 * 3;
+                ItemStack stack = Inignoto.game.player.inventory.hotbar[i];
+
+                if (MouseInSpace(mouse_x, mouse_y, new Rectangle(x, y, 90, 90)))
+                {
+                    UpdateSlot(mouse_x, mouse_y, 0, inventory.hotbar[i], out inventory.hotbar[i], SlotType.NORMAL);
+                }
+            }
+        }
+
+        private void UpdateSlot(int mouse_x, int mouse_y, int drop, ItemStack stack, out ItemStack o, SlotType type)
+        {
+            o = stack;
+            if (GameSettings.Settings.ATTACK.IsJustPressed())
+            {
+                int add = inventory.TryAddToStack(stack, inventory.grabStack, out inventory.grabStack, type);
+                if (add == -1)
+                {
+                    inventory.SwapStacks(stack, inventory.grabStack, out o, out inventory.grabStack, type);
+                }
+
+            }
+            if (GameSettings.Settings.USE.IsJustPressed())
+            {
+
+                if (inventory.grabStack == null)
+                {
+                    inventory.grabStack = inventory.SplitStack(stack, out o, type);
+                } else
+                {
+                    if (stack == null)
+                    {
+                        o = new ItemStack(inventory.grabStack.item, 0);
+                        stack = o;
+                    }
+                    if (stack != null)
+                    {
+                        if (stack.count <= stack.item.max_stack && stack.item == inventory.grabStack.item)
+                        {
+                            stack.count++;
+                            inventory.grabStack.count--;
+                            if (inventory.grabStack.count <= 0) inventory.grabStack = null;
+                        }
+                    }
+                }
+            }
+        }
+
+        public static void Dispose()
+        {
+            if (open_sound != null)
+            {
+                open_sound.Dispose();
+                close_sound.Dispose();
+            }
+        }
 
     }
 }

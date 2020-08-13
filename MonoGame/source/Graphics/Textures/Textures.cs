@@ -5,6 +5,7 @@ using System.IO;
 using Inignoto.Utilities;
 using System.Collections.Generic;
 using Inignoto.Graphics.Fonts;
+using Inignoto.Tiles.Data;
 
 namespace Inignoto.Graphics.Textures
 {
@@ -19,6 +20,8 @@ namespace Inignoto.Graphics.Textures
         public static Texture2D inventory;
         public static Texture2D font_mandrill_regular;
         public static Texture2D font_mandrill_bold;
+
+        public static Dictionary<TileData, Texture2D> TILE_ITEMS = new Dictionary<TileData, Texture2D>();
 
         private static List<Texture> textures = new List<Texture>();
 
@@ -49,6 +52,10 @@ namespace Inignoto.Graphics.Textures
         public static void Dispose()
         {
             foreach (Texture tex in textures)
+            {
+                tex.Dispose();
+            }
+            foreach (Texture tex in TILE_ITEMS.Values)
             {
                 tex.Dispose();
             }

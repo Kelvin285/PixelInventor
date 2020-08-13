@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Inignoto.Math;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace Inignoto.Graphics.Mesh
@@ -10,7 +11,7 @@ namespace Inignoto.Graphics.Mesh
         VertexBuffer vertexBuffer;
 
         public readonly bool lines;
-
+        
         public Mesh(GraphicsDevice device, VertexPositionColorTexture[] triangleVertices, bool lines = false)
         {
             this.triangleVertices = triangleVertices;
@@ -34,6 +35,11 @@ namespace Inignoto.Graphics.Mesh
 
         public void Draw(Texture texture, BasicEffect effect, GraphicsDevice device)
         {
+            Draw(texture, effect, device, worldMatrix);
+        }
+
+        public void Draw(Texture texture, BasicEffect effect, GraphicsDevice device, Matrix worldMatrix)
+        {
             effect.World = worldMatrix;
             device.SetVertexBuffer(vertexBuffer);
             foreach (EffectPass pass in effect.CurrentTechnique.
@@ -44,6 +50,26 @@ namespace Inignoto.Graphics.Mesh
 
                 device.DrawPrimitives(lines ? PrimitiveType.LineList : PrimitiveType.TriangleList, 0, Length);
             }
+        }
+
+        public Texture2D CreateTexture(Texture texture, BasicEffect effect, GraphicsDevice device, Vector3 position, Quaternion rotation, int width, int height)
+        {
+            RenderTarget2D target;
+            target = new RenderTarget2D(Inignoto.game.GraphicsDevice, width, height, false, SurfaceFormat.Color, DepthFormat.Depth16);
+
+            Inignoto.game.GraphicsDevice.SetRenderTarget(target);
+            Inignoto.game.GraphicsDevice.Clear(Color.Transparent);
+            
+            Inignoto.game.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+
+
+            Matrix matrix = Matrix.CreateFromQuaternion(rotation);
+            matrix.Translation = position;
+
+            Draw(texture, effect, device, matrix);
+
+            Inignoto.game.GraphicsDevice.SetRenderTarget(null);
+            return (Texture2D)target;
         }
 
         public void Dispose()

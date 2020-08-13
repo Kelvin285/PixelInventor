@@ -16,6 +16,9 @@ using Inignoto.Entities.Client.Player;
 using Inignoto.Graphics.Gui;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
+using Inignoto.Tiles;
+using System.Collections.Generic;
+using Inignoto.Audio;
 
 namespace Inignoto
 {
@@ -32,12 +35,13 @@ namespace Inignoto
         public Point mousePos;
         public Point lastMousePos;
 
-        public bool mouse_captured = true;
+        public bool mouse_captured = false;
 
         private Matrix projectionMatrix;
         public Camera camera;
 
-        private BasicEffect basicEffect;
+        public BasicEffect BasicEffect { get; private set; }
+        public List<GameSound> SoundsToDispose = new List<GameSound>();
 
         public World.World world;
         public ClientPlayerEntity player;
@@ -81,12 +85,12 @@ namespace Inignoto
             
             
 
-            basicEffect = new BasicEffect(GraphicsDevice);
-            basicEffect.Alpha = 1f;
-            basicEffect.VertexColorEnabled = true;
-            basicEffect.TextureEnabled = true;
+            BasicEffect = new BasicEffect(GraphicsDevice);
+            BasicEffect.Alpha = 1f;
+            BasicEffect.VertexColorEnabled = true;
+            BasicEffect.TextureEnabled = true;
 
-            basicEffect.LightingEnabled = false;
+            BasicEffect.LightingEnabled = false;
             
             Vector3f a = new Vector3f(0, 20, 0);
             Vector3f b = new Vector3f(0, -20, 0);
@@ -148,6 +152,16 @@ namespace Inignoto
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
+            for (int i = 0; i < SoundsToDispose.Count; i++)
+            {
+                GameSound sound = SoundsToDispose[i];
+                if (sound != null)
+                    if (sound.State != SoundState.Playing)
+                    {
+                        sound.Dispose();
+                        SoundsToDispose.Remove(sound);
+                    }
+            }
             SoundEffect.MasterVolume = Settings.MASTER_VOLUME / 100.0f;
             int width = Window.ClientBounds.Right - Window.ClientBounds.Left;
             int height = Window.ClientBounds.Top - Window.ClientBounds.Bottom;
@@ -168,9 +182,11 @@ namespace Inignoto
             base.Update(gameTime);
             lastMousePos = new Point(mousePos.X, mousePos.Y);
 
-            mouse_captured = Hud.openGui == null;
+            
 
             if (!IsActive) mouse_captured = false;
+            else
+                mouse_captured = Hud.openGui == null;
 
             if (mouse_captured)
             {
@@ -189,15 +205,25 @@ namespace Inignoto
         private void UpdateInput(GameTime gameTime)
         {
             InputSetting.Update();
+
+            int width = Window.ClientBounds.Right - Window.ClientBounds.Left;
+            int height = Window.ClientBounds.Bottom - Window.ClientBounds.Top;
+            hud.Update(gameTime, width, height);
+
             if (Settings.INVENTORY.IsJustPressed())
             {
                 if (Hud.openGui == null)
                 {
-                    Hud.openGui = new InventoryGui();
+                    Hud.openGui = new InventoryGui(Inignoto.game.player.inventory);
                 } else
                 {
                     Hud.openGui.Close();
                 }
+            }
+            if (Hud.openGui != null)
+            {
+                
+                Hud.openGui.Update(gameTime, width, height);
             }
         }
 
@@ -208,8 +234,8 @@ namespace Inignoto
         protected override void Draw(GameTime gameTime)
         {
             
-            basicEffect.Projection = projectionMatrix;
-            basicEffect.View = camera.ViewMatrix;
+            BasicEffect.Projection = projectionMatrix;
+            BasicEffect.View = camera.ViewMatrix;
             
             GraphicsDevice.Clear(Color.CornflowerBlue);
             
@@ -219,7 +245,9 @@ namespace Inignoto
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             GraphicsDevice.SamplerStates[0] = SamplerState.PointClamp;
 
-            world.Render(GraphicsDevice, basicEffect);
+            TileManager.TryLoadTileTextures();
+
+            world.Render(GraphicsDevice, BasicEffect);
 
 
             int width = Window.ClientBounds.Right - Window.ClientBounds.Left;

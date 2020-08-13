@@ -20,6 +20,9 @@ namespace Inignoto.Audio
         public static SoundEffect[] step_grass = new SoundEffect[5];
         public static SoundEffect[] step_soil = new SoundEffect[5];
 
+        public static SoundEffect inventory_open;
+        public static SoundEffect inventory_close;
+
         public static void LoadSoundEffects()
         {
             player_hit = LoadSoundEffect(new ResourcePath("Inignoto", "sounds/player/hit.wav", "assets"));
@@ -28,6 +31,9 @@ namespace Inignoto.Audio
 
             ambient_wind = LoadSoundEffect(new ResourcePath("Inignoto", "sounds/ambient/wind.wav", "assets"));
             ambient_fabric_in_wind = LoadSoundEffect(new ResourcePath("Inignoto", "sounds/ambient/fabric_in_wind.wav", "assets"));
+
+            inventory_open = LoadSoundEffect(new ResourcePath("Inignoto", "sounds/inventory/open.wav", "assets"));
+            inventory_close = LoadSoundEffect(new ResourcePath("Inignoto", "sounds/inventory/close.wav", "assets"));
 
             for (int i = 0; i < step_grass.Length; i++)
             {

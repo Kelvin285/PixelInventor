@@ -3,6 +3,8 @@ using Inignoto.Tiles;
 using Inignoto.Tiles.Data;
 using Inignoto.GameSettings;
 using Inignoto.Audio;
+using Inignoto.Graphics.Gui;
+using Inignoto.Items;
 
 namespace Inignoto.Utilities
 {
@@ -12,8 +14,9 @@ namespace Inignoto.Utilities
         {
             Settings.LoadSettings();
             Textures.LoadTextures();
-            Tiles.TileManager.Loadtiles();
+            TileManager.Loadtiles();
             TileDataHolder.Initialize();
+            ItemManager.LoadItems();
             SoundEffects.LoadSoundEffects();
 
             Inignoto.game.world = new World.World();
@@ -25,6 +28,8 @@ namespace Inignoto.Utilities
         {
             Textures.Dispose();
             SoundEffects.Dispose();
+
+            InventoryGui.Dispose();
         }
     }
 }

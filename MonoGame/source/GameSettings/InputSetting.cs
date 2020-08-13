@@ -47,6 +47,7 @@ namespace Inignoto.GameSettings
 
         public bool IsPressed()
         {
+
             if (Mouse)
             {
                 switch (Input) {
@@ -69,7 +70,6 @@ namespace Inignoto.GameSettings
 
         public bool IsJustPressed()
         {
-            
             if (IsPressed() && Inignoto.game.currentFrame <= lastPressed)
             {
                 return true;

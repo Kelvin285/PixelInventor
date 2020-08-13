@@ -1,9 +1,14 @@
 ﻿using Inignoto.Audio;
+using Inignoto.GameSettings;
 using Inignoto.Graphics.Fonts;
+using Inignoto.Graphics.World;
+using Inignoto.Inventory;
 using Inignoto.Math;
+using Inignoto.Tiles;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,6 +33,11 @@ namespace Inignoto.Graphics.Gui
 
         protected static float health = 0;
         protected static int heartBeat = 0;
+
+        public virtual void Update(GameTime time, int width, int height)
+        {
+            UpdateKeys();
+        }
 
         public virtual void Render(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime time)
         {
@@ -114,6 +124,33 @@ namespace Inignoto.Graphics.Gui
 
             Draw(spriteBatch, width, height, Textures.Textures.viginette, new Rectangle(0, 0, 1920, 1080), new Color(255 - (int)(255 * (health / 100)), 0, 0, 255 - (int)(255 * (health / 100))));
 
+            //inventory hotbar
+            Draw(spriteBatch, width, height, Textures.Textures.inventory_row, new Rectangle(1920 / 2 - (324 * 3) / 2, 1080 - 40 * 3, 324 * 3, 40 * 3), Color.White);
+
+            int mouse_x = (int)(Inignoto.game.mousePos.X * (1920.0 / width));
+            int mouse_y = (int)(Inignoto.game.mousePos.Y * (1080.0 / height));
+
+            for (int i = 0; i < 10; i++)
+            {
+                int x = (7 + i * 31) * 3 + 1920 / 2 - (324 * 3) / 2;
+                int y = 5 * 3 + 1080 - 40 * 3;
+                ItemStack stack = Inignoto.game.player.inventory.hotbar[i];
+
+                if (mouse_x >= x && mouse_y >= y && mouse_x <= x + 90 && mouse_y <= y + 90)
+                {
+                    Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(x, y, 90, 90), new Rectangle(24, 330, 30, 30), Color.White);
+                }
+                if (openGui == null && i == Inignoto.game.player.inventory.selected)
+                {
+                    Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(x, y, 90, 90), new Rectangle(24, 300, 30, 30), Color.White);
+                }
+
+                if (stack != null)
+                {
+                    DrawItem(spriteBatch, width, height, stack, x, y, 0.75f, 0.75f);
+                }
+            }
+
             if (renderGui != null)
             {
                 renderGui.Render(device, spriteBatch, width, height, time);
@@ -121,15 +158,13 @@ namespace Inignoto.Graphics.Gui
                 {
                     RenderHealthbar(device, spriteBatch, width, height, time);
                 }
-            } else
+            }
+            else
             {
                 Draw(spriteBatch, width, height, Textures.Textures.fp_cursor, new Rectangle(1920 / 2 - 8, 1080 / 2 - 8, 16 * 3, 16 * 3), Inignoto.game.camera.highlightedTile == null ? Color.Gray : Color.White);
 
                 RenderHealthbar(device, spriteBatch, width, height, time);
             }
-
-            //inventory hotbar
-            Draw(spriteBatch, width, height, Textures.Textures.inventory_row, new Rectangle(1920 / 2 - (324 * 3) / 2, 1080 - 40 * 3, 324 * 3, 40 * 3), Color.White);
 
             /////////////////////////////////////////////
             Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(0, 0, 1920, 1080), new Color(0, 0, 0, Fade));
@@ -161,6 +196,47 @@ namespace Inignoto.Graphics.Gui
 
             Draw(spriteBatch, width, height, Textures.Textures.hud, new Rectangle(x + 48 + (int)(88 * health / 100) * 3 - (13 * 3) + r2 * 3, y + 10, (26 - r) * 3 - r2 * 3, 8 * 3), new Rectangle(103 + r2, 8 * frame, 26 - r - r2, 8), Color.White);
 
+        }
+
+        private int current_scroll = 0;
+        private int last_scroll = 0;
+
+        protected virtual void UpdateKeys()
+        {
+            for (int i = 0; i < Settings.HOTBAR_KEYS.Length; i++)
+            {
+                if (Settings.HOTBAR_KEYS[i].IsPressed())
+                {
+                    Inignoto.game.player.inventory.selected = i;
+                }
+            }
+            current_scroll = (Mouse.GetState().ScrollWheelValue / 8) / 15;
+
+            int scroll = current_scroll - last_scroll;
+
+            if (Inignoto.game.player.inventory.selected + scroll > 9)
+            {
+                Inignoto.game.player.inventory.selected = 0;
+            }
+            else
+            if (Inignoto.game.player.inventory.selected + scroll < 0)
+            {
+                Inignoto.game.player.inventory.selected = 9;
+            }
+            else Inignoto.game.player.inventory.selected += scroll;
+            last_scroll = current_scroll;
+        }
+
+        public void DrawItem(SpriteBatch spriteBatch, int width, int height, ItemStack stack, int x, int y, float scaleX, float scaleY)
+        {
+            Draw(spriteBatch, width, height, stack.item.GetRenderTexture(), new Rectangle(x - 11 * 3, y, (int)(192 * scaleX), (int)(108 * scaleY)), Color.White);
+            if (stack.item.max_stack > 1)
+            {
+                DrawString(spriteBatch, width, height, x + 7, y + 6, 0.75f, FontManager.mandrill_bold, "" + stack.count, Color.Gray);
+                DrawString(spriteBatch, width, height, x + 7, y + 5, 0.75f, FontManager.mandrill_bold, "" + stack.count, Color.Gray);
+                DrawString(spriteBatch, width, height, x + 5, y + 6, 0.75f, FontManager.mandrill_bold, "" + stack.count, Color.Gray);
+                DrawString(spriteBatch, width, height, x + 5, y + 5, 0.75f, FontManager.mandrill_bold, "" + stack.count, Color.White);
+            }
         }
 
         protected void Draw(SpriteBatch batch, int width, int height, Texture2D texture, Rectangle r1, Rectangle r2, Color color, float rotation)
