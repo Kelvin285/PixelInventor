@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 using Inignoto.Audio;
 using Inignoto.Client;
 using Inignoto.Entities.Player;
+using Inignoto.GameSettings;
 using Inignoto.Graphics.Gui;
+using Inignoto.Graphics.Models;
+using Inignoto.Graphics.Textures;
 using Inignoto.Inventory;
 using Inignoto.Items;
 using Inignoto.Math;
@@ -32,6 +35,8 @@ namespace Inignoto.Entities.Client.Player
 
         private GameSound wind_instance;
         private GameSound fabric_wind_instance;
+
+        private int perspective = 1;
 
         public ClientPlayerEntity(World.World world, Vector3f position) : base(world, position)
         {
@@ -86,6 +91,12 @@ namespace Inignoto.Entities.Client.Player
             {
                 velocity.Y = -0.15f;
                 flyMovement = true;
+            }
+
+            if (Settings.PERSPECTIVE_SWITCH.IsJustPressed())
+            {
+                perspective++;
+                perspective %= 3;
             }
             
             if (GameSettings.Settings.JUMP.IsPressed())
@@ -230,41 +241,7 @@ namespace Inignoto.Entities.Client.Player
                     if (GameSettings.Settings.ATTACK.IsPressed())
                     {
                         Tile tile = TileManager.GetTile(world.GetVoxel(result.pos).tile_id);
-                        bool add = false;
-                        ItemStack it = new ItemStack(tile, 1);
-                        for (int i = 0; i < 10; i++)
-                        {
-                            if (inventory.hotbar[i] == null)
-                            {
-                                inventory.hotbar[i] = it;
-                                add = true;
-                                break;
-                            }
-                            int n = inventory.TryAddToStack(inventory.hotbar[i], it, out it, PhysicalInventory.SlotType.NORMAL);
-                            if (n != -1)
-                            {
-                                add = true;
-                                break;
-                            }
-                        }
-                        if (!add)
-                        {
-                            for (int i = 0; i < 30; i++)
-                            {
-                                if (inventory.inventory[i] == null)
-                                {
-                                    inventory.inventory[i] = it;
-                                    add = true;
-                                    break;
-                                }
-                                int n = inventory.TryAddToStack(inventory.inventory[i], it, out it, PhysicalInventory.SlotType.NORMAL);
-                                if (n != -1)
-                                {
-                                    add = true;
-                                    break;
-                                }
-                            }
-                        }
+                        
 
                         SoundEffect[] sounds = tile.step_sound;
                         if (sounds != null)
@@ -274,6 +251,8 @@ namespace Inignoto.Entities.Client.Player
                             sound.Play();
                             Inignoto.game.SoundsToDispose.Add(sound);
                         }
+
+                        world.entities.Add(new ItemEntity(world, new Vector3f(result.pos.x + 0.5f, result.pos.y + 0.5f, result.pos.z + 0.5f), new ItemStack(TileManager.GetTile(result.data.tile_id))));
 
                         world.SetVoxel(result.pos, TileManager.AIR.DefaultData);
 
@@ -285,20 +264,21 @@ namespace Inignoto.Entities.Client.Player
 
                 if (GameSettings.Settings.USE.IsPressed())
                 {
-                    if (inventory.hotbar[inventory.selected] != null)
+                    if (Inventory.hotbar[Inventory.selected] != null)
                     {
-                        inventory.hotbar[inventory.selected].item.TryUse(this, time);
+                        Inventory.hotbar[Inventory.selected].item.TryUse(this, time);
                     }
-                } else
+                }
+                else
                 {
-                    if (inventory.hotbar[inventory.selected] != null)
+                    if (Inventory.hotbar[Inventory.selected] != null)
                     {
-                        inventory.hotbar[inventory.selected].item.TryStopUsing(this, time);
+                        Inventory.hotbar[Inventory.selected].item.TryStopUsing(this, time);
                     }
                 }
 
             }
-            
+
         }
 
         public void NormalMotion(GameTime time)
@@ -369,139 +349,12 @@ namespace Inignoto.Entities.Client.Player
 
             DoInputControls(time);
 
-            
-            OnGround = false;
-
-
-            for (float sx = 0; sx < 2; sx++)
-            {
-                for (float sz = 0; sz < 2; sz++)
-                {
-                    TileRaytraceResult ground_result = world.RayTraceTiles(new Vector3f(position).Add(size.X * sx, size.Y, size.Z * sz), new Vector3f(position).Add(size.X * sx, 0, size.Z * sz).Sub(0, -0.01f, 0), Tiles.Tile.TileRayTraceType.BLOCK);
-                    if (ground_result != null)
-                    {
-                        OnGround = true;
-                        if (velocity.Y < 0)
-                            velocity.Y = 0;
-                    }
-                    TileRaytraceResult near_ground = world.RayTraceTiles(new Vector3f(position).Add(size.X * sx, size.Y, size.Z * sz), new Vector3f(position).Add(size.X * sx, -1.1f, size.Z * sz), Tiles.Tile.TileRayTraceType.BLOCK);
-                    if (near_ground != null)
-                    {
-                        NearGround = true;
-                    }
-
-                    TileRaytraceResult step_result = world.RayTraceTiles(new Vector3f(position).Add(size.X * sx, 0, size.Z * sz), new Vector3f(position).Add(size.X * sx, StepHeight, size.Z * sz), Tiles.Tile.TileRayTraceType.BLOCK);
-                    if (step_result != null && NearGround)
-                    {
-                        position.Y += StepHeight;
-                    }
-                }
-            }
-
-
-            if (velocity.Y < 0)
-            {
-                for (float sx = 0; sx < 2; sx++)
-                {
-                    for (float sz = 0; sz < 2; sz++)
-                    {
-                        Vector3f collision_p1 = new Vector3f(position).Add(size.X * sx, 0, size.Z * sz);
-                        Vector3f collision_p2 = new Vector3f(position).Add(size.X * sx, velocity.Y, size.Z * sz);
-
-                        TileRaytraceResult result = world.RayTraceTiles(collision_p1, collision_p2, Tiles.Tile.TileRayTraceType.BLOCK);
-                        if (result != null)
-                        {
-                            if (TileManager.GetTile(result.data.tile_id).BlocksMovement())
-                            {
-                                if (!LastOnGround) PlayStepSound(SoundType.PLAYERS, -1);
-                                position.Y = result.hit.Y;
-                                velocity.Y = 0;
-                                OnGround = true;
-                                break;
-                            }
-
-                        }
-
-                    }
-                }
-            }
-
-            BlockAboveHead = false;
-            for (float sx = 0; sx < 2; sx++)
-            {
-                for (float sz = 0; sz < 2; sz++)
-                {
-                    Vector3f collision_p1 = new Vector3f(position).Add(size.X * sx, size.Y - 0.1f, size.Z * sz);
-                    Vector3f collision_p2 = new Vector3f(position).Add(size.X * sx, size.Y + velocity.Y + 0.1f, size.Z * sz);
-
-                    TileRaytraceResult result = world.RayTraceTiles(collision_p1, collision_p2, Tiles.Tile.TileRayTraceType.BLOCK);
-                    if (result != null)
-                    {
-                        if (TileManager.GetTile(result.data.tile_id).BlocksMovement())
-                        {
-                            if (velocity.Y > 0)
-                            {
-                                velocity.Y = 0.0f;
-                                position.Y = result.hit.Y - size.Y - 0.1f;
-                            }
-                            BlockAboveHead = true;
-                                break;
-                        }
-
-                    }
-
-                }
-            }
-            
-            if (TileManager.GetTile(world.GetVoxel(new TilePos(position.X + 0.5f, position.Y + size.Y, position.Z + 0.5f)).tile_id).BlocksMovement())
-            {
-                BlockAboveHead = true;
-            }
-
-            for (float sz = 0; sz < 2; sz++)
-            {
-                Vector3f collision_p1 = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * sz);
-                Vector3f collision_p2 = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * sz).Add(velocity.X, 0, 0).Add(size.X * 0.52f * velocity.X / System.Math.Abs(velocity.X), 0, 0);
-                for (float h = OnGround ? StepHeight : 0; h < size.Y - 0.2f; h += 0.1f)
-                {
-                    collision_p1.Y = position.Y + h;
-                    collision_p2.Y = position.Y + h;
-                    TileRaytraceResult result = world.RayTraceTiles(collision_p1, collision_p2, Tiles.Tile.TileRayTraceType.BLOCK);
-                    if (result != null)
-                    {
-                        if (TileManager.GetTile(result.data.tile_id).BlocksMovement())
-                        {
-                            velocity.X = 0;
-                            break;
-                        }
-
-                    }
-                }
-            }
-
-            for (float sx = 0; sx < 2; sx++)
-            {
-                Vector3f collision_p1 = new Vector3f(position).Add(size.X * sx, 0, size.Z * 0.5f);
-                Vector3f collision_p2 = new Vector3f(position).Add(size.X * sx, 0, size.Z * 0.5f).Add(0, 0, velocity.Z).Add(0, 0, size.Z * 0.52f * velocity.Z / System.Math.Abs(velocity.Z));
-                for (float h = OnGround ? StepHeight : 0; h < size.Y - 0.2f; h += 0.1f)
-                {
-                    collision_p1.Y = position.Y + h;
-                    collision_p2.Y = position.Y + h;
-                    TileRaytraceResult result = world.RayTraceTiles(collision_p1, collision_p2, Tiles.Tile.TileRayTraceType.BLOCK);
-                    if (result != null)
-                    {
-                        if (TileManager.GetTile(result.data.tile_id).BlocksMovement())
-                        {
-                            velocity.Z = 0;
-                            break;
-                        }
-
-                    }
-                }
-            }
+           
+            DoBlockCollisions();
 
             if (Crouching && NearGround && !Jumping)
             {
+                
                 bool flagX = false;
                 bool flagZ = false;
                 {
@@ -731,6 +584,7 @@ namespace Inignoto.Entities.Client.Player
             }
         }
 
+        
         public void UpdateCamera()
         {
 
@@ -754,10 +608,7 @@ namespace Inignoto.Entities.Client.Player
                 if (look.X >= 85) look.X = 85;
                 if (look.X <= -85) look.X = -85;
             }
-
-            camera.rotation.Set(look.X, look.Y, look.Z);
-
-
+            
             Vector3f cpos = new Vector3f();
             cpos.Set(position.X + size.X * 0.5f, position.Y + GetEyeHeight(), position.Z + size.Z * 0.5f);
             if (Inignoto.game.world.gameTime.TotalGameTime.TotalMilliseconds < CameraShakeTime)
@@ -771,14 +622,93 @@ namespace Inignoto.Entities.Client.Player
                 z *= 2;
                 cpos.Add(new Vector3((float)x * CameraShakeIntensity, (float)y * CameraShakeIntensity, (float)z * CameraShakeIntensity));
             }
-            camera.position.Set(Vector3.Lerp(camera.position.Vector, cpos.Vector, 0.5f));
+
+            cpos.Add(ForwardLook.Mul(-(perspective - 1) * 4.0f));
+
+            TileRaytraceResult result = world.RayTraceTiles(GetEyePosition(), cpos, TileRayTraceType.BLOCK);
+
+            cpos.Sub(ForwardLook.Mul(-(perspective - 1) * 0.5f));
+
+            if (result != null)
+            {
+                Vector3f dir = new Vector3f(cpos).Sub(GetEyePosition());
+                if (dir.Vector.Length() != 0)
+                    dir.Div(dir.Vector.Length());
+                cpos = GetEyePosition().Add(dir.Mul(result.intersection.lambda.X - 0.5f));
+            }
+            
+            camera.position.Set(Vector3.Lerp(camera.position.Vector, cpos.Vector, 1f));
+            camera.rotation.Set(look.X, look.Y, look.Z);
+            if (perspective == 0)
+            {
+                camera.rotation.Set(-look.X, look.Y + 180, -look.Z);
+            }
+
+            SetModelTransform(position);
         }
 
-        
-
-        public override void Render(GraphicsDevice device, BasicEffect effect)
+        public void SetModelTransform(Vector3f position = null, Vector3f look = null)
         {
+            if (position == null) position = this.position;
+            if (look == null) look = this.look;
+            if (model != null)
+            {
+                float sine = (float)System.Math.Sin(look.Y * (3.14 / 180.0));
+                float cos = (float)System.Math.Cos(look.Y * (3.14 / 180.0));
+                model.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
+                model.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
 
+                shirt.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
+                shirt.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
+
+                pants.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
+                pants.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
+
+                shoes.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
+                shoes.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
+            }
+        }
+
+        public GameModel model;
+        public GameModel shirt;
+        public GameModel pants;
+        public GameModel shoes;
+        public Texture2D texture;
+
+        public Texture2D shirtTexture;
+        public Texture2D pantsTexture;
+        public Texture2D shoesTexture;
+
+        public override void Render(GraphicsDevice device, BasicEffect effect, bool showModel = false)
+        {
+            if (model == null)
+            {
+                texture = Textures.LoadTexture(new Utilities.ResourcePath("Inignoto", "textures/entity/player/skin/skin1.png", "assets"));
+                model = GameModel.LoadModel(new Utilities.ResourcePath("inignoto", "models/test.model", "assets"), texture);
+
+                shirtTexture = Textures.LoadTexture(new Utilities.ResourcePath("Inignoto", "textures/entity/player/shirt/shirt1.png", "assets"));
+                shirt = GameModel.LoadModel(new Utilities.ResourcePath("inignoto", "models/shirt.model", "assets"), shirtTexture);
+
+                pantsTexture = Textures.LoadTexture(new Utilities.ResourcePath("Inignoto", "textures/entity/player/pants/pants1.png", "assets"));
+                pants = GameModel.LoadModel(new Utilities.ResourcePath("inignoto", "models/pants.model", "assets"), pantsTexture);
+
+                shoesTexture = Textures.LoadTexture(new Utilities.ResourcePath("Inignoto", "textures/entity/player/shoes/shoes1.png", "assets"));
+                shoes = GameModel.LoadModel(new Utilities.ResourcePath("inignoto", "models/shoes.model", "assets"), shoesTexture);
+            }
+            if (model != null && perspective != 1 || model != null && showModel)
+            {
+                model.scale.Set(2.0f, 2.0f, 2.0f);
+                model.Render(device, effect);
+
+                shoes.scale.Set(2.0f, 2.0f, 2.0f);
+                shoes.Render(device, effect);
+
+                pants.scale.Set(2.0f, 2.0f, 2.0f);
+                pants.Render(device, effect);
+
+                shirt.scale.Set(2.0f, 2.0f, 2.0f);
+                shirt.Render(device, effect);
+            }
         }
 
         public override void DamageEntity(float damage)
@@ -815,6 +745,10 @@ namespace Inignoto.Entities.Client.Player
             if (y_offset != 0)
             {
                 pos = new TilePos(pos.x, (float)System.Math.Round(pos.y + y_offset), pos.z);
+            }
+            if (velocity.Y >= -0.01f)
+            {
+                pos.y -= 1;
             }
             SoundEffect[] sounds = TileManager.GetTile(world.GetVoxel(pos).tile_id).step_sound;
             if (sounds != null)

@@ -1,0 +1,46 @@
+Part 0
+Right_Leg_Lower
+Position -1.9986043 2.9752617 1.9247662
+Rotation 0.0 -0.01881042 0.0 0.9998174
+Size 4 3 3
+Scale 1.01 1.01 1.01
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 43 12
+Part 1
+Right_Leg_Upper
+Position -1.9986043 6.7087326 1.9247662
+Rotation 0.0 -0.01881042 0.0 0.9998174
+Size 4 5 3
+Scale 1.01 1.01 1.01
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 43 2
+Part 2
+Left_Leg_Lower
+Position 2.0 2.9752617 2.0
+Rotation 0.0 0.0 0.0 1.0
+Size 4 3 3
+Scale 1.01 1.01 1.01
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 64 12
+Part 3
+Left_Leg_Upper
+Position 2.0 6.7087326 2.0
+Rotation 0.0 0.0 0.0 1.0
+Size 4 5 3
+Scale 1.01 1.01 1.01
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 64 2
+Parent 0 1
+Parent 2 3

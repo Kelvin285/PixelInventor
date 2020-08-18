@@ -55,7 +55,7 @@ namespace Inignoto.Graphics.World
                     new Vector3f(1, 0, 0)
                 };
 
-        public static Mesh.Mesh BuildTile(int x, int y, int z, TileData data, GraphicsDevice device)
+        public static Mesh.Mesh BuildTile(float x, float y, float z, TileData data, GraphicsDevice device)
         {
             List<VertexPositionColorTexture> vpct = new List<VertexPositionColorTexture>();
 
@@ -77,10 +77,10 @@ namespace Inignoto.Graphics.World
                 int ind = indices[i];
                 vpct.Add(new VertexPositionColorTexture(vertices[ind], colors[ind], textures[ind]));
             }
-            return new Mesh.Mesh(device, vpct.ToArray());
+            return new Mesh.Mesh(device, vpct.ToArray(), false, Textures.Textures.tiles.GetTexture());
         }
 
-        public static int BuildFace(int x, int y, int z, TileData data, TileFace face, List<Vector3> vertices, List<Color> colors, List<Vector2> textures, List<int> indices, int index)
+        public static int BuildFace(float x, float y, float z, TileData data, TileFace face, List<Vector3> vertices, List<Color> colors, List<Vector2> textures, List<int> indices, int index)
         {
             Vector3f[] verts = FRONT;
 
@@ -97,15 +97,15 @@ namespace Inignoto.Graphics.World
 
             if (face == TileFace.FRONT || face == TileFace.BACK || face == TileFace.TOP || face == TileFace.BOTTOM)
             {
-                u2 = x % data.num_x;
+                u2 = (int)x % data.num_x;
             }
-            else u2 = z % data.num_x;
+            else u2 = (int)z % data.num_x;
 
             if (face == TileFace.FRONT || face == TileFace.BACK || face == TileFace.LEFT || face == TileFace.RIGHT)
             {
-                v2 = y % data.num_y;
+                v2 = (int)y % data.num_y;
             }
-            else v2 = z % data.num_y;
+            else v2 = (int)z % data.num_y;
 
             float u = (location.X + u2 * atlas.GetWidth()) / (float)atlas.GetWidth();
             float v = (location.Y + v2 * atlas.GetHeight()) / (float)atlas.GetHeight();

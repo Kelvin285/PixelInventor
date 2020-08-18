@@ -98,6 +98,15 @@ namespace Inignoto.World
         {
             chunkManager.Render(device, effect);
             RenderTileSelection(device, effect);
+
+            for (int i = 0; i < entities.Count; i++)
+            {
+                Entity entity = entities[i];
+                if (entity != null)
+                {
+                    entity.Render(device, effect);
+                }
+            }
         }
 
         private Mesh selectionBox;
@@ -323,11 +332,13 @@ namespace Inignoto.World
 
             Vector3f raypos = new Vector3f(start);
             Vector3f raydir = new Vector3f(end).Sub(start).Div(length);
-
-            RayBox raybox = new RayBox();
-            raybox.Min = new Vector3f();
-            raybox.Max = new Vector3f();
-            for (int ii = 0; ii < 100; ii++)
+            
+            RayBox raybox = new RayBox
+            {
+                Min = new Vector3f(),
+                Max = new Vector3f()
+            };
+            for (int ii = 0; ii < 10; ii++)
             {
                 if (raypos.DistanceTo(start.Vector) > length)
                 {
@@ -338,7 +349,7 @@ namespace Inignoto.World
                 raybox.Max.Set(pos.x + 1, pos.y + 1, pos.z + 1);
                 RayIntersection intersection = Raytracing.IntersectBox(start, raydir, raybox);
                 raypos.Set(start);
-                raypos.Add(new Vector3f(raydir).Mul(intersection.lambda.Y + 0.001f));
+                raypos.Add(new Vector3f(raydir).Mul(intersection.lambda.Y + 0.01f));
                 TileData data = GetVoxel(pos);
                 Tile tile = TileManager.GetTile(data.tile_id);
                 if (tile != null)
@@ -353,9 +364,11 @@ namespace Inignoto.World
                             bool hit = false;
                             RayIntersection r = new RayIntersection();
                             foreach (RayBox box in tile.GetCollisionBoxes(data)) {
-                                RayBox b2 = new RayBox();
-                                b2.Min = new Vector3f(box.Min).Add(pos.x, pos.y, pos.z);
-                                b2.Max = new Vector3f(box.Max).Add(pos.x, pos.y, pos.z);
+                                RayBox b2 = new RayBox
+                                {
+                                    Min = new Vector3f(box.Min).Add(pos.x, pos.y, pos.z),
+                                    Max = new Vector3f(box.Max).Add(pos.x, pos.y, pos.z)
+                                };
 
                                 if (Raytracing.DoesCollisionOccur(start, dir, b2, new Quaternionf()))
                                 {

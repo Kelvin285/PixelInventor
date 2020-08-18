@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 
 namespace Inignoto.Math
 {
@@ -36,23 +37,25 @@ namespace Inignoto.Math
         public float Z { get => vector.Z; set => vector.Z = value; }
 
 
-        public void Set(float x, float y, float z)
+        public Vector3f Set(float x, float y, float z)
         {
             vector.X = x;
             vector.Y = y;
             vector.Z = z;
+            return this;
         }
 
-        public void Set(Vector3 vec)
+        public Vector3f Set(Vector3 vec)
         {
             vector.X = vec.X;
             vector.Y = vec.Y;
             vector.Z = vec.Z;
+            return this;
         }
 
-        public void Set(Vector3f vec)
+        public Vector3f Set(Vector3f vec)
         {
-            Set(vec.Vector);
+            return Set(vec.Vector);
         }
 
         public void SetX(float x)
@@ -193,5 +196,10 @@ namespace Inignoto.Math
         public Vector3 ZXY => new Vector3(Z, X, Y);
         public Vector3 YXZ => new Vector3(Y, X, Z);
         public Vector3 YZX => new Vector3(Y, Z, X);
+
+        public Vector3f Lerp(Vector3f a, float b)
+        {
+            return new Vector3f(Vector3.Lerp(Vector, a.Vector, b));
+        }
     }
 }

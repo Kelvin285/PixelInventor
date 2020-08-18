@@ -7,6 +7,7 @@ using Inignoto.Audio;
 using Inignoto.Entities;
 using Inignoto.Entities.Player;
 using Inignoto.Graphics.Textures;
+using Inignoto.Graphics.World;
 using Inignoto.Math;
 using Inignoto.Tiles;
 using Inignoto.Utilities;
@@ -26,6 +27,8 @@ namespace Inignoto.Items
         public TileItem(Tile tile, int max_stack = 64) : base(tile.name, max_stack, 0.25f)
         {
             this.tile = tile;
+            if (tile.IsVisible())
+            Mesh = TileBuilder.BuildTile(-0.5f, -0.5f, -0.5f, tile.DefaultData, Inignoto.game.GraphicsDevice);
         }
 
         protected override bool Attack(Entity user, GameTime time)
@@ -68,10 +71,10 @@ namespace Inignoto.Items
                     if (user is PlayerEntity)
                     {
                         PlayerEntity player = (PlayerEntity)user;
-                        player.inventory.hotbar[player.inventory.selected].count--;
-                        if (player.inventory.hotbar[player.inventory.selected].count <= 0)
+                        player.Inventory.hotbar[player.Inventory.selected].count--;
+                        if (player.Inventory.hotbar[player.Inventory.selected].count <= 0)
                         {
-                            player.inventory.hotbar[player.inventory.selected] = null;
+                            player.Inventory.hotbar[player.Inventory.selected] = null;
                         }
                     }
 

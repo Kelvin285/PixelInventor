@@ -39,6 +39,11 @@ namespace Inignoto.Graphics.Gui
             UpdateKeys();
         }
 
+        public virtual void PreRender(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime time)
+        {
+
+        }
+
         public virtual void Render(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime time)
         {
             if (openGui != null)
@@ -134,13 +139,13 @@ namespace Inignoto.Graphics.Gui
             {
                 int x = (7 + i * 31) * 3 + 1920 / 2 - (324 * 3) / 2;
                 int y = 5 * 3 + 1080 - 40 * 3;
-                ItemStack stack = Inignoto.game.player.inventory.hotbar[i];
+                ItemStack stack = Inignoto.game.player.Inventory.hotbar[i];
 
                 if (mouse_x >= x && mouse_y >= y && mouse_x <= x + 90 && mouse_y <= y + 90)
                 {
                     Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(x, y, 90, 90), new Rectangle(24, 330, 30, 30), Color.White);
                 }
-                if (openGui == null && i == Inignoto.game.player.inventory.selected)
+                if (openGui == null && i == Inignoto.game.player.Inventory.selected)
                 {
                     Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(x, y, 90, 90), new Rectangle(24, 300, 30, 30), Color.White);
                 }
@@ -207,23 +212,23 @@ namespace Inignoto.Graphics.Gui
             {
                 if (Settings.HOTBAR_KEYS[i].IsPressed())
                 {
-                    Inignoto.game.player.inventory.selected = i;
+                    Inignoto.game.player.Inventory.selected = i;
                 }
             }
             current_scroll = (Mouse.GetState().ScrollWheelValue / 8) / 15;
 
             int scroll = current_scroll - last_scroll;
 
-            if (Inignoto.game.player.inventory.selected + scroll > 9)
+            if (Inignoto.game.player.Inventory.selected + scroll > 9)
             {
-                Inignoto.game.player.inventory.selected = 0;
+                Inignoto.game.player.Inventory.selected = 0;
             }
             else
-            if (Inignoto.game.player.inventory.selected + scroll < 0)
+            if (Inignoto.game.player.Inventory.selected + scroll < 0)
             {
-                Inignoto.game.player.inventory.selected = 9;
+                Inignoto.game.player.Inventory.selected = 9;
             }
-            else Inignoto.game.player.inventory.selected += scroll;
+            else Inignoto.game.player.Inventory.selected += scroll;
             last_scroll = current_scroll;
         }
 
@@ -238,6 +243,8 @@ namespace Inignoto.Graphics.Gui
                 DrawString(spriteBatch, width, height, x + 5, y + 5, 0.75f, FontManager.mandrill_bold, "" + stack.count, Color.White);
             }
         }
+
+
 
         protected void Draw(SpriteBatch batch, int width, int height, Texture2D texture, Rectangle r1, Rectangle r2, Color color, float rotation)
         {

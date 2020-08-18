@@ -26,6 +26,7 @@ namespace Inignoto.Graphics.Gui
 
         private PhysicalInventory inventory;
 
+        private RenderTarget2D target;
 
         public InventoryGui(PhysicalInventory inventory)
         {
@@ -178,7 +179,47 @@ namespace Inignoto.Graphics.Gui
                 }
             }
 
-            
+            if (target != null)
+            {
+                //96, 106
+                int w = (int)(164 * 2.5f);
+                int h = (int)(108 * 2.5f);
+
+                Draw(spriteBatch, width, height, (Texture2D)target, new Rectangle((96 + (57 / 2)) * 3 - (w * 3 / 5) - 5, (106 + (97 / 2)) * 3 - h / 2 - 10 + drop, w, h), Color.White);
+            }
+
+        }
+
+        public override void PreRender(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime time)
+        {
+            DrawPlayer(device, Inignoto.game.BasicEffect, width, height, time);
+        }
+
+
+        public void DrawPlayer(GraphicsDevice device, BasicEffect effect, int width, int height, GameTime time)
+        {
+            Inignoto.game.camera.rotation.Y = 180;
+
+            effect.View = Inignoto.game.camera.ViewMatrix;
+
+            if (target == null)
+            {
+                target = new RenderTarget2D(device, width, height, false, SurfaceFormat.Color, DepthFormat.Depth16);
+            }
+
+            Inignoto.game.GraphicsDevice.SetRenderTarget(target);
+            Inignoto.game.GraphicsDevice.Clear(Color.Transparent);
+
+            Inignoto.game.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+
+            Inignoto.game.player.SetModelTransform(new Vector3f(-0.7f, -1f, 1.25f), new Vector3f(0, 0, 0));
+
+            Inignoto.game.player.Render(device, effect, true);
+
+            Inignoto.game.player.SetModelTransform();
+
+            Inignoto.game.GraphicsDevice.SetRenderTarget(null);
+
         }
 
         protected override void UpdateKeys()
@@ -216,7 +257,7 @@ namespace Inignoto.Graphics.Gui
             {
                 int x = (7 + i * 31) * 3 + 1920 / 2 - (324 * 3) / 2;
                 int y = 5 * 3 + 1080 - 40 * 3;
-                ItemStack stack = Inignoto.game.player.inventory.hotbar[i];
+                ItemStack stack = Inignoto.game.player.Inventory.hotbar[i];
 
                 if (MouseInSpace(mouse_x, mouse_y, new Rectangle(x, y, 90, 90)))
                 {

@@ -1,4 +1,5 @@
 ﻿using Inignoto.Entities;
+using Inignoto.Graphics.Mesh;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -17,6 +18,8 @@ namespace Inignoto.Items
 
         public readonly double cooldown;
         protected double cooldown_time = 0;
+
+        public Mesh Mesh { get; protected set; }
 
         public Item(string name, int max_stack = 64, double cooldown = 1.0f)
         {

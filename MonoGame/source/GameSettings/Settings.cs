@@ -30,6 +30,8 @@ namespace Inignoto.GameSettings
         public static InputSetting INVENTORY = new InputSetting(Keys.Escape, false);
         public static InputSetting ATTACK = new InputSetting(0, true);
         public static InputSetting USE = new InputSetting(1, true);
+        public static InputSetting PERSPECTIVE_SWITCH = new InputSetting(Keys.F5, false);
+
 
         public static InputSetting[] HOTBAR_KEYS = new InputSetting[10];
 
@@ -144,6 +146,10 @@ namespace Inignoto.GameSettings
                     {
                         INVENTORY.Read(b);
                     }
+                    if (a.Equals("PERSPECTIVE_SWITCH"))
+                    {
+                        PERSPECTIVE_SWITCH.Read(b);
+                    }
                     for (int i = 0; i < 10; i++)
                     {
                         if (a.Equals("HOTBAR_KEY"+i))
@@ -186,6 +192,7 @@ namespace Inignoto.GameSettings
             str += GetSaveString("ATTACK", ATTACK.Write());
             str += GetSaveString("USE", USE.Write());
             str += GetSaveString("INVENTORY", INVENTORY.Write());
+            str += GetSaveString("PERSPECTIVE_SWITCH", PERSPECTIVE_SWITCH.Write());
 
             for (int i = 0; i < 10; i++)
             {

@@ -11,8 +11,13 @@ namespace Inignoto.Graphics.Mesh
         VertexBuffer vertexBuffer;
 
         public readonly bool lines;
+
+        public readonly Texture2D texture;
+
+        public Vector3 scale = new Vector3(1.0f);
+        public Quaternion rotation = new Quaternion();
         
-        public Mesh(GraphicsDevice device, VertexPositionColorTexture[] triangleVertices, bool lines = false)
+        public Mesh(GraphicsDevice device, VertexPositionColorTexture[] triangleVertices, bool lines = false, Texture2D texture = null)
         {
             this.triangleVertices = triangleVertices;
             vertexBuffer = new VertexBuffer(device, typeof(
@@ -23,6 +28,7 @@ namespace Inignoto.Graphics.Mesh
 
             worldMatrix = Matrix.CreateWorld(new Vector3(0, 0, 0), Vector3.Forward, Vector3.Up);
             this.lines = lines;
+            this.texture = texture;
         }
 
         public void SetPosition(Vector3 position)
@@ -30,8 +36,23 @@ namespace Inignoto.Graphics.Mesh
             worldMatrix.Translation = position;
         }
 
+        public void SetScale(Vector3 scale)
+        {
+            this.scale = scale;
+        }
+
+        public void SetRotation(Quaternion rotation)
+        {
+            this.rotation = rotation;
+        }
+
         public bool IsDisposed => vertexBuffer.IsDisposed;
         public int Length => triangleVertices.Length;
+
+        public void Draw(BasicEffect effect, GraphicsDevice device)
+        {
+            Draw(texture, effect, device, worldMatrix);
+        }
 
         public void Draw(Texture texture, BasicEffect effect, GraphicsDevice device)
         {
@@ -40,7 +61,9 @@ namespace Inignoto.Graphics.Mesh
 
         public void Draw(Texture texture, BasicEffect effect, GraphicsDevice device, Matrix worldMatrix)
         {
-            effect.World = worldMatrix;
+            Matrix matrix = Matrix.CreateScale(scale) * Matrix.CreateFromQuaternion(rotation) * worldMatrix;
+            
+            effect.World = matrix;
             device.SetVertexBuffer(vertexBuffer);
             foreach (EffectPass pass in effect.CurrentTechnique.
                     Passes)

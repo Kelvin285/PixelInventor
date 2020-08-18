@@ -22,14 +22,19 @@ namespace Inignoto.Math
             this.RotateXYZ(axisX, axisY, axisZ);
         }
 
-        public Quaternion Rotation => rotation;
+        public Quaternionf(float x, float y, float z, float w)
+        {
+            rotation = new Quaternion(x, y, z, w);
+        }
+
+        public Quaternion Rotation { get => rotation; set => rotation = value; }
 
         public Quaternionf Identity()
         {
-            this.rotation.X = 0;
-            this.rotation.Y = 0;
-            this.rotation.Z = 0;
-            this.rotation.W = 1;
+            rotation.X = 0;
+            rotation.Y = 0;
+            rotation.Z = 0;
+            rotation.W = 1;
             return this;
         }
 

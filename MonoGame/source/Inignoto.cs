@@ -214,7 +214,7 @@ namespace Inignoto
             {
                 if (Hud.openGui == null)
                 {
-                    Hud.openGui = new InventoryGui(Inignoto.game.player.inventory);
+                    Hud.openGui = new InventoryGui(Inignoto.game.player.Inventory);
                 } else
                 {
                     Hud.openGui.Close();
@@ -233,10 +233,26 @@ namespace Inignoto
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
+            int width = Window.ClientBounds.Right - Window.ClientBounds.Left;
+            int height = Window.ClientBounds.Bottom - Window.ClientBounds.Top;
             
             BasicEffect.Projection = projectionMatrix;
+
+            Vector3f lastPos = camera.position;
+            camera.position = new Vector3f(0, 0, 0);
+            Vector3f lastRot = camera.rotation;
+            camera.rotation = new Vector3f(0, 0, 0);
             BasicEffect.View = camera.ViewMatrix;
-            
+
+            if (Hud.openGui != null)
+            {
+                
+                Hud.openGui.PreRender(GraphicsDevice, spriteBatch, width, height, gameTime);
+            }
+
+            camera.position = lastPos;
+            camera.rotation = lastRot;
+            BasicEffect.View = camera.ViewMatrix;
             GraphicsDevice.Clear(Color.CornflowerBlue);
             
             RasterizerState rasterizerState = new RasterizerState();
@@ -250,10 +266,7 @@ namespace Inignoto
             world.Render(GraphicsDevice, BasicEffect);
 
 
-            int width = Window.ClientBounds.Right - Window.ClientBounds.Left;
-            int height = Window.ClientBounds.Bottom - Window.ClientBounds.Top;
-
-
+            
             spriteBatch.Begin(SpriteSortMode.Deferred,
       BlendState.NonPremultiplied,
       SamplerState.PointClamp);

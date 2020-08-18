@@ -2,6 +2,7 @@
 using Inignoto.Math;
 using Inignoto.Tiles;
 using Inignoto.World;
+using Inignoto.World.RaytraceResult;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
@@ -56,7 +57,7 @@ namespace Inignoto.Entities
 
         public Vector3f ForwardLook
         {
-            get => new Vector3f(Vector3.Forward).Rotate(Quaternion.CreateFromYawPitchRoll(look.Y * (float)System.Math.PI / 180, look.X * (float)System.Math.PI / 180, look.Z * (float)System.Math.PI / 180));
+            get => new Vector3f(Vector3.Forward).Rotate(Quaternion.CreateFromYawPitchRoll((look.Y - 1) * ((float)System.Math.PI / 180.0f), look.X * ((float)System.Math.PI / 180.0f), look.Z * ((float)System.Math.PI / 180.0f)));
         }
 
 
@@ -100,7 +101,7 @@ namespace Inignoto.Entities
             
         }
 
-        public virtual void Render(GraphicsDevice device, BasicEffect effect)
+        public virtual void Render(GraphicsDevice device, BasicEffect effect, bool showModel = false)
         {
 
         }
@@ -144,6 +145,137 @@ namespace Inignoto.Entities
             {
                 DamageEntity(damage * damage * damage * 5);
             }
+        }
+
+        public virtual void DoBlockCollisions()
+        {
+            OnGround = false;
+
+
+            for (float sx = 0; sx < 2; sx++)
+            {
+                for (float sz = 0; sz < 2; sz++)
+                {
+                    TileRaytraceResult near_ground = world.RayTraceTiles(new Vector3f(position).Set(position).Add(size.X * sx, size.Y, size.Z * sz), new Vector3f(position).Set(position).Add(size.X * sx, -1.1f, size.Z * sz), Tiles.Tile.TileRayTraceType.BLOCK);
+                    if (near_ground != null)
+                    {
+                        NearGround = true;
+                    }
+                    TileRaytraceResult ground_result = world.RayTraceTiles(new Vector3f(position).Set(position).Add(size.X * sx, size.Y, size.Z * sz), new Vector3f(position).Set(position).Add(size.X * sx, 0, size.Z * sz), Tiles.Tile.TileRayTraceType.BLOCK);
+                    if (ground_result != null)
+                    {
+                        OnGround = true;
+                        if (velocity.Y < 0)
+                        {
+                            velocity.Y = 0;
+                        }
+                    }
+
+                    TileRaytraceResult step_result = world.RayTraceTiles(new Vector3f(position).Set(position).Add(size.X * sx, 0, size.Z * sz), new Vector3f(position).Set(position).Add(size.X * sx, StepHeight, size.Z * sz), Tiles.Tile.TileRayTraceType.BLOCK);
+                    if (step_result != null && NearGround)
+                    {
+                        position.Y += StepHeight;
+                    }
+                }
+            }
+
+
+            if (velocity.Y <= 0)
+            {
+                Vector3f collision_p1 = new Vector3f(position).Add(size.X * 0.5f, 0.01f, size.Z * 0.5f);
+                Vector3f collision_p2 = new Vector3f(position).Add(size.X * 0.5f, velocity.Y - 0.01f, size.Z * 0.5f);
+
+                TileRaytraceResult result = world.RayTraceTiles(collision_p1, collision_p2, Tiles.Tile.TileRayTraceType.BLOCK);
+                if (result != null)
+                {
+                    if (TileManager.GetTile(result.data.tile_id).BlocksMovement())
+                    {
+                        if (!LastOnGround && velocity.Y < 0)
+                        {
+                            PlayStepSound(SoundType.PLAYERS, -1);
+                        }
+                        position.Y = result.hit.Y;
+                        velocity.Y = 0;
+                        OnGround = true;
+                    }
+
+                }
+            }
+
+            BlockAboveHead = false;
+            for (float sx = 0; sx < 2; sx++)
+            {
+                for (float sz = 0; sz < 2; sz++)
+                {
+                    Vector3f collision_p1 = new Vector3f(position).Add(size.X * sx, size.Y - 0.1f, size.Z * sz);
+                    Vector3f collision_p2 = new Vector3f(position).Add(size.X * sx, size.Y + velocity.Y + 0.1f, size.Z * sz);
+
+                    TileRaytraceResult result = world.RayTraceTiles(collision_p1, collision_p2, Tiles.Tile.TileRayTraceType.BLOCK);
+                    if (result != null)
+                    {
+                        if (TileManager.GetTile(result.data.tile_id).BlocksMovement())
+                        {
+                            if (velocity.Y > 0)
+                            {
+                                velocity.Y = 0.0f;
+                                position.Y = result.hit.Y - size.Y - 0.1f;
+                            }
+                            BlockAboveHead = true;
+                            break;
+                        }
+
+                    }
+
+                }
+            }
+
+            if (TileManager.GetTile(world.GetVoxel(new TilePos(position.X + 0.5f, position.Y + size.Y, position.Z + 0.5f)).tile_id).BlocksMovement())
+            {
+                BlockAboveHead = true;
+            }
+
+            for (float sz = 0; sz < 2; sz++)
+            {
+                Vector3f collision_p1 = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * sz);
+                Vector3f collision_p2 = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * sz).Add(velocity.X, 0, 0).Add(size.X * 0.52f * velocity.X / System.Math.Abs(velocity.X), 0, 0);
+                for (float h = OnGround ? StepHeight : 0.1f; h < size.Y - 0.2f; h += 0.1f)
+                {
+                    collision_p1.Y = position.Y + h;
+                    collision_p2.Y = position.Y + h;
+                    TileRaytraceResult result = world.RayTraceTiles(collision_p1, collision_p2, Tiles.Tile.TileRayTraceType.BLOCK);
+                    if (result != null)
+                    {
+                        if (TileManager.GetTile(result.data.tile_id).BlocksMovement())
+                        {
+                            velocity.X = 0;
+                            break;
+                        }
+
+                    }
+                }
+            }
+
+            for (float sx = 0; sx < 2; sx++)
+            {
+                Vector3f collision_p1 = new Vector3f(position).Add(size.X * sx, 0, size.Z * 0.5f);
+                Vector3f collision_p2 = new Vector3f(position).Add(size.X * sx, 0, size.Z * 0.5f).Add(0, 0, velocity.Z).Add(0, 0, size.Z * 0.52f * velocity.Z / System.Math.Abs(velocity.Z));
+                for (float h = OnGround ? StepHeight : 0.1f; h < size.Y - 0.2f; h += 0.1f)
+                {
+                    collision_p1.Y = position.Y + h;
+                    collision_p2.Y = position.Y + h;
+                    TileRaytraceResult result = world.RayTraceTiles(collision_p1, collision_p2, Tiles.Tile.TileRayTraceType.BLOCK);
+                    if (result != null)
+                    {
+                        if (TileManager.GetTile(result.data.tile_id).BlocksMovement())
+                        {
+                            velocity.Z = 0;
+                            break;
+                        }
+
+                    }
+                }
+            }
+            LastOnGround = OnGround;
         }
 
         public virtual void PlayStepSound(SoundType soundType, float y_offset = 0)
