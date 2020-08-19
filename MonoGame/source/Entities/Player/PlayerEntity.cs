@@ -42,6 +42,8 @@ namespace Inignoto.Entities.Player
 
             Name = Name.Substring(0, System.Math.Min(Name.Length, 18));
             Inventory = new PhysicalInventory(this);
+
+            soundType = Audio.SoundType.PLAYERS;
         }
 
         public override void Update(GameTime time)

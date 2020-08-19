@@ -45,6 +45,8 @@ namespace Inignoto.Items
 
             TileRaytraceResult result = world.RayTraceTiles(eyePosition, new Vector3f(eyePosition).Add(user.ForwardLook.Mul(user.ReachDistance)), Tiles.Tile.TileRayTraceType.BLOCK);
 
+            if (result == null) return false;
+
             Vector3f normal = result.intersection.normal;
 
             TilePos pos = new World.World.TilePos(result.pos.x + normal.X, result.pos.y + normal.Y, result.pos.z + normal.Z);
@@ -56,8 +58,8 @@ namespace Inignoto.Items
                     Rectangle b1 = new Rectangle(pos.x * 32, pos.y * 32, 32, 32);
                     Rectangle b2 = new Rectangle(pos.x * 32, pos.z * 32, 32, 32);
 
-                    Rectangle p1 = new Rectangle((int)(e.position.X * 32) + 1, (int)(e.position.Y * 32) + 1, (int)(e.size.X * 32) - 2, (int)(e.size.Y * 32) - 2);
-                    Rectangle p2 = new Rectangle((int)(e.position.X * 32) + 1, (int)(e.position.Z * 32) + 1, (int)(e.size.X * 32) - 2, (int)(e.size.Z * 32) - 2);
+                    Rectangle p1 = new Rectangle((int)(e.position.X * 32), (int)(e.position.Y * 32) + 1, (int)(e.size.X * 32), (int)(e.size.Y * 32) - 1);
+                    Rectangle p2 = new Rectangle((int)(e.position.X * 32), (int)(e.position.Z * 32), (int)(e.size.X * 32), (int)(e.size.Z * 32));
 
                     if (b1.Intersects(p1) && b2.Intersects(p2))
                     {

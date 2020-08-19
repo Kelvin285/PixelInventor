@@ -166,7 +166,8 @@ namespace Inignoto.Graphics.Gui
             }
             else
             {
-                Draw(spriteBatch, width, height, Textures.Textures.fp_cursor, new Rectangle(1920 / 2 - 8, 1080 / 2 - 8, 16 * 3, 16 * 3), Inignoto.game.camera.highlightedTile == null ? Color.Gray : Color.White);
+                if (Inignoto.game.player.Perspective == 1)
+                Draw(spriteBatch, width, height, Textures.Textures.fp_cursor, new Rectangle(1920 / 2 - 8 * 3, 1080 / 2 - 8 * 3, 16 * 3, 16 * 3), Inignoto.game.camera.highlightedTile == null ? Color.Gray : Color.White);
 
                 RenderHealthbar(device, spriteBatch, width, height, time);
             }

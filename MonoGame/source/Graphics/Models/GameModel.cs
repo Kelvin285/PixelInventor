@@ -14,7 +14,7 @@ namespace Inignoto.Graphics.Models
     {
         public readonly List<Part> Parts = new List<Part>();
 
-        public readonly List<Keyframe> timeline = new List<Keyframe>();
+        public List<Keyframe> timeline = new List<Keyframe>();
 
         public float currentTime = 0.0f;
         public float animationSpeed = 1.0f / 30.0f;
@@ -130,13 +130,17 @@ namespace Inignoto.Graphics.Models
             
             Dictionary<string, string> data = FileUtils.LoadFileAsDataList(path);
 
+            List<string> commands = new List<string>();
+
             foreach (string a in data.Keys)
             {
-                string b = "";
-                data.TryGetValue(a, out b);
+                data.TryGetValue(a, out string b);
 
                 if (a.Length > 0 && b.Length > 0)
                 {
+
+                    if (commands.Contains(a)) continue;
+                    commands.Add(a);
                     if (a.Contains("frame"))
                     {
                         currentKeyframe = new Keyframe(int.Parse(b));
@@ -150,70 +154,95 @@ namespace Inignoto.Graphics.Models
                     {
                         currentTransform = new KeyTransformation();
                         currentKeyframe.transformations.Add(b, currentTransform);
+                        commands.Clear();
                     }
                     if (a.Contains("rotation"))
                     {
-                        String[] split = b.Split(',');
+                        string[] split = b.Split(',');
                         float x = float.Parse(split[0]);
                         float y = float.Parse(split[1]);
                         float z = float.Parse(split[2]);
                         float w = float.Parse(split[3]);
+                        if (currentTransform.rotation.X == 0 &&
+                            currentTransform.rotation.Y == 0 &&
+                            currentTransform.rotation.Z == 0 &&
+                            currentTransform.rotation.W == 0)
                         currentTransform.rotation = new Quaternionf(x, y, z, w);
                     }
                     if (a.Contains("look"))
                     {
-                        String[] split = b.Split(',');
+                        string[] split = b.Split(',');
                         float x = float.Parse(split[0]);
                         float y = float.Parse(split[1]);
                         float z = float.Parse(split[2]);
-                        currentTransform.look = new Vector3f(x, y, z);
+                        if (currentTransform.look.X == 0 &&
+                            currentTransform.look.Y == 0 &&
+                            currentTransform.look.Z == 1)
+                            currentTransform.look = new Vector3f(x, y, z);
                     }
                     if (a.Contains("origin"))
                     {
-                        String[] split = b.Split(',');
+                        string[] split = b.Split(',');
                         float x = float.Parse(split[0]);
                         float y = float.Parse(split[1]);
                         float z = float.Parse(split[2]);
-                        currentTransform.origin = new Vector3f(x, y, z);
+                        if (currentTransform.origin.X == 0 &&
+                            currentTransform.origin.Y == 0 &&
+                            currentTransform.origin.Z == 0)
+                            currentTransform.origin = new Vector3f(x, y, z);
                     }
                     if (a.Contains("position"))
                     {
-                        String[] split = b.Split(',');
+                        string[] split = b.Split(',');
                         float x = float.Parse(split[0]);
                         float y = float.Parse(split[1]);
                         float z = float.Parse(split[2]);
-                        currentTransform.position = new Vector3f(x, y, z);
+                        if (currentTransform.position.X == 0 &&
+                            currentTransform.position.Y == 0 &&
+                            currentTransform.position.Z == 0)
+                            currentTransform.position = new Vector3f(x, y, z);
                     }
                     if (a.Contains("axisAngles"))
                     {
-                        String[] split = b.Split(',');
+                        string[] split = b.Split(',');
                         float x = float.Parse(split[0]);
                         float y = float.Parse(split[1]);
                         float z = float.Parse(split[2]);
-                        currentTransform.axisAngles = new Vector3f(x, y, z);
+                        if (currentTransform.axisAngles.X == 0 &&
+                            currentTransform.axisAngles.Y == 0 &&
+                            currentTransform.axisAngles.Z == 0)
+                            currentTransform.axisAngles = new Vector3f(x, y, z);
                     }
                     if (a.Contains("scale"))
                     {
-                        String[] split = b.Split(',');
+                        string[] split = b.Split(',');
                         float x = float.Parse(split[0]);
                         float y = float.Parse(split[1]);
                         float z = float.Parse(split[2]);
-                        currentTransform.scale = new Vector3f(x, y, z);
+                        if (currentTransform.scale.X == 1 &&
+                            currentTransform.scale.Y == 1 &&
+                            currentTransform.scale.Z == 1)
+                            currentTransform.scale = new Vector3f(x, y, z);
                     }
                     if (a.Contains("size"))
                     {
-                        String[] split = b.Split(',');
+                        string[] split = b.Split(',');
                         int x = (int)float.Parse(split[0]);
                         int y = (int)float.Parse(split[1]);
                         int z = (int)float.Parse(split[2]);
-                        currentTransform.size = new Vector3f(x, y, z);
+                        if (currentTransform.size.X == 0 &&
+                            currentTransform.size.Y == 0 &&
+                            currentTransform.size.Z == 0)
+                            currentTransform.size = new Vector3f(x, y, z);
                     }
                     if (a.Contains("uv"))
                     {
-                        String[] split = b.Split(',');
+                        string[] split = b.Split(',');
                         int x = (int)float.Parse(split[0]);
                         int y = (int)float.Parse(split[1]);
-                        currentTransform.uv = new Vector2(x, y);
+                        if (currentTransform.uv.X == 0 &&
+                            currentTransform.uv.Y == 0)
+                            currentTransform.uv = new Vector2(x, y);
                     }
                     if (a.Contains("locked"))
                     {
@@ -342,54 +371,40 @@ namespace Inignoto.Graphics.Models
             }
         }
 
-        public void Render(GraphicsDevice device, BasicEffect effect)
+        public void Render(GraphicsDevice device, BasicEffect effect, GameTime time, bool updateAnimation = true)
         {
-            if (currentTime >= timeline.Count)
+            float delta = (float)time.ElapsedGameTime.TotalSeconds * 60;
+
+            if (updateAnimation)
             {
-                currentTime -= timeline.Count;
-            }
-            if (currentTime < 0)
-            {
-                currentTime += timeline.Count;
-            }
-            if (IsPlaying())
-            {
-                currentTime += animationSpeed * (float)timeline[GetCurrentFrame()].speed;
-            }
-            if (currentTime >= timeline.Count)
-            {
-                currentTime -= timeline.Count;
-            }
-            if (currentTime < 0)
-            {
-                currentTime += timeline.Count;
-            }
-            List<Part> p = new List<Part>();
-            foreach (Part part in Parts)
-            {
-                if (part.parent == null)
+                if (currentTime >= timeline.Count)
                 {
-                    p.Add(part);
+                    currentTime -= timeline.Count;
+                }
+                if (currentTime < 0)
+                {
+                    currentTime += timeline.Count;
+                }
+                if (IsPlaying())
+                {
+                    currentTime += animationSpeed * (float)timeline[GetCurrentFrame()].speed * delta;
+                }
+                if (currentTime >= timeline.Count)
+                {
+                    currentTime -= timeline.Count;
+                }
+                if (currentTime < 0)
+                {
+                    currentTime += timeline.Count;
                 }
             }
-
-            foreach (Part part in p)
-            {
-                part.Rotate(new Vector3f(rotation.X, 0, 0), origin);
-                part.Rotate(new Vector3f(0, rotation.Y, 0), origin);
-                part.Rotate(new Vector3f(0, 0, rotation.Z), origin);
-            }
-
+            
+            
             foreach (Part part in Parts)
             {
                 part.Render(device, effect);
             }
-            foreach (Part part in p)
-            {
-                part.Rotate(new Vector3f(0, 0, -rotation.Z), origin);
-                part.Rotate(new Vector3f(0, -rotation.Y, 0), origin);
-                part.Rotate(new Vector3f(-rotation.X, 0, 0), origin);
-            }
+            
         }
 
     }

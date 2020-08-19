@@ -263,7 +263,7 @@ namespace Inignoto
 
             TileManager.TryLoadTileTextures();
 
-            world.Render(GraphicsDevice, BasicEffect);
+            world.Render(GraphicsDevice, BasicEffect, gameTime);
 
 
             

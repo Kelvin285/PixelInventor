@@ -94,7 +94,7 @@ namespace Inignoto.World
             }
         }
 
-        public void Render(GraphicsDevice device, BasicEffect effect)
+        public void Render(GraphicsDevice device, BasicEffect effect, GameTime time)
         {
             chunkManager.Render(device, effect);
             RenderTileSelection(device, effect);
@@ -104,7 +104,7 @@ namespace Inignoto.World
                 Entity entity = entities[i];
                 if (entity != null)
                 {
-                    entity.Render(device, effect);
+                    entity.Render(device, effect, time);
                 }
             }
         }

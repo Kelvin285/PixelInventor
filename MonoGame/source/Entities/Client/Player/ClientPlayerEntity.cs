@@ -36,12 +36,15 @@ namespace Inignoto.Entities.Client.Player
         private GameSound wind_instance;
         private GameSound fabric_wind_instance;
 
-        private int perspective = 1;
+        public int Perspective { get; private set; }
+
+        private float WalkCycleSpeed = 0;
 
         public ClientPlayerEntity(World.World world, Vector3f position) : base(world, position)
         {
             wind_instance = new GameSound(SoundEffects.ambient_wind.CreateInstance(), SoundType.AMBIENT);
             fabric_wind_instance = new GameSound(SoundEffects.ambient_fabric_in_wind.CreateInstance(), SoundType.AMBIENT);
+            Perspective = 1;
         }
 
         public override void Update(GameTime time)
@@ -72,13 +75,14 @@ namespace Inignoto.Entities.Client.Player
                     }
 
             }
-
+            LastOnGround = OnGround;
         }
 
         private bool justPressedC = false;
 
         public void DoInputControls(GameTime time)
         {
+            float delta = (float)time.ElapsedGameTime.TotalSeconds * 60;
 
             float friction = 0.2f;
             float moveLerp = 0.1f;
@@ -89,27 +93,27 @@ namespace Inignoto.Entities.Client.Player
 
             if (Crouching && Flying)
             {
-                velocity.Y = -0.15f;
+                velocity.Y = -0.15f * delta;
                 flyMovement = true;
             }
 
             if (Settings.PERSPECTIVE_SWITCH.IsJustPressed())
             {
-                perspective++;
-                perspective %= 3;
+                Perspective++;
+                Perspective %= 3;
             }
             
             if (GameSettings.Settings.JUMP.IsPressed())
             {
                 if (OnGround)
                 {
-                    velocity.Y = 0.15f;
+                    velocity.Y = 0.15f * delta;
                     Jumping = true;
                 }
 
                 if (Flying)
                 {
-                    velocity.Y = 0.15f;
+                    velocity.Y = 0.15f * delta;
                     flyMovement = true;
                     if (Crouching) flyMovement = false;
                 }
@@ -151,28 +155,28 @@ namespace Inignoto.Entities.Client.Player
 
             if (Keyboard.GetState().IsKeyDown(Keys.W))
             {
-                Vector3 motion = (camera.ForwardMotionVector.Vector * new Vector3(GetMovementSpeed(), 0.0f, GetMovementSpeed()));
+                Vector3 motion = (ForwardMotionVector.Vector * new Vector3(GetMovementSpeed(time), 0.0f, GetMovementSpeed(time)));
                 trueMotion.Add(motion);
                 walking = true;
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.S))
             {
-                Vector3 motion = (camera.ForwardMotionVector.Vector * new Vector3(GetMovementSpeed(), 0.0f, GetMovementSpeed()) * -1f);
+                Vector3 motion = (ForwardMotionVector.Vector * new Vector3(GetMovementSpeed(time), 0.0f, GetMovementSpeed(time)) * -1f);
                 trueMotion.Add(motion);
                 walking = true;
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.A))
             {
-                Vector3 motion = (camera.RightMotionVector.Vector * new Vector3(GetMovementSpeed(), 0.0f, GetMovementSpeed()) * -1f);
+                Vector3 motion = (RightMotionVector.Vector * new Vector3(GetMovementSpeed(time), 0.0f, GetMovementSpeed(time)) * -1f);
                 trueMotion.Add(motion);
                 walking = true;
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.D))
             {
-                Vector3 motion = (camera.RightMotionVector.Vector * new Vector3(GetMovementSpeed(), 0.0f, GetMovementSpeed()));
+                Vector3 motion = (RightMotionVector.Vector * new Vector3(GetMovementSpeed(time), 0.0f, GetMovementSpeed(time)));
                 trueMotion.Add(motion);
                 walking = true;
             }
@@ -185,9 +189,13 @@ namespace Inignoto.Entities.Client.Player
             if (walking)
             {
                 float speed = 450;
-                if (Crouching || Crawling)
+                if (Crouching)
                 {
-                    speed = 750;
+                    speed = 450;
+                }
+                if (Crawling)
+                {
+                    speed = 650;
                 }
                 if (Running)
                 {
@@ -200,6 +208,8 @@ namespace Inignoto.Entities.Client.Player
                     WalkCycle = Inignoto.game.world.gameTime.TotalGameTime.TotalMilliseconds;
                     PlayStepSound(SoundType.PLAYERS);
                 }
+
+                WalkCycleSpeed = speed / 1000.0f;
             }
             
             if (Keyboard.GetState().IsKeyDown(Keys.C))
@@ -214,16 +224,16 @@ namespace Inignoto.Entities.Client.Player
             {
                 if (OnGround)
                 {
-                    velocity.Set(Vector3.Lerp(velocity.Vector, new Vector3(0, velocity.Y, 0), friction));
+                    velocity.Set(Vector3.Lerp(velocity.Vector, new Vector3(0, velocity.Y, 0), friction * delta));
                 } else
                 {
-                    velocity.Set(Vector3.Lerp(velocity.Vector, new Vector3(0, velocity.Y, 0), friction * 0.1f));
+                    velocity.Set(Vector3.Lerp(velocity.Vector, new Vector3(0, velocity.Y, 0), friction * 0.1f * delta));
                 }
             } else if (trueMotion.Vector.Length() > 0)
             {
                 trueMotion.Div(trueMotion.Vector.Length());
-                trueMotion.Mul(GetMovementSpeed());
-                velocity.Set(Vector3.Lerp(velocity.Vector, new Vector3(trueMotion.X, velocity.Y, trueMotion.Z), moveLerp));
+                trueMotion.Mul(GetMovementSpeed(time));
+                velocity.Set(Vector3.Lerp(velocity.Vector, new Vector3(trueMotion.X, velocity.Y, trueMotion.Z), moveLerp * delta));
             }
             DoItemActions(time);
         }
@@ -283,26 +293,26 @@ namespace Inignoto.Entities.Client.Player
 
         public void NormalMotion(GameTime time)
         {
-
+            float delta = (float)time.ElapsedGameTime.TotalSeconds * 60;
             if (!OnGround && !Flying)
             {
                 if (velocity.Y > 0)
                 {
                     if (GameSettings.Settings.JUMP.IsPressed())
                     {
-                        velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.0075f);
+                        velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.0075f * delta);
                     } else
                     {
-                        velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.01f);
+                        velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.01f * delta);
                     }
                 } else
                 {
                     if (GameSettings.Settings.SNEAK.IsPressed())
                     {
-                        velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.0125f);
+                        velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.0125f * delta);
                     }
                     else
-                        velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.01f);
+                        velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.01f * delta);
                 }
 
                 float d = System.Math.Abs(FallStart - position.Y);
@@ -623,11 +633,11 @@ namespace Inignoto.Entities.Client.Player
                 cpos.Add(new Vector3((float)x * CameraShakeIntensity, (float)y * CameraShakeIntensity, (float)z * CameraShakeIntensity));
             }
 
-            cpos.Add(ForwardLook.Mul(-(perspective - 1) * 4.0f));
+            cpos.Add(ForwardLook.Mul(-(Perspective - 1) * 4.0f));
 
             TileRaytraceResult result = world.RayTraceTiles(GetEyePosition(), cpos, TileRayTraceType.BLOCK);
 
-            cpos.Sub(ForwardLook.Mul(-(perspective - 1) * 0.5f));
+            cpos.Sub(ForwardLook.Mul(-(Perspective - 1) * 0.5f));
 
             if (result != null)
             {
@@ -639,7 +649,7 @@ namespace Inignoto.Entities.Client.Player
             
             camera.position.Set(Vector3.Lerp(camera.position.Vector, cpos.Vector, 1f));
             camera.rotation.Set(look.X, look.Y, look.Z);
-            if (perspective == 0)
+            if (Perspective == 0)
             {
                 camera.rotation.Set(-look.X, look.Y + 180, -look.Z);
             }
@@ -657,59 +667,75 @@ namespace Inignoto.Entities.Client.Player
                 float cos = (float)System.Math.Cos(look.Y * (3.14 / 180.0));
                 model.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
                 model.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
-
-                shirt.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
-                shirt.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
-
-                pants.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
-                pants.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
-
-                shoes.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
-                shoes.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
             }
         }
 
         public GameModel model;
-        public GameModel shirt;
-        public GameModel pants;
-        public GameModel shoes;
         public Texture2D texture;
+        public List<Keyframe> idle;
+        public List<Keyframe> walk;
+        public List<Keyframe> jump;
 
-        public Texture2D shirtTexture;
-        public Texture2D pantsTexture;
-        public Texture2D shoesTexture;
 
-        public override void Render(GraphicsDevice device, BasicEffect effect, bool showModel = false)
+        public override void Render(GraphicsDevice device, BasicEffect effect, GameTime time, bool showModel = false)
         {
             if (model == null)
             {
+                idle = GameModel.LoadAnimation(new Utilities.ResourcePath("inignoto", "models/entity/player/idle.anim", "assets"));
+                walk = GameModel.LoadAnimation(new Utilities.ResourcePath("inignoto", "models/entity/player/walk.anim", "assets"));
+                jump = GameModel.LoadAnimation(new Utilities.ResourcePath("inignoto", "models/entity/player/jump.anim", "assets"));
+
                 texture = Textures.LoadTexture(new Utilities.ResourcePath("Inignoto", "textures/entity/player/skin/skin1.png", "assets"));
-                model = GameModel.LoadModel(new Utilities.ResourcePath("inignoto", "models/test.model", "assets"), texture);
+                model = GameModel.LoadModel(new Utilities.ResourcePath("inignoto", "models/entity/player/player.model", "assets"), texture);
 
-                shirtTexture = Textures.LoadTexture(new Utilities.ResourcePath("Inignoto", "textures/entity/player/shirt/shirt1.png", "assets"));
-                shirt = GameModel.LoadModel(new Utilities.ResourcePath("inignoto", "models/shirt.model", "assets"), shirtTexture);
-
-                pantsTexture = Textures.LoadTexture(new Utilities.ResourcePath("Inignoto", "textures/entity/player/pants/pants1.png", "assets"));
-                pants = GameModel.LoadModel(new Utilities.ResourcePath("inignoto", "models/pants.model", "assets"), pantsTexture);
-
-                shoesTexture = Textures.LoadTexture(new Utilities.ResourcePath("Inignoto", "textures/entity/player/shoes/shoes1.png", "assets"));
-                shoes = GameModel.LoadModel(new Utilities.ResourcePath("inignoto", "models/shoes.model", "assets"), shoesTexture);
+                model.editMode = GameModel.EditMode.ANIMATION;
+                model.timeline = idle;
+                model.Play(0);
             }
-            if (model != null && perspective != 1 || model != null && showModel)
+
+            if (Walking)
+            {
+               
+                if (Running)
+                {
+                    model.animationSpeed = 1.5f / 15.0f;
+                    TryPlayAnimation(walk);
+                } else
+                {
+                    model.animationSpeed = 1.1f / 15.0f;
+                    TryPlayAnimation(walk);
+                }
+            } else
+            {
+                model.animationSpeed = 1.0f / 60.0f;
+                TryPlayAnimation(idle);
+            }
+
+            if (!OnGround)
+            {
+                TryPlayAnimation(jump);
+            }
+
+            if (model != null && Perspective != 1 || model != null && showModel)
             {
                 model.scale.Set(2.0f, 2.0f, 2.0f);
-                model.Render(device, effect);
-
-                shoes.scale.Set(2.0f, 2.0f, 2.0f);
-                shoes.Render(device, effect);
-
-                pants.scale.Set(2.0f, 2.0f, 2.0f);
-                pants.Render(device, effect);
-
-                shirt.scale.Set(2.0f, 2.0f, 2.0f);
-                shirt.Render(device, effect);
+                model.Render(device, effect, time);
             }
         }
+
+        public void TryPlayAnimation(List<Keyframe> animation)
+        {
+            if (model != null)
+            {
+                if (model.timeline != animation)
+                {
+                    model.timeline = animation;
+                    model.Play(0);
+                }
+            }
+        }
+
+
 
         public override void DamageEntity(float damage)
         {
@@ -729,14 +755,14 @@ namespace Inignoto.Entities.Client.Player
         }
        
 
-        public override float GetMovementSpeed()
+        public override float GetMovementSpeed(GameTime time)
         {
             if (Flying && !Crouching)
             {
-                if (Running) return 0.2f;
-                return 0.1f;
+                if (Running) return 0.2f * (float)time.ElapsedGameTime.TotalSeconds * 60;
+                return 0.1f * (float)time.ElapsedGameTime.TotalSeconds * 60;
             }
-            return base.GetMovementSpeed();
+            return base.GetMovementSpeed(time);
         }
 
         public override void PlayStepSound(SoundType soundType, float y_offset = 0)
@@ -757,8 +783,8 @@ namespace Inignoto.Entities.Client.Player
                 GameSound sound = new GameSound(effect.CreateInstance(), soundType);
                 sound.Volume = 0.5f;
                 if (Running) sound.Volume = 0.75f;
-                if (Crouching) sound.Volume = 0.25f;
-                if (Crawling) sound.Volume = 0.1f;
+                if (Crouching) sound.Volume = 0.35f;
+                if (Crawling) sound.Volume = 0.2f;
                 sound.Play();
                 SoundsToDispose.Add(sound);
             }

@@ -30,6 +30,7 @@ namespace Inignoto.Entities
         public override void Update(GameTime time)
         {
             base.Update(time);
+            float delta = (float)time.ElapsedGameTime.TotalSeconds * 60;
 
             OnGround = false;
             if (velocity.Y <= 0)
@@ -69,12 +70,12 @@ namespace Inignoto.Entities
                 }
             if (closest != null)
             {
-                MoveToPlayer(closest);
+                MoveToPlayer(closest, time);
             } else
             {
                 if (!OnGround)
                 {
-                    velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.01f);
+                    velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.01f * delta);
                 }
             }
 
@@ -82,9 +83,11 @@ namespace Inignoto.Entities
             position.Add(velocity);
         }
 
-        private void MoveToPlayer(PlayerEntity player)
+        private void MoveToPlayer(PlayerEntity player, GameTime time)
         {
-            position.Set(Vector3.Lerp(position.Vector, player.GetEyePosition().Vector, 0.075f));
+            float delta = (float)time.ElapsedGameTime.TotalSeconds * 60;
+
+            position.Set(Vector3.Lerp(position.Vector, player.GetEyePosition().Vector, 0.075f * delta));
             if (player.GetEyePosition().DistanceTo(position.Vector) <= 1)
             {
                 bool add = false;
@@ -154,7 +157,7 @@ namespace Inignoto.Entities
             }
         }
 
-        public override void Render(GraphicsDevice device, BasicEffect effect, bool showModel = false)
+        public override void Render(GraphicsDevice device, BasicEffect effect, GameTime time, bool showModel = false)
         {
             ItemStack stack = Stack;
             if (stack != null)

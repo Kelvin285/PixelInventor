@@ -55,9 +55,26 @@ namespace Inignoto.Entities
 
         public Vector3f look = new Vector3f(0, 0, 0);
 
+        public SoundType soundType = SoundType.CREATURES;
+
         public Vector3f ForwardLook
         {
             get => new Vector3f(Vector3.Forward).Rotate(Quaternion.CreateFromYawPitchRoll((look.Y - 1) * ((float)System.Math.PI / 180.0f), look.X * ((float)System.Math.PI / 180.0f), look.Z * ((float)System.Math.PI / 180.0f)));
+        }
+
+        public Vector3f ForwardMotionVector
+        {
+            get => new Vector3f(Vector3.Forward).Rotate(Quaternion.CreateFromYawPitchRoll(look.Y * (float)System.Math.PI / 180, 0, 0));
+        }
+
+        public Vector3f RightMotionVector
+        {
+            get => new Vector3f(Vector3.Forward).Rotate(Quaternion.CreateFromYawPitchRoll((look.Y - 90) * (float)System.Math.PI / 180, 0, 0));
+        }
+
+        public Vector3f UpMotionVector
+        {
+            get => new Vector3f(0, 1, 0);
         }
 
 
@@ -101,7 +118,7 @@ namespace Inignoto.Entities
             
         }
 
-        public virtual void Render(GraphicsDevice device, BasicEffect effect, bool showModel = false)
+        public virtual void Render(GraphicsDevice device, BasicEffect effect, GameTime time, bool showModel = false)
         {
 
         }
@@ -111,12 +128,12 @@ namespace Inignoto.Entities
             return size.Y * 0.85f;
         }
 
-        public virtual float GetMovementSpeed()
+        public virtual float GetMovementSpeed(GameTime time)
         {
-            if (Crawling) return 0.025f;
-            if (Crouching) return 0.035f;
-            if (Running) return 0.11f;
-            return 0.055f;
+            if (Crawling) return 0.025f * (float)time.ElapsedGameTime.TotalSeconds * 60;
+            if (Crouching) return 0.035f * (float)time.ElapsedGameTime.TotalSeconds * 60;
+            if (Running) return 0.11f * (float)time.ElapsedGameTime.TotalSeconds * 60;
+            return 0.055f * (float)time.ElapsedGameTime.TotalSeconds * 60;
         }
 
         public virtual Vector3f GetEyePosition()
@@ -192,7 +209,8 @@ namespace Inignoto.Entities
                     {
                         if (!LastOnGround && velocity.Y < 0)
                         {
-                            PlayStepSound(SoundType.PLAYERS, -1);
+                            PlayStepSound(soundType, -1);
+                            LandOnGround();
                         }
                         position.Y = result.hit.Y;
                         velocity.Y = 0;
