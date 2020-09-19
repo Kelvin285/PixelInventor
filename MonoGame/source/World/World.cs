@@ -15,6 +15,7 @@ using Inignoto.Entities;
 using System;
 using Inignoto.Graphics.Mesh;
 using Inignoto.Graphics.Textures;
+using Inignoto.Effects;
 
 namespace Inignoto.World
 {
@@ -94,7 +95,7 @@ namespace Inignoto.World
             }
         }
 
-        public void Render(GraphicsDevice device, BasicEffect effect, GameTime time)
+        public void Render(GraphicsDevice device, GameEffect effect, GameTime time)
         {
             chunkManager.Render(device, effect);
             RenderTileSelection(device, effect);
@@ -110,7 +111,7 @@ namespace Inignoto.World
         }
 
         private Mesh selectionBox;
-        public void RenderTileSelection(GraphicsDevice device, BasicEffect effect)
+        public void RenderTileSelection(GraphicsDevice device, GameEffect effect)
         {
             if (selectionBox == null)
             {

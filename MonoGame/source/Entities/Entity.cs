@@ -1,4 +1,5 @@
 ﻿using Inignoto.Audio;
+using Inignoto.Effects;
 using Inignoto.Math;
 using Inignoto.Tiles;
 using Inignoto.World;
@@ -118,7 +119,7 @@ namespace Inignoto.Entities
             
         }
 
-        public virtual void Render(GraphicsDevice device, BasicEffect effect, GameTime time, bool showModel = false)
+        public virtual void Render(GraphicsDevice device, GameEffect effect, GameTime time, bool showModel = false)
         {
 
         }

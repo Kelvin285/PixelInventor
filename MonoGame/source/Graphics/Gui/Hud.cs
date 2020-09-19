@@ -260,6 +260,7 @@ namespace Inignoto.Graphics.Gui
 
         protected void Draw(SpriteBatch batch, int width, int height, Texture2D texture, Rectangle r1, Rectangle r2, Color color)
         {
+            if (texture == null) return;
             float x = r1.X * (width / 1920.0f);
             float y = r1.Y * (height / 1080.0f);
             float w = r1.Width * (width / 1920.0f);
@@ -269,6 +270,7 @@ namespace Inignoto.Graphics.Gui
 
         protected void Draw(SpriteBatch batch, int width, int height, Texture2D texture, Rectangle r1, Color color)
         {
+            if (texture == null) return;
             float x = r1.X * (width / 1920.0f);
             float y = r1.Y * (height / 1080.0f);
             float w = r1.Width * (width / 1920.0f);

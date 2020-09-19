@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Inignoto.Audio;
 using Inignoto.Client;
+using Inignoto.Effects;
 using Inignoto.Entities.Player;
 using Inignoto.GameSettings;
 using Inignoto.Graphics.Gui;
@@ -40,11 +41,17 @@ namespace Inignoto.Entities.Client.Player
 
         private float WalkCycleSpeed = 0;
 
+        private float RenderEyeHeight = 0;
+
+        private float forward = 0;
+        private float right = 0;
+
         public ClientPlayerEntity(World.World world, Vector3f position) : base(world, position)
         {
             wind_instance = new GameSound(SoundEffects.ambient_wind.CreateInstance(), SoundType.AMBIENT);
             fabric_wind_instance = new GameSound(SoundEffects.ambient_fabric_in_wind.CreateInstance(), SoundType.AMBIENT);
             Perspective = 1;
+            RenderEyeHeight = GetEyeHeight();
         }
 
         public override void Update(GameTime time)
@@ -80,12 +87,22 @@ namespace Inignoto.Entities.Client.Player
 
         private bool justPressedC = false;
 
+        private float OffGroundTimer = 0.0f;
+
         public void DoInputControls(GameTime time)
         {
             float delta = (float)time.ElapsedGameTime.TotalSeconds * 60;
 
+            if (!OnGround)
+            {
+                OffGroundTimer = 1.0f;
+            } else
+            {
+                OffGroundTimer = MathHelper.Max(OffGroundTimer - delta, 0.0f);
+            }
+            
             float friction = 0.2f;
-            float moveLerp = 0.1f;
+            float moveLerp = (OffGroundTimer == 0) ? 0.9f : 0.25f;
 
             Camera camera = Inignoto.game.camera;
 
@@ -153,32 +170,36 @@ namespace Inignoto.Entities.Client.Player
             bool walking = false;
             Vector3f trueMotion = new Vector3f();
 
-            if (Keyboard.GetState().IsKeyDown(Keys.W))
+            if (Settings.FORWARD.IsPressed() && !Settings.BACKWARD.IsPressed())
             {
                 Vector3 motion = (ForwardMotionVector.Vector * new Vector3(GetMovementSpeed(time), 0.0f, GetMovementSpeed(time)));
                 trueMotion.Add(motion);
                 walking = true;
+                forward = GetMovementSpeed(time);
             }
 
-            if (Keyboard.GetState().IsKeyDown(Keys.S))
+            if (Settings.BACKWARD.IsPressed() && !Settings.FORWARD.IsPressed())
             {
                 Vector3 motion = (ForwardMotionVector.Vector * new Vector3(GetMovementSpeed(time), 0.0f, GetMovementSpeed(time)) * -1f);
                 trueMotion.Add(motion);
                 walking = true;
+                forward = -GetMovementSpeed(time);
             }
 
-            if (Keyboard.GetState().IsKeyDown(Keys.A))
+            if (Settings.LEFT.IsPressed() && !Settings.RIGHT.IsPressed())
             {
                 Vector3 motion = (RightMotionVector.Vector * new Vector3(GetMovementSpeed(time), 0.0f, GetMovementSpeed(time)) * -1f);
                 trueMotion.Add(motion);
                 walking = true;
+                right = -GetMovementSpeed(time);
             }
 
-            if (Keyboard.GetState().IsKeyDown(Keys.D))
+            if (Settings.RIGHT.IsPressed() && !Settings.LEFT.IsPressed())
             {
                 Vector3 motion = (RightMotionVector.Vector * new Vector3(GetMovementSpeed(time), 0.0f, GetMovementSpeed(time)));
                 trueMotion.Add(motion);
                 walking = true;
+                right = GetMovementSpeed(time);
             }
 
             Walking = walking;
@@ -193,15 +214,17 @@ namespace Inignoto.Entities.Client.Player
                 {
                     speed = 450;
                 }
-                if (Crawling)
-                {
-                    speed = 650;
-                }
+                
                 if (Running)
                 {
                     speed = 350;
                 }
-                
+
+                if (Crawling)
+                {
+                    speed = 1000;
+                }
+
 
                 if (Inignoto.game.world.gameTime.TotalGameTime.TotalMilliseconds > WalkCycle + speed)
                 {
@@ -227,7 +250,7 @@ namespace Inignoto.Entities.Client.Player
                     velocity.Set(Vector3.Lerp(velocity.Vector, new Vector3(0, velocity.Y, 0), friction * delta));
                 } else
                 {
-                    velocity.Set(Vector3.Lerp(velocity.Vector, new Vector3(0, velocity.Y, 0), friction * 0.1f * delta));
+                    velocity.Set(Vector3.Lerp(velocity.Vector, new Vector3(0, velocity.Y, 0), friction * 0.001f * delta));
                 }
             } else if (trueMotion.Vector.Length() > 0)
             {
@@ -580,17 +603,17 @@ namespace Inignoto.Entities.Client.Player
 
             if (Keyboard.GetState().IsKeyDown(Keys.S))
             {
-                position.Add(camera.ForwardMotionVector.Vector * new Vector3(0.1f, 0.0f, 0.1f) * -1f);
+                position.Add(camera.ForwardMotionVector.Vector * new Vector3(0.1f, 0.0f, 0.1f) * -0.75f);
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.A))
             {
-                position.Add(camera.RightMotionVector.Vector * new Vector3(0.1f, 0.0f, 0.1f) * -1f);
+                position.Add(camera.RightMotionVector.Vector * new Vector3(0.1f, 0.0f, 0.1f) * -0.75f);
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.D))
             {
-                position.Add(camera.RightMotionVector.Vector * new Vector3(0.1f, 0.0f, 0.1f));
+                position.Add(camera.RightMotionVector.Vector * new Vector3(0.1f, 0.0f, 0.1f) * 0.75f);
             }
         }
 
@@ -620,7 +643,7 @@ namespace Inignoto.Entities.Client.Player
             }
             
             Vector3f cpos = new Vector3f();
-            cpos.Set(position.X + size.X * 0.5f, position.Y + GetEyeHeight(), position.Z + size.Z * 0.5f);
+            cpos.Set(position.X + size.X * 0.5f, position.Y + RenderEyeHeight, position.Z + size.Z * 0.5f);
             if (Inignoto.game.world.gameTime.TotalGameTime.TotalMilliseconds < CameraShakeTime)
             {
                 Random random = new Random();
@@ -635,13 +658,13 @@ namespace Inignoto.Entities.Client.Player
 
             cpos.Add(ForwardLook.Mul(-(Perspective - 1) * 4.0f));
 
-            TileRaytraceResult result = world.RayTraceTiles(GetEyePosition(), cpos, TileRayTraceType.BLOCK);
+            TileRaytraceResult result = world.RayTraceTiles(GetEyePositionForRender(), cpos, TileRayTraceType.BLOCK);
 
             cpos.Sub(ForwardLook.Mul(-(Perspective - 1) * 0.5f));
 
             if (result != null)
             {
-                Vector3f dir = new Vector3f(cpos).Sub(GetEyePosition());
+                Vector3f dir = new Vector3f(cpos).Sub(GetEyePositionForRender());
                 if (dir.Vector.Length() != 0)
                     dir.Div(dir.Vector.Length());
                 cpos = GetEyePosition().Add(dir.Mul(result.intersection.lambda.X - 0.5f));
@@ -650,11 +673,19 @@ namespace Inignoto.Entities.Client.Player
             camera.position.Set(Vector3.Lerp(camera.position.Vector, cpos.Vector, 1f));
             camera.rotation.Set(look.X, look.Y, look.Z);
             if (Perspective == 0)
-            {
-                camera.rotation.Set(-look.X, look.Y + 180, -look.Z);
+            {   
+                camera.rotation.Set(-look.X, look.Y + 180, -look.Z + lean + rLean * 30);
             }
 
             SetModelTransform(position);
+            RenderEyeHeight = MathHelper.Lerp(RenderEyeHeight, GetEyeHeight(), 0.25f);
+            
+            
+        }
+
+        public virtual Vector3f GetEyePositionForRender()
+        {
+            return new Vector3f(position).Add(size.X * 0.5f, RenderEyeHeight, size.Z * 0.5f);
         }
 
         public void SetModelTransform(Vector3f position = null, Vector3f look = null)
@@ -667,60 +698,401 @@ namespace Inignoto.Entities.Client.Player
                 float cos = (float)System.Math.Cos(look.Y * (3.14 / 180.0));
                 model.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
                 model.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
+
+                shirt_model.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
+                shirt_model.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
+
+                pants_model.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
+                pants_model.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
+
+                shoes_model.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
+                shoes_model.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
+
+                eyes_model.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
+                eyes_model.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
+
+                hair_model.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
+                hair_model.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
             }
         }
 
         public GameModel model;
+        public GameModel shirt_model;
+        public GameModel pants_model;
+        public GameModel eyes_model;
+        public GameModel shoes_model;
+        public GameModel hair_model;
+
         public Texture2D texture;
+        public Texture2D shirt;
+        public Texture2D pants;
+        public Texture2D shoes;
+        public Texture2D eyes;
+        public Texture2D hair;
+
         public List<Keyframe> idle;
         public List<Keyframe> walk;
         public List<Keyframe> jump;
+        public List<Keyframe> run;
+        public List<Keyframe> fall;
+        public List<Keyframe> sneaking;
+        public List<Keyframe> sneak_idle;
+        public List<Keyframe> crawling;
+        public List<Keyframe> crawl_idle;
 
 
-        public override void Render(GraphicsDevice device, BasicEffect effect, GameTime time, bool showModel = false)
+        public bool shirt_visible = true;
+        public bool long_sleeves = false;
+        public bool pants_visible = true;
+        public bool long_pants = true;
+        public bool shoes_cover = true;
+
+        public GameModel pick_model;
+        public Texture2D pick_texture;
+
+        public override void Render(GraphicsDevice device, GameEffect effect, GameTime time, bool showModel = false)
         {
             if (model == null)
             {
-                idle = GameModel.LoadAnimation(new Utilities.ResourcePath("inignoto", "models/entity/player/idle.anim", "assets"));
-                walk = GameModel.LoadAnimation(new Utilities.ResourcePath("inignoto", "models/entity/player/walk.anim", "assets"));
-                jump = GameModel.LoadAnimation(new Utilities.ResourcePath("inignoto", "models/entity/player/jump.anim", "assets"));
+                idle = GameModel.LoadAnimation(new Utilities.ResourcePath("Inignoto", "models/entity/player/idle.anim", "assets"));
+                walk = GameModel.LoadAnimation(new Utilities.ResourcePath("Inignoto", "models/entity/player/walk.anim", "assets"));
+                jump = GameModel.LoadAnimation(new Utilities.ResourcePath("Inignoto", "models/entity/player/jump.anim", "assets"));
+                run = GameModel.LoadAnimation(new Utilities.ResourcePath("Inignoto", "models/entity/player/run.anim", "assets"));
+                fall = GameModel.LoadAnimation(new Utilities.ResourcePath("Inignoto", "models/entity/player/fall.anim", "assets"));
+                sneaking = GameModel.LoadAnimation(new Utilities.ResourcePath("Inignoto", "models/entity/player/sneaking.anim", "assets"));
+                sneak_idle = GameModel.LoadAnimation(new Utilities.ResourcePath("Inignoto", "models/entity/player/sneak_idle.anim", "assets"));
+                crawling = GameModel.LoadAnimation(new Utilities.ResourcePath("Inignoto", "models/entity/player/crawling.anim", "assets"));
+                crawl_idle = GameModel.LoadAnimation(new Utilities.ResourcePath("Inignoto", "models/entity/player/crawl_idle.anim", "assets"));
+
 
                 texture = Textures.LoadTexture(new Utilities.ResourcePath("Inignoto", "textures/entity/player/skin/skin1.png", "assets"));
-                model = GameModel.LoadModel(new Utilities.ResourcePath("inignoto", "models/entity/player/player.model", "assets"), texture);
+                shirt = Textures.LoadTexture(new Utilities.ResourcePath("Inignoto", "textures/entity/player/shirt/shirt1.png", "assets"));
+                pants = Textures.LoadTexture(new Utilities.ResourcePath("Inignoto", "textures/entity/player/pants/pants1.png", "assets"));
+                shoes = Textures.LoadTexture(new Utilities.ResourcePath("Inignoto", "textures/entity/player/shoes/shoes1.png", "assets"));
+                eyes = Textures.LoadTexture(new Utilities.ResourcePath("Inignoto", "textures/entity/player/eyes/eyes1.png", "assets"));
+                hair = Textures.LoadTexture(new Utilities.ResourcePath("Inignoto", "textures/entity/player/hair/hair1.png", "assets"));
+
+                model = GameModel.LoadModel(new Utilities.ResourcePath("Inignoto", "models/entity/player/player.model", "assets"), texture);
+                shirt_model = GameModel.LoadModel(new Utilities.ResourcePath("Inignoto", "models/entity/player/player.model", "assets"), shirt);
+                pants_model = GameModel.LoadModel(new Utilities.ResourcePath("Inignoto", "models/entity/player/player.model", "assets"), pants);
+                eyes_model = GameModel.LoadModel(new Utilities.ResourcePath("Inignoto", "models/entity/player/eyes.model", "assets"), eyes);
+                shoes_model = GameModel.LoadModel(new Utilities.ResourcePath("Inignoto", "models/entity/player/player.model", "assets"), shoes);
+                hair_model = GameModel.LoadModel(new Utilities.ResourcePath("Inignoto", "models/entity/player/hair1.model", "assets"), hair);
+
+                pick_texture = Textures.LoadTexture(new Utilities.ResourcePath("Inignoto", "textures/items/iron_pickaxe.png", "assets"));
+                pick_model = GameModel.LoadModel(new Utilities.ResourcePath("Inignoto", "models/item/iron_pickaxe.model", "assets"), pick_texture);
+                pick_model.timeline = GameModel.LoadAnimation(new Utilities.ResourcePath("Inignoto", "models/item/iron_pickaxe.anim", "assets"));
+                pick_model.editMode = GameModel.EditMode.MODEL;
+                //pick_model.Play(0);
 
                 model.editMode = GameModel.EditMode.ANIMATION;
                 model.timeline = idle;
                 model.Play(0);
+
+                shirt_model.editMode = GameModel.EditMode.ANIMATION;
+                shirt_model.timeline = idle;
+                shirt_model.Play(0);
+
+                pants_model.editMode = GameModel.EditMode.ANIMATION;
+                pants_model.timeline = idle;
+                pants_model.Play(0);
+
+                eyes_model.editMode = GameModel.EditMode.ANIMATION;
+                eyes_model.timeline = idle;
+                eyes_model.Play(0);
+
+                shoes_model.editMode = GameModel.EditMode.ANIMATION;
+                shoes_model.timeline = idle;
+                shoes_model.Play(0);
+
+                hair_model.editMode = GameModel.EditMode.ANIMATION;
+                hair_model.timeline = idle;
+                hair_model.Play(0);
+            }
+
+            if (shoes_model != null)
+                foreach (Part part in shoes_model.Parts)
+                {
+                    if (!part.name.Contains("Foot"))
+                    {
+                        part.visible = false;
+                    }
+                }
+
+            if (hair_model != null)
+                foreach (Part part in hair_model.Parts)
+                {
+                    if (!part.name.Contains("Head"))
+                    {
+                        part.visible = false;
+                    }
+                }
+
+            if (eyes_model != null)
+                foreach (Part part in pants_model.Parts)
+                {
+                    if (!part.name.Contains("Head"))
+                    {
+                        part.visible = false;
+                    }
+                }
+
+            if (pants_model != null)
+                foreach (Part part in pants_model.Parts)
+                {
+                    part.visible = false;
+                    if (part.name.Contains("Leg"))
+                    {
+                        part.visible = true;
+                        if (!long_pants)
+                        {
+                            if (part.name.Contains("Leg_Lower"))
+                            {
+                                part.visible = false;
+                            }
+                        }
+                    }
+                }
+
+            if (shirt_model != null)
+            foreach (Part part in shirt_model.Parts)
+            {
+                    if (!(part.name.Contains("Body") || part.name.Contains("Arm")))
+                    {
+                        part.visible = false;
+                    }
+                    if (part.name.Contains("Arm") && part.name.Contains("Arm_Lower"))
+                    {
+                        part.visible = long_sleeves;
+                    }
+            }
+
+                foreach (Part part in model.Parts)
+            {
+                if (part.name.Contains("Body") || part.name.Contains("Arm"))
+                {
+                    if (shirt_visible)
+                    {
+                        part.visible = false;
+                        if (!long_sleeves)
+                        {
+                            if (part.name.Contains("Arm_Lower"))
+                            {
+                                part.visible = true;
+                            }
+                        }
+                    }
+                }
+                if (part.name.Contains("Leg"))
+                {
+                    if (pants_visible)
+                    {
+                        part.visible = false;
+                        if (!long_pants)
+                        {
+                            if (part.name.Contains("Leg_Lower")) part.visible = true;
+                        }
+                    }
+                }
+                if (shoes_cover && part.name.Contains("Foot"))
+                {
+                    part.visible = false;
+                }
             }
 
             if (Walking)
             {
-               
-                if (Running)
+                if (Crawling)
                 {
-                    model.animationSpeed = 1.5f / 15.0f;
-                    TryPlayAnimation(walk);
-                } else
+                    model.animationSpeed = 0.25f / 15.0f;
+                    shirt_model.animationSpeed = 0.25f / 15.0f;
+                    pants_model.animationSpeed = 0.25f / 15.0f;
+                    eyes_model.animationSpeed = 0.25f / 15.0f;
+                    shoes_model.animationSpeed = 0.25f / 15.0f;
+                    hair_model.animationSpeed = 0.25f / 15.0f;
+                    TryPlayAnimation(crawling);
+                }
+                else
+                 if (Crouching)
                 {
                     model.animationSpeed = 1.1f / 15.0f;
-                    TryPlayAnimation(walk);
+                    shirt_model.animationSpeed = 1.1f / 15.0f;
+                    pants_model.animationSpeed = 1.1f / 15.0f;
+                    eyes_model.animationSpeed = 1.1f / 15.0f;
+                    shoes_model.animationSpeed = 1.1f / 15.0f;
+                    hair_model.animationSpeed = 1.1f / 15.0f;
+                    TryPlayAnimation(sneaking);
+                } else
+                {
+                    if (Running)
+                    {
+                        model.animationSpeed = (1.5f / 15.0f) * 2.0f;
+                        shirt_model.animationSpeed = (1.5f / 15.0f) * 2.0f;
+                        pants_model.animationSpeed = (1.5f / 15.0f) * 2.0f;
+                        eyes_model.animationSpeed = (1.5f / 15.0f) * 2.0f;
+                        shoes_model.animationSpeed = (1.5f / 15.0f) * 2.0f;
+                        hair_model.animationSpeed = (1.5f / 15.0f) * 2.0f;
+                        TryPlayAnimation(run);
+                    }
+                    else
+                    {
+                        model.animationSpeed = 1.1f / 15.0f;
+                        shirt_model.animationSpeed = 1.1f / 15.0f;
+                        pants_model.animationSpeed = 1.1f / 15.0f;
+                        eyes_model.animationSpeed = 1.1f / 15.0f;
+                        shoes_model.animationSpeed = 1.1f / 15.0f;
+                        hair_model.animationSpeed = 1.1f / 15.0f;
+                        TryPlayAnimation(walk);
+                    }
                 }
+
+                
             } else
             {
                 model.animationSpeed = 1.0f / 60.0f;
-                TryPlayAnimation(idle);
+                shirt_model.animationSpeed = 1.0f / 60.0f;
+                pants_model.animationSpeed = 1.0f / 60.0f;
+                eyes_model.animationSpeed = 1.0f / 60.0f;
+                shoes_model.animationSpeed = 1.0f / 60.0f;
+                hair_model.animationSpeed = 1.0f / 60.0f;
+                if (Crawling)
+                {
+                    TryPlayAnimation(crawl_idle);
+                }
+                else
+                if (Crouching)
+                {
+                    TryPlayAnimation(sneak_idle);
+                } else
+                {
+                    TryPlayAnimation(idle);
+                }
             }
 
             if (!OnGround)
             {
-                TryPlayAnimation(jump);
+                TryPlayAnimation(fall);
             }
 
             if (model != null && Perspective != 1 || model != null && showModel)
             {
+                if (shirt_model != null)
+                {
+                    shirt_model.currentTime = model.currentTime;
+                    shirt_model.scale.Set(2.0f, 2.0f, 2.0f);
+                    shirt_model.Render(device, effect, time);
+                }
+                if (pants_model != null)
+                {
+                    pants_model.currentTime = model.currentTime;
+                    pants_model.scale.Set(2.0f, 2.0f, 2.0f);
+                    pants_model.Render(device, effect, time);
+                }
+                if (shoes_model != null)
+                {
+                    shoes_model.currentTime = model.currentTime;
+                    shoes_model.scale.Set(2.0f, 2.0f, 2.0f);
+                    shoes_model.Render(device, effect, time);
+                }
+
+                eyes_model.currentTime = model.currentTime;
+                hair_model.currentTime = model.currentTime;
+
                 model.scale.Set(2.0f, 2.0f, 2.0f);
                 model.Render(device, effect, time);
+
+                if (eyes_model != null)
+                {
+                    eyes_model.scale.Set(2.0f, 2.0f, 2.0f);
+                    eyes_model.Render(device, effect, time);
+                }
+
+                if (hair_model != null)
+                {
+                    hair_model.scale.Set(2.0f, 2.0f, 2.0f);
+                    hair_model.Render(device, effect, time);
+                }
+
+                ItemStack stack = Inventory.hotbar[Inventory.selected];
+                if (stack != null)
+                {
+                    if (stack.item.Model != null)
+                    {
+                        Vector3f renderPos = null;
+                        Quaternionf renderRot = null;
+                        foreach (Part part in model.Parts)
+                        {
+                            if (part.name.Contains("Right_Hand"))
+                            {
+                                renderPos = part.RenderPosition;
+                                renderRot = part.RenderRotation;
+                            }
+                        }
+
+                        stack.item.Model.scale = new Vector3f(1.0f, 1.0f, 1.0f);
+                        stack.item.Model.translation = renderPos;
+
+                        Vector3f euler = renderRot.ToEulerAngles();
+
+                        Vector3f e2 = new Vector3f(euler.Z, euler.X, euler.Y);
+
+                        stack.item.Model.rotation = new Vector3f(0, 90f * 3.14f / 180.0f, 90f * 3.14f / 180.0f).Add(new Vector3f(model.rotation)).Add(e2);
+
+                        stack.item.Model.Render(device, effect, time);
+                    }
+                }
             }
+            SetHeadRotation(-look.X, 0);
+
+            lean = MathHelper.Lerp(lean, lastYaw - look.Y, 0.1f);
+            fLean = MathHelper.Lerp(fLean, forward, 0.15f);
+            rLean = MathHelper.Lerp(rLean, right, 0.15f);
+
+            forward = 0;
+            right = 0;
+
+            SetLean(lean + rLean * 30);
+            SetForwardLean(fLean * 45);
+
+            lastYaw = look.Y;
+
+            
+        }
+
+        private float rLean;
+        private float fLean;
+
+        private float lastYaw = 0;
+        private float lean = 0;
+
+        public void SetForwardLean(float lean)
+        {
+            model.rotation.X = lean * (float)System.Math.PI / 180.0f;
+            eyes_model.rotation.X = lean * (float)System.Math.PI / 180.0f;
+            shirt_model.rotation.X = lean * (float)System.Math.PI / 180.0f;
+            pants_model.rotation.X = lean * (float)System.Math.PI / 180.0f;
+            shoes_model.rotation.X = lean * (float)System.Math.PI / 180.0f;
+            hair_model.rotation.X = lean * (float)System.Math.PI / 180.0f;
+        }
+
+        public void SetLean(float lean)
+        {
+            model.rotation.Z = lean * (float)System.Math.PI / 180.0f;
+            eyes_model.rotation.Z = lean * (float)System.Math.PI / 180.0f;
+            shirt_model.rotation.Z = lean * (float)System.Math.PI / 180.0f;
+            pants_model.rotation.Z = lean * (float)System.Math.PI / 180.0f;
+            shoes_model.rotation.Z = lean * (float)System.Math.PI / 180.0f;
+            hair_model.rotation.Z = lean * (float)System.Math.PI / 180.0f;
+        }
+
+        public void SetHeadRotation(float pitch, float yaw)
+        {
+            model.extra_rotations["Neck"] = new Vector3(pitch * (float)System.Math.PI / 180.0f, yaw * (float)System.Math.PI / 180.0f, 0);
+            eyes_model.extra_rotations["Neck"] = new Vector3(pitch * (float)System.Math.PI / 180.0f, yaw * (float)System.Math.PI / 180.0f, 0);
+            shirt_model.extra_rotations["Neck"] = new Vector3(pitch * (float)System.Math.PI / 180.0f, yaw * (float)System.Math.PI / 180.0f, 0);
+            pants_model.extra_rotations["Neck"] = new Vector3(pitch * (float)System.Math.PI / 180.0f, yaw * (float)System.Math.PI / 180.0f, 0);
+            shoes_model.extra_rotations["Neck"] = new Vector3(pitch * (float)System.Math.PI / 180.0f, yaw * (float)System.Math.PI / 180.0f, 0);
+            hair_model.extra_rotations["Neck"] = new Vector3(pitch * (float)System.Math.PI / 180.0f, yaw * (float)System.Math.PI / 180.0f, 0);
         }
 
         public void TryPlayAnimation(List<Keyframe> animation)
@@ -731,6 +1103,16 @@ namespace Inignoto.Entities.Client.Player
                 {
                     model.timeline = animation;
                     model.Play(0);
+                    shirt_model.timeline = animation;
+                    shirt_model.Play(0);
+                    pants_model.timeline = animation;
+                    pants_model.Play(0);
+                    eyes_model.timeline = animation;
+                    eyes_model.Play(0);
+                    shoes_model.timeline = animation;
+                    shoes_model.Play(0);
+                    hair_model.timeline = animation;
+                    hair_model.Play(0);
                 }
             }
         }

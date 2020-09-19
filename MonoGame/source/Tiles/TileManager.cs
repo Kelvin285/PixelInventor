@@ -2,6 +2,7 @@
 using Inignoto.Graphics.Mesh;
 using Inignoto.Graphics.Textures;
 using Inignoto.Graphics.World;
+using Inignoto.Utilities;
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 
@@ -50,7 +51,7 @@ namespace Inignoto.Tiles
 
                 Mesh mesh = TileBuilder.BuildTile(0, 0, 0, tile.DefaultData, Inignoto.game.GraphicsDevice);
 
-                Textures.TILE_ITEMS.Add(tile.DefaultData, mesh.CreateTexture(Textures.tiles.GetTexture(), Inignoto.game.BasicEffect, Inignoto.game.GraphicsDevice, new Vector3(-0.75f, -0.2f, -1.4f), Quaternion.CreateFromYawPitchRoll(45 * 3.14f / 180, 30 * 3.14f / 180, 0), 128, 128));
+                Textures.TILE_ITEMS.Add(tile.DefaultData, mesh.CreateTexture(Textures.tiles.GetTexture(), GameResources.effect, Inignoto.game.GraphicsDevice, new Vector3(-0.75f, -0.2f, -1.4f), Quaternion.CreateFromYawPitchRoll(45 * 3.14f / 180, 30 * 3.14f / 180, 0), 128, 128));
 
                 mesh.Dispose();
             }

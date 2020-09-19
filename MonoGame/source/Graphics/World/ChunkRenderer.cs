@@ -1,6 +1,7 @@
 ﻿using Inignoto.World.Chunks;
 using Microsoft.Xna.Framework.Graphics;
 using Inignoto.Utilities;
+using Inignoto.Effects;
 
 namespace Inignoto.Graphics.World
 {
@@ -11,7 +12,7 @@ namespace Inignoto.Graphics.World
 
         }
 
-        public void RenderChunk(GraphicsDevice device, BasicEffect effect, Chunk chunk)
+        public void RenderChunk(GraphicsDevice device, GameEffect effect, Chunk chunk)
         {
             if (chunk.secondMesh != null)
                 chunk.secondMesh.Draw(Textures.Textures.tiles.GetTexture(), effect, device);

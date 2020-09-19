@@ -1,4 +1,5 @@
-﻿using Inignoto.Math;
+﻿using Inignoto.Effects;
+using Inignoto.Math;
 using Inignoto.Utilities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -16,6 +17,8 @@ namespace Inignoto.Graphics.Models
 
         public List<Keyframe> timeline = new List<Keyframe>();
 
+        public Dictionary<string, Vector3> extra_rotations = new Dictionary<string, Vector3>();
+
         public float currentTime = 0.0f;
         public float animationSpeed = 1.0f / 30.0f;
 
@@ -23,6 +26,13 @@ namespace Inignoto.Graphics.Models
         public Vector3f translation = new Vector3f(0, 0, 0);
         public Vector3f scale = new Vector3f(1, 1, 1);
         public Vector3f origin = new Vector3f(0, 0, 0);
+
+        private Texture2D texture;
+
+        public Texture2D Texture { get => texture; set {
+                texture = value;
+                ChangeTexture(value);
+            } }
 
         private bool playing = false;
 
@@ -132,6 +142,8 @@ namespace Inignoto.Graphics.Models
 
             List<string> commands = new List<string>();
 
+            string name = "";
+
             foreach (string a in data.Keys)
             {
                 data.TryGetValue(a, out string b);
@@ -155,6 +167,7 @@ namespace Inignoto.Graphics.Models
                         currentTransform = new KeyTransformation();
                         currentKeyframe.transformations.Add(b, currentTransform);
                         commands.Clear();
+                        name = b;
                     }
                     if (a.Contains("rotation"))
                     {
@@ -193,6 +206,7 @@ namespace Inignoto.Graphics.Models
                     }
                     if (a.Contains("position"))
                     {
+                        
                         string[] split = b.Split(',');
                         float x = float.Parse(split[0]);
                         float y = float.Parse(split[1]);
@@ -201,6 +215,7 @@ namespace Inignoto.Graphics.Models
                             currentTransform.position.Y == 0 &&
                             currentTransform.position.Z == 0)
                             currentTransform.position = new Vector3f(x, y, z);
+
                     }
                     if (a.Contains("axisAngles"))
                     {
@@ -353,13 +368,14 @@ namespace Inignoto.Graphics.Models
                     }
                     else
                     {
+                        if (part.name.Equals("Part"))
                         part.name = s;
                     }
                 }
             }
             model.Parts.Clear();
             model.Parts.AddRange(parts);
-            
+            model.ChangeTexture(texture);
             return model;
         }
 
@@ -369,9 +385,10 @@ namespace Inignoto.Graphics.Models
             {
                 part.ChangeTexture(texture);
             }
+            this.texture = texture;
         }
 
-        public void Render(GraphicsDevice device, BasicEffect effect, GameTime time, bool updateAnimation = true)
+        public void Render(GraphicsDevice device, GameEffect effect, GameTime time, bool updateAnimation = true)
         {
             float delta = (float)time.ElapsedGameTime.TotalSeconds * 60;
 
@@ -398,13 +415,57 @@ namespace Inignoto.Graphics.Models
                     currentTime += timeline.Count;
                 }
             }
-            
-            
+
+            editMode = EditMode.ANIMATION;
+
+            foreach (Part part in Parts)
+            {
+                if (part.RenderRotation == null)
+                {
+                    part.RenderRotation = part.GetRotation();
+                }
+                part.RenderRotation.Rotation = Quaternion.Lerp(part.RenderRotation.Rotation, part.GetRotation().Rotation, 0.05f);
+            }
+
+            editMode = EditMode.MODEL;
+            foreach (string str in extra_rotations.Keys)
+            {
+                extra_rotations.TryGetValue(str, out Vector3 val);
+
+                foreach (Part part in Parts)
+                {
+                    if (part.name.Equals(str))
+                    {
+                        
+                        part.Rotate(new Vector3f(val.X, 0, 0));
+                        part.Rotate(new Vector3f(0, val.Y, 0));
+                        part.Rotate(new Vector3f(0, 0, val.Z));
+                    }
+                }
+            }
+            editMode = EditMode.ANIMATION;
+
             foreach (Part part in Parts)
             {
                 part.Render(device, effect);
             }
-            
+            editMode = EditMode.MODEL;
+            foreach (string str in extra_rotations.Keys)
+            {
+                extra_rotations.TryGetValue(str, out Vector3 val);
+
+                foreach (Part part in Parts)
+                {
+                    if (part.name.Equals(str))
+                    {
+                        part.Rotate(new Vector3f(0, 0, -val.Z));
+                        part.Rotate(new Vector3f(0, -val.Y, 0));
+                        part.Rotate(new Vector3f(-val.X, 0, 0));
+
+                    }
+                }
+            }
+            editMode = EditMode.ANIMATION;
         }
 
     }

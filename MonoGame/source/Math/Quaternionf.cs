@@ -38,6 +38,22 @@ namespace Inignoto.Math
             return this;
         }
 
+        public Vector3f ToEulerAngles()
+        {
+            
+            Vector3f pitchYawRoll = new Vector3f();
+
+            float yaw = (float)System.Math.Atan2(2.0 * (Y * Z + W * X), W * W - X * X - Y * Y + Z * Z);
+            float pitch = (float)System.Math.Asin(-2.0 * (X * Z - W * Y));
+            float roll = (float)System.Math.Atan2(2.0 * (X * Y + W * Z), W * W + X * X - Y * Y - Z * Z);
+
+            pitchYawRoll.X = pitch;
+            pitchYawRoll.Y = yaw;
+            pitchYawRoll.Z = roll;
+
+            return pitchYawRoll;
+        }
+
         public Quaternionf Normalize()
         {
             this.rotation.Normalize();
@@ -46,26 +62,10 @@ namespace Inignoto.Math
 
         public Quaternionf RotateXYZ(float angleX, float angleY, float angleZ)
         {
-            float sx = IMathHelper.Sin(angleX * 0.5f);
-            float cx = IMathHelper.CosFromSin(sx, angleX * 0.5f);
-            float sy = IMathHelper.Sin(angleY * 0.5f);
-            float cy = IMathHelper.CosFromSin(sy, angleY * 0.5f);
-            float sz = IMathHelper.Sin(angleZ * 0.5f);
-            float cz = IMathHelper.CosFromSin(sz, angleZ * 0.5f);
-
-            float cycz = cy * cz;
-            float sysz = sy * sz;
-            float sycz = sy * cz;
-            float cysz = cy * sz;
-            float w = cx * cycz - sx * sysz;
-            float x = sx * cycz + cx * sysz;
-            float y = cx * sycz - sx * cysz;
-            float z = cx * cysz + sx * sycz;
-
-            rotation.X = IMathHelper.Fma(rotation.W, x, IMathHelper.Fma(rotation.X, w, IMathHelper.Fma(rotation.Y, z, -rotation.Z * y)));
-            rotation.Y = IMathHelper.Fma(rotation.W, y, IMathHelper.Fma(-rotation.X, z, IMathHelper.Fma( rotation.Y, w, rotation.Z * x)));
-            rotation.Z = IMathHelper.Fma(rotation.W, y, IMathHelper.Fma(rotation.X, y, IMathHelper.Fma(-rotation.Y, x, rotation.Z * w)));
-            rotation.W = IMathHelper.Fma(rotation.W, w, IMathHelper.Fma(-rotation.X, x, IMathHelper.Fma(-rotation.Y, y, -rotation.Z * z)));
+            Quaternion x = Quaternion.CreateFromAxisAngle(new Vector3(1, 0, 0), angleX * 3.14f / 180.0f);
+            Quaternion y = Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), angleY * 3.14f / 180.0f);
+            Quaternion z = Quaternion.CreateFromAxisAngle(new Vector3(0, 0, 1), angleZ * 3.14f / 180.0f);
+            Rotation = Quaternion.Concatenate(x, Quaternion.Concatenate(y, z));
             return this;
         }
 
@@ -106,13 +106,13 @@ namespace Inignoto.Math
 
         public Quaternionf Nlerp(Quaternionf q, float factor)
         {
-            float cosom = IMathHelper.Fma(rotation.X, q.rotation.X, IMathHelper.Fma(rotation.Y, q.rotation.Y, IMathHelper.Fma(rotation.Z, q.rotation.Z, rotation.W * q.rotation.W)));
+            float cosom = IMathHelper.Fma(rotation.X, rotation.X, IMathHelper.Fma(rotation.Y, rotation.Y, IMathHelper.Fma(rotation.Z, rotation.Z, rotation.W * rotation.W)));
             float scale0 = 1.0f - factor;
             float scale1 = (cosom >= 0.0f) ? factor : -factor;
-            rotation.X = IMathHelper.Fma(scale0, rotation.X, scale1 * q.rotation.X);
-            rotation.Y = IMathHelper.Fma(scale0, rotation.Y, scale1 * q.rotation.Y);
-            rotation.Z = IMathHelper.Fma(scale0, rotation.Z, scale1 * q.rotation.Z);
-            rotation.W = IMathHelper.Fma(scale0, rotation.W, scale1 * q.rotation.W);
+            rotation.X = IMathHelper.Fma(scale0, rotation.X, scale1 * rotation.X);
+            rotation.Y = IMathHelper.Fma(scale0, rotation.Y, scale1 * rotation.Y);
+            rotation.Z = IMathHelper.Fma(scale0, rotation.Z, scale1 * rotation.Z);
+            rotation.W = IMathHelper.Fma(scale0, rotation.W, scale1 * rotation.W);
             return this;
         }
 

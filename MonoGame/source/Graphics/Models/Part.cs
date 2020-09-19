@@ -1,4 +1,5 @@
-﻿using Inignoto.Math;
+﻿using Inignoto.Effects;
+using Inignoto.Math;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -21,6 +22,9 @@ namespace Inignoto.Graphics.Models
         public Vector2 uv = new Vector2(0, 0);
         public Vector3f origin = new Vector3f();
 
+        public Vector3f renderPosition = new Vector3f();
+        public Quaternionf renderRotation = new Quaternionf();
+
         public Part parent;
         public List<Part> children = new List<Part>();
 
@@ -36,6 +40,9 @@ namespace Inignoto.Graphics.Models
         public Vector3f look = new Vector3f(0, 0, 1);
 
         public Vector3f axisAngles = new Vector3f(0, 0, 0);
+
+        public Vector3f RenderPosition;
+        public Quaternionf RenderRotation;
 
         private GameModel model;
         public Part(GameModel model)
@@ -153,10 +160,10 @@ namespace Inignoto.Graphics.Models
             verts.Add(new Vector3f(1, 1, 0));
             verts.Add(new Vector3f(1, 0, 0));
 
-            verts.Add(new Vector3f(1, 0, 1));
-            verts.Add(new Vector3f(1, 1, 1));
-            verts.Add(new Vector3f(0, 1, 1));
             verts.Add(new Vector3f(0, 0, 1));
+            verts.Add(new Vector3f(0, 1, 1));
+            verts.Add(new Vector3f(1, 1, 1));
+            verts.Add(new Vector3f(1, 0, 1));
 
             verts.Add(new Vector3f(0, 0, 1));
             verts.Add(new Vector3f(0, 1, 1));
@@ -309,6 +316,11 @@ namespace Inignoto.Graphics.Models
         }
 
         public void Rotate(Vector3f rotation)
+        {
+            Rotate(rotation, new Vector3f(position).Add(new Vector3f(origin).Rotate(this.rotation.Rotation)));
+        }
+
+        public void Rotate(Quaternion rotation)
         {
             Rotate(rotation, new Vector3f(position).Add(new Vector3f(origin).Rotate(this.rotation.Rotation)));
         }
@@ -481,25 +493,28 @@ namespace Inignoto.Graphics.Models
             return this.rotation;
         }
 
-        public void Render(GraphicsDevice device, BasicEffect effect)
+        public void Render(GraphicsDevice device, GameEffect effect)
         {
-            
+
             Quaternionf rotation = new Quaternionf(GetRotation().Rotation);
 
             Quaternion current = rotation.Rotation;
 
             Vector3f position = new Vector3f(GetPosition()).Mul(SCALING);
+
             Vector3f scale = new Vector3f(GetScale()).Mul(SCALING).Mul(1, 1, -1);
+
+            renderPosition.Set(Vector3.Lerp(renderPosition.Vector, position.Vector, 0.25f));
+            renderRotation.Rotation = Quaternion.Lerp(renderRotation.Rotation, rotation.Rotation, 0.25f);
+
+            position = new Vector3f(renderPosition);
+            rotation = new Quaternionf(renderRotation.Rotation);
 
             Quaternion euler = Quaternion.CreateFromYawPitchRoll(model.rotation.Y, model.rotation.X, model.rotation.Z);
             position.Rotate(euler);
 
             rotation.Rotation = Quaternion.Concatenate(rotation.Rotation, euler);
 
-            if (current.Equals(rotation.Rotation))
-            {
-                rotation.Rotation = euler;
-            }
 
             position.Mul(model.scale);
 
@@ -510,6 +525,8 @@ namespace Inignoto.Graphics.Models
             mesh.SetPosition(position.Vector);
             mesh.SetRotation(rotation.Rotation);
             mesh.SetScale(scale.Vector);
+
+            RenderPosition = position;
 
             if (this.mesh != null && this.visible)
                 mesh.Draw(texture, effect, device);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Inignoto.Effects;
 using Inignoto.Entities.Player;
 using Inignoto.Inventory;
 using Inignoto.Math;
@@ -157,7 +158,7 @@ namespace Inignoto.Entities
             }
         }
 
-        public override void Render(GraphicsDevice device, BasicEffect effect, GameTime time, bool showModel = false)
+        public override void Render(GraphicsDevice device, GameEffect effect, GameTime time, bool showModel = false)
         {
             ItemStack stack = Stack;
             if (stack != null)

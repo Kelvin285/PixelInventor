@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Inignoto.Graphics.World;
 using Inignoto.World.Generator;
 using Inignoto.Graphics.Mesh;
+using Inignoto.Effects;
 
 namespace Inignoto.World.Chunks
 {
@@ -167,7 +168,7 @@ namespace Inignoto.World.Chunks
             }
         }
 
-        public void Render(GraphicsDevice device, BasicEffect effect)
+        public void Render(GraphicsDevice device, GameEffect effect)
         {
             rendering.Clear();
             foreach (Chunk chunk in chunks.Values)

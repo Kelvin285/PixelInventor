@@ -1,4 +1,6 @@
-﻿using Inignoto.Math;
+﻿using Inignoto.Effects;
+using Inignoto.Math;
+using Inignoto.Utilities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -49,33 +51,35 @@ namespace Inignoto.Graphics.Mesh
         public bool IsDisposed => vertexBuffer.IsDisposed;
         public int Length => triangleVertices.Length;
 
-        public void Draw(BasicEffect effect, GraphicsDevice device)
+        public void Draw(GameEffect effect, GraphicsDevice device)
         {
             Draw(texture, effect, device, worldMatrix);
         }
 
-        public void Draw(Texture texture, BasicEffect effect, GraphicsDevice device)
+        public void Draw(Texture texture, GameEffect effect, GraphicsDevice device)
         {
             Draw(texture, effect, device, worldMatrix);
         }
 
-        public void Draw(Texture texture, BasicEffect effect, GraphicsDevice device, Matrix worldMatrix)
+        public void Draw(Texture texture, GameEffect effect, GraphicsDevice device, Matrix worldMatrix)
         {
             Matrix matrix = Matrix.CreateScale(scale) * Matrix.CreateFromQuaternion(rotation) * worldMatrix;
             
             effect.World = matrix;
             device.SetVertexBuffer(vertexBuffer);
+
+
             foreach (EffectPass pass in effect.CurrentTechnique.
                     Passes)
             {
-                effect.Parameters["Texture"].SetValue(texture);
+                effect.Parameters["ModelTexture"].SetValue(texture);
                 pass.Apply();
 
                 device.DrawPrimitives(lines ? PrimitiveType.LineList : PrimitiveType.TriangleList, 0, Length);
             }
         }
 
-        public Texture2D CreateTexture(Texture texture, BasicEffect effect, GraphicsDevice device, Vector3 position, Quaternion rotation, int width, int height)
+        public Texture2D CreateTexture(Texture texture, GameEffect effect, GraphicsDevice device, Vector3 position, Quaternion rotation, int width, int height)
         {
             RenderTarget2D target;
             target = new RenderTarget2D(Inignoto.game.GraphicsDevice, width, height, false, SurfaceFormat.Color, DepthFormat.Depth16);

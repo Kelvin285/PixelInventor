@@ -38,6 +38,7 @@ namespace Inignoto.Inventory
             inventory[0] = new ItemStack(TileManager.DIRT, 4);
             inventory[1] = new ItemStack(TileManager.GRASS, 64);
             hotbar[0] = new ItemStack(TileManager.GRASS, 64);
+            hotbar[1] = new ItemStack(ItemManager.IRON_PICKAXE, 1);
         }
 
         public void SwapStacks(ItemStack A, ItemStack B, out ItemStack a, out ItemStack b, SlotType type)

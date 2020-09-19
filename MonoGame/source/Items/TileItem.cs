@@ -24,7 +24,7 @@ namespace Inignoto.Items
 
         public readonly Tile tile;
 
-        public TileItem(Tile tile, int max_stack = 64) : base(tile.name, max_stack, 0.25f)
+        public TileItem(Tile tile, int max_stack = 64) : base(tile.name, max_stack, 0.25f, false)
         {
             this.tile = tile;
             if (tile.IsVisible())

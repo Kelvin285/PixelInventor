@@ -1,9 +1,11 @@
 ﻿using Inignoto.Audio;
+using Inignoto.Effects;
 using Inignoto.GameSettings;
 using Inignoto.Graphics.Fonts;
 using Inignoto.Inventory;
 using Inignoto.Items;
 using Inignoto.Math;
+using Inignoto.Utilities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
@@ -185,22 +187,28 @@ namespace Inignoto.Graphics.Gui
                 int w = (int)(164 * 2.5f);
                 int h = (int)(108 * 2.5f);
 
-                Draw(spriteBatch, width, height, (Texture2D)target, new Rectangle((96 + (57 / 2)) * 3 - (w * 3 / 5) - 5, (106 + (97 / 2)) * 3 - h / 2 - 10 + drop, w, h), Color.White);
+                Draw(spriteBatch, width, height, (Texture2D)target, new Rectangle((96 + (57 / 2)) * 3 - (w * 3 / 5) - 5 + 170, (106 + (97 / 2)) * 3 - h / 2 - 10 + drop + 15, (int)(w / 2.5f), h - 10), new Rectangle(1920 / 4 + 270, 0, (int)(1920 / 2.5f), 1080), Color.White);
             }
 
         }
 
         public override void PreRender(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime time)
         {
-            DrawPlayer(device, Inignoto.game.BasicEffect, width, height, time);
+            DrawPlayer(device, GameResources.effect, 1920, 1080, time);
         }
 
 
-        public void DrawPlayer(GraphicsDevice device, BasicEffect effect, int width, int height, GameTime time)
+        public void DrawPlayer(GraphicsDevice device, GameEffect effect, int width, int height, GameTime time)
         {
             Inignoto.game.camera.rotation.Y = 180;
 
             effect.View = Inignoto.game.camera.ViewMatrix;
+
+            RasterizerState rasterizerState = new RasterizerState();
+            rasterizerState.CullMode = CullMode.None;
+            device.RasterizerState = rasterizerState;
+            device.DepthStencilState = DepthStencilState.Default;
+            device.SamplerStates[0] = SamplerState.PointClamp;
 
             if (target == null)
             {
