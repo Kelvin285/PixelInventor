@@ -19,6 +19,7 @@ using Microsoft.Xna.Framework.Media;
 using Inignoto.Tiles;
 using System.Collections.Generic;
 using Inignoto.Audio;
+using Inignoto.Items;
 
 namespace Inignoto
 {
@@ -40,7 +41,6 @@ namespace Inignoto
         private Matrix projectionMatrix;
         public Camera camera;
 
-        public BasicEffect BasicEffect { get; private set; }
         public List<GameSound> SoundsToDispose = new List<GameSound>();
 
         public World.World world;
@@ -85,12 +85,11 @@ namespace Inignoto
             
             
 
-            BasicEffect = new BasicEffect(GraphicsDevice);
-            BasicEffect.Alpha = 1f;
-            BasicEffect.VertexColorEnabled = true;
-            BasicEffect.TextureEnabled = true;
+            //GameResources.effect.Alpha = 1f;
+            //GameResources.effect.VertexColorEnabled = true;
+            //GameResources.effect.TextureEnabled = true;
 
-            BasicEffect.LightingEnabled = false;
+            //GameResources.effect.LightingEnabled = false;
             
             Vector3f a = new Vector3f(0, 20, 0);
             Vector3f b = new Vector3f(0, -20, 0);
@@ -233,16 +232,22 @@ namespace Inignoto
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
+            GameResources.effect.Time = (float)gameTime.TotalGameTime.TotalSeconds;
+
             int width = Window.ClientBounds.Right - Window.ClientBounds.Left;
             int height = Window.ClientBounds.Bottom - Window.ClientBounds.Top;
             
-            BasicEffect.Projection = projectionMatrix;
+            GameResources.effect.Projection = projectionMatrix;
 
             Vector3f lastPos = camera.position;
             camera.position = new Vector3f(0, 0, 0);
             Vector3f lastRot = camera.rotation;
             camera.rotation = new Vector3f(0, 0, 0);
-            BasicEffect.View = camera.ViewMatrix;
+            GameResources.effect.View = camera.ViewMatrix;
+
+            GraphicsDevice.BlendState = BlendState.AlphaBlend;
+
+            ItemManager.DrawItems(gameTime);
 
             if (Hud.openGui != null)
             {
@@ -252,9 +257,9 @@ namespace Inignoto
 
             camera.position = lastPos;
             camera.rotation = lastRot;
-            BasicEffect.View = camera.ViewMatrix;
+            GameResources.effect.View = camera.ViewMatrix;
             GraphicsDevice.Clear(Color.CornflowerBlue);
-            
+                      
             RasterizerState rasterizerState = new RasterizerState();
             rasterizerState.CullMode = CullMode.None;
             GraphicsDevice.RasterizerState = rasterizerState;
@@ -263,7 +268,7 @@ namespace Inignoto
 
             TileManager.TryLoadTileTextures();
 
-            world.Render(GraphicsDevice, BasicEffect, gameTime);
+            world.Render(GraphicsDevice, GameResources.effect, gameTime);
 
 
             

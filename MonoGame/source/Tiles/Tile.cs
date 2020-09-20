@@ -2,6 +2,7 @@
 using Inignoto.Math;
 using static Inignoto.Math.Raytracing;
 using Microsoft.Xna.Framework.Audio;
+using System;
 
 namespace Inignoto.Tiles
 {
@@ -64,6 +65,11 @@ namespace Inignoto.Tiles
         {
             this.visible = visible;
             return this;
+        }
+
+        public bool IsRaytraceType(TileRayTraceType rayTraceType)
+        {
+            return GetRayTraceType() == rayTraceType;
         }
 
         public bool BlocksMovement()

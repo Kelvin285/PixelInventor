@@ -85,8 +85,12 @@ namespace Inignoto.World.Chunks
                     if (chunk.NeedsToRebuild())
                     {
                         chunk.secondMesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, chunk);
+                        chunk.secondWaterMesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, chunk, true);
                         if (chunk.secondMesh != null)
                             chunk.secondMesh.SetPosition(new Microsoft.Xna.Framework.Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
+                        if (chunk.secondWaterMesh != null)
+                            chunk.secondWaterMesh.SetPosition(new Microsoft.Xna.Framework.Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
+
                         chunk.FinishRebuilding();
                         if (chunk.mesh != null)
                         {
@@ -181,6 +185,12 @@ namespace Inignoto.World.Chunks
                 chunkRenderer.RenderChunk(device, effect, rendering[i]);
                 TryUnloadChunk(rendering[i].GetX(), rendering[i].GetY(), rendering[i].GetZ());
             }
+            GameResources.effect.Water = true;
+            for (int i = 0; i < rendering.Count; i++)
+            {
+                chunkRenderer.RenderChunk(device, effect, rendering[i], true);
+            }
+            GameResources.effect.Water = false;
         }
 
     }

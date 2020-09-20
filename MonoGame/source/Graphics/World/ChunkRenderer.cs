@@ -12,20 +12,38 @@ namespace Inignoto.Graphics.World
 
         }
 
-        public void RenderChunk(GraphicsDevice device, GameEffect effect, Chunk chunk)
+        public void RenderChunk(GraphicsDevice device, GameEffect effect, Chunk chunk, bool water = false)
         {
-            if (chunk.secondMesh != null)
-                chunk.secondMesh.Draw(Textures.Textures.tiles.GetTexture(), effect, device);
-            if (chunk.mesh != null)
+            if (!water)
             {
-                if (chunk.mesh.IsDisposed)
+                if (chunk.secondMesh != null)
+                    chunk.secondMesh.Draw(Textures.Textures.tiles.GetTexture(), effect, device);
+                if (chunk.mesh != null)
                 {
-                    if (chunk.secondMesh != null)
+                    if (chunk.mesh.IsDisposed)
                     {
-                        chunk.mesh = chunk.secondMesh;
+                        if (chunk.secondMesh != null)
+                        {
+                            chunk.mesh = chunk.secondMesh;
+                        }
                     }
+                    chunk.mesh.Draw(Textures.Textures.tiles.GetTexture(), effect, device);
                 }
-                chunk.mesh.Draw(Textures.Textures.tiles.GetTexture(), effect, device);
+            } else
+            {
+                if (chunk.secondWaterMesh != null)
+                    chunk.secondWaterMesh.Draw(Textures.Textures.tiles.GetTexture(), effect, device);
+                if (chunk.waterMesh != null)
+                {
+                    if (chunk.waterMesh.IsDisposed)
+                    {
+                        if (chunk.secondWaterMesh != null)
+                        {
+                            chunk.waterMesh = chunk.secondWaterMesh;
+                        }
+                    }
+                    chunk.waterMesh.Draw(Textures.Textures.tiles.GetTexture(), effect, device);
+                }
             }
         }
     }

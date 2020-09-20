@@ -20,6 +20,9 @@ namespace Inignoto.World.Chunks
         public Mesh mesh;
         public Mesh secondMesh;
 
+        public Mesh waterMesh;
+        public Mesh secondWaterMesh;
+
         public Chunk(int x, int y, int z, World world)
         {
             this.x = x;

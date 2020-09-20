@@ -12,7 +12,7 @@ namespace Inignoto.Graphics.World
     public class ChunkBuilder
     {
 
-        public static Mesh.Mesh BuildMeshForChunk(GraphicsDevice device, Chunk chunk)
+        public static Mesh.Mesh BuildMeshForChunk(GraphicsDevice device, Chunk chunk, bool water = false)
         {
             int invisible = 0;
             List<VertexPositionColorTexture> vpct = new List<VertexPositionColorTexture>();
@@ -30,19 +30,32 @@ namespace Inignoto.Graphics.World
                     {
                         TileData data = chunk.GetVoxel(x, y, z);
                         Tile tile = TileManager.GetTile(data.tile_id);
+
+                        Tile.TileRayTraceType rayTraceType = Tile.TileRayTraceType.BLOCK;
+
+                        if (tile.GetRayTraceType() == Tile.TileRayTraceType.FLUID)
+                        {
+                            if (!water)
+                            continue;
+                            rayTraceType = Tile.TileRayTraceType.FLUID;
+                        } else
+                        {
+                            if (water) continue;
+                        }
+
                         if (tile.IsVisible())
                         {
-                            if (!TileManager.GetTile(chunk.GetVoxel(x, y, z - 1).tile_id).IsVisible())
+                            if (!TileManager.GetTile(chunk.GetVoxel(x, y, z - 1).tile_id).IsRaytraceType(rayTraceType))
                                 index = TileBuilder.BuildFace(x, y, z, data, Tiles.Tile.TileFace.FRONT, vertices, colors, textures, indices, index);
-                            if (!TileManager.GetTile(chunk.GetVoxel(x, y, z + 1).tile_id).IsVisible())
+                            if (!TileManager.GetTile(chunk.GetVoxel(x, y, z + 1).tile_id).IsRaytraceType(rayTraceType))
                                 index = TileBuilder.BuildFace(x, y, z, data, Tiles.Tile.TileFace.BACK, vertices, colors, textures, indices, index);
-                            if (!TileManager.GetTile(chunk.GetVoxel(x - 1, y, z).tile_id).IsVisible())
+                            if (!TileManager.GetTile(chunk.GetVoxel(x - 1, y, z).tile_id).IsRaytraceType(rayTraceType))
                                 index = TileBuilder.BuildFace(x, y, z, data, Tiles.Tile.TileFace.LEFT, vertices, colors, textures, indices, index);
-                            if (!TileManager.GetTile(chunk.GetVoxel(x + 1, y, z).tile_id).IsVisible())
+                            if (!TileManager.GetTile(chunk.GetVoxel(x + 1, y, z).tile_id).IsRaytraceType(rayTraceType))
                                 index = TileBuilder.BuildFace(x, y, z, data, Tiles.Tile.TileFace.RIGHT, vertices, colors, textures, indices, index);
-                            if (!TileManager.GetTile(chunk.GetVoxel(x, y + 1, z).tile_id).IsVisible())
+                            if (!TileManager.GetTile(chunk.GetVoxel(x, y + 1, z).tile_id).IsRaytraceType(rayTraceType))
                                 index = TileBuilder.BuildFace(x, y, z, data, Tiles.Tile.TileFace.TOP, vertices, colors, textures, indices, index);
-                            if (!TileManager.GetTile(chunk.GetVoxel(x, y - 1, z).tile_id).IsVisible())
+                            if (!TileManager.GetTile(chunk.GetVoxel(x, y - 1, z).tile_id).IsRaytraceType(rayTraceType))
                                 index = TileBuilder.BuildFace(x, y, z, data, Tiles.Tile.TileFace.BOTTOM, vertices, colors, textures, indices, index);
                         }
                         else invisible++;

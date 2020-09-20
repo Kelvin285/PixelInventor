@@ -18,9 +18,16 @@ namespace Inignoto.Graphics.Mesh
 
         public Vector3 scale = new Vector3(1.0f);
         public Quaternion rotation = new Quaternion();
-        
+
+        public bool empty = false;
+
         public Mesh(GraphicsDevice device, VertexPositionColorTexture[] triangleVertices, bool lines = false, Texture2D texture = null)
         {
+            if (triangleVertices.Length == 0)
+            {
+                empty = true;
+                return;
+            }
             this.triangleVertices = triangleVertices;
             vertexBuffer = new VertexBuffer(device, typeof(
                            VertexPositionColorTexture), triangleVertices.Length, BufferUsage.
@@ -63,6 +70,7 @@ namespace Inignoto.Graphics.Mesh
 
         public void Draw(Texture texture, GameEffect effect, GraphicsDevice device, Matrix worldMatrix)
         {
+            if (empty) return;
             Matrix matrix = Matrix.CreateScale(scale) * Matrix.CreateFromQuaternion(rotation) * worldMatrix;
             
             effect.World = matrix;
