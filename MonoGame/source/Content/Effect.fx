@@ -36,21 +36,25 @@ VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
 
     float4 worldPosition = mul(input.Position, World);
 
-    float4 viewPosition = mul(worldPosition, View);
-	
-    output.Position = mul(viewPosition, Projection);
-
     output.Color = input.Color;
+
+    if (water) {
+        worldPosition.y -= abs(0.05f * (sin(worldPosition.x + time) + cos(worldPosition.z + time)));
+        output.Color.a *= 0.5f;
+    }
+
+    float4 viewPosition = mul(worldPosition, View);
+
+
+    output.Position = mul(viewPosition, Projection);
 
 	output.TextureCoordinate = input.TextureCoordinate;
 
 	output.PixelPos = output.Position;
 
-	output.Position.y -= distance(output.Position.xz, float2(0, 0)) * 0.1f; //ROUND PLANET
+	//output.Position.y -= distance(output.Position.xz, float2(0, 0)) * 0.1f; //ROUND PLANET
 
-	if (water) {
-		output.Position.y += 0.25f * (sin(output.Position.x + time) + cos(output.Position.z + time));
-	}
+	
 
     return output;
 }
@@ -76,6 +80,19 @@ technique Specular
 {
     pass Pass1
     {
+        AlphaBlendEnable = true; // Setup For Alpha Blending
+        ZEnable = true; // Setup For Alpha Blending
+        ZWriteEnable = true; // Setup For Alpha Blending
+
+        //SrcBlend = One; // Additive Blending
+        //DestBlend = One; // Additive Blending
+        //BlendOp = Add; // Additive Blending
+
+        // Final Colour = srcColour * srcAlpha + destColour * (1 - srcAlpha)
+        SrcBlend = SrcAlpha; // Normal Alpha Blending
+        DestBlend = InvSrcAlpha; // Normal Alpha Blending
+        BlendOp = Add; // Normal Alpha Blending
+
         VertexShader = compile vs_2_0 VertexShaderFunction();
         PixelShader = compile ps_3_0 PixelShaderFunction();
     }

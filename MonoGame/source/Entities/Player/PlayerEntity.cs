@@ -19,7 +19,7 @@ namespace Inignoto.Entities.Player
             SURVIVAL, FREECAM, SANDBOX
         }
 
-        public Gamemode gamemode = Gamemode.SURVIVAL;
+        public Gamemode gamemode = Gamemode.SANDBOX;
 
         public Vector3f SpawnPosition { get; protected set; }
 

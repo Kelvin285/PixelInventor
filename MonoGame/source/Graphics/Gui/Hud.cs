@@ -130,7 +130,7 @@ namespace Inignoto.Graphics.Gui
             Draw(spriteBatch, width, height, Textures.Textures.viginette, new Rectangle(0, 0, 1920, 1080), new Color(255 - (int)(255 * (health / 100)), 0, 0, 255 - (int)(255 * (health / 100))));
 
             //inventory hotbar
-            Draw(spriteBatch, width, height, Textures.Textures.inventory_row, new Rectangle(1920 / 2 - (324 * 3) / 2, 1080 - 40 * 3, 324 * 3, 40 * 3), Color.White);
+            Draw(spriteBatch, width, height, Textures.Textures.inventory_row, new Rectangle(1920 / 2 - (324 * 3) / 2, 1080 - 40 * 3 + 1, 324 * 3, 40 * 3), Color.White);
 
             int mouse_x = (int)(Inignoto.game.mousePos.X * (1920.0 / width));
             int mouse_y = (int)(Inignoto.game.mousePos.Y * (1080.0 / height));
@@ -282,6 +282,7 @@ namespace Inignoto.Graphics.Gui
         {
             char[] ch = str.ToCharArray();
             int I = 0;
+            int pos = 0;
             for (int i = 0; i < ch.Length; i++)
             {
                 char c = ch[i];
@@ -289,8 +290,9 @@ namespace Inignoto.Graphics.Gui
                 font.parts.TryGetValue(c, out part);
                 if (part != null)
                 {
-                    Rectangle rect = new Rectangle(x + (int)(size * font.width + size * font.spacing + size * part.offset.X) * I, y + (int)(size * part.offset.Y), (int)(size * part.glyphBounds.Width + size ), (int)(size * part.glyphBounds.Height));
+                    Rectangle rect = new Rectangle(x + pos + (int)(6.25f * I * size), y + (int)(size * part.offset.Y), (int)(size * part.glyphBounds.Width + size ), (int)(size * part.glyphBounds.Height));
                     Draw(batch, W, H, font.texture, rect, part.glyphBounds, color);
+                    pos += (int)(size * font.width + size * font.spacing + size * part.offset.X);
                     I++;
                 }
             }

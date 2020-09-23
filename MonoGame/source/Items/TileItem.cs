@@ -73,11 +73,15 @@ namespace Inignoto.Items
                     if (user is PlayerEntity)
                     {
                         PlayerEntity player = (PlayerEntity)user;
-                        player.Inventory.hotbar[player.Inventory.selected].count--;
-                        if (player.Inventory.hotbar[player.Inventory.selected].count <= 0)
+                        if (player.gamemode != PlayerEntity.Gamemode.SANDBOX)
                         {
-                            player.Inventory.hotbar[player.Inventory.selected] = null;
+                            player.Inventory.hotbar[player.Inventory.selected].count--;
+                            if (player.Inventory.hotbar[player.Inventory.selected].count <= 0)
+                            {
+                                player.Inventory.hotbar[player.Inventory.selected] = null;
+                            }
                         }
+                        
                     }
 
                     SoundEffect[] sounds = tile.step_sound;

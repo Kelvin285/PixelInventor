@@ -20,6 +20,7 @@ namespace Inignoto.Graphics.Textures
         public static Texture2D inventory;
         public static Texture2D font_mandrill_regular;
         public static Texture2D font_mandrill_bold;
+        public static Texture2D item_browser;
 
         public static Dictionary<TileData, Texture2D> TILE_ITEMS = new Dictionary<TileData, Texture2D>();
 
@@ -36,6 +37,7 @@ namespace Inignoto.Graphics.Textures
             inventory = LoadTexture(new ResourcePath("Inignoto", "textures/gui/inventory.png", "assets"));
             font_mandrill_regular = LoadTexture(new ResourcePath("Inignoto", "fonts/mandrill/mandrill_regular_48.png", "assets"));
             font_mandrill_bold = LoadTexture(new ResourcePath("Inignoto", "fonts/mandrill/mandrill_bold_48.png", "assets"));
+            item_browser = LoadTexture(new ResourcePath("Inignoto", "textures/gui/item_browser.png", "assets"));
 
             FontManager.LoadFonts();
         }

@@ -12,6 +12,7 @@ namespace Inignoto.Items
     public class ItemManager
     {
         public static Dictionary<string, Item> REGISTRY = new Dictionary<string, Item>();
+        public static List<Item> ITEM_LIST = new List<Item>();
 
         private static int ticks = 0;
 
@@ -48,6 +49,8 @@ namespace Inignoto.Items
         public static Item RegisterItem(Item item)
         {
             REGISTRY.Add(item.Name, item);
+            if (!(item is TileItem && ((TileItem)item).tile == TileManager.AIR))
+            ITEM_LIST.Add(item);
             return item;
         }
 

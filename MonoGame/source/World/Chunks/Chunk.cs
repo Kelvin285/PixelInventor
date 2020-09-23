@@ -148,8 +148,20 @@ namespace Inignoto.World.Chunks
 
         public void MarkForRebuild()
         {
+            MarkForRebuild(Tile.TileRayTraceType.BLOCK);
+            //MarkForRebuild(Tile.TileRayTraceType.FLUID);
+        }
+        public void MarkForRebuild(Tile.TileRayTraceType raytraceType)
+        {
             rebuilding = true;
-            world.GetChunkManager().chunksToRerender.Add(this);
+            //if (raytraceType == Tile.TileRayTraceType.FLUID)
+            {
+                //world.GetChunkManager().fluidChunksToRerender.Add(this);
+            }
+            //else
+            {
+                world.GetChunkManager().chunksToRerender.Add(this);
+            }
         }
 
         public void FinishRebuilding()

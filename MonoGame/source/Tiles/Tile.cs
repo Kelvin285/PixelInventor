@@ -72,6 +72,11 @@ namespace Inignoto.Tiles
             return GetRayTraceType() == rayTraceType;
         }
 
+        internal bool IsRaytraceTypeOrSolid(TileRayTraceType rayTraceType)
+        {
+            return IsRaytraceType(rayTraceType) || solid;
+        }
+
         public bool BlocksMovement()
         {
             return blocksMovement;

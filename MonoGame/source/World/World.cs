@@ -280,45 +280,48 @@ namespace Inignoto.World
             int y = pos.y - cy * Constants.CHUNK_SIZE;
             int z = pos.z - cz * Constants.CHUNK_SIZE;
 
+            TileRayTraceType raytraceType = TileManager.GetTile(voxel.tile_id).GetRayTraceType();
+
             Chunk chunk = chunkManager.TryGetChunk(cx, cy, cz);
             if (chunk != null)
             {
+
                 chunk.SetVoxel(x, y, z, voxel);
-                chunk.MarkForRebuild();
+                chunk.MarkForRebuild(raytraceType);
                 
                 if (TileManager.GetTile(voxel.tile_id).IsVisible() == false)
                 {
                     if (x % Constants.CHUNK_SIZE == 0)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx - 1, cy, cz);
-                        if (chunk2 != null) chunk2.MarkForRebuild();
+                        if (chunk2 != null) chunk2.MarkForRebuild(raytraceType);
                     }
                     if (x % Constants.CHUNK_SIZE == Constants.CHUNK_SIZE - 1)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx + 1, cy, cz);
-                        if (chunk2 != null) chunk2.MarkForRebuild();
+                        if (chunk2 != null) chunk2.MarkForRebuild(raytraceType);
                     }
 
                     if (y % Constants.CHUNK_SIZE == 0)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx, cy - 1, cz);
-                        if (chunk2 != null) chunk2.MarkForRebuild();
+                        if (chunk2 != null) chunk2.MarkForRebuild(raytraceType);
                     }
                     if (y % Constants.CHUNK_SIZE == Constants.CHUNK_SIZE - 1)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx, cy + 1, cz);
-                        if (chunk2 != null) chunk2.MarkForRebuild();
+                        if (chunk2 != null) chunk2.MarkForRebuild(raytraceType);
                     }
 
                     if (z % Constants.CHUNK_SIZE == 0)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx, cy, cz - 1);
-                        if (chunk2 != null) chunk2.MarkForRebuild();
+                        if (chunk2 != null) chunk2.MarkForRebuild(raytraceType);
                     }
                     if (z % Constants.CHUNK_SIZE == Constants.CHUNK_SIZE - 1)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx, cy, cz + 1);
-                        if (chunk2 != null) chunk2.MarkForRebuild();
+                        if (chunk2 != null) chunk2.MarkForRebuild(raytraceType);
                     }
                 }
                 

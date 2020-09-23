@@ -259,7 +259,7 @@ namespace Inignoto
             camera.rotation = lastRot;
             GameResources.effect.View = camera.ViewMatrix;
             GraphicsDevice.Clear(Color.CornflowerBlue);
-                      
+            
             RasterizerState rasterizerState = new RasterizerState();
             rasterizerState.CullMode = CullMode.None;
             GraphicsDevice.RasterizerState = rasterizerState;

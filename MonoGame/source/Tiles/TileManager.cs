@@ -41,7 +41,7 @@ namespace Inignoto.Tiles
             AIR = new Tile("Inignoto:air", null, false).SetRayTraceType(Tile.TileRayTraceType.GAS).SetVisible(false).SetBlocksMovement(false).SetReplaceable(true);
             DIRT = new Tile("Inignoto:dirt", SoundEffects.step_soil);
             GRASS = new Tile("Inignoto:grass", SoundEffects.step_grass);
-            WATER = new Tile("Inignoto:water", null).SetBlocksMovement(false).SetRayTraceType(Tile.TileRayTraceType.FLUID).SetReplaceable(true);
+            WATER = new Tile("Inignoto:water", null, false).SetBlocksMovement(false).SetRayTraceType(Tile.TileRayTraceType.FLUID).SetReplaceable(true);
         }
 
         public static void TryLoadTileTextures()

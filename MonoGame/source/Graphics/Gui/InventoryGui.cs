@@ -5,16 +5,21 @@ using Inignoto.Graphics.Fonts;
 using Inignoto.Inventory;
 using Inignoto.Items;
 using Inignoto.Math;
+using Inignoto.Tiles;
 using Inignoto.Utilities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Input;
+using System.Xml.Serialization;
 using static Inignoto.Inventory.PhysicalInventory;
+using Keyboard = Microsoft.Xna.Framework.Input.Keyboard;
 
 namespace Inignoto.Graphics.Gui
 {
@@ -29,6 +34,11 @@ namespace Inignoto.Graphics.Gui
         private PhysicalInventory inventory;
 
         private RenderTarget2D target;
+
+
+        private int PHYSICAL = 0, DIGITAL = 1, SANDBOX = 2;
+        private int current_inventory = 0;
+
 
         public InventoryGui(PhysicalInventory inventory)
         {
@@ -57,25 +67,11 @@ namespace Inignoto.Graphics.Gui
             return rect.Contains(mx, my);
         }
 
-        public override void Render(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime time)
+        public void RenderMainInventory(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime time)
         {
             int mouse_x = (int)(Inignoto.game.mousePos.X * (1920.0 / width));
             int mouse_y = (int)(Inignoto.game.mousePos.Y * (1080.0 / height));
 
-
-            if (!closing)
-            {
-                DropdownAnimation = MathHelper.Lerp(DropdownAnimation, 0.0f, 0.1f);
-            } else
-            {
-                DropdownAnimation = MathHelper.Lerp(DropdownAnimation, 1.0f, 0.1f);
-                if (DropdownAnimation >= 0.9f)
-                {
-                    openGui = null;
-                }
-            }
-
-            
             Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(0, -(int)(DropdownAnimation * 360 * 3), 640 * 3, 293 * 3), new Rectangle(0, 0, 640, 293), Color.White);
 
             if (Inignoto.game.player != null)
@@ -85,9 +81,9 @@ namespace Inignoto.Graphics.Gui
                 {
                     int x = 89 * 3 + i * 12;
                     int y = -(int)(DropdownAnimation * 360 * 3) + 227 * 3 - (int)(i * 0.5f);
-                    DrawString(spriteBatch, width, height, x, y, 0.5f, FontManager.mandrill_bold, ""+ch[i], Color.White);
+                    DrawString(spriteBatch, width, height, x, y, 0.5f, FontManager.mandrill_bold, "" + ch[i], Color.White);
                 }
-                
+
             }
 
             int drop = -(int)(DropdownAnimation * 360 * 3);
@@ -95,18 +91,7 @@ namespace Inignoto.Graphics.Gui
             RenderHealthbar(device, spriteBatch, width, height, time, 67 * 3, drop + 245 * 3);
 
 
-            //main inventory icon (Backpack)
-            Draw(spriteBatch, width, height, Textures.Textures.hud, new Rectangle(2 * 3, 2 * 3 + drop, 38 * 3, 38 * 3), new Rectangle(0, 44, 38, 38), Color.White);
-            Draw(spriteBatch, width, height, Textures.Textures.hud, new Rectangle(2 * 3 + 19 * 3 - 10 * 3, 2 * 3 + drop + 19 * 3 - (int)(19 * 3 * 0.5), 20 * 3, 19 * 3), new Rectangle(40, 44, 20, 19), Color.White);
-
-            //digital inventory icon (Computer)
-            Draw(spriteBatch, width, height, Textures.Textures.hud, new Rectangle(2 * 3, 2 * 3 + 40 * 3 + drop, 38 * 3, 38 * 3), new Rectangle(0, 44, 38, 38), Color.White);
-            Draw(spriteBatch, width, height, Textures.Textures.hud, new Rectangle(2 * 3 + 19 * 3 - 11 * 3, 2 * 3 + 40 * 3 + drop + 19 * 3 - (int)(19 * 3 * 0.5), 22 * 3, 19 * 3), new Rectangle(63, 44, 22, 19), Color.White);
-
-
-            //0, 44, 38, 38 <- Circle
-            //40, 44, 20, 19 <- Backpack
-            //63, 44, 22, 19 <- computer
+            
 
             Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(264 * 3, 262 * 3 + drop, 13 * 3, 11 * 3), new Rectangle(73, 347, 13, 11), Color.White);
             Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(63 * 3, 115 * 3 + drop, 16 * 3, 18 * 3), new Rectangle(89, 340, 16, 18), Color.White);
@@ -162,23 +147,16 @@ namespace Inignoto.Graphics.Gui
             if (inventory.trashStack != null)
             {
 
-                
+
                 if (inventory.trashStack.item.GetRenderTexture() != null)
                 {
                     //228 * 3, 252 * 3 + drop
                     DrawItem(spriteBatch, width, height, inventory.trashStack, 228 * 3, 252 * 3 + drop, 0.75f, 0.75f);
                 }
-            } else
+            }
+            else
             {
                 Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(236 * 3, 258 * 3 + drop, 14 * 3, 18 * 3), new Rectangle(57, 342, 14, 18), Color.White);
-            }
-
-            if (inventory.grabStack != null)
-            {
-                if (inventory.grabStack.item.GetRenderTexture() != null)
-                {
-                    DrawItem(spriteBatch, width, height, inventory.grabStack, mouse_x - 15 * 3, mouse_y - 15 * 3, 0.75f, 0.75f);
-                }
             }
 
             if (target != null)
@@ -188,6 +166,283 @@ namespace Inignoto.Graphics.Gui
                 int h = (int)(108 * 2.5f);
 
                 Draw(spriteBatch, width, height, (Texture2D)target, new Rectangle((96 + (57 / 2)) * 3 - (w * 3 / 5) - 5 + 170, (106 + (97 / 2)) * 3 - h / 2 - 10 + drop + 15, (int)(w / 2.5f), h - 10), new Rectangle(1920 / 4 + 270, 0, (int)(1920 / 2.5f), 1080), Color.White);
+            }
+        }
+
+        private int page = 0;
+        private string searchstring = "";
+        private bool[] pressed = new bool[256];
+        private bool clicked = false;
+        private bool just_clicked = false;
+        private bool has_none = false;
+
+        private List<Item> search_items = new List<Item>();
+
+        public void RenderSandboxInventory(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime gameTime)
+        {
+            int pages = ItemManager.REGISTRY.Count / (10 * 4);
+
+            if (search_items.Count > 0)
+            {
+                pages = search_items.Count / (10 * 4);
+            }
+
+            int mouse_x = (int)(Inignoto.game.mousePos.X * (1920.0 / width));
+            int mouse_y = (int)(Inignoto.game.mousePos.Y * (1080.0 / height));
+
+            int drop = -(int)(DropdownAnimation * 360 * 3);
+            int X = 1920 / 2 - (322 * 3) / 2;
+            int Y = 1080 / 2 - (173 * 3) / 2 + drop;
+
+            //322, 173
+            Draw(spriteBatch, width, height, Textures.Textures.item_browser, new Rectangle(X, Y, 322 * 3, 173 * 3), new Rectangle(0, 0, 322, 173), Color.White);
+
+            //first slot: 6, 29
+            //slot size: 30 (+1)
+            if (!has_none)
+            for (int x = 0; x < 10; x++)
+            {
+                for (int y = 0; y < 4; y++)
+                {
+                    int I = x + y * 10;
+
+                    Item item = null;
+                    if (search_items.Count == 0)
+                    {
+                        if (I < ItemManager.ITEM_LIST.Count)
+                        {
+                            item = ItemManager.ITEM_LIST[I];
+
+                            if (MouseInSpace(mouse_x, mouse_y, new Rectangle(X + 18 + x * 93, Y + 29 * 3 + y * 93, 90, 90)))
+                            {
+                                Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(X + 18 + x * 93, Y + 29 * 3 + y * 93, 90, 90), new Rectangle(24, 330, 30, 30), Color.White);
+                                if (Settings.ATTACK.IsPressed())
+                                {
+                                    inventory.grabStack = new ItemStack(item, item.max_stack);
+                                }
+                            }
+                            DrawItem(spriteBatch, width, height, new ItemStack(item, item.max_stack), X + 18 + x * 93, Y + 29 * 3 + y * 93, 0.75f, 0.75f);
+                        }
+                    } else
+                    {
+                        if (I < search_items.Count)
+                        {
+                            
+                            item = search_items[I];
+
+                            if (MouseInSpace(mouse_x, mouse_y, new Rectangle(X + 18 + x * 93, Y + 29 * 3 + y * 93, 90, 90)))
+                            {
+                                Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(X + 18 + x * 93, Y + 29 * 3 + y * 93, 90, 90), new Rectangle(24, 330, 30, 30), Color.White);
+                                if (Settings.ATTACK.IsPressed())
+                                {
+                                    inventory.grabStack = new ItemStack(item, item.max_stack);
+                                }
+                            }
+                            DrawItem(spriteBatch, width, height, new ItemStack(item, item.max_stack), X + 18 + x * 93, Y + 29 * 3 + y * 93, 0.75f, 0.75f);
+                        }
+                    }
+                    
+                }
+            }
+
+            for (int i = 0; i < 256; i++)
+            {
+                if (Keyboard.GetState().IsKeyDown((Keys)i))
+                {
+                    if (!pressed[i])
+                    {
+                        pressed[i] = true;
+
+                        if (i == (int)Keys.Back)
+                        {
+                            if (searchstring.Length - 1 >= 0)
+                            searchstring = searchstring.Substring(0, searchstring.Length - 1);
+                        }
+                        else
+                        if (i == (int)Keys.Space)
+                        {
+                            searchstring += " ";
+                        } else
+                        {
+                            string add = ((Keys)i).ToString();
+                            if (add.Length == 1)
+                                searchstring += add;
+                        }
+                        search_items.Clear();
+                        if (searchstring.Trim().Length > 0)
+                        {
+                            has_none = true;
+                            foreach (Item item in ItemManager.ITEM_LIST)
+                            {
+                                if (item.Name.ToLower().Replace("_", " ").Contains(searchstring.ToLower().Trim()))
+                                {
+                                    search_items.Add(item);
+                                    has_none = false;
+                                }
+                            }
+                            page = 0;
+                        } else
+                        {
+                            has_none = false;
+                        }
+                    }
+                } else
+                {
+                    pressed[i] = false;
+                }
+            }
+            
+            //283, 155
+            string pagestr = (page + 1) + "/" + (pages + 1);
+            DrawString(spriteBatch, width, height, X + 283 * 3 + 5 + 25 - (int)(10 * (pagestr.Length / 2.0f)), Y + 155 * 3 - 5, 0.5f, FontManager.mandrill_bold, pagestr, Color.White);
+
+            bool a = (int)gameTime.TotalGameTime.Seconds % 2 <= 0 && searchstring.Length == 0;
+            string s2 = searchstring + (a ? "|" : "");
+            //230, 14
+            DrawString(spriteBatch, width, height, X + 230 * 3 + 5, Y + 14 * 3, 0.5f, FontManager.mandrill_bold, s2.Substring(0, MathHelper.Min(s2.Length, 18)), Color.White);
+
+
+            //right = 305, 155
+            //arrow size = 5, 7
+            if (MouseInSpace(mouse_x, mouse_y, new Rectangle(X + 305 * 3, Y + 155 * 3, 5 * 3, 7 * 3)))
+            {
+                
+                if (just_clicked)
+                {
+                    if (page < pages) page++;
+                }
+            } else
+            {
+                Draw(spriteBatch, width, height, Textures.Textures.item_browser, new Rectangle(X + 305 * 3, Y + 155 * 3, 5 * 3, 7 * 3), new Rectangle(305, 155, 5, 7), Color.LightGray);
+            }
+            if (MouseInSpace(mouse_x, mouse_y, new Rectangle(X + 277 * 3, Y + 155 * 3, 5 * 3, 7 * 3)))
+            {
+                if (just_clicked)
+                {
+                    if (page > 0) page--;
+                }
+            } else
+            {
+                Draw(spriteBatch, width, height, Textures.Textures.item_browser, new Rectangle(X + 277 * 3, Y + 155 * 3, 5 * 3, 7 * 3), new Rectangle(277, 155, 5, 7), Color.LightGray);
+            }
+
+
+            if (GameSettings.Settings.ATTACK.IsPressed())
+            {
+                if (!clicked)
+                {
+                    just_clicked = true;
+                } else
+                {
+                    just_clicked = false;
+                }
+                clicked = true;
+            } else
+            {
+                clicked = false;
+            }
+        }
+
+        public override void Render(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime time)
+        {
+            if (!closing)
+            {
+                DropdownAnimation = MathHelper.Lerp(DropdownAnimation, 0.0f, 0.1f);
+            }
+            else
+            {
+                DropdownAnimation = MathHelper.Lerp(DropdownAnimation, 1.0f, 0.1f);
+                if (DropdownAnimation >= 0.9f)
+                {
+                    openGui = null;
+                }
+            }
+
+
+            if (current_inventory == PHYSICAL)
+                RenderMainInventory(device, spriteBatch, width, height, time);
+
+            if (current_inventory == SANDBOX)
+                RenderSandboxInventory(device, spriteBatch, width, height, time);
+            else
+                searchstring = "";
+
+            int mouse_x = (int)(Inignoto.game.mousePos.X * (1920.0 / width));
+            int mouse_y = (int)(Inignoto.game.mousePos.Y * (1080.0 / height));
+
+            int drop = -(int)(DropdownAnimation * 360 * 3);
+
+
+            if (inventory.grabStack != null)
+            {
+                if (inventory.grabStack.item.GetRenderTexture() != null)
+                {
+                    DrawItem(spriteBatch, width, height, inventory.grabStack, mouse_x - 15 * 3, mouse_y - 15 * 3, 0.75f, 0.75f);
+                }
+            }
+
+            //0, 44, 38, 38 <- Circle
+            //0, 44+38, 38, 38 <- Circle (highlighted)
+
+            //40, 44, 20, 19 <- Backpack
+            //63, 44, 22, 19 <- computer
+
+
+            if (this.MouseInSpace(mouse_x, mouse_y, new Rectangle(2 * 3, 2 * 3 + 40 * 3 + drop, 38 * 3, 38 * 3)))
+            {
+                //digital inventory icon (Computer)
+                Draw(spriteBatch, width, height, Textures.Textures.hud, new Rectangle(2 * 3, 2 * 3 + 40 * 3 + drop, 38 * 3, 38 * 3), new Rectangle(0, 44+38, 38, 38), Color.White);
+                if (GameSettings.Settings.ATTACK.IsPressed())
+                {
+                    current_inventory = DIGITAL;
+                }
+            }
+            else
+            {
+                //digital inventory icon (Computer)
+                Draw(spriteBatch, width, height, Textures.Textures.hud, new Rectangle(2 * 3, 2 * 3 + 40 * 3 + drop, 38 * 3, 38 * 3), new Rectangle(0, 44, 38, 38), Color.White);
+
+            }
+
+            if (this.MouseInSpace(mouse_x, mouse_y, new Rectangle(2 * 3, 2 * 3 + drop, 38 * 3, 38 * 3)))
+            {
+                //main inventory icon (Backpack)
+                Draw(spriteBatch, width, height, Textures.Textures.hud, new Rectangle(2 * 3, 2 * 3 + drop, 38 * 3, 38 * 3), new Rectangle(0, 44+38, 38, 38), Color.White);
+                if (GameSettings.Settings.ATTACK.IsPressed())
+                {
+                    current_inventory = PHYSICAL;
+                }
+            }
+            else
+            {
+                //main inventory icon (Backpack)
+                Draw(spriteBatch, width, height, Textures.Textures.hud, new Rectangle(2 * 3, 2 * 3 + drop, 38 * 3, 38 * 3), new Rectangle(0, 44, 38, 38), Color.White);
+            }
+            //Backpack
+            Draw(spriteBatch, width, height, Textures.Textures.hud, new Rectangle(2 * 3 + 19 * 3 - 10 * 4, 2 * 3 + drop + 19 * 3 - (int)(19 * 4 * 0.5), 20 * 4, 19 * 4), new Rectangle(40, 44, 20, 19), Color.White);
+            //Computer
+            Draw(spriteBatch, width, height, Textures.Textures.hud, new Rectangle((int)(2 * 3 + 19 * 3 - 11 * 3.5f), 2 * 3 + 40 * 3 + drop + 19 * 3 - (int)(19 * 3.5f * 0.5), (int)(22 * 3.5f), (int)(19 * 3.5f)), new Rectangle(63, 44, 22, 19), Color.White);
+            if (Inignoto.game.player.gamemode == Entities.Player.PlayerEntity.Gamemode.SANDBOX)
+            {
+                if (MouseInSpace(mouse_x, mouse_y, new Rectangle(2 * 3, 2 * 3 + 40 * 6 + drop, 38 * 3, 38 * 3)))
+                {
+                    //Circle
+                    Draw(spriteBatch, width, height, Textures.Textures.hud, new Rectangle(2 * 3, 2 * 3 + 40 * 6 + drop, 38 * 3, 38 * 3), new Rectangle(0, 44+38, 38, 38), Color.White);
+                    if (GameSettings.Settings.ATTACK.IsPressed())
+                    {
+                        current_inventory = SANDBOX;
+                    }
+                }
+                else
+                {
+                    //Circle
+                    Draw(spriteBatch, width, height, Textures.Textures.hud, new Rectangle(2 * 3, 2 * 3 + 40 * 6 + drop, 38 * 3, 38 * 3), new Rectangle(0, 44, 38, 38), Color.White);
+
+                }
+
+                //Block
+                Draw(spriteBatch, width, height, Textures.Textures.hud, new Rectangle((int)(2 * 3 + 19 * 3 - 14 * 2.5f), 2 * 3 + 40 * 6 + drop + 19 * 3 - (int)(17 * 5 * 0.5), 14 * 5, 17 * 5), new Rectangle(91, 47, 14, 17), Color.White);
+                
             }
 
         }
@@ -206,7 +461,7 @@ namespace Inignoto.Graphics.Gui
 
             RasterizerState rasterizerState = new RasterizerState();
             rasterizerState.CullMode = CullMode.None;
-            device.RasterizerState = rasterizerState;
+            device.RasterizerState = rasterizerState; 
             device.DepthStencilState = DepthStencilState.Default;
             device.SamplerStates[0] = SamplerState.PointClamp;
 
@@ -242,9 +497,8 @@ namespace Inignoto.Graphics.Gui
             
         }
         
-        public override void Update(GameTime time, int width, int height)
+        public void UpdateMainInventory(GameTime time, int width, int height)
         {
-            UpdateKeys();
             int mouse_x = (int)(Inignoto.game.mousePos.X * (1920.0 / width));
             int mouse_y = (int)(Inignoto.game.mousePos.Y * (1080.0 / height));
             int drop = -(int)(DropdownAnimation * 360 * 3);
@@ -267,6 +521,13 @@ namespace Inignoto.Graphics.Gui
             {
                 UpdateSlot(mouse_x, mouse_y, drop, inventory.trashStack, out inventory.trashStack, SlotType.TRASH);
             }
+        }
+
+        public void UpdateHotbar(GameTime time, int width, int height)
+        {
+            int mouse_x = (int)(Inignoto.game.mousePos.X * (1920.0 / width));
+            int mouse_y = (int)(Inignoto.game.mousePos.Y * (1080.0 / height));
+            int drop = -(int)(DropdownAnimation * 360 * 3);
 
             for (int i = 0; i < 10; i++)
             {
@@ -279,6 +540,17 @@ namespace Inignoto.Graphics.Gui
                     UpdateSlot(mouse_x, mouse_y, 0, inventory.hotbar[i], out inventory.hotbar[i], SlotType.NORMAL);
                 }
             }
+        }
+
+        public override void Update(GameTime time, int width, int height)
+        {
+
+            UpdateKeys();
+
+            if (current_inventory == PHYSICAL)
+            UpdateMainInventory(time, width, height);
+            UpdateHotbar(time, width, height);
+            
         }
 
         private void UpdateSlot(int mouse_x, int mouse_y, int drop, ItemStack stack, out ItemStack o, SlotType type)

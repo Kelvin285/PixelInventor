@@ -77,6 +77,7 @@ namespace Inignoto.Entities.Client.Player
                     }
                 case Gamemode.SANDBOX:
                     {
+                        if (!(Hud.openGui is InventoryGui))
                         NormalMotion(time);
                         break;
                     }
@@ -104,6 +105,11 @@ namespace Inignoto.Entities.Client.Player
             float friction = 0.2f;
             float moveLerp = (OffGroundTimer == 0) ? 0.9f : 0.25f;
 
+            if (Hud.openGui is InventoryGui)
+            {
+                moveLerp = 0;
+            }
+
             Camera camera = Inignoto.game.camera;
 
             bool flyMovement = false;
@@ -120,7 +126,7 @@ namespace Inignoto.Entities.Client.Player
                 Perspective %= 3;
             }
             
-            if (GameSettings.Settings.JUMP.IsPressed())
+            if (GameSettings.Settings.JUMP.IsPressed() && !(Hud.openGui is InventoryGui))
             {
                 if (OnGround)
                 {
@@ -250,7 +256,7 @@ namespace Inignoto.Entities.Client.Player
                     velocity.Set(Vector3.Lerp(velocity.Vector, new Vector3(0, velocity.Y, 0), friction * delta));
                 } else
                 {
-                    velocity.Set(Vector3.Lerp(velocity.Vector, new Vector3(0, velocity.Y, 0), friction * 0.001f * delta));
+                    velocity.Set(Vector3.Lerp(velocity.Vector, new Vector3(0, velocity.Y, 0), friction * 0.5f * delta));
                 }
             } else if (trueMotion.Vector.Length() > 0)
             {
@@ -316,6 +322,9 @@ namespace Inignoto.Entities.Client.Player
 
         public void NormalMotion(GameTime time)
         {
+
+            
+
             float delta = (float)time.ElapsedGameTime.TotalSeconds * 60;
             if (!OnGround && !Flying)
             {
