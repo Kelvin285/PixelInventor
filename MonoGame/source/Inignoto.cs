@@ -245,7 +245,8 @@ namespace Inignoto
             camera.rotation = new Vector3f(0, 0, 0);
             GameResources.effect.View = camera.ViewMatrix;
 
-            GraphicsDevice.BlendState = BlendState.AlphaBlend;
+            GraphicsDevice.BlendState = BlendState.NonPremultiplied;
+            
 
             ItemManager.DrawItems(gameTime);
 

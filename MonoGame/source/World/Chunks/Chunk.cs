@@ -4,6 +4,8 @@ using Inignoto.Tiles;
 using System;
 using Inignoto.Graphics.Mesh;
 using Inignoto.Graphics.World;
+using Inignoto.Math;
+using Microsoft.Xna.Framework;
 
 namespace Inignoto.World.Chunks
 {
@@ -167,6 +169,19 @@ namespace Inignoto.World.Chunks
         public void FinishRebuilding()
         {
             rebuilding = false;
+
+            Chunk chunk = chunkManager.TryGetChunk(GetX() - 1, GetY(), GetZ());
+            if (chunk != null) chunkManager.secondaryChunksToRerender.Add(chunk);
+            chunk = chunkManager.TryGetChunk(GetX() + 1, GetY(), GetZ());
+            if (chunk != null) chunkManager.secondaryChunksToRerender.Add(chunk);
+            chunk = chunkManager.TryGetChunk(GetX(), GetY() - 1, GetZ());
+            if (chunk != null) chunkManager.secondaryChunksToRerender.Add(chunk);
+            chunk = chunkManager.TryGetChunk(GetX(), GetY() + 1, GetZ());
+            if (chunk != null) chunkManager.secondaryChunksToRerender.Add(chunk);
+            chunk = chunkManager.TryGetChunk(GetX(), GetY(), GetZ() - 1);
+            if (chunk != null) chunkManager.secondaryChunksToRerender.Add(chunk);
+            chunk = chunkManager.TryGetChunk(GetX(), GetY(), GetZ() + 1);
+            if (chunk != null) chunkManager.secondaryChunksToRerender.Add(chunk);
         }
 
         public bool NeedsToRebuild()

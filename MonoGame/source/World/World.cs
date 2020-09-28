@@ -16,6 +16,7 @@ using System;
 using Inignoto.Graphics.Mesh;
 using Inignoto.Graphics.Textures;
 using Inignoto.Effects;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Inignoto.World
 {
@@ -55,10 +56,13 @@ namespace Inignoto.World
         public readonly WorldProperties properties;
         public readonly List<Entity> entities;
 
+        private Mesh skybox;
+
         public GameTime gameTime { get; private set; }
 
         public readonly Random random;
 
+        public float radius { get; private set; }
 
         public World()
         {
@@ -66,6 +70,7 @@ namespace Inignoto.World
             properties = new WorldProperties();
             entities = new List<Entity>();
             random = new Random();
+            radius = 25;
         }
 
         public void UpdateChunkGeneration()
@@ -97,8 +102,15 @@ namespace Inignoto.World
 
         public void Render(GraphicsDevice device, GameEffect effect, GameTime time)
         {
-            chunkManager.Render(device, effect);
-            RenderTileSelection(device, effect);
+
+            if (skybox == null)
+            {
+                skybox = TileBuilder.BuildTile(-0.5f, -0.5f, -0.5f, TileManager.DIRT.DefaultData, device);
+                skybox.texture = Textures.white_square;
+            }
+            skybox.scale = new Vector3(1000.0f);
+            
+
 
             for (int i = 0; i < entities.Count; i++)
             {
@@ -108,6 +120,23 @@ namespace Inignoto.World
                     entity.Render(device, effect, time);
                 }
             }
+            RenderTileSelection(device, effect);
+
+            GameResources.effect.ObjectColor = GameResources.effect.FogColor;
+            skybox.SetPosition(Inignoto.game.player.position.Vector);
+            skybox.Draw(effect, device);
+            GameResources.effect.ObjectColor = Color.White.ToVector4();
+
+
+            RasterizerState rasterizerState = new RasterizerState();
+            rasterizerState.CullMode = CullMode.CullClockwiseFace;
+            device.RasterizerState = rasterizerState;
+
+            chunkManager.Render(device, effect);
+
+            RasterizerState rasterizerState2 = new RasterizerState();
+            rasterizerState2.CullMode = CullMode.None;
+            device.RasterizerState = rasterizerState2;
         }
 
         private Mesh selectionBox;
@@ -396,6 +425,11 @@ namespace Inignoto.World
             }
 
             return null;
+        }
+
+        public Vector4 GetSkyColor()
+        {
+            return new Vector4(Color.CornflowerBlue.R / 255.0f, Color.CornflowerBlue.G / 255.0f, Color.CornflowerBlue.B / 255.0f, 1.0f);
         }
     }
 }

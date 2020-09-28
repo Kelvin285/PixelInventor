@@ -6,6 +6,8 @@ float4 fog_color;
 bool water;
 float time;
 
+float4 color;
+
 texture ModelTexture;
 sampler2D textureSampler = sampler_state {
     Texture = (ModelTexture);
@@ -30,6 +32,13 @@ struct VertexShaderOutput
 	float4 PixelPos : COLOR1;
 };
 
+float rand(in float2 uv)
+{
+    float2 noise = (frac(sin(dot(uv, float2(12.9898, 78.233) * 2.0)) * 43758.5453));
+    return abs(noise.x + noise.y) * 0.5;
+}
+
+
 VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
 {
     VertexShaderOutput output;
@@ -38,15 +47,24 @@ VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
 
     output.Color = input.Color;
 
-    if (water) {
-        worldPosition.y -= abs(0.05f * (sin(worldPosition.x + time) + cos(worldPosition.z + time)));
-        output.Color.a *= 0.5f;
-    }
-
     float4 viewPosition = mul(worldPosition, View);
 
 
+    if (water) {
+    
+        float val = abs(sin(rand(float2(worldPosition.x, worldPosition.z)) + worldPosition.x + time));
+
+        worldPosition.y -= 0.1f * val;
+        
+        float val2 = (1.0f - val) * 0.5f;
+        float water_fog = (viewPosition.y - viewPosition.z) / 35.0f;
+
+        output.Color += float4(val2 + water_fog, val2 + water_fog, val2 + water_fog, val2);
+    }
+
+    viewPosition = mul(worldPosition, View);
     output.Position = mul(viewPosition, Projection);
+
 
 	output.TextureCoordinate = input.TextureCoordinate;
 
@@ -59,15 +77,15 @@ VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
     return output;
 }
 
-float4 PixelShaderFunction(VertexShaderOutput input, float2 vPos : VPOS) : COLOR0
+float4 OpaquePixelShaderFunction(VertexShaderOutput input, float2 vPos : VPOS) : COLOR0
 {	
 	
 	float4 textureColor = tex2D(textureSampler, input.TextureCoordinate);
 	float depth = min(1, max(0, distance(input.PixelPos.xyz, float3(0, 0, 0)) / fog_distance));
 
-	if (textureColor.a <= 0) clip(-1);
+	if (textureColor.a != 1) clip(-1);
 
-	float4 final_color = textureColor * input.Color;
+	float4 final_color = textureColor * input.Color * color;
 
 	final_color.r = lerp(final_color.r, fog_color.r, depth);
 	final_color.g = lerp(final_color.g, fog_color.g, depth);
@@ -76,17 +94,31 @@ float4 PixelShaderFunction(VertexShaderOutput input, float2 vPos : VPOS) : COLOR
 	return final_color;
 }
 
+float4 TransparentPixelShaderFunction(VertexShaderOutput input, float2 vPos : VPOS) : COLOR0
+{
+
+    float4 textureColor = tex2D(textureSampler, input.TextureCoordinate);
+    float depth = min(1, max(0, distance(input.PixelPos.xyz, float3(0, 0, 0)) / fog_distance));
+
+    if (textureColor.a <= 0 || textureColor.a == 1) clip(-1);
+
+    float4 final_color = textureColor * input.Color;
+
+    final_color.r = lerp(final_color.r, fog_color.r, depth);
+    final_color.g = lerp(final_color.g, fog_color.g, depth);
+    final_color.b = lerp(final_color.b, fog_color.b, depth);
+
+    return final_color;
+}
+
 technique Specular
 {
-    pass Pass1
-    {
-        AlphaBlendEnable = true; // Setup For Alpha Blending
-        ZEnable = true; // Setup For Alpha Blending
-        ZWriteEnable = true; // Setup For Alpha Blending
 
-        //SrcBlend = One; // Additive Blending
-        //DestBlend = One; // Additive Blending
-        //BlendOp = Add; // Additive Blending
+    pass Pass2
+    {
+        AlphaBlendEnable = true;
+        ZEnable = true;
+        ZWriteEnable = false;
 
         // Final Colour = srcColour * srcAlpha + destColour * (1 - srcAlpha)
         SrcBlend = SrcAlpha; // Normal Alpha Blending
@@ -94,6 +126,21 @@ technique Specular
         BlendOp = Add; // Normal Alpha Blending
 
         VertexShader = compile vs_2_0 VertexShaderFunction();
-        PixelShader = compile ps_3_0 PixelShaderFunction();
+        PixelShader = compile ps_3_0 TransparentPixelShaderFunction();
+    }
+
+    pass Pass1
+    {
+        AlphaBlendEnable = true;
+        ZEnable = true;
+        ZWriteEnable = true;
+
+        // Final Colour = srcColour * srcAlpha + destColour * (1 - srcAlpha)
+        SrcBlend = SrcAlpha; // Normal Alpha Blending
+        DestBlend = InvSrcAlpha; // Normal Alpha Blending
+        BlendOp = Add; // Normal Alpha Blending
+
+        VertexShader = compile vs_2_0 VertexShaderFunction();
+        PixelShader = compile ps_3_0 OpaquePixelShaderFunction();
     }
 }

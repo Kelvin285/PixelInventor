@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,7 @@ namespace Inignoto.Math
 {
     public class IMathHelper
     {
+
         public static float Fma(float a, float b, float c)
         {
             return a * b + c;

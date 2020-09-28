@@ -38,7 +38,7 @@ namespace Inignoto.Graphics.Textures
             target = new RenderTarget2D(Inignoto.game.GraphicsDevice, width, height, false, SurfaceFormat.Color, DepthFormat.None);
 
             Inignoto.game.GraphicsDevice.SetRenderTarget(target);
-            Inignoto.game.GraphicsDevice.Clear(Color.White);
+            Inignoto.game.GraphicsDevice.Clear(new Color(0, 0, 0, 0));
             batch.Begin();
             
             int w = 0;

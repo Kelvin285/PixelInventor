@@ -14,7 +14,7 @@ namespace Inignoto.Graphics.Mesh
 
         public readonly bool lines;
 
-        public readonly Texture2D texture;
+        public Texture2D texture;
 
         public Vector3 scale = new Vector3(1.0f);
         public Quaternion rotation = new Quaternion();
@@ -89,6 +89,14 @@ namespace Inignoto.Graphics.Mesh
 
         public Texture2D CreateTexture(Texture texture, GameEffect effect, GraphicsDevice device, Vector3 position, Quaternion rotation, int width, int height)
         {
+            Vector3f pos = new Vector3f(Inignoto.game.camera.position);
+            Vector3f rot = new Vector3f(Inignoto.game.camera.rotation);
+
+            Inignoto.game.camera.position = new Vector3f(0, 0, 0);
+            Inignoto.game.camera.rotation = new Vector3f(0, 0, 0);
+
+            effect.View = Inignoto.game.camera.ViewMatrix;
+
             RenderTarget2D target;
             target = new RenderTarget2D(Inignoto.game.GraphicsDevice, width, height, false, SurfaceFormat.Color, DepthFormat.Depth16);
 
@@ -104,6 +112,12 @@ namespace Inignoto.Graphics.Mesh
             Draw(texture, effect, device, matrix);
 
             Inignoto.game.GraphicsDevice.SetRenderTarget(null);
+
+            Inignoto.game.camera.position = pos;
+            Inignoto.game.camera.rotation = rot;
+
+            effect.View = Inignoto.game.camera.ViewMatrix;
+
             return (Texture2D)target;
         }
 

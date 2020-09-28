@@ -12,10 +12,10 @@ namespace Inignoto.Graphics.World
     {
         private static readonly Vector3f[] LEFT = new Vector3f[]
                 {
-                    new Vector3f(0, 0, 0),
-                    new Vector3f(0, 1, 0),
+                    new Vector3f(0, 0, 1),
                     new Vector3f(0, 1, 1),
-                    new Vector3f(0, 0, 1)
+                    new Vector3f(0, 1, 0),
+                    new Vector3f(0, 0, 0)
                 };
         private static readonly Vector3f[] FRONT =
             {
@@ -27,10 +27,10 @@ namespace Inignoto.Graphics.World
 
         private static readonly Vector3f[] BACK =
            {
-                new Vector3f(0, 0, 1),
-                new Vector3f(0, 1, 1),
+                new Vector3f(1, 0, 1),
                 new Vector3f(1, 1, 1),
-                new Vector3f(1, 0, 1)
+                new Vector3f(0, 1, 1),
+                new Vector3f(0, 0, 1)
             };
 
         private static readonly Vector3f[] RIGHT = new Vector3f[]
@@ -49,10 +49,10 @@ namespace Inignoto.Graphics.World
                 };
         private static readonly Vector3f[] BOTTOM = new Vector3f[]
                 {
-                    new Vector3f(0, 0, 0),
                     new Vector3f(0, 0, 1),
-                    new Vector3f(1, 0, 1),
-                    new Vector3f(1, 0, 0)
+                    new Vector3f(0, 0, 0),
+                    new Vector3f(1, 0, 0),
+                    new Vector3f(1, 0, 1)
                 };
 
         public static Mesh.Mesh BuildTile(float x, float y, float z, TileData data, GraphicsDevice device)

@@ -1,4 +1,5 @@
-﻿using Inignoto.Effects;
+﻿using Inignoto.Client;
+using Inignoto.Effects;
 using Inignoto.Entities;
 using Inignoto.Graphics.Mesh;
 using Inignoto.Graphics.Models;
@@ -114,11 +115,14 @@ namespace Inignoto.Items
             return Target;
         }
 
+
+        private static Camera itemCamera = new Camera();
         public void Draw(GraphicsDevice device, GameEffect effect, int width, int height, GameTime time)
         {
-            Inignoto.game.camera.rotation.Y = 180;
 
-            effect.View = Inignoto.game.camera.ViewMatrix;
+            itemCamera.rotation.Y = 180;
+
+            effect.View = itemCamera.ViewMatrix;
 
             RasterizerState rasterizerState = new RasterizerState();
             rasterizerState.CullMode = CullMode.None;

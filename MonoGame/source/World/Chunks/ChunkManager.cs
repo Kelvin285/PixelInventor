@@ -17,7 +17,7 @@ namespace Inignoto.World.Chunks
         private readonly Dictionary<Vector3, Chunk> chunks;
         private List<Chunk> chunksToBuild;
         public readonly List<Chunk> chunksToRerender;
-        public readonly List<Chunk> fluidChunksToRerender;
+        public readonly List<Chunk> secondaryChunksToRerender;
 
         public readonly List<Chunk> rendering;
 
@@ -35,7 +35,7 @@ namespace Inignoto.World.Chunks
             chunkRenderer = new ChunkRenderer();
             chunksToBuild = new List<Chunk>();
             chunksToRerender = new List<Chunk>();
-            fluidChunksToRerender = new List<Chunk>();
+            secondaryChunksToRerender = new List<Chunk>();
 
             rendering = new List<Chunk>();
         }
@@ -82,61 +82,54 @@ namespace Inignoto.World.Chunks
 
             for (int i = 0; i < chunksToRerender.Count; i++)
             {
-                if (chunksToRerender[i].NeedsToRebuild())
+                Chunk chunk = chunksToRerender[i];
+
+                if (chunk.NeedsToRebuild())
                 {
-                    Chunk chunk = chunksToRerender[i];
+                    chunk.secondMesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, chunk);
+                    if (chunk.secondMesh != null)
+                        chunk.secondMesh.SetPosition(new Microsoft.Xna.Framework.Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
 
-                    if (chunk.NeedsToRebuild())
+                    chunk.FinishRebuilding();
+                    if (chunk.mesh != null)
                     {
-                        chunk.secondMesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, chunk);
-                        if (chunk.secondMesh != null)
-                            chunk.secondMesh.SetPosition(new Microsoft.Xna.Framework.Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
-                        
-                        chunk.FinishRebuilding();
-                        if (chunk.mesh != null)
-                        {
-                            chunk.mesh.Dispose();
-                        }
-
-                        chunk.secondWaterMesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, chunk, true);
-                        if (chunk.secondWaterMesh != null)
-                            chunk.secondWaterMesh.SetPosition(new Microsoft.Xna.Framework.Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
-
-                        chunk.FinishRebuilding();
-                        if (chunk.waterMesh != null)
-                        {
-                            chunk.waterMesh.Dispose();
-                        }
-
-
+                        chunk.mesh.Dispose();
                     }
+
+                    chunk.secondWaterMesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, chunk, true);
+                    if (chunk.secondWaterMesh != null)
+                        chunk.secondWaterMesh.SetPosition(new Microsoft.Xna.Framework.Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
+
+                    chunk.FinishRebuilding();
+                    if (chunk.waterMesh != null)
+                    {
+                        chunk.waterMesh.Dispose();
+                    }
+
+
                 }
                 chunksToRerender.Remove(chunksToRerender[i]);
             }
 
-            /*
-            for (int i = 0; i < fluidChunksToRerender.Count; i++)
+            for (int i = 0; i < secondaryChunksToRerender.Count; i++)
             {
-                if (fluidChunksToRerender[i].NeedsToRebuild())
+                
+                Chunk chunk = secondaryChunksToRerender[i];
+
+                if (!chunk.NeedsToRebuild())
                 {
-                    Chunk chunk = fluidChunksToRerender[i];
+                    chunk.secondWaterMesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, chunk, true);
+                    if (chunk.secondWaterMesh != null)
+                        chunk.secondWaterMesh.SetPosition(new Microsoft.Xna.Framework.Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
 
-                    if (chunk.NeedsToRebuild())
+                    if (chunk.waterMesh != null)
                     {
-                        chunk.secondWaterMesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, chunk, true);
-                        if (chunk.secondWaterMesh != null)
-                            chunk.secondWaterMesh.SetPosition(new Microsoft.Xna.Framework.Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
-
-                        chunk.FinishRebuilding();
-                        if (chunk.waterMesh != null)
-                        {
-                            chunk.waterMesh.Dispose();
-                        }
-
+                        chunk.waterMesh.Dispose();
                     }
                 }
-                fluidChunksToRerender.Remove(fluidChunksToRerender[i]);
-            }*/
+
+                secondaryChunksToRerender.Remove(secondaryChunksToRerender[i]);
+            }
         }
 
         public void BeginUpdate(Vector3 camera)
@@ -221,13 +214,17 @@ namespace Inignoto.World.Chunks
                 chunkRenderer.RenderChunk(device, effect, rendering[i]);
                 TryUnloadChunk(rendering[i].GetX(), rendering[i].GetY(), rendering[i].GetZ());
             }
+            
             GameResources.effect.Water = true;
             for (int i = 0; i < rendering.Count; i++)
             {
                 chunkRenderer.RenderChunk(device, effect, rendering[i], true);
             }
             GameResources.effect.Water = false;
+
         }
+
+
 
     }
 }

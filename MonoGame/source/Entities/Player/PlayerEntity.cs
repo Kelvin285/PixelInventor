@@ -34,7 +34,7 @@ namespace Inignoto.Entities.Player
 
         public PlayerEntity(World.World world, Vector3f position) : base(world, position)
         {
-            position.Y = world.properties.generator.GetHeight(position.X, position.Z) + 1;
+            position.Y = world.properties.generator.GetHeight(position.X, position.Z, world.radius) + 1;
             ReachDistance = 4.0f;
             SpawnPosition = new Vector3f(position);
 

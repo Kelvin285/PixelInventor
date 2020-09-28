@@ -18,6 +18,7 @@ namespace Inignoto.Effects
         public Vector4 FogColor { get => GetFloat4("fog_color"); set => SetFloat4("fog_color", value); }
         public float Time { get => GetFloat("time"); set => SetFloat("time", value); }
         public bool Water { get => GetBool("water"); set => SetBool("water", value); }
+        public Vector4 ObjectColor { get => GetFloat4("color"); set => SetFloat4("color", value); }
 
         public GameEffect(GraphicsDevice graphicsDevice, byte[] effectCode) : base(graphicsDevice, effectCode)
         {
@@ -36,8 +37,13 @@ namespace Inignoto.Effects
 
         private void Init()
         {
+            ObjectColor = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+
             FogDistance = 500.0f;
             FogColor = new Vector4(Color.CornflowerBlue.R / 255.0f, Color.CornflowerBlue.G / 255.0f, Color.CornflowerBlue.B / 255.0f, 1.0f);
+
+            //FogDistance = 25.0f;
+            //FogColor = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
         }
 
         public Matrix GetMatrix(string name)
