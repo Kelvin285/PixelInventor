@@ -3,12 +3,13 @@ using Inignoto.Math;
 using Inignoto.Utilities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 
 namespace Inignoto.Graphics.Mesh
 {
     public class Mesh
     {
-        Matrix worldMatrix;
+        public Matrix worldMatrix;
         readonly VertexPositionColorTexture[] triangleVertices;
         VertexBuffer vertexBuffer;
 
@@ -40,6 +41,11 @@ namespace Inignoto.Graphics.Mesh
             this.texture = texture;
         }
 
+        public Vector3 GetPosition()
+        {
+            return this.worldMatrix.Translation;
+        }
+
         public void SetPosition(Vector3 position)
         {
             worldMatrix.Translation = position;
@@ -55,7 +61,7 @@ namespace Inignoto.Graphics.Mesh
             this.rotation = rotation;
         }
 
-        public bool IsDisposed => vertexBuffer.IsDisposed;
+        public bool IsDisposed => vertexBuffer != null ? vertexBuffer.IsDisposed : true;
         public int Length => triangleVertices.Length;
 
         public void Draw(GameEffect effect, GraphicsDevice device)
@@ -70,6 +76,7 @@ namespace Inignoto.Graphics.Mesh
 
         public void Draw(Texture texture, GameEffect effect, GraphicsDevice device, Matrix worldMatrix)
         {
+            
             if (empty) return;
             Matrix matrix = Matrix.CreateScale(scale) * Matrix.CreateFromQuaternion(rotation) * worldMatrix;
             

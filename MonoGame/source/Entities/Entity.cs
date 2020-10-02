@@ -7,7 +7,9 @@ using Inignoto.World.RaytraceResult;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
+using System.IO.Packaging;
 using static Inignoto.World.World;
 
 namespace Inignoto.Entities
@@ -57,6 +59,8 @@ namespace Inignoto.Entities
         public Vector3f look = new Vector3f(0, 0, 0);
 
         public SoundType soundType = SoundType.CREATURES;
+
+        public WorldArea area = 0;
 
         public Vector3f ForwardLook
         {
@@ -112,6 +116,120 @@ namespace Inignoto.Entities
                 }
             }
             LastOnGround = OnGround;
+
+            float diameter = world.radius * 2;
+            float length = diameter * 2;
+            float radius = world.radius;
+
+            switch (area) {
+                case WorldArea.MAIN:
+
+                    float lat = (position.X / length) * MathHelper.TwoPi * world.radius;
+
+                    if (position.Z > diameter - 0.5f)
+                    {
+                        lat /= (world.radius);
+                        Console.WriteLine(MathHelper.ToDegrees(lat));
+
+                        position.X = (float)System.Math.Cos(lat) * (world.radius - 1) + diameter + world.radius;
+                        position.Z = (float)System.Math.Sin(lat) * (world.radius - 1) + diameter + world.radius;
+
+                        Matrix look = Matrix.CreateLookAt(position.Vector, new Vector3(radius + diameter, position.Vector.Y, radius + diameter), Vector3.Up);
+
+                        this.look.Y += MathHelper.ToDegrees(2 * (float)System.Math.Acos(Quaternion.CreateFromRotationMatrix(look).X));
+                        this.look.Y += 90;
+                        this.look.Y -= MathHelper.ToDegrees(lat);
+
+                        this.velocity = new Vector3f(0, 0, 0);
+
+                        area = WorldArea.TOP;
+                    }
+
+                    if (position.Z < 0.5f)
+                    {
+                        lat /= (world.radius);
+
+                        position.X = (float)System.Math.Cos(lat) * (world.radius - 1) + radius;
+                        position.Z = (float)System.Math.Sin(lat) * (world.radius - 1) + diameter + world.radius;
+
+                        Matrix look = Matrix.CreateLookAt(position.Vector, new Vector3(radius, position.Vector.Y, radius + diameter), Vector3.Up);
+
+                        this.look.Y += MathHelper.ToDegrees(2 * (float)System.Math.Acos(Quaternion.CreateFromRotationMatrix(look).X));
+                        this.look.Y -= 90;
+                        this.look.Y -= MathHelper.ToDegrees(lat);
+
+                        this.velocity = new Vector3f(0, 0, 0);
+
+                        area = WorldArea.BOTTOM;
+                    }
+
+                    if (position.X < 0)
+                    {
+                        position.X = length;
+                    }
+                    if (position.X > length)
+                    {
+                        position.X = 0;
+                    }
+                    break;
+                case WorldArea.TOP:
+                    {
+                        float dist = Vector2.Distance(new Vector2(position.X, position.Z), new Vector2(diameter + radius, diameter + radius));
+
+                        if (dist > radius - 0.5f)
+                        {
+                            float atan = (float)System.Math.Atan2(position.Z - (diameter + radius), position.X - (diameter + radius));
+                            if (atan < 0) atan += MathHelper.TwoPi;
+
+
+                            Matrix look = Matrix.CreateLookAt(position.Vector, new Vector3(radius + diameter, position.Vector.Y, radius + diameter), Vector3.Up);
+
+                            this.look.Y -= 90;
+                            this.look.Y -= MathHelper.ToDegrees(2 * (float)System.Math.Acos(Quaternion.CreateFromRotationMatrix(look).X));
+                            this.look.Y += MathHelper.ToDegrees(atan);
+
+                            lat = atan / MathHelper.TwoPi;
+                            lat *= length;
+                            position.X = lat;
+                            position.Z = diameter - 1;
+                            
+                            this.velocity = new Vector3f(0, 0, 0);
+
+                            
+                            area = WorldArea.MAIN;
+                        }
+                    }
+                    break;
+                case WorldArea.BOTTOM:
+                    {
+                        float dist = Vector2.Distance(new Vector2(position.X, position.Z), new Vector2(radius, diameter + radius));
+                        if (dist > radius - 0.5f)
+                        {
+                            float lon = -(radius - dist);
+
+                            float atan = (float)System.Math.Atan2(position.Z - (diameter + radius), position.X - radius);
+                            if (atan < 0) atan += MathHelper.TwoPi;
+
+                            Matrix look = Matrix.CreateLookAt(position.Vector, new Vector3(radius, position.Vector.Y, radius + diameter), Vector3.Up);
+
+                            this.look.Y += 90;
+                            this.look.Y -= MathHelper.ToDegrees(2 * (float)System.Math.Acos(Quaternion.CreateFromRotationMatrix(look).X));
+                            this.look.Y += MathHelper.ToDegrees(atan);
+
+
+                            lat = atan / MathHelper.TwoPi;
+                            lat *= length;
+                            position.X = lat;
+                            position.Z = 1;
+                            this.velocity = new Vector3f(0, 0, 0);
+
+
+                            area = WorldArea.MAIN;
+                        }
+                    }
+                    break;
+            }
+            
         }
 
         public void DoPhysicsUpdates(GameTime time)

@@ -52,6 +52,8 @@ namespace Inignoto.Entities.Client.Player
             fabric_wind_instance = new GameSound(SoundEffects.ambient_fabric_in_wind.CreateInstance(), SoundType.AMBIENT);
             Perspective = 1;
             RenderEyeHeight = GetEyeHeight();
+
+            Inignoto.game.camera.position = position;
         }
 
         public override void Update(GameTime time)

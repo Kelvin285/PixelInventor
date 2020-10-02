@@ -20,6 +20,9 @@ namespace Inignoto.Effects
         public bool Water { get => GetBool("water"); set => SetBool("water", value); }
         public Vector4 ObjectColor { get => GetFloat4("color"); set => SetFloat4("color", value); }
 
+        public float Radius { get => GetFloat("radius"); set => SetFloat("radius", value); }
+        public float Area { get => GetFloat("area"); set => SetFloat("area", value); }
+
         public GameEffect(GraphicsDevice graphicsDevice, byte[] effectCode) : base(graphicsDevice, effectCode)
         {
             Init();

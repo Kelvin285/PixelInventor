@@ -455,6 +455,7 @@ namespace Inignoto.Graphics.Gui
 
         public void DrawPlayer(GraphicsDevice device, GameEffect effect, int width, int height, GameTime time)
         {
+            effect.Radius = 0;
             Inignoto.game.camera.rotation.Y = 180;
 
             effect.View = Inignoto.game.camera.ViewMatrix;

@@ -25,6 +25,8 @@ namespace Inignoto.World.Chunks
         public Mesh waterMesh;
         public Mesh secondWaterMesh;
 
+        public bool transparentRebuild = false;
+
         public Chunk(int x, int y, int z, World world)
         {
             this.x = x;
@@ -58,6 +60,10 @@ namespace Inignoto.World.Chunks
         {
             if (IsInsideChunk(x, y, z))
             {
+                if (TileManager.GetTile(voxel.tile_id) == TileManager.WATER)
+                {
+                    this.transparentRebuild = true;
+                }
                 voxels[GetIndexFor(x, y, z)] = voxel;
                 return true;
             }
@@ -171,17 +177,17 @@ namespace Inignoto.World.Chunks
             rebuilding = false;
 
             Chunk chunk = chunkManager.TryGetChunk(GetX() - 1, GetY(), GetZ());
-            if (chunk != null) chunkManager.secondaryChunksToRerender.Add(chunk);
+            if (chunk != null && transparentRebuild) chunkManager.secondaryChunksToRerender.Add(chunk);
             chunk = chunkManager.TryGetChunk(GetX() + 1, GetY(), GetZ());
-            if (chunk != null) chunkManager.secondaryChunksToRerender.Add(chunk);
+            if (chunk != null && transparentRebuild) chunkManager.secondaryChunksToRerender.Add(chunk);
             chunk = chunkManager.TryGetChunk(GetX(), GetY() - 1, GetZ());
-            if (chunk != null) chunkManager.secondaryChunksToRerender.Add(chunk);
+            if (chunk != null && transparentRebuild) chunkManager.secondaryChunksToRerender.Add(chunk);
             chunk = chunkManager.TryGetChunk(GetX(), GetY() + 1, GetZ());
-            if (chunk != null) chunkManager.secondaryChunksToRerender.Add(chunk);
+            if (chunk != null && transparentRebuild) chunkManager.secondaryChunksToRerender.Add(chunk);
             chunk = chunkManager.TryGetChunk(GetX(), GetY(), GetZ() - 1);
-            if (chunk != null) chunkManager.secondaryChunksToRerender.Add(chunk);
+            if (chunk != null && transparentRebuild) chunkManager.secondaryChunksToRerender.Add(chunk);
             chunk = chunkManager.TryGetChunk(GetX(), GetY(), GetZ() + 1);
-            if (chunk != null) chunkManager.secondaryChunksToRerender.Add(chunk);
+            if (chunk != null && transparentRebuild) chunkManager.secondaryChunksToRerender.Add(chunk);
         }
 
         public bool NeedsToRebuild()

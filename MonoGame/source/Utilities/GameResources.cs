@@ -24,7 +24,7 @@ namespace Inignoto.Utilities
             SoundEffects.LoadSoundEffects();
 
             Inignoto.game.world = new World.World();
-            Inignoto.game.player = new Entities.Client.Player.ClientPlayerEntity(Inignoto.game.world, new Math.Vector3f(0, 10, 0));
+            Inignoto.game.player = new Entities.Client.Player.ClientPlayerEntity(Inignoto.game.world, new Math.Vector3f(Inignoto.game.world.radius * 2, 10, Inignoto.game.world.radius));
             Inignoto.game.hud = new Graphics.Gui.Hud();
 
             effect = new GameEffect(Inignoto.game.Content.Load<Effect>("Effect"));

@@ -7,6 +7,7 @@ using Inignoto.Graphics.World;
 using Inignoto.World.Generator;
 using Inignoto.Graphics.Mesh;
 using Inignoto.Effects;
+using System;
 
 namespace Inignoto.World.Chunks
 {
@@ -55,19 +56,44 @@ namespace Inignoto.World.Chunks
                 if (System.Math.Abs(c.GetX() - current_x) > H_VIEW + 1 ||
                     System.Math.Abs(c.GetY() - current_y) > V_VIEW + 1 ||
                     System.Math.Abs(c.GetZ() - current_z) > H_VIEW + 1) {
-                    chunksToBuild.Remove(c);
-                    continue;
+
+                    if (System.Math.Abs(c.GetX() - (current_x + (int)((world.radius * 4) / Constants.CHUNK_SIZE))) > H_VIEW + 1)
+                    {
+                        if (System.Math.Abs(c.GetX() - (current_x - (int)((world.radius * 4) / Constants.CHUNK_SIZE))) > H_VIEW + 1)
+                        {
+
+                            chunksToBuild.Remove(c);
+                            continue;
+                        }
+                    }
+
                 }
                 if (chunksToBuild[i].NeedsToGenerate())
                 {
                     //generator.GenerateChunk(chunksToBuild[i]);
                     //chunksToBuild[i].SetGenerated();
                     Chunk chunk = chunksToBuild[i];
+                    
                     float dist = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x, current_y, current_z));
                     if (dist < distance) {
                         distance = dist;
                         closest = chunk;
                     }
+
+                    dist = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x + (int)((world.radius * 4) / Constants.CHUNK_SIZE), current_y, current_z));
+                    if (dist < distance)
+                    {
+                        distance = dist;
+                        closest = chunk;
+                    }
+
+                    dist = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x - (int)((world.radius * 4) / Constants.CHUNK_SIZE), current_y, current_z));
+                    if (dist < distance)
+                    {
+                        distance = dist;
+                        closest = chunk;
+                    }
+
                 } else
                 {
                     chunksToBuild.Remove(chunksToBuild[i]);
@@ -96,11 +122,6 @@ namespace Inignoto.World.Chunks
                         chunk.mesh.Dispose();
                     }
 
-                    chunk.secondWaterMesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, chunk, true);
-                    if (chunk.secondWaterMesh != null)
-                        chunk.secondWaterMesh.SetPosition(new Microsoft.Xna.Framework.Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
-
-                    chunk.FinishRebuilding();
                     if (chunk.waterMesh != null)
                     {
                         chunk.waterMesh.Dispose();
@@ -118,7 +139,7 @@ namespace Inignoto.World.Chunks
 
                 if (!chunk.NeedsToRebuild())
                 {
-                    chunk.secondWaterMesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, chunk, true);
+                    chunk.mesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, chunk);
                     if (chunk.secondWaterMesh != null)
                         chunk.secondWaterMesh.SetPosition(new Microsoft.Xna.Framework.Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
 
@@ -126,9 +147,12 @@ namespace Inignoto.World.Chunks
                     {
                         chunk.waterMesh.Dispose();
                     }
+
+                    chunk.transparentRebuild = false;
                 }
 
                 secondaryChunksToRerender.Remove(secondaryChunksToRerender[i]);
+                if (i > 2) break;
             }
         }
 
@@ -166,12 +190,19 @@ namespace Inignoto.World.Chunks
         {
             int H_VIEW = GameSettings.Settings.HORIZONTAL_VIEW;
             int V_VIEW = GameSettings.Settings.VERTICAL_VIEW;
-            if (System.Math.Abs(x - current_x) > H_VIEW ||
-                System.Math.Abs(y - current_y) > V_VIEW ||
-                System.Math.Abs(z - current_z) > H_VIEW)
+            if (System.Math.Abs(x - current_x) > H_VIEW + 1 ||
+                    System.Math.Abs(y - current_y) > V_VIEW + 1 ||
+                    System.Math.Abs(z - current_z) > H_VIEW + 1)
             {
-                chunks.Remove(new Vector3(x, y, z));
-                return true;
+                if (System.Math.Abs(x - (current_x + (int)((world.radius * 4) / Constants.CHUNK_SIZE))) > H_VIEW + 1)
+                {
+                    if (System.Math.Abs(x - (current_x - (int)((world.radius * 4) / Constants.CHUNK_SIZE))) > H_VIEW + 1)
+                    {
+                        chunks.Remove(new Vector3(x, y, z));
+                        return true;
+
+                    }
+                }
             }
             return false;
         }
@@ -186,18 +217,28 @@ namespace Inignoto.World.Chunks
         {
             int H_VIEW = GameSettings.Settings.HORIZONTAL_VIEW;
             int V_VIEW = GameSettings.Settings.VERTICAL_VIEW;
-            for (int x = -H_VIEW; x < H_VIEW; x++)
+
+
+            int rad = (int)((world.radius * 4.0f) / Constants.CHUNK_SIZE);
+            for (int y = -V_VIEW; y < V_VIEW; y++)
             {
-                for (int y = -V_VIEW; y < V_VIEW; y++)
+                for (int z = -H_VIEW; z < H_VIEW; z++)
                 {
-                    for (int z = -H_VIEW; z < H_VIEW; z++)
+                    for (int x = -H_VIEW; x < H_VIEW; x++)
                     {
                         int X = x + current_x;
                         int Y = y + current_y;
                         int Z = z + current_z;
-                        TryAddChunk(X, Y, Z);
+
+                        int W = X;
+                        if (W < 0) W += rad;
+                        if (W >= rad) W -= rad;
+
+                        TryAddChunk(W, Y, Z);
+
                     }
                 }
+
             }
         }
 

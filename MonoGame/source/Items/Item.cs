@@ -119,7 +119,7 @@ namespace Inignoto.Items
         private static Camera itemCamera = new Camera();
         public void Draw(GraphicsDevice device, GameEffect effect, int width, int height, GameTime time)
         {
-
+            effect.Radius = 0;
             itemCamera.rotation.Y = 180;
 
             effect.View = itemCamera.ViewMatrix;

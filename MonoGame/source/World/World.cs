@@ -22,6 +22,12 @@ namespace Inignoto.World
 {
     public class World
     {
+
+        public enum WorldArea
+        {
+            MAIN = 0, TOP = 1, BOTTOM = 2
+        }
+
         public struct TilePos {
             public int x, y, z;
             public TilePos(int x = 0, int y = 0, int z = 0)
@@ -70,7 +76,7 @@ namespace Inignoto.World
             properties = new WorldProperties();
             entities = new List<Entity>();
             random = new Random();
-            radius = 25;
+            radius = 128;
         }
 
         public void UpdateChunkGeneration()
@@ -102,6 +108,10 @@ namespace Inignoto.World
 
         public void Render(GraphicsDevice device, GameEffect effect, GameTime time)
         {
+
+            effect.Radius = radius;
+            effect.Area = (int)Inignoto.game.player.area;
+            effect.FogDistance = GameSettings.Settings.HORIZONTAL_VIEW * Constants.CHUNK_SIZE;
 
             if (skybox == null)
             {
@@ -278,11 +288,15 @@ namespace Inignoto.World
 
         public Chunks.Chunk TryGetChunk(TilePos pos)
         {
+            if (pos.x < 0) pos.x += (int)(radius * 4);
+            if (pos.x > (int)(radius * 4)) pos.x -= (int)(radius * 4);
             return chunkManager.TryGetChunk(pos.x / Constants.CHUNK_SIZE, pos.y / Constants.CHUNK_SIZE, pos.z / Constants.CHUNK_SIZE);
         }
 
         public TileData GetVoxel(TilePos pos)
         {
+            if (pos.x < 0) pos.x += (int)(radius * 4);
+            if (pos.x > (int)(radius * 4)) pos.x -= (int)(radius * 4);
             int cx = (int)System.Math.Floor((float)pos.x / Constants.CHUNK_SIZE);
             int cy = (int)System.Math.Floor((float)pos.y / Constants.CHUNK_SIZE);
             int cz = (int)System.Math.Floor((float)pos.z / Constants.CHUNK_SIZE);
@@ -301,6 +315,8 @@ namespace Inignoto.World
 
         public void SetVoxel(TilePos pos, TileData voxel)
         {
+            if (pos.x < 0) pos.x += (int)(radius * 4);
+            if (pos.x > (int)(radius * 4)) pos.x -= (int)(radius * 4);
             int cx = (int)System.Math.Floor((float)pos.x / Constants.CHUNK_SIZE);
             int cy = (int)System.Math.Floor((float)pos.y / Constants.CHUNK_SIZE);
             int cz = (int)System.Math.Floor((float)pos.z / Constants.CHUNK_SIZE);
@@ -359,6 +375,16 @@ namespace Inignoto.World
 
         public TileRaytraceResult RayTraceTiles(Vector3f start, Vector3f end, TileRayTraceType type)
         {
+            if (end.X > (int)(radius * 4))
+            {
+                end.X -= (int)(radius * 4);
+                start.X -= (int)(radius * 4);
+            }
+            else if (end.X < 0)
+            {
+                end.X += (int)(radius * 4);
+                start.X += (int)(radius * 4);
+            }
             TilePos pos = new TilePos(start.X, start.Y, start.Z);
 
             float length = end.DistanceTo(start.Vector);
@@ -373,6 +399,7 @@ namespace Inignoto.World
             };
             for (int ii = 0; ii < 10; ii++)
             {
+                
                 if (raypos.DistanceTo(start.Vector) > length)
                 {
                     break;
@@ -383,6 +410,8 @@ namespace Inignoto.World
                 RayIntersection intersection = Raytracing.IntersectBox(start, raydir, raybox);
                 raypos.Set(start);
                 raypos.Add(new Vector3f(raydir).Mul(intersection.lambda.Y + 0.01f));
+
+
                 TileData data = GetVoxel(pos);
                 Tile tile = TileManager.GetTile(data.tile_id);
                 if (tile != null)

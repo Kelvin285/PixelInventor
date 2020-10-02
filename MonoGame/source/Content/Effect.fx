@@ -8,6 +8,9 @@ float time;
 
 float4 color;
 
+float radius;
+float area;
+
 texture ModelTexture;
 sampler2D textureSampler = sampler_state {
     Texture = (ModelTexture);
@@ -30,6 +33,7 @@ struct VertexShaderOutput
     float4 Color : COLOR0;
 	float2 TextureCoordinate : TEXCOORD0;
 	float4 PixelPos : COLOR1;
+    float4 WorldPos : TEXCOORD1;
 };
 
 float rand(in float2 uv)
@@ -46,6 +50,7 @@ VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
     float4 worldPosition = mul(input.Position, World);
 
     output.Color = input.Color;
+    output.WorldPos = worldPosition;
 
     float4 viewPosition = mul(worldPosition, View);
 
@@ -70,11 +75,56 @@ VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
 
 	output.PixelPos = output.Position;
 
-	//output.Position.y -= distance(output.Position.xz, float2(0, 0)) * 0.1f; //ROUND PLANET
+    if (radius > 0)
+	output.Position.y -= max(0, (distance(output.Position.xz, float2(0, 0)) - 25) / (radius / 16.0f)); //ROUND PLANET
 
 	
 
     return output;
+}
+
+float GetFog(VertexShaderOutput input) {
+    float depth = 0;
+    float diameter = radius * 2;
+
+    float dist1 = distance(input.WorldPos.xz, float2(radius, radius + diameter));
+    float dist2 = distance(input.WorldPos.xz, float2(radius + diameter, radius + diameter));
+    float dist3 = abs(input.WorldPos.z - radius);
+
+
+    float fade = 25;
+    float fade_add = 5;
+    float max_fade = fade + fade_add;
+
+    bool in_bounds = false;
+
+    if (dist1 <= radius + 2 && area == 2) {
+        if (radius - dist1 < max_fade) {
+            depth = 1.0f - (radius - dist1 - fade_add) / fade;
+        }
+        in_bounds = true;
+    }
+
+    if (dist2 <= radius + 2 && area == 1) {
+        if (radius - dist2 < max_fade) {
+            depth = 1.0f - (radius - dist2 - fade_add) / fade;
+            in_bounds = true;
+        }
+        in_bounds = true;
+    }
+    
+    if (input.WorldPos.z > -2 && input.WorldPos.z < diameter + 2 && area == 0) {
+        if (radius - dist3 < max_fade) {
+            depth = 1.0f - (radius - dist3 - fade_add) / fade;
+        }
+        in_bounds = true;
+    }
+
+    if (!in_bounds) {
+        return 1.0f;
+    }
+
+    return depth;
 }
 
 float4 OpaquePixelShaderFunction(VertexShaderOutput input, float2 vPos : VPOS) : COLOR0
@@ -83,6 +133,13 @@ float4 OpaquePixelShaderFunction(VertexShaderOutput input, float2 vPos : VPOS) :
 	float4 textureColor = tex2D(textureSampler, input.TextureCoordinate);
 	float depth = min(1, max(0, distance(input.PixelPos.xyz, float3(0, 0, 0)) / fog_distance));
 
+    float fog = GetFog(input);
+    if (radius > 0) {
+        if (fog > depth) depth = fog;
+    }
+
+    depth = max(0, min(1, depth));
+
 	if (textureColor.a != 1) clip(-1);
 
 	float4 final_color = textureColor * input.Color * color;
@@ -90,7 +147,7 @@ float4 OpaquePixelShaderFunction(VertexShaderOutput input, float2 vPos : VPOS) :
 	final_color.r = lerp(final_color.r, fog_color.r, depth);
 	final_color.g = lerp(final_color.g, fog_color.g, depth);
 	final_color.b = lerp(final_color.b, fog_color.b, depth);
-
+    
 	return final_color;
 }
 
@@ -99,6 +156,13 @@ float4 TransparentPixelShaderFunction(VertexShaderOutput input, float2 vPos : VP
 
     float4 textureColor = tex2D(textureSampler, input.TextureCoordinate);
     float depth = min(1, max(0, distance(input.PixelPos.xyz, float3(0, 0, 0)) / fog_distance));
+
+    float fog = GetFog(input);
+    if (radius > 0) {
+        if (fog > depth) depth = fog;
+    }
+
+    depth = max(0, min(1, depth));
 
     if (textureColor.a <= 0 || textureColor.a == 1) clip(-1);
 
