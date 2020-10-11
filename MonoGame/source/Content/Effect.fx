@@ -6,10 +6,14 @@ float4 fog_color;
 bool water;
 float time;
 
+float3 camera_pos;
+
 float4 color;
 
 float radius;
 float area;
+
+bool world_render;
 
 texture ModelTexture;
 sampler2D textureSampler = sampler_state {
@@ -43,24 +47,45 @@ float rand(in float2 uv)
 }
 
 
+
 VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
 {
     VertexShaderOutput output;
-
     float4 worldPosition = mul(input.Position, World);
+    
+    if (world_render == true) {
+        float r = radius;
+        if (radius <= 0) r = 900000;
+        float diameter = r * 2;
+        float length = diameter * 4;
 
+        float lat = 3.14 * (worldPosition.x - camera_pos.x) / length;
+
+        lat += 3.14 / 2.0 + 3.14;
+
+        worldPosition.y = worldPosition.y - length * (sin(lat) + 1);
+
+        float lon = 3.14 * (worldPosition.z - camera_pos.z) / (length / 2);
+
+        lon += 3.14 / 2.0 + 3.14;
+
+        worldPosition.y += worldPosition.y - (length / 2) * (sin(lon) + 1);
+        worldPosition.y /= 2.0;
+    }
+    
     output.Color = input.Color;
     output.WorldPos = worldPosition;
 
     float4 viewPosition = mul(worldPosition, View);
 
+    if (viewPosition.z > 0) output.Color.a = 0;
 
     if (water) {
-    
+
         float val = abs(sin(rand(float2(worldPosition.x, worldPosition.z)) + worldPosition.x + time));
 
         worldPosition.y -= 0.1f * val;
-        
+
         float val2 = (1.0f - val) * 0.5f;
         float water_fog = (viewPosition.y - viewPosition.z) / 35.0f;
 
@@ -71,15 +96,11 @@ VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
     output.Position = mul(viewPosition, Projection);
 
 
-	output.TextureCoordinate = input.TextureCoordinate;
+    output.TextureCoordinate = input.TextureCoordinate;
 
-	output.PixelPos = output.Position;
+    output.PixelPos = output.Position;
 
-    if (radius > 0)
-	output.Position.y -= max(0, (distance(output.Position.xz, float2(0, 0)) - 25) / (radius / 16.0f)); //ROUND PLANET
-
-	
-
+    
     return output;
 }
 
@@ -189,7 +210,7 @@ technique Specular
         DestBlend = InvSrcAlpha; // Normal Alpha Blending
         BlendOp = Add; // Normal Alpha Blending
 
-        VertexShader = compile vs_2_0 VertexShaderFunction();
+        VertexShader = compile vs_3_0 VertexShaderFunction();
         PixelShader = compile ps_3_0 TransparentPixelShaderFunction();
     }
 
@@ -204,7 +225,7 @@ technique Specular
         DestBlend = InvSrcAlpha; // Normal Alpha Blending
         BlendOp = Add; // Normal Alpha Blending
 
-        VertexShader = compile vs_2_0 VertexShaderFunction();
+        VertexShader = compile vs_3_0 VertexShaderFunction();
         PixelShader = compile ps_3_0 OpaquePixelShaderFunction();
     }
 }

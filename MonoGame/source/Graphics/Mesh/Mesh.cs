@@ -130,6 +130,7 @@ namespace Inignoto.Graphics.Mesh
 
         public void Dispose()
         {
+            if (vertexBuffer != null)
             vertexBuffer.Dispose();
         }
     }

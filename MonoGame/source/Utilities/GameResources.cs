@@ -7,6 +7,7 @@ using Inignoto.Graphics.Gui;
 using Inignoto.Items;
 using Microsoft.Xna.Framework.Graphics;
 using Inignoto.Effects;
+using Microsoft.Xna.Framework;
 
 namespace Inignoto.Utilities
 {
@@ -28,6 +29,7 @@ namespace Inignoto.Utilities
             Inignoto.game.hud = new Graphics.Gui.Hud();
 
             effect = new GameEffect(Inignoto.game.Content.Load<Effect>("Effect"));
+            effect.Init();
         }
 
         public static void Dispose()

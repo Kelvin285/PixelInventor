@@ -22,23 +22,23 @@ namespace Inignoto.Effects
 
         public float Radius { get => GetFloat("radius"); set => SetFloat("radius", value); }
         public float Area { get => GetFloat("area"); set => SetFloat("area", value); }
+        public bool WorldRender { get => GetBool("world_render"); set => SetBool("world_render", value); }
+
+        public Vector3 CameraPos { get => GetFloat3("camera_pos"); set => SetFloat3("camera_pos", value); }
 
         public GameEffect(GraphicsDevice graphicsDevice, byte[] effectCode) : base(graphicsDevice, effectCode)
         {
-            Init();
         }
 
         public GameEffect(GraphicsDevice graphicsDevice, byte[] effectCode, int index, int count) : base(graphicsDevice, effectCode, index, count)
         {
-            Init();
         }
 
         public GameEffect(Effect cloneSource) : base(cloneSource)
         {
-            Init();
         }
 
-        private void Init()
+        public void Init()
         {
             ObjectColor = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -85,6 +85,16 @@ namespace Inignoto.Effects
         }
 
         public void SetFloat4(string name, Vector4 value)
+        {
+            Parameters[name].SetValue(value);
+        }
+
+        public Vector3 GetFloat3(string name)
+        {
+            return Parameters[name].GetValueVector3();
+        }
+
+        public void SetFloat3(string name, Vector3 value)
         {
             Parameters[name].SetValue(value);
         }

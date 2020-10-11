@@ -76,7 +76,7 @@ namespace Inignoto.World
             properties = new WorldProperties();
             entities = new List<Entity>();
             random = new Random();
-            radius = 128;
+            radius = 4096;
         }
 
         public void UpdateChunkGeneration()
@@ -112,6 +112,9 @@ namespace Inignoto.World
             effect.Radius = radius;
             effect.Area = (int)Inignoto.game.player.area;
             effect.FogDistance = GameSettings.Settings.HORIZONTAL_VIEW * Constants.CHUNK_SIZE;
+            effect.CameraPos = Inignoto.game.camera.position.Vector;
+            effect.WorldRender = true;
+
 
             if (skybox == null)
             {
@@ -147,6 +150,8 @@ namespace Inignoto.World
             RasterizerState rasterizerState2 = new RasterizerState();
             rasterizerState2.CullMode = CullMode.None;
             device.RasterizerState = rasterizerState2;
+
+            effect.WorldRender = false;
         }
 
         private Mesh selectionBox;
