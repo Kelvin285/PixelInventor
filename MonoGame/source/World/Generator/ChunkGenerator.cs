@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using System.Runtime.CompilerServices;
 using System.CodeDom;
 using System;
+using Inignoto.Graphics.World;
 
 namespace Inignoto.World.Generator
 {
@@ -33,7 +34,8 @@ namespace Inignoto.World.Generator
                     for (int chunk_y = 0; chunk_y < Constants.CHUNK_SIZE; chunk_y++)
                     {
                         int y = chunk_y + chunk.GetY() * Constants.CHUNK_SIZE;
-
+                        chunk.SetLight(chunk_x, chunk_y, chunk_z, 0, 0, 0, 15);
+                        
                         if (y < voxel_height)
                         {
                             if (y < voxel_height - 1)
@@ -54,16 +56,15 @@ namespace Inignoto.World.Generator
                     }
                 }
             }
-            chunk.MarkForRebuild();
+            chunk.BuildMesh();
+            //chunk.MarkForRebuild();
         }
 
         public float GetHeight(float x, float z, float radius)
         {
             float diameter = radius * 2;
             float length = diameter * 2;
-
-            float third = 360.0f / 3.0f;
-
+            
             if (x >= 0 && z >= 0 && x <= length && z <= length)
             {
                 if (z < diameter)
@@ -103,7 +104,7 @@ namespace Inignoto.World.Generator
 
         public float GetPolarHeight(float x, float y)
         {
-            return noise.GetNoise(x, y) * 10.0f;
+            return noise.GetValue(x, y) * 10.0f;
         }
     }
 }

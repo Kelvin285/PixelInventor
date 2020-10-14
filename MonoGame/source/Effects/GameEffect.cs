@@ -98,5 +98,13 @@ namespace Inignoto.Effects
         {
             Parameters[name].SetValue(value);
         }
+
+        public void SetChunk(int i, Vector3 position, bool[] voxels, bool empty = false)
+        {
+            Parameters["chunks["+i+"].position"].SetValue(position);
+            for (int j = 0; j < voxels.Length; j++)
+                Parameters["chunks[" + i + "].voxels["+j+"]"].SetValue(voxels[j]);
+            Parameters["chunks[" + i + "].empty"].SetValue(empty);
+        }
     }
 }

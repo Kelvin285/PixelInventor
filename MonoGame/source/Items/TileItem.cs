@@ -31,9 +31,9 @@ namespace Inignoto.Items
             Mesh = TileBuilder.BuildTile(-0.5f, -0.5f, -0.5f, tile.DefaultData, Inignoto.game.GraphicsDevice);
         }
 
-        protected override bool Attack(Entity user, GameTime time)
+        protected override bool Attack(Entity user, GameTime time, World.RaytraceResult.TileRaytraceResult result)
         {
-            base.Attack(user, time);
+            base.Attack(user, time, result);
             return true;
         }
 

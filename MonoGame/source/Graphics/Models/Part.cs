@@ -1,4 +1,5 @@
 ﻿using Inignoto.Effects;
+using Inignoto.Graphics.Mesh;
 using Inignoto.Math;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -214,11 +215,11 @@ namespace Inignoto.Graphics.Models
 
             }
 
-            VertexPositionColorTexture[] vpct = new VertexPositionColorTexture[indices.Length];
+            VertexPositionLightTexture[] vpct = new VertexPositionLightTexture[indices.Length];
 
             for (int i = 0; i < indices.Length; i++)
             {
-                vpct[i] = new VertexPositionColorTexture(new Vector3(vertices[indices[i] * 3], vertices[indices[i] * 3 + 1], vertices[indices[i] * 3 + 2]), Color.White, new Vector2(texCoords[indices[i] * 2], texCoords[indices[i] * 2 + 1]));
+                vpct[i] = new VertexPositionLightTexture(new Vector3(vertices[indices[i] * 3], vertices[indices[i] * 3 + 1], vertices[indices[i] * 3 + 2]), Color.White, new Vector2(texCoords[indices[i] * 2], texCoords[indices[i] * 2 + 1]));
             }
             return new Mesh.Mesh(Inignoto.game.GraphicsDevice, vpct, false, texture);
         }

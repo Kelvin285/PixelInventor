@@ -12,6 +12,8 @@ namespace Inignoto.World.Chunks
     public class Chunk
     {
         private readonly TileData[] voxels;
+        private readonly int[] light;
+        private readonly int[] sunlight;
 
         private readonly int x, y, z;
         private readonly World world;
@@ -34,7 +36,115 @@ namespace Inignoto.World.Chunks
             this.z = z;
             this.world = world;
             voxels = new TileData[Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE];
+            light = new int[voxels.Length];
+            sunlight = new int[voxels.Length];
             chunkManager = world.GetChunkManager();
+        }
+
+        public void BuildMesh()
+        {
+            secondMesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, this);
+            if (secondMesh != null)
+                secondMesh.SetPosition(new Microsoft.Xna.Framework.Vector3(GetX() * Constants.CHUNK_SIZE, GetY() * Constants.CHUNK_SIZE, GetZ() * Constants.CHUNK_SIZE));
+
+            FinishRebuilding();
+            if (mesh != null)
+            {
+                mesh.Dispose();
+            }
+
+            if (waterMesh != null)
+            {
+                waterMesh.Dispose();
+            }
+        }
+
+        public int GetRedLight(int x, int y, int z)
+        {
+            return GetLight(x, y, z) & 0b1111;
+        }
+
+        public int GetGreenLight(int x, int y, int z)
+        {
+            return (GetLight(x, y, z) >> 4) & 0b1111;
+        }
+
+        public int GetBlueLight(int x, int y, int z)
+        {
+            return (GetLight(x, y, z) >> 8) & 0b1111;
+        }
+
+        public int GetLight(int x, int y, int z)
+        {
+            if (IsInsideChunk(x, y, z))
+            {
+                return light[x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE];
+            }
+
+            Chunk chunk = GetAdjacentChunkForLocation(x, y, z, out int X, out int Y, out int Z);
+
+            if (chunk != null)
+            {
+                return chunk.GetLight(X, Y, Z);
+            }
+
+            return 0;
+        }
+
+        public int GetSunlight(int x, int y, int z)
+        {
+            if (IsInsideChunk(x, y, z))
+            {
+                return sunlight[x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE];
+            }
+
+            Chunk chunk = GetAdjacentChunkForLocation(x, y, z, out int X, out int Y, out int Z);
+
+            if (chunk != null)
+            {
+                return chunk.GetSunlight(X, Y, Z);
+            }
+
+            return 0;
+        }
+
+        public void SetLight(int x, int y, int z, int r, int g, int b, int sun)
+        {
+            if (IsInsideChunk(x, y, z))
+            {
+                int R = System.Math.Max(System.Math.Min(15, r), 0);
+                int G = System.Math.Max(System.Math.Min(15, g), 0) << 4;
+                int B = System.Math.Max(System.Math.Min(15, b), 0) << 8;
+                int SUN = System.Math.Max(System.Math.Min(15, sun), 0);
+
+                if (r > -1)
+                {
+                    light[x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE] &= 0b111111110000;
+                    light[x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE] |= R;
+                }
+                if (g > -1)
+                {
+                    light[x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE] &= 0b111100001111;
+                    light[x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE] |= G;
+                }
+                
+                if (b > -1)
+                {
+                    light[x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE] &= 0b000011111111;
+                    light[x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE] |= B;
+                }
+                
+                if (sun > -1)
+                sunlight[x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE] = SUN;
+                return;
+            }
+
+            Chunk chunk = GetAdjacentChunkForLocation(x, y, z, out int X, out int Y, out int Z);
+
+            if (chunk != null)
+            {
+                chunk.SetLight(X, Y, Z, r, g, b, sun);
+            }
         }
 
         public TileData GetVoxel(int x, int y, int z)
@@ -162,14 +272,8 @@ namespace Inignoto.World.Chunks
         public void MarkForRebuild(Tile.TileRayTraceType raytraceType)
         {
             rebuilding = true;
-            //if (raytraceType == Tile.TileRayTraceType.FLUID)
-            {
-                //world.GetChunkManager().fluidChunksToRerender.Add(this);
-            }
-            //else
-            {
-                world.GetChunkManager().chunksToRerender.Add(this);
-            }
+            //world.GetChunkManager().chunksToRerender.Add(this);
+            this.BuildMesh();
         }
 
         public void FinishRebuilding()
@@ -177,17 +281,17 @@ namespace Inignoto.World.Chunks
             rebuilding = false;
 
             Chunk chunk = chunkManager.TryGetChunk(GetX() - 1, GetY(), GetZ());
-            if (chunk != null && transparentRebuild) chunkManager.secondaryChunksToRerender.Add(chunk);
+            if (chunk != null && transparentRebuild) chunkManager.QueueForRerender(chunk);
             chunk = chunkManager.TryGetChunk(GetX() + 1, GetY(), GetZ());
-            if (chunk != null && transparentRebuild) chunkManager.secondaryChunksToRerender.Add(chunk);
+            if (chunk != null && transparentRebuild) chunkManager.QueueForRerender(chunk);
             chunk = chunkManager.TryGetChunk(GetX(), GetY() - 1, GetZ());
-            if (chunk != null && transparentRebuild) chunkManager.secondaryChunksToRerender.Add(chunk);
+            if (chunk != null && transparentRebuild) chunkManager.QueueForRerender(chunk);
             chunk = chunkManager.TryGetChunk(GetX(), GetY() + 1, GetZ());
-            if (chunk != null && transparentRebuild) chunkManager.secondaryChunksToRerender.Add(chunk);
+            if (chunk != null && transparentRebuild) chunkManager.QueueForRerender(chunk);
             chunk = chunkManager.TryGetChunk(GetX(), GetY(), GetZ() - 1);
-            if (chunk != null && transparentRebuild) chunkManager.secondaryChunksToRerender.Add(chunk);
+            if (chunk != null && transparentRebuild) chunkManager.QueueForRerender(chunk);
             chunk = chunkManager.TryGetChunk(GetX(), GetY(), GetZ() + 1);
-            if (chunk != null && transparentRebuild) chunkManager.secondaryChunksToRerender.Add(chunk);
+            if (chunk != null && transparentRebuild) chunkManager.QueueForRerender(chunk);
         }
 
         public bool NeedsToRebuild()

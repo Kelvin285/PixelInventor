@@ -10,7 +10,7 @@ namespace Inignoto.Graphics.Mesh
     public class Mesh
     {
         public Matrix worldMatrix;
-        readonly VertexPositionColorTexture[] triangleVertices;
+        readonly VertexPositionLightTexture[] triangleVertices;
         VertexBuffer vertexBuffer;
 
         public readonly bool lines;
@@ -22,7 +22,7 @@ namespace Inignoto.Graphics.Mesh
 
         public bool empty = false;
 
-        public Mesh(GraphicsDevice device, VertexPositionColorTexture[] triangleVertices, bool lines = false, Texture2D texture = null)
+        public Mesh(GraphicsDevice device, VertexPositionLightTexture[] triangleVertices, bool lines = false, Texture2D texture = null)
         {
             if (triangleVertices.Length == 0)
             {
@@ -31,7 +31,7 @@ namespace Inignoto.Graphics.Mesh
             }
             this.triangleVertices = triangleVertices;
             vertexBuffer = new VertexBuffer(device, typeof(
-                           VertexPositionColorTexture), triangleVertices.Length, BufferUsage.
+                           VertexPositionLightTexture), triangleVertices.Length, BufferUsage.
                            WriteOnly);
 
             vertexBuffer.SetData(this.triangleVertices);
@@ -90,6 +90,7 @@ namespace Inignoto.Graphics.Mesh
                 effect.Parameters["ModelTexture"].SetValue(texture);
                 pass.Apply();
 
+                //device.DrawUserPrimitives(lines ? PrimitiveType.LineList : PrimitiveType.TriangleList, triangleVertices, 0, Length);
                 device.DrawPrimitives(lines ? PrimitiveType.LineList : PrimitiveType.TriangleList, 0, Length);
             }
         }

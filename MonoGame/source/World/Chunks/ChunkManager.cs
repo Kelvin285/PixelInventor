@@ -17,7 +17,6 @@ namespace Inignoto.World.Chunks
 
         private readonly Dictionary<Vector3, Chunk> chunks;
         private List<Chunk> chunksToBuild;
-        public readonly List<Chunk> chunksToRerender;
         public readonly List<Chunk> secondaryChunksToRerender;
 
         public readonly List<Chunk> rendering;
@@ -29,18 +28,21 @@ namespace Inignoto.World.Chunks
 
         private bool start = false;
 
+        private bool modifiedChunks = false;
+        
         public ChunkManager(World world)
         {
             chunks = new Dictionary<Vector3, Chunk>();
             this.world = world;
             chunkRenderer = new ChunkRenderer();
             chunksToBuild = new List<Chunk>();
-            chunksToRerender = new List<Chunk>();
+            //chunksToRerender = new List<Chunk>();
             secondaryChunksToRerender = new List<Chunk>();
 
             rendering = new List<Chunk>();
         }
 
+        private int iterations = 0;
         public void GenerateChunks(ChunkGenerator generator)
         {
             float distance = float.MaxValue;
@@ -105,54 +107,62 @@ namespace Inignoto.World.Chunks
                 closest.SetGenerated();
                 chunksToBuild.Remove(closest);
             }
+        }
 
-            for (int i = 0; i < chunksToRerender.Count; i++)
+        public void FixChunkBorders()
+        {
+
+            float distance = float.MaxValue;
+            Chunk closest = null;
+
+            int H_VIEW = GameSettings.Settings.HORIZONTAL_VIEW;
+            int V_VIEW = GameSettings.Settings.VERTICAL_VIEW;
+
+            int size = secondaryChunksToRerender.Count;
+            for (int i = 0; i < secondaryChunksToRerender.Count && i < size; i++)
             {
-                Chunk chunk = chunksToRerender[i];
-
-                if (chunk.NeedsToRebuild())
-                {
-                    chunk.secondMesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, chunk);
-                    if (chunk.secondMesh != null)
-                        chunk.secondMesh.SetPosition(new Microsoft.Xna.Framework.Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
-
-                    chunk.FinishRebuilding();
-                    if (chunk.mesh != null)
-                    {
-                        chunk.mesh.Dispose();
-                    }
-
-                    if (chunk.waterMesh != null)
-                    {
-                        chunk.waterMesh.Dispose();
-                    }
-
-
-                }
-                chunksToRerender.Remove(chunksToRerender[i]);
-            }
-
-            for (int i = 0; i < secondaryChunksToRerender.Count; i++)
-            {
-                
                 Chunk chunk = secondaryChunksToRerender[i];
-
-                if (!chunk.NeedsToRebuild())
+                if (chunk == null)
                 {
-                    chunk.mesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, chunk);
-                    if (chunk.secondWaterMesh != null)
-                        chunk.secondWaterMesh.SetPosition(new Microsoft.Xna.Framework.Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
-
-                    if (chunk.waterMesh != null)
-                    {
-                        chunk.waterMesh.Dispose();
-                    }
-
-                    chunk.transparentRebuild = false;
+                    secondaryChunksToRerender.RemoveAt(i);
+                    continue;
+                }
+                float dist = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x, current_y, current_z));
+                if (dist < distance)
+                {
+                    distance = dist;
+                    closest = chunk;
                 }
 
-                secondaryChunksToRerender.Remove(secondaryChunksToRerender[i]);
-                if (i > 2) break;
+                dist = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x + (int)((world.radius * 4) / Constants.CHUNK_SIZE), current_y, current_z));
+                if (dist < distance)
+                {
+                    distance = dist;
+                    closest = chunk;
+                }
+
+                dist = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x - (int)((world.radius * 4) / Constants.CHUNK_SIZE), current_y, current_z));
+                if (dist < distance)
+                {
+                    distance = dist;
+                    closest = chunk;
+                }
+            }
+            if (closest != null)
+            {
+                Chunk chunk = closest;
+                chunk.mesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, chunk);
+                if (chunk.secondWaterMesh != null)
+                    chunk.secondWaterMesh.SetPosition(new Microsoft.Xna.Framework.Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
+
+                if (chunk.waterMesh != null)
+                {
+                    chunk.waterMesh.Dispose();
+                }
+
+                chunk.transparentRebuild = false;
+
+                secondaryChunksToRerender.Remove(chunk);
             }
         }
 
@@ -183,6 +193,7 @@ namespace Inignoto.World.Chunks
                 Chunk chunk = new Chunk(x, y, z, world);
                 chunks.Add(position, chunk);
                 chunksToBuild.Add(chunk);
+                modifiedChunks = true;
             }
         }
 
@@ -199,6 +210,7 @@ namespace Inignoto.World.Chunks
                     if (System.Math.Abs(x - (current_x - (int)((world.radius * 4) / Constants.CHUNK_SIZE))) > H_VIEW + 1)
                     {
                         chunks.Remove(new Vector3(x, y, z));
+                        modifiedChunks = true;
                         return true;
 
                     }
@@ -240,11 +252,15 @@ namespace Inignoto.World.Chunks
                 }
 
             }
+
+            Console.WriteLine(chunks.Count);
         }
 
         public void Render(GraphicsDevice device, GameEffect effect)
         {
             rendering.Clear();
+            
+            if (modifiedChunks)
             foreach (Chunk chunk in chunks.Values)
             {
                 rendering.Add(chunk);
@@ -262,10 +278,14 @@ namespace Inignoto.World.Chunks
                 chunkRenderer.RenderChunk(device, effect, rendering[i], true);
             }
             GameResources.effect.Water = false;
-
         }
 
-
-
+        public void QueueForRerender(Chunk chunk)
+        {
+            if (!secondaryChunksToRerender.Contains(chunk))
+            {
+                secondaryChunksToRerender.Add(chunk);
+            }
+        }
     }
 }

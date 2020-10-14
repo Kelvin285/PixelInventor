@@ -295,7 +295,12 @@ namespace Inignoto.Entities.Client.Player
 
                         world.entities.Add(new ItemEntity(world, new Vector3f(result.pos.x + 0.5f, result.pos.y + 0.5f, result.pos.z + 0.5f), new ItemStack(TileManager.GetTile(result.data.tile_id))));
 
-                        world.SetVoxel(result.pos, TileManager.AIR.DefaultData);
+                        if (gamemode == Gamemode.SANDBOX)
+                        {
+                            if (Inventory.hotbar[Inventory.selected].item.canBreakBlocks)
+                            world.SetVoxel(result.pos, TileManager.AIR.DefaultData);
+                        }
+                        Inventory.hotbar[Inventory.selected].item.TryAttack(this, time, result);
 
 
 

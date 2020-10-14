@@ -5,6 +5,7 @@ using Inignoto.Math;
 using static Inignoto.Tiles.Tile;
 using Inignoto.Tiles.Data;
 using Inignoto.Graphics.Textures;
+using Inignoto.Graphics.Mesh;
 
 namespace Inignoto.Graphics.World
 {
@@ -57,7 +58,7 @@ namespace Inignoto.Graphics.World
 
         public static Mesh.Mesh BuildTile(float x, float y, float z, TileData data, GraphicsDevice device)
         {
-            List<VertexPositionColorTexture> vpct = new List<VertexPositionColorTexture>();
+            List<VertexPositionLightTexture> vpct = new List<VertexPositionLightTexture>();
 
             List<Vector3> vertices = new List<Vector3>();
             List<Color> colors = new List<Color>();
@@ -75,7 +76,7 @@ namespace Inignoto.Graphics.World
             for (int i = 0; i < indices.Count; i++)
             {
                 int ind = indices[i];
-                vpct.Add(new VertexPositionColorTexture(vertices[ind], colors[ind], textures[ind]));
+                vpct.Add(new VertexPositionLightTexture(vertices[ind], colors[ind], textures[ind]));
             }
             return new Mesh.Mesh(device, vpct.ToArray(), false, Textures.Textures.tiles.GetTexture());
         }

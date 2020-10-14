@@ -34,6 +34,8 @@ namespace Inignoto.Items
 
         public Vector3 position, rotation, scale;
 
+        public bool canBreakBlocks { get; protected set; }
+
         public Item(string name, int max_stack = 64, double cooldown = 1.0f, bool model = true, Vector3 position = new Vector3(), Vector3 rotation = new Vector3(), Vector3 scale = new Vector3())
         {
             Name = name;
@@ -45,7 +47,7 @@ namespace Inignoto.Items
             this.position = position;
             this.rotation = rotation;
             this.scale = scale;
-
+            canBreakBlocks = true;
             if (model)
             {
                 string[] split = name.Split(':');
@@ -54,6 +56,12 @@ namespace Inignoto.Items
                 anim_path = new ResourcePath(split[0], "models/item/" + split[1] + ".anim", "assets");
 
             }
+        }
+
+        public Item breaksBlocks(bool b)
+        {
+            canBreakBlocks = b;
+            return this;
         }
 
         public Item TrySetModel(GameTime time)
@@ -75,14 +83,13 @@ namespace Inignoto.Items
             return this;
         }
            
-        public void TryAttack(Entity user, GameTime time)
+        public void TryAttack(Entity user, GameTime time, World.RaytraceResult.TileRaytraceResult result)
         {
             if (time.TotalGameTime.TotalMilliseconds > cooldown_time)
             {
-                if (Attack(user, time))
+                if (Attack(user, time, result))
                 cooldown_time = time.TotalGameTime.TotalMilliseconds + cooldown * 1000;
             }
-            
         }
 
         public void TryUse(Entity user, GameTime time)
@@ -100,7 +107,7 @@ namespace Inignoto.Items
 
         }
 
-        protected virtual bool Attack(Entity user, GameTime time)
+        protected virtual bool Attack(Entity user, GameTime time, World.RaytraceResult.TileRaytraceResult result)
         {
             return true;
         }

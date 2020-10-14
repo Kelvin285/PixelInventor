@@ -84,6 +84,11 @@ namespace Inignoto.World
             chunkManager.GenerateChunks(properties.generator);
         }
 
+        public void FixChunkBorders()
+        {
+            chunkManager.FixChunkBorders();
+        }
+
         public void Update(Vector3 camera_position, GameTime time)
         {
             this.gameTime = time;
@@ -173,108 +178,108 @@ namespace Inignoto.World
 
         public void BuildSelectionBox()
         {
-            VertexPositionColorTexture[] vpct =
+            VertexPositionLightTexture[] vpct =
             {
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 0, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 0, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 0, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 1, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 1, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 1, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 1, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 0, 0), Color.White, new Vector2(0, 0)),
 
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 0, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 0, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 0, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 1, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 1, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 1, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 1, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 0, 1), Color.White, new Vector2(0, 0)),
 
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 0, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 0, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 0, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 0, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 0, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 0, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 0, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 0, 0), Color.White, new Vector2(0, 0)),
 
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 1, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 1, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 1, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 1, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 1, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 1, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 1, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 1, 0), Color.White, new Vector2(0, 0)),
 
-                 new VertexPositionColorTexture(
+                 new VertexPositionLightTexture(
                     new Vector3(0, 0, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 0, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 0, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 1, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 1, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 1, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 1, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(0, 0, 0), Color.White, new Vector2(0, 0)),
 
-                 new VertexPositionColorTexture(
+                 new VertexPositionLightTexture(
                     new Vector3(1, 0, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 0, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 0, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 1, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 1, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 1, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 1, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionColorTexture(
+                new VertexPositionLightTexture(
                     new Vector3(1, 0, 0), Color.White, new Vector2(0, 0)),
             };
             for (int i = 0; i < vpct.Length; i++)
@@ -337,41 +342,43 @@ namespace Inignoto.World
             {
 
                 chunk.SetVoxel(x, y, z, voxel);
-                chunk.MarkForRebuild(raytraceType);
+                //chunk.MarkForRebuild(raytraceType);
+                chunk.BuildMesh();
                 
                 if (TileManager.GetTile(voxel.tile_id).IsVisible() == false)
                 {
                     if (x % Constants.CHUNK_SIZE == 0)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx - 1, cy, cz);
-                        if (chunk2 != null) chunk2.MarkForRebuild(raytraceType);
+                        if (chunk2 != null) chunk2.GetWorld().GetChunkManager().QueueForRerender(chunk2);
                     }
                     if (x % Constants.CHUNK_SIZE == Constants.CHUNK_SIZE - 1)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx + 1, cy, cz);
-                        if (chunk2 != null) chunk2.MarkForRebuild(raytraceType);
+                        if (chunk2 != null) chunk2.GetWorld().GetChunkManager().QueueForRerender(chunk2);
                     }
 
                     if (y % Constants.CHUNK_SIZE == 0)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx, cy - 1, cz);
-                        if (chunk2 != null) chunk2.MarkForRebuild(raytraceType);
+                        if (chunk2 != null) chunk2.GetWorld().GetChunkManager().QueueForRerender(chunk2);
                     }
                     if (y % Constants.CHUNK_SIZE == Constants.CHUNK_SIZE - 1)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx, cy + 1, cz);
-                        if (chunk2 != null) chunk2.MarkForRebuild(raytraceType);
+                        if (chunk2 != null) chunk2.GetWorld().GetChunkManager().QueueForRerender(chunk2);
                     }
 
                     if (z % Constants.CHUNK_SIZE == 0)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx, cy, cz - 1);
-                        if (chunk2 != null) chunk2.MarkForRebuild(raytraceType);
+                        if (chunk2 != null) chunk2.GetWorld().GetChunkManager().QueueForRerender(chunk2);
                     }
                     if (z % Constants.CHUNK_SIZE == Constants.CHUNK_SIZE - 1)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx, cy, cz + 1);
-                        if (chunk2 != null) chunk2.MarkForRebuild(raytraceType);
+                        
+                        if (chunk2 != null) chunk2.GetWorld().GetChunkManager().QueueForRerender(chunk2);
                     }
                 }
                 

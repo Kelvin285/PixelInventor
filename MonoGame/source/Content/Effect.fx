@@ -1,4 +1,13 @@
-﻿float4x4 World;
+﻿#if OPENGL
+#define SV_POSITION POSITION
+#define VS_SHADERMODEL vs_3_0
+#define PS_SHADERMODEL ps_3_0
+#else
+#define VS_SHADERMODEL vs_3_0
+#define PS_SHADERMODEL ps_3_0
+#endif
+
+float4x4 World;
 float4x4 View;
 float4x4 Projection;
 float fog_distance;
@@ -15,8 +24,10 @@ float area;
 
 bool world_render;
 
+
 texture ModelTexture;
 sampler2D textureSampler = sampler_state {
+    
     Texture = (ModelTexture);
     MagFilter = Point;
     MinFilter = Point;
@@ -38,6 +49,7 @@ struct VertexShaderOutput
 	float2 TextureCoordinate : TEXCOORD0;
 	float4 PixelPos : COLOR1;
     float4 WorldPos : TEXCOORD1;
+    float4 Light : TEXCOORD2;
 };
 
 float rand(in float2 uv)
@@ -46,12 +58,21 @@ float rand(in float2 uv)
     return abs(noise.x + noise.y) * 0.5;
 }
 
-
-
 VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
 {
+    
     VertexShaderOutput output;
     float4 worldPosition = mul(input.Position, World);
+    
+    output.Light = input.Color;
+
+    int CAM_CX = (int)(camera_pos.x) / 16 - 4;
+    int CAM_CY = (int)(camera_pos.y) / 16 - 2;
+    int CAM_CZ = (int)(camera_pos.z) / 16 - 4;
+
+    int CX = (int)(worldPosition.x) / 16 - CAM_CX;
+    int CY = (int)(worldPosition.y) / 16 - CAM_CY;
+    int CZ = (int)(worldPosition.z) / 16 - CAM_CZ;
     
     if (world_render == true) {
         float r = radius;
@@ -73,12 +94,12 @@ VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
         worldPosition.y /= 2.0;
     }
     
-    output.Color = input.Color;
+    output.Color = float4(1, 1, 1, 1);
     output.WorldPos = worldPosition;
 
     float4 viewPosition = mul(worldPosition, View);
 
-    if (viewPosition.z > 0) output.Color.a = 0;
+    if (viewPosition.z > 1) output.Color.a = 0;
 
     if (water) {
 
@@ -149,8 +170,9 @@ float GetFog(VertexShaderOutput input) {
 }
 
 float4 OpaquePixelShaderFunction(VertexShaderOutput input, float2 vPos : VPOS) : COLOR0
-{	
-	
+{
+    float4 light = float4(max(input.Light.xyz, input.Light.w), 1);
+
 	float4 textureColor = tex2D(textureSampler, input.TextureCoordinate);
 	float depth = min(1, max(0, distance(input.PixelPos.xyz, float3(0, 0, 0)) / fog_distance));
 
@@ -163,7 +185,7 @@ float4 OpaquePixelShaderFunction(VertexShaderOutput input, float2 vPos : VPOS) :
 
 	if (textureColor.a != 1) clip(-1);
 
-	float4 final_color = textureColor * input.Color * color;
+	float4 final_color = textureColor * input.Color * color * light;
 
 	final_color.r = lerp(final_color.r, fog_color.r, depth);
 	final_color.g = lerp(final_color.g, fog_color.g, depth);
@@ -174,6 +196,7 @@ float4 OpaquePixelShaderFunction(VertexShaderOutput input, float2 vPos : VPOS) :
 
 float4 TransparentPixelShaderFunction(VertexShaderOutput input, float2 vPos : VPOS) : COLOR0
 {
+    float4 light = float4(max(input.Light.xyz, input.Light.w), 1);
 
     float4 textureColor = tex2D(textureSampler, input.TextureCoordinate);
     float depth = min(1, max(0, distance(input.PixelPos.xyz, float3(0, 0, 0)) / fog_distance));
@@ -187,7 +210,7 @@ float4 TransparentPixelShaderFunction(VertexShaderOutput input, float2 vPos : VP
 
     if (textureColor.a <= 0 || textureColor.a == 1) clip(-1);
 
-    float4 final_color = textureColor * input.Color;
+    float4 final_color = textureColor * input.Color * light;
 
     final_color.r = lerp(final_color.r, fog_color.r, depth);
     final_color.g = lerp(final_color.g, fog_color.g, depth);
@@ -210,8 +233,8 @@ technique Specular
         DestBlend = InvSrcAlpha; // Normal Alpha Blending
         BlendOp = Add; // Normal Alpha Blending
 
-        VertexShader = compile vs_3_0 VertexShaderFunction();
-        PixelShader = compile ps_3_0 TransparentPixelShaderFunction();
+        VertexShader = compile VS_SHADERMODEL VertexShaderFunction();
+        PixelShader = compile PS_SHADERMODEL TransparentPixelShaderFunction();
     }
 
     pass Pass1
@@ -225,7 +248,7 @@ technique Specular
         DestBlend = InvSrcAlpha; // Normal Alpha Blending
         BlendOp = Add; // Normal Alpha Blending
 
-        VertexShader = compile vs_3_0 VertexShaderFunction();
-        PixelShader = compile ps_3_0 OpaquePixelShaderFunction();
+        VertexShader = compile VS_SHADERMODEL VertexShaderFunction();
+        PixelShader = compile PS_SHADERMODEL OpaquePixelShaderFunction();
     }
 }

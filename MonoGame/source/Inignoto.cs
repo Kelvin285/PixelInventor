@@ -47,6 +47,7 @@ namespace Inignoto
         public ClientPlayerEntity player;
 
         public Thread world_thread;
+        public Thread rerender_thread;
         private bool running = true;
 
         public Hud hud;
@@ -57,6 +58,8 @@ namespace Inignoto
         public Inignoto()
         {
             graphics = new GraphicsDeviceManager(this);
+            graphics.GraphicsProfile = GraphicsProfile.HiDef;
+            
             Content.RootDirectory = "Content";
            
         }
@@ -102,6 +105,11 @@ namespace Inignoto
             world_thread = new Thread(world_thread_start);
             world_thread.IsBackground = true;
             world_thread.Start();
+
+            ThreadStart rerender_thread_start = new ThreadStart(FixWorldChunkBorders);
+            rerender_thread = new Thread(rerender_thread_start);
+            rerender_thread.IsBackground = true;
+            rerender_thread.Start();
         }
 
         public static void UpdateWorldGeneration()
@@ -109,6 +117,15 @@ namespace Inignoto
             while (Inignoto.game.running)
             {
                 Inignoto.game.world.UpdateChunkGeneration();
+                Thread.Sleep(5);
+            }
+        }
+
+        public static void FixWorldChunkBorders()
+        {
+            while (Inignoto.game.running)
+            {                
+                Inignoto.game.world.FixChunkBorders();
                 Thread.Sleep(5);
             }
         }
@@ -260,7 +277,7 @@ namespace Inignoto
             camera.rotation = lastRot;
             GameResources.effect.View = camera.ViewMatrix;
             GraphicsDevice.Clear(Color.CornflowerBlue);
-            
+
             RasterizerState rasterizerState = new RasterizerState();
             rasterizerState.CullMode = CullMode.None;
             GraphicsDevice.RasterizerState = rasterizerState;

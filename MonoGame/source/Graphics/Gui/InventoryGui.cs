@@ -345,13 +345,15 @@ namespace Inignoto.Graphics.Gui
 
         public override void Render(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime time)
         {
+            float delta = (float)time.ElapsedGameTime.TotalSeconds * 60;
+
             if (!closing)
             {
-                DropdownAnimation = MathHelper.Lerp(DropdownAnimation, 0.0f, 0.1f);
+                DropdownAnimation = MathHelper.Lerp(DropdownAnimation, 0.0f, 0.1f * delta);
             }
             else
             {
-                DropdownAnimation = MathHelper.Lerp(DropdownAnimation, 1.0f, 0.1f);
+                DropdownAnimation = MathHelper.Lerp(DropdownAnimation, 1.0f, 0.1f * delta);
                 if (DropdownAnimation >= 0.9f)
                 {
                     openGui = null;
