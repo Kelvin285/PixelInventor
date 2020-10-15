@@ -1,0 +1,2 @@
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\obj\Debug\netcoreapp2.1\Inignoto.csprojAssemblyReference.cache
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\obj\Debug\netcoreapp2.1\Inignoto.csproj.CoreCompileInputs.cache

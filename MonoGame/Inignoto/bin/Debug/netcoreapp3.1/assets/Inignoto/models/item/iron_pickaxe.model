@@ -1,0 +1,227 @@
+Part 0
+Axe_Right3
+Position 9.568345 25.99966 0.0
+Rotation 0.0 0.0 -0.9624977 -0.27127305
+Size 4 2 0
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 39 24
+Part 1
+Axe_Right2
+Position 6.1734724 27.915543 0.0
+Rotation 0.0 0.0 -0.20276272 0.97922385
+Size 5 3 1
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 37 19
+Part 2
+Axe_Right
+Position 2.6941605 29.182365 0.0
+Rotation 0.0 0.0 -0.10571927 0.9943943
+Size 5 4 2
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 37 12
+Part 3
+Axe_Left3
+Position -9.456895 25.980663 0.0
+Rotation 0.0 0.0 -0.96250206 0.27127442
+Size 4 2 0
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 10 24
+Part 4
+Axe_Left2
+Position -6.062022 27.896545 0.0
+Rotation 0.0 0.0 0.19936793 0.9799247
+Size 5 3 1
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 8 19
+Part 5
+Axe_Left
+Position -2.5827103 29.163368 0.0
+Rotation 0.0 0.0 0.10571946 0.99439603
+Size 5 4 2
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 7 12
+Part 6
+Axe_Middle
+Position 0.0 29.508095 0.0
+Rotation 0.0 0.0 0.38268346 0.9238795
+Size 4 4 3
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 22 11
+Part 7
+Handle_Top3
+Position 0.0 33.10781 0.0
+Rotation 0.0 0.0 0.0 1.0
+Size 1 1 1
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 22 0
+Part 8
+Handle_Top2
+Position 0.0 32.354782 0.0
+Rotation 0.0 0.0 0.0 1.0
+Size 1 1 2
+Scale 1.0 1.0 0.9
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 27 0
+Part 9
+Handle_Top
+Position 0.0 32.354782 0.0
+Rotation 0.0 0.0 0.0 1.0
+Size 2 1 1
+Scale 0.9 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 27 4
+Part 10
+Rope6
+Position 0.0 6.0 0.0
+Rotation 0.0 0.0 0.060681015 0.9981568
+Size 4 1 3
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 0 0
+Part 11
+Rope5
+Position 0.0 4.0 0.0
+Rotation 0.0 0.0 0.060681015 0.9981568
+Size 4 1 3
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 0 0
+Part 12
+Rope4
+Position 0.0 2.0 0.0
+Rotation 0.0 0.0 0.060681015 0.9981568
+Size 4 1 3
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 0 0
+Part 13
+Rope3
+Position 0.0 0.0 0.0
+Rotation 0.0 0.0 0.060681015 0.9981568
+Size 4 1 3
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 0 0
+Part 14
+Rope2
+Position 0.0 -2.0 0.0
+Rotation 0.0 0.0 0.060681015 0.9981568
+Size 4 1 3
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 0 0
+Part 15
+Rope
+Position 0.0 -4.0 0.0
+Rotation 0.0 0.0 0.060681015 0.9981568
+Size 4 1 3
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 0 0
+Part 16
+Handle_Middle
+Position 0.0 13.0 0.0
+Rotation 0.0 0.0 0.0 1.0
+Size 3 38 2
+Scale 1.0 1.0 0.9
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 24 19
+Part 17
+Handle_Bottom
+Position 0.0 -8.0 0.0
+Rotation 0.0 0.0 0.38268346 0.9238795
+Size 6 6 2
+Scale 1.0 1.0 1.1
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 21 61
+Part 18
+Handle
+Position 0.0 0.0 0.0
+Rotation 0.0 0.0 0.060681015 0.9981568
+Size 0 0 0
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 0 0
+Parent 0 1
+Parent 1 2
+Parent 2 6
+Parent 3 4
+Parent 4 5
+Parent 5 6
+Parent 6 16
+Parent 7 8
+Parent 8 9
+Parent 9 16
+Parent 10 11
+Parent 11 12
+Parent 12 13
+Parent 13 14
+Parent 14 15
+Parent 15 16
+Parent 16 17
+Parent 17 18
