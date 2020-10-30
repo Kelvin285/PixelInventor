@@ -1,10 +1,9 @@
 {
   "version": 2,
-  "dgSpecHash": "mhxffh7adVVcb9mwIIL8bVx0W3x3mdT29/WD/EarCm1wpFMUHV55mg9cXvgZmIezOt351HPfaqQS3a60DGzMTQ==",
+  "dgSpecHash": "S2JUcRikeurCyQSg43wsoMAcSIvDQPqbrynTC+VAbNLpihXql4iVHmSLQHT5vR7lqOYMovq2LnnPpf66gicPow==",
   "success": true,
   "projectFilePath": "C:\\Users\\lolga\\Desktop\\Coding\\Inignoto\\Inignoto\\Inignoto\\Inignoto\\Inignoto.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\lolga\\.nuget\\packages\\glmsharp\\0.9.8\\glmsharp.0.9.8.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\libuv\\1.9.1\\libuv.1.9.1.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\microsoft.codeanalysis.analyzers\\1.1.0\\microsoft.codeanalysis.analyzers.1.1.0.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\microsoft.codeanalysis.common\\1.3.0\\microsoft.codeanalysis.common.1.3.0.nupkg.sha512",
@@ -26,7 +25,7 @@
     "C:\\Users\\lolga\\.nuget\\packages\\monogame.content.builder.task\\3.8.0.1641\\monogame.content.builder.task.3.8.0.1641.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\monogame.framework.windowsdx\\3.8.0.1641\\monogame.framework.windowsdx.3.8.0.1641.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\netstandard.library\\1.6.0\\netstandard.library.1.6.0.nupkg.sha512",
-    "C:\\Users\\lolga\\.nuget\\packages\\remotion.linq\\2.1.2\\remotion.linq.2.1.2.nupkg.sha512",
+    "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder\\remotion.linq\\2.2.0\\remotion.linq.2.2.0.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\runtime.native.system\\4.0.0\\runtime.native.system.4.0.0.nupkg.sha512",
     "C:\\Microsoft\\Xamarin\\NuGet\\runtime.native.system.io.compression\\4.1.0\\runtime.native.system.io.compression.4.1.0.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\runtime.native.system.net.http\\4.0.1\\runtime.native.system.net.http.4.0.1.nupkg.sha512",
@@ -41,9 +40,6 @@
     "C:\\Users\\lolga\\.nuget\\packages\\sharpdx.mediafoundation\\4.0.1\\sharpdx.mediafoundation.4.0.1.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\sharpdx.xaudio2\\4.0.1\\sharpdx.xaudio2.4.0.1.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\sharpdx.xinput\\4.0.1\\sharpdx.xinput.4.0.1.nupkg.sha512",
-    "C:\\Users\\lolga\\.nuget\\packages\\sharpvk\\0.4.2\\sharpvk.0.4.2.nupkg.sha512",
-    "C:\\Users\\lolga\\.nuget\\packages\\sharpvk.glfw\\0.4.1\\sharpvk.glfw.0.4.1.nupkg.sha512",
-    "C:\\Users\\lolga\\.nuget\\packages\\sharpvk.shanq\\0.4.1\\sharpvk.shanq.0.4.1.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\system.appcontext\\4.1.0\\system.appcontext.4.1.0.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\system.buffers\\4.0.0\\system.buffers.4.0.0.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\system.collections\\4.0.11\\system.collections.4.0.11.nupkg.sha512",
@@ -96,7 +92,6 @@
     "C:\\Users\\lolga\\.nuget\\packages\\system.resources.reader\\4.0.0\\system.resources.reader.4.0.0.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\system.resources.resourcemanager\\4.0.1\\system.resources.resourcemanager.4.0.1.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\system.runtime\\4.1.0\\system.runtime.4.1.0.nupkg.sha512",
-    "C:\\Users\\lolga\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\4.4.0\\system.runtime.compilerservices.unsafe.4.4.0.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\system.runtime.extensions\\4.1.0\\system.runtime.extensions.4.1.0.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\system.runtime.handles\\4.0.1\\system.runtime.handles.4.0.1.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\system.runtime.interopservices\\4.1.0\\system.runtime.interopservices.4.1.0.nupkg.sha512",
@@ -126,23 +121,11 @@
     "C:\\Users\\lolga\\.nuget\\packages\\system.threading.thread\\4.0.0\\system.threading.thread.4.0.0.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\system.threading.threadpool\\4.0.10\\system.threading.threadpool.4.0.10.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\system.threading.timer\\4.0.1\\system.threading.timer.4.0.1.nupkg.sha512",
-    "C:\\Users\\lolga\\.nuget\\packages\\system.valuetuple\\4.4.0\\system.valuetuple.4.4.0.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\system.xml.readerwriter\\4.0.11\\system.xml.readerwriter.4.0.11.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\system.xml.xdocument\\4.0.11\\system.xml.xdocument.4.0.11.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\system.xml.xmldocument\\4.0.1\\system.xml.xmldocument.4.0.1.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\system.xml.xpath\\4.0.1\\system.xml.xpath.4.0.1.nupkg.sha512",
     "C:\\Users\\lolga\\.nuget\\packages\\system.xml.xpath.xdocument\\4.0.1\\system.xml.xpath.xdocument.4.0.1.nupkg.sha512"
   ],
-  "logs": [
-    {
-      "code": "NU1701",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "Package 'GlmSharp 0.9.8' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8' instead of the project target framework '.NETCoreApp,Version=v3.1'. This package may not be fully compatible with your project.",
-      "libraryId": "GlmSharp",
-      "targetGraphs": [
-        ".NETCoreApp,Version=v3.1"
-      ]
-    }
-  ]
+  "logs": []
 }

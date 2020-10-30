@@ -292,16 +292,25 @@ namespace Inignoto.Entities.Client.Player
                             sound.Play();
                             Inignoto.game.SoundsToDispose.Add(sound);
                         }
-
-                        world.entities.Add(new ItemEntity(world, new Vector3f(result.pos.x + 0.5f, result.pos.y + 0.5f, result.pos.z + 0.5f), new ItemStack(TileManager.GetTile(result.data.tile_id))));
-
-                        if (gamemode == Gamemode.SANDBOX)
+                        bool notnull = false;
+                        if (Inventory.hotbar[Inventory.selected] != null)
+                            if (Inventory.hotbar[Inventory.selected].item != null)
+                            {
+                                notnull = true;
+                                if (gamemode == Gamemode.SANDBOX)
+                                {
+                                    if (Inventory.hotbar[Inventory.selected].item.canBreakBlocks)
+                                        world.SetVoxel(result.pos, TileManager.AIR.DefaultData);
+                                }
+                                Inventory.hotbar[Inventory.selected].item.TryAttack(this, time, result);
+                            }
+                        if (!notnull)
                         {
-                            if (Inventory.hotbar[Inventory.selected].item.canBreakBlocks)
-                            world.SetVoxel(result.pos, TileManager.AIR.DefaultData);
+                            if (gamemode == Gamemode.SANDBOX)
+                            {
+                                world.SetVoxel(result.pos, TileManager.AIR.DefaultData);
+                            }
                         }
-                        Inventory.hotbar[Inventory.selected].item.TryAttack(this, time, result);
-
 
 
                         UseTimer = 10;

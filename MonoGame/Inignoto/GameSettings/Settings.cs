@@ -1,5 +1,6 @@
 ﻿using Inignoto.Utilities;
 using Microsoft.Xna.Framework.Input;
+using System;
 using System.Collections.Generic;
 namespace Inignoto.GameSettings
 {
@@ -32,6 +33,8 @@ namespace Inignoto.GameSettings
         public static InputSetting USE = new InputSetting(1, true);
         public static InputSetting PERSPECTIVE_SWITCH = new InputSetting(Keys.F5, false);
 
+        public static bool VSYNC = false;
+
 
         public static InputSetting[] HOTBAR_KEYS = new InputSetting[10];
 
@@ -53,6 +56,7 @@ namespace Inignoto.GameSettings
                     if (a.Equals("HORIZONTAL_VIEW"))
                     {
                         int.TryParse(b, out HORIZONTAL_VIEW);
+                        Console.WriteLine("HORIZONTAL VIEW: " + b);
                     }
                     if (a.Equals("VERTICAL_VIEW"))
                     {
@@ -105,6 +109,10 @@ namespace Inignoto.GameSettings
                     {
                         float.TryParse(b, out GUI_VOLUME);
                         GUI_VOLUME = System.Math.Max(System.Math.Min(GUI_VOLUME, 100), 0);
+                    }
+                    if (a.Equals("VSYNC"))
+                    {
+                        bool.TryParse(b, out VSYNC);
                     }
                     if (a.Equals("FORWARD"))
                     {
@@ -181,6 +189,8 @@ namespace Inignoto.GameSettings
             str += GetSaveString("AMBIENT_VOLUME", "" + AMBIENT_VOLUME);
             str += GetSaveString("MUSIC_VOLUME", "" + MUSIC_VOLUME);
             str += GetSaveString("GUI_VOLUME", "" + GUI_VOLUME);
+
+            str += GetSaveString("VSYNC", "" + VSYNC);
 
             str += GetSaveString("FORWARD", FORWARD.Write());
             str += GetSaveString("BACKWARD", BACKWARD.Write());

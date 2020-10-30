@@ -1,3 +1,5 @@
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netcoreapp3.1\Content\cylinder_sphere.xnb
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netcoreapp3.1\Content\Effect.xnb
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netcoreapp3.1\Inignoto.exe
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netcoreapp3.1\Inignoto.deps.json
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netcoreapp3.1\Inignoto.runtimeconfig.json
@@ -26,18 +28,10 @@ C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netc
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netcoreapp3.1\runtimes\win7-arm\native\libuv.dll
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netcoreapp3.1\runtimes\win7-x64\native\libuv.dll
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netcoreapp3.1\runtimes\win7-x86\native\libuv.dll
-C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\obj\Debug\netcoreapp3.1\Inignoto.csprojAssemblyReference.cache
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\obj\Debug\netcoreapp3.1\Inignoto.csproj.CoreCompileInputs.cache
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\obj\Debug\netcoreapp3.1\Inignoto.csproj.CopyComplete
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\obj\Debug\netcoreapp3.1\Inignoto.dll
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\obj\Debug\netcoreapp3.1\Inignoto.pdb
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\obj\Debug\netcoreapp3.1\Inignoto.genruntimeconfig.cache
-C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netcoreapp3.1\Content\cylinder_sphere.xnb
-C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netcoreapp3.1\Content\Effect.xnb
-C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netcoreapp3.1\GlmSharp.dll
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\obj\Debug\netcoreapp3.1\Inignoto.csprojAssemblyReference.cache
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netcoreapp3.1\Remotion.Linq.dll
-C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netcoreapp3.1\SharpVk.dll
-C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netcoreapp3.1\SharpVk.Glfw.dll
-C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netcoreapp3.1\SharpVk.Shanq.dll
-C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netcoreapp3.1\SharpVk.Shanq.GlmSharp.dll
-C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Debug\netcoreapp3.1\SharpVk.Shanq.GlmSharp.pdb

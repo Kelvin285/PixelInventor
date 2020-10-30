@@ -2,15 +2,6 @@
   "version": 3,
   "targets": {
     ".NETCoreApp,Version=v3.1": {
-      "GlmSharp/0.9.8": {
-        "type": "package",
-        "compile": {
-          "lib/Net45/GlmSharp.dll": {}
-        },
-        "runtime": {
-          "lib/Net45/GlmSharp.dll": {}
-        }
-      },
       "Libuv/1.9.1": {
         "type": "package",
         "dependencies": {
@@ -400,7 +391,7 @@
           "System.Xml.XDocument": "4.0.11"
         }
       },
-      "Remotion.Linq/2.1.2": {
+      "Remotion.Linq/2.2.0": {
         "type": "package",
         "dependencies": {
           "System.Collections": "4.0.11",
@@ -606,44 +597,6 @@
         },
         "runtime": {
           "lib/netcoreapp1.0/SharpDX.XInput.dll": {}
-        }
-      },
-      "SharpVk/0.4.2": {
-        "type": "package",
-        "dependencies": {
-          "System.Runtime.CompilerServices.Unsafe": "4.4.0",
-          "System.ValueTuple": "4.4.0"
-        },
-        "compile": {
-          "lib/netstandard2.0/SharpVk.dll": {}
-        },
-        "runtime": {
-          "lib/netstandard2.0/SharpVk.dll": {}
-        }
-      },
-      "SharpVk.Glfw/0.4.1": {
-        "type": "package",
-        "dependencies": {
-          "SharpVk": "0.4.1"
-        },
-        "compile": {
-          "lib/netstandard2.0/SharpVk.Glfw.dll": {}
-        },
-        "runtime": {
-          "lib/netstandard2.0/SharpVk.Glfw.dll": {}
-        }
-      },
-      "SharpVk.Shanq/0.4.1": {
-        "type": "package",
-        "dependencies": {
-          "Remotion.Linq": "2.1.2",
-          "SharpVk": "0.4.1"
-        },
-        "compile": {
-          "lib/netstandard2.0/SharpVk.Shanq.dll": {}
-        },
-        "runtime": {
-          "lib/netstandard2.0/SharpVk.Shanq.dll": {}
         }
       },
       "System.AppContext/4.1.0": {
@@ -1650,15 +1603,6 @@
           "ref/netstandard1.5/System.Runtime.dll": {}
         }
       },
-      "System.Runtime.CompilerServices.Unsafe/4.4.0": {
-        "type": "package",
-        "compile": {
-          "ref/netstandard2.0/System.Runtime.CompilerServices.Unsafe.dll": {}
-        },
-        "runtime": {
-          "lib/netstandard2.0/System.Runtime.CompilerServices.Unsafe.dll": {}
-        }
-      },
       "System.Runtime.Extensions/4.1.0": {
         "type": "package",
         "dependencies": {
@@ -2230,15 +2174,6 @@
           "ref/netstandard1.2/System.Threading.Timer.dll": {}
         }
       },
-      "System.ValueTuple/4.4.0": {
-        "type": "package",
-        "compile": {
-          "ref/netcoreapp2.0/_._": {}
-        },
-        "runtime": {
-          "lib/netcoreapp2.0/_._": {}
-        }
-      },
       "System.Xml.ReaderWriter/4.0.11": {
         "type": "package",
         "dependencies": {
@@ -2352,21 +2287,6 @@
     }
   },
   "libraries": {
-    "GlmSharp/0.9.8": {
-      "sha512": "09/3MF8WhtFwfrE7bHwzhDhVTAQB2OvbzNVHLT8NFwNIdnGrud6PcyplHBxOaw2MMsgfm2cYsgwkj1YGttupwg==",
-      "type": "package",
-      "path": "glmsharp/0.9.8",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "glmsharp.0.9.8.nupkg.sha512",
-        "glmsharp.nuspec",
-        "lib/Net20/GlmSharp.XML",
-        "lib/Net20/GlmSharp.dll",
-        "lib/Net45/GlmSharp.XML",
-        "lib/Net45/GlmSharp.dll"
-      ]
-    },
     "Libuv/1.9.1": {
       "sha512": "uqX2Frwf9PW8MaY7PRNY6HM5BpW1D8oj1EdqzrmbEFD5nH63Yat3aEjN/tws6Tw6Fk7LwmLBvtUh32tTeTaHiA==",
       "type": "package",
@@ -2872,10 +2792,10 @@
         "netstandard.library.nuspec"
       ]
     },
-    "Remotion.Linq/2.1.2": {
-      "sha512": "iEHT2fNOuTxhchbaOks+9Ea4YKvp454T/2mZm7CiUqIbUFl7ruK+2SVSvogkBODdxyk7eCpOAQSsowNxO8kKaw==",
+    "Remotion.Linq/2.2.0": {
+      "sha512": "fK/76UmpC0FXBlGDFVPLJHQlDLYnGC+XY3eoDgCgbtrhi0vzbXDQ3n/IYHhqSKqXQfGw/u04A1drWs7rFVkRjw==",
       "type": "package",
-      "path": "remotion.linq/2.1.2",
+      "path": "remotion.linq/2.2.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2889,7 +2809,7 @@
         "lib/netstandard1.0/Remotion.Linq.xml",
         "lib/portable-net45+win+wpa81+wp80/Remotion.Linq.dll",
         "lib/portable-net45+win+wpa81+wp80/Remotion.Linq.xml",
-        "remotion.linq.2.1.2.nupkg.sha512",
+        "remotion.linq.2.2.0.nupkg.sha512",
         "remotion.linq.nuspec"
       ]
     },
@@ -3154,44 +3074,6 @@
         "lib/uap10.0/SharpDX.XInput.xml",
         "sharpdx.xinput.4.0.1.nupkg.sha512",
         "sharpdx.xinput.nuspec"
-      ]
-    },
-    "SharpVk/0.4.2": {
-      "sha512": "0CzZJWKw6CTmxKOXzCCyTKCD7tZB6g2+tm2VSSCXWTHlIMHxlRzbH5BaqkYCGo9Y23wp0hPuz2U3NifMH1VI6w==",
-      "type": "package",
-      "path": "sharpvk/0.4.2",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "lib/netstandard2.0/SharpVk.dll",
-        "lib/netstandard2.0/SharpVk.xml",
-        "sharpvk.0.4.2.nupkg.sha512",
-        "sharpvk.nuspec"
-      ]
-    },
-    "SharpVk.Glfw/0.4.1": {
-      "sha512": "/WqdTW3bqxKkVjh/O7xqMXQjx/+5jmkTY1pOYJW2E7JGTlHx5EJGlcqjKFT2JH3vv1l02bQ5rfDFOQZK5/VevA==",
-      "type": "package",
-      "path": "sharpvk.glfw/0.4.1",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "lib/netstandard2.0/SharpVk.Glfw.dll",
-        "lib/netstandard2.0/SharpVk.Glfw.xml",
-        "sharpvk.glfw.0.4.1.nupkg.sha512",
-        "sharpvk.glfw.nuspec"
-      ]
-    },
-    "SharpVk.Shanq/0.4.1": {
-      "sha512": "yYxVJZ4+b5pIoHhCnIoXgY7SpWdj+387cyhysgvGR5kO7iLz55qDyOTI2J/wT2QD1Sgn+pzKr7tcbiZlIO7izQ==",
-      "type": "package",
-      "path": "sharpvk.shanq/0.4.1",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "lib/netstandard2.0/SharpVk.Shanq.dll",
-        "sharpvk.shanq.0.4.1.nupkg.sha512",
-        "sharpvk.shanq.nuspec"
       ]
     },
     "System.AppContext/4.1.0": {
@@ -5924,29 +5806,6 @@
         "system.runtime.nuspec"
       ]
     },
-    "System.Runtime.CompilerServices.Unsafe/4.4.0": {
-      "sha512": "9dLLuBxr5GNmOfl2jSMcsHuteEg32BEfUotmmUkmZjpR3RpVHE8YQwt0ow3p6prwA1ME8WqDVZqrr8z6H8G+Kw==",
-      "type": "package",
-      "path": "system.runtime.compilerservices.unsafe/4.4.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "LICENSE.TXT",
-        "THIRD-PARTY-NOTICES.TXT",
-        "lib/netstandard1.0/System.Runtime.CompilerServices.Unsafe.dll",
-        "lib/netstandard1.0/System.Runtime.CompilerServices.Unsafe.xml",
-        "lib/netstandard2.0/System.Runtime.CompilerServices.Unsafe.dll",
-        "lib/netstandard2.0/System.Runtime.CompilerServices.Unsafe.xml",
-        "ref/netstandard1.0/System.Runtime.CompilerServices.Unsafe.dll",
-        "ref/netstandard1.0/System.Runtime.CompilerServices.Unsafe.xml",
-        "ref/netstandard2.0/System.Runtime.CompilerServices.Unsafe.dll",
-        "ref/netstandard2.0/System.Runtime.CompilerServices.Unsafe.xml",
-        "system.runtime.compilerservices.unsafe.4.4.0.nupkg.sha512",
-        "system.runtime.compilerservices.unsafe.nuspec",
-        "useSharedDesignerContext.txt",
-        "version.txt"
-      ]
-    },
     "System.Runtime.Extensions/4.1.0": {
       "sha512": "CUOHjTT/vgP0qGW22U4/hDlOqXmcPq5YicBaXdUR2UiUoLwBT+olO6we4DVbq57jeX5uXH2uerVZhf0qGj+sVQ==",
       "type": "package",
@@ -7292,51 +7151,6 @@
         "system.threading.timer.nuspec"
       ]
     },
-    "System.ValueTuple/4.4.0": {
-      "sha512": "BahUww/+mdP4ARCAh2RQhQTg13wYLVrBb9SYVgW8ZlrwjraGCXHGjo0oIiUfZ34LUZkMMR+RAzR7dEY4S1HeQQ==",
-      "type": "package",
-      "path": "system.valuetuple/4.4.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "LICENSE.TXT",
-        "THIRD-PARTY-NOTICES.TXT",
-        "lib/MonoAndroid10/_._",
-        "lib/MonoTouch10/_._",
-        "lib/net461/System.ValueTuple.dll",
-        "lib/net461/System.ValueTuple.xml",
-        "lib/net47/System.ValueTuple.dll",
-        "lib/net47/System.ValueTuple.xml",
-        "lib/netcoreapp2.0/_._",
-        "lib/netstandard1.0/System.ValueTuple.dll",
-        "lib/netstandard1.0/System.ValueTuple.xml",
-        "lib/netstandard2.0/_._",
-        "lib/portable-net40+sl4+win8+wp8/System.ValueTuple.dll",
-        "lib/portable-net40+sl4+win8+wp8/System.ValueTuple.xml",
-        "lib/xamarinios10/_._",
-        "lib/xamarinmac20/_._",
-        "lib/xamarintvos10/_._",
-        "lib/xamarinwatchos10/_._",
-        "ref/MonoAndroid10/_._",
-        "ref/MonoTouch10/_._",
-        "ref/net461/System.ValueTuple.dll",
-        "ref/net461/System.ValueTuple.xml",
-        "ref/net47/System.ValueTuple.dll",
-        "ref/net47/System.ValueTuple.xml",
-        "ref/netcoreapp2.0/_._",
-        "ref/netstandard2.0/_._",
-        "ref/portable-net40+sl4+win8+wp8/System.ValueTuple.dll",
-        "ref/portable-net40+sl4+win8+wp8/System.ValueTuple.xml",
-        "ref/xamarinios10/_._",
-        "ref/xamarinmac20/_._",
-        "ref/xamarintvos10/_._",
-        "ref/xamarinwatchos10/_._",
-        "system.valuetuple.4.4.0.nupkg.sha512",
-        "system.valuetuple.nuspec",
-        "useSharedDesignerContext.txt",
-        "version.txt"
-      ]
-    },
     "System.Xml.ReaderWriter/4.0.11": {
       "sha512": "ZIiLPsf67YZ9zgr31vzrFaYQqxRPX9cVHjtPSnmx4eN6lbS/yEyYNr2vs1doGDEscF0tjCZFsk9yUg1sC9e8tg==",
       "type": "package",
@@ -7597,12 +7411,9 @@
   },
   "projectFileDependencyGroups": {
     ".NETCoreApp,Version=v3.1": [
-      "GlmSharp >= 0.9.8",
       "MonoGame.Content.Builder.Task >= 3.8.0.1641",
       "MonoGame.Framework.WindowsDX >= 3.8.0.1641",
-      "SharpVk >= 0.4.2",
-      "SharpVk.Glfw >= 0.4.1",
-      "SharpVk.Shanq >= 0.4.1"
+      "Remotion.Linq >= 2.2.0"
     ]
   },
   "packageFolders": {
@@ -7649,10 +7460,6 @@
     "frameworks": {
       "netcoreapp3.1": {
         "dependencies": {
-          "GlmSharp": {
-            "target": "Package",
-            "version": "[0.9.8, )"
-          },
           "MonoGame.Content.Builder.Task": {
             "target": "Package",
             "version": "[3.8.0.1641, )"
@@ -7661,17 +7468,9 @@
             "target": "Package",
             "version": "[3.8.0.1641, )"
           },
-          "SharpVk": {
+          "Remotion.Linq": {
             "target": "Package",
-            "version": "[0.4.2, )"
-          },
-          "SharpVk.Glfw": {
-            "target": "Package",
-            "version": "[0.4.1, )"
-          },
-          "SharpVk.Shanq": {
-            "target": "Package",
-            "version": "[0.4.1, )"
+            "version": "[2.2.0, )"
           }
         },
         "imports": [
@@ -7695,17 +7494,5 @@
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.403\\RuntimeIdentifierGraph.json"
       }
     }
-  },
-  "logs": [
-    {
-      "code": "NU1701",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "Package 'GlmSharp 0.9.8' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8' instead of the project target framework '.NETCoreApp,Version=v3.1'. This package may not be fully compatible with your project.",
-      "libraryId": "GlmSharp",
-      "targetGraphs": [
-        ".NETCoreApp,Version=v3.1"
-      ]
-    }
-  ]
+  }
 }

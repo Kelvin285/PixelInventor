@@ -22,9 +22,6 @@ C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Release\ne
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Release\netcoreapp3.1\SharpDX.MediaFoundation.dll
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Release\netcoreapp3.1\SharpDX.XAudio2.dll
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Release\netcoreapp3.1\SharpDX.XInput.dll
-C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Release\netcoreapp3.1\SharpVk.dll
-C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Release\netcoreapp3.1\SharpVk.Glfw.dll
-C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Release\netcoreapp3.1\SharpVk.Shanq.dll
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Release\netcoreapp3.1\runtimes\debian-x64\native\libuv.so
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Release\netcoreapp3.1\runtimes\fedora-x64\native\libuv.so
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Release\netcoreapp3.1\runtimes\opensuse-x64\native\libuv.so
@@ -33,8 +30,6 @@ C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Release\ne
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Release\netcoreapp3.1\runtimes\win7-arm\native\libuv.dll
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Release\netcoreapp3.1\runtimes\win7-x64\native\libuv.dll
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Release\netcoreapp3.1\runtimes\win7-x86\native\libuv.dll
-C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Release\netcoreapp3.1\SharpVk.Shanq.GlmSharp.dll
-C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\bin\Release\netcoreapp3.1\SharpVk.Shanq.GlmSharp.pdb
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\obj\Release\netcoreapp3.1\Inignoto.csprojAssemblyReference.cache
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\obj\Release\netcoreapp3.1\Inignoto.csproj.CoreCompileInputs.cache
 C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto\obj\Release\netcoreapp3.1\Inignoto.csproj.CopyComplete

@@ -129,7 +129,6 @@ namespace Inignoto.Entities
                     if (position.Z > diameter - 0.5f)
                     {
                         lat /= (world.radius);
-                        Console.WriteLine(MathHelper.ToDegrees(lat));
 
                         position.X = (float)System.Math.Cos(lat) * (world.radius - 1) + diameter + world.radius;
                         position.Z = (float)System.Math.Sin(lat) * (world.radius - 1) + diameter + world.radius;

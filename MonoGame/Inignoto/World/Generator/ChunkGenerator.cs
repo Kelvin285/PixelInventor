@@ -35,10 +35,11 @@ namespace Inignoto.World.Generator
                     for (int chunk_y = 0; chunk_y < Constants.CHUNK_SIZE; chunk_y++)
                     {
                         int y = chunk_y + chunk.GetY() * Constants.CHUNK_SIZE;
-                        chunk.SetLight(chunk_x, chunk_y, chunk_z, 0, 0, 0, 15);
-                        
+
                         if (y < voxel_height)
                         {
+                            chunk.SetLight(chunk_x, chunk_y, chunk_z, -1, -1, -1, 0);
+
                             if (y < voxel_height - 1)
                             {
                                 chunk.SetVoxel(chunk_x, chunk_y, chunk_z, TileManager.DIRT.DefaultData);
@@ -48,7 +49,10 @@ namespace Inignoto.World.Generator
                             }
                         } else
                         {
+                            chunk.SetLight(chunk_x, chunk_y, chunk_z, -1, -1, -1, 15);
+                            
                             chunk.SetVoxel(chunk_x, chunk_y, chunk_z, TileManager.AIR.DefaultData);
+                            
                             if (y <= 0)
                             {
                                 chunk.SetVoxel(chunk_x, chunk_y, chunk_z, TileManager.WATER.DefaultData);
@@ -57,8 +61,9 @@ namespace Inignoto.World.Generator
                     }
                 }
             }
-            chunk.BuildMesh();
-            //chunk.MarkForRebuild();
+            chunk.UpdateLights();
+            //chunk.BuildMesh();
+            chunk.MarkForRebuild();
         }
 
         public float GetHeight(float x, float z, float radius)

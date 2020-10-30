@@ -3,7 +3,7 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <PublishReadyToRun>false</PublishReadyToRun>
     <TieredCompilation>false</TieredCompilation>
@@ -13,23 +13,21 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
   <ItemGroup>
     <TrimmerRootAssembly Include="Microsoft.Xna.Framework.Content.ContentTypeReader" Visible="false" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="GlmSharp" Version="0.9.8" />
     <PackageReference Include="MonoGame.Framework.WindowsDX" Version="3.8.0.1641" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.0.1641" />
-    <PackageReference Include="SharpVk" Version="0.4.2" />
-    <PackageReference Include="SharpVk.Glfw" Version="0.4.1" />
-    <PackageReference Include="SharpVk.Shanq" Version="0.4.1" />
+    <PackageReference Include="Remotion.Linq" Version="2.2.0" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Content\bin\Windows\Content\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="SharpVk.Shanq.GlmSharp">
-      <HintPath>..\..\packages\netstandard2.1\netstandard2.1\SharpVk.Shanq.GlmSharp.dll</HintPath>
-    </Reference>
   </ItemGroup>
 </Project>

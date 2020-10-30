@@ -122,12 +122,16 @@ namespace Inignoto.World.Chunks
             int size = secondaryChunksToRerender.Count;
             for (int i = 0; i < secondaryChunksToRerender.Count && i < size; i++)
             {
+
                 Chunk chunk = secondaryChunksToRerender[i];
+
+
                 if (chunk == null)
                 {
                     secondaryChunksToRerender.RemoveAt(i);
                     continue;
                 }
+                if (!IsChunkWithinFrustum(chunk)) continue;
                 float dist = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x, current_y, current_z));
                 if (dist < distance)
                 {
@@ -183,18 +187,21 @@ namespace Inignoto.World.Chunks
             }
         }
 
-        public void TryAddChunk(int x, int y, int z)
+        public Chunk TryAddChunk(int x, int y, int z)
         {
             Vector3 position = new Vector3(x, y, z);
             if (chunks.ContainsKey(position))
             {
-                return;
+                Chunk c = null;
+                chunks.TryGetValue(position, out c);
+                return c;
             } else
             {
                 Chunk chunk = new Chunk(x, y, z, world);
                 chunks.Add(position, chunk);
                 chunksToBuild.Add(chunk);
                 modifiedChunks = true;
+                return chunk;
             }
         }
 
@@ -222,8 +229,48 @@ namespace Inignoto.World.Chunks
 
         public Chunk TryGetChunk(int x, int y, int z)
         {
-            chunks.TryGetValue(new Vector3(x, y, z), out Chunk chunk);
-            return chunk;
+            if (chunks.ContainsKey(new Vector3(x, y, z)))
+            {
+                chunks.TryGetValue(new Vector3(x, y, z), out Chunk chunk);
+                return chunk;
+            }
+            return null;
+        }
+
+        public void UpdateChunks() {
+            
+
+            int H_VIEW = Constants.ACTIVE_CHUNK_DISTANCE;
+            int V_VIEW = Constants.ACTIVE_CHUNK_DISTANCE;
+
+
+            int rad = (int)((world.radius * 4.0f) / Constants.CHUNK_SIZE);
+
+            for (int y = -V_VIEW; y < V_VIEW; y++)
+            {
+                for (int z = -H_VIEW; z < H_VIEW; z++)
+                {
+                    for (int x = -H_VIEW; x < H_VIEW; x++)
+                    {
+                        int X = x + current_x;
+                        int Y = y + current_y;
+                        int Z = z + current_z;
+
+                        int W = X;
+                        if (W < 0) W += rad;
+                        if (W >= rad) W -= rad;
+
+                        Chunk chunk = TryGetChunk(W, Y, Z);
+                        if (chunk != null)
+                        {
+                            float distance = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x, current_y, current_z));
+                            chunk.Tick(distance);
+
+                        }
+                        
+                    }
+                }
+            }
         }
 
         private void Update()
@@ -248,13 +295,11 @@ namespace Inignoto.World.Chunks
                         if (W >= rad) W -= rad;
 
                         TryAddChunk(W, Y, Z);
-
                     }
                 }
 
             }
 
-            Console.WriteLine(chunks.Count);
         }
 
         public void RenderVulkan()
@@ -273,28 +318,85 @@ namespace Inignoto.World.Chunks
             }
         }
 
+        public bool IsChunkWithinFrustum(Chunk chunk)
+        {
+
+            Vector3 min = new Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE);
+            Vector3 max = min + new Vector3(Constants.CHUNK_SIZE);
+            BoundingBox box = new BoundingBox(min, max);
+            if (Inignoto.game.camera.frustum.Intersects(box)) return true;
+
+            min = new Vector3(chunk.GetX() * Constants.CHUNK_SIZE - chunk.GetWorld().radius * 4 + chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE);
+            max = min + new Vector3(Constants.CHUNK_SIZE);
+            box = new BoundingBox(min, max);
+            if (Inignoto.game.camera.frustum.Intersects(box)) return true;
+
+            min = new Vector3(chunk.GetX() * Constants.CHUNK_SIZE + chunk.GetWorld().radius * 4 + chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE);
+            max = min + new Vector3(Constants.CHUNK_SIZE);
+            box = new BoundingBox(min, max);
+            if (Inignoto.game.camera.frustum.Intersects(box)) return true;
+
+            return false;
+        }
+
         public void Render(GraphicsDevice device, GameEffect effect)
         {
-            rendering.Clear();
-            
-            if (modifiedChunks)
-            foreach (Chunk chunk in chunks.Values)
+
+            if (modifiedChunks || current_x != last_x || current_y != last_y || current_z != last_z)
             {
-                rendering.Add(chunk);
+                rendering.Clear();
+                foreach (Chunk chunk in chunks.Values)
+                {
+                    if (!TryUnloadChunk(chunk.GetX(), chunk.GetY(), chunk.GetZ()))
+                    rendering.Add(chunk);
+                }
             }
+                
+
+            List<Chunk> waterRender = new List<Chunk>();
+            List<Chunk> transparentRender = new List<Chunk>();
 
             for (int i = 0; i < rendering.Count; i++)
             {
+                
+                if (TryUnloadChunk(rendering[i].GetX(), rendering[i].GetY(), rendering[i].GetZ()))
+                {
+                    continue;
+                }
+                if (!IsChunkWithinFrustum(rendering[i])) continue;
+
+                if (rendering[i].NeedsToRebuild())
+                {
+                    rendering[i].BuildMesh();
+                }
+
                 chunkRenderer.RenderChunk(device, effect, rendering[i]);
-                TryUnloadChunk(rendering[i].GetX(), rendering[i].GetY(), rendering[i].GetZ());
+
+                if (rendering[i].waterMesh != null || rendering[i].secondWaterMesh != null)
+                {
+                    waterRender.Add(rendering[i]);
+                }
+
+                if (rendering[i].transparencyMesh != null || rendering[i].secondTransparencyMesh != null)
+                {
+                    transparentRender.Add(rendering[i]);
+                }
             }
             
             GameResources.effect.Water = true;
-            for (int i = 0; i < rendering.Count; i++)
+            for (int i = 0; i < waterRender.Count; i++)
             {
-                chunkRenderer.RenderChunk(device, effect, rendering[i], true);
+                chunkRenderer.RenderChunk(device, effect, waterRender[i], true);
             }
             GameResources.effect.Water = false;
+            GameResources.effect.Transparent = true;
+
+            for (int i = 0; i < transparentRender.Count; i++)
+            {
+                chunkRenderer.RenderChunk(device, effect, transparentRender[i], false, true);
+            }
+            GameResources.effect.Transparent = false;
+
         }
 
         public void QueueForRerender(Chunk chunk)

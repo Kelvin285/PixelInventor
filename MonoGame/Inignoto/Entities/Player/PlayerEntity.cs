@@ -50,6 +50,8 @@ namespace Inignoto.Entities.Player
         {
             base.Update(time);
 
+            ReachDistance = gamemode != Gamemode.SANDBOX ? 4.5f : 8.0f;
+
             size.Y = 1.85f;
             if (Crouching)
             {

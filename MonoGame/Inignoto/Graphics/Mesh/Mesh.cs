@@ -39,6 +39,11 @@ namespace Inignoto.Graphics.Mesh
             worldMatrix = Matrix.CreateWorld(new Vector3(0, 0, 0), Vector3.Forward, Vector3.Up);
             this.lines = lines;
             this.texture = texture;
+
+            if (Inignoto.game.VULKAN_ENABLED)
+            {
+                //VulkanMain.CreateMesh(triangleVertices, triangleVertices.Length);
+            }
         }
 
         public Vector3 GetPosition()
@@ -87,6 +92,7 @@ namespace Inignoto.Graphics.Mesh
             foreach (EffectPass pass in effect.CurrentTechnique.
                     Passes)
             {
+                if (texture == null) continue;
                 effect.Parameters["ModelTexture"].SetValue(texture);
                 pass.Apply();
 

@@ -12,7 +12,7 @@ namespace Inignoto.Graphics.Mesh
         public Vector2 TextureCoordinate;
         public static readonly VertexDeclaration VertexDeclaration;
 
-        public VertexPositionLightTexture(Vector3 position, Color color, Vector2 textureCoordinate, int light = 0b111111111111, int sunlight = 15)
+        public VertexPositionLightTexture(Vector3 position, Color color, Vector2 textureCoordinate, int light = 0, int sunlight = 15)
         {
             Position = position;
             int light_r = light & 0b1111;

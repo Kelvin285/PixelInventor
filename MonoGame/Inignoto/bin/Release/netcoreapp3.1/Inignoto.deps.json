@@ -8,24 +8,12 @@
     ".NETCoreApp,Version=v3.1": {
       "Inignoto/1.0.0": {
         "dependencies": {
-          "GlmSharp": "0.9.8",
           "MonoGame.Content.Builder.Task": "3.8.0.1641",
           "MonoGame.Framework.WindowsDX": "3.8.0.1641",
-          "SharpVk": "0.4.2",
-          "SharpVk.Glfw": "0.4.1",
-          "SharpVk.Shanq": "0.4.1",
-          "SharpVk.Shanq.GlmSharp": "0.0.0.0"
+          "Remotion.Linq": "2.2.0"
         },
         "runtime": {
           "Inignoto.dll": {}
-        }
-      },
-      "GlmSharp/0.9.8": {
-        "runtime": {
-          "lib/Net45/GlmSharp.dll": {
-            "assemblyVersion": "0.9.8.0",
-            "fileVersion": "0.9.8.0"
-          }
         }
       },
       "Libuv/1.9.1": {
@@ -347,7 +335,7 @@
           "System.Xml.XDocument": "4.0.11"
         }
       },
-      "Remotion.Linq/2.1.2": {
+      "Remotion.Linq/2.2.0": {
         "dependencies": {
           "System.Collections": "4.0.11",
           "System.Diagnostics.Debug": "4.0.11",
@@ -363,8 +351,8 @@
         },
         "runtime": {
           "lib/netstandard1.0/Remotion.Linq.dll": {
-            "assemblyVersion": "2.1.0.0",
-            "fileVersion": "2.1.2.30000"
+            "assemblyVersion": "2.2.0.0",
+            "fileVersion": "2.2.0.30000"
           }
         }
       },
@@ -507,41 +495,6 @@
           "lib/netcoreapp1.0/SharpDX.XInput.dll": {
             "assemblyVersion": "4.0.1.0",
             "fileVersion": "4.0.1.0"
-          }
-        }
-      },
-      "SharpVk/0.4.2": {
-        "dependencies": {
-          "System.Runtime.CompilerServices.Unsafe": "4.4.0",
-          "System.ValueTuple": "4.4.0"
-        },
-        "runtime": {
-          "lib/netstandard2.0/SharpVk.dll": {
-            "assemblyVersion": "0.4.2.0",
-            "fileVersion": "0.4.2.0"
-          }
-        }
-      },
-      "SharpVk.Glfw/0.4.1": {
-        "dependencies": {
-          "SharpVk": "0.4.2"
-        },
-        "runtime": {
-          "lib/netstandard2.0/SharpVk.Glfw.dll": {
-            "assemblyVersion": "0.4.1.0",
-            "fileVersion": "0.4.1.0"
-          }
-        }
-      },
-      "SharpVk.Shanq/0.4.1": {
-        "dependencies": {
-          "Remotion.Linq": "2.1.2",
-          "SharpVk": "0.4.2"
-        },
-        "runtime": {
-          "lib/netstandard2.0/SharpVk.Shanq.dll": {
-            "assemblyVersion": "0.4.1.0",
-            "fileVersion": "0.4.1.0"
           }
         }
       },
@@ -1155,7 +1108,6 @@
           "Microsoft.NETCore.Targets": "1.0.3"
         }
       },
-      "System.Runtime.CompilerServices.Unsafe/4.4.0": {},
       "System.Runtime.Extensions/4.1.0": {
         "dependencies": {
           "Microsoft.NETCore.Platforms": "1.0.2",
@@ -1476,7 +1428,6 @@
           "System.Runtime": "4.1.0"
         }
       },
-      "System.ValueTuple/4.4.0": {},
       "System.Xml.ReaderWriter/4.0.11": {
         "dependencies": {
           "System.Collections": "4.0.11",
@@ -1551,14 +1502,6 @@
           "System.Xml.XDocument": "4.0.11",
           "System.Xml.XPath": "4.0.1"
         }
-      },
-      "SharpVk.Shanq.GlmSharp/0.0.0.0": {
-        "runtime": {
-          "SharpVk.Shanq.GlmSharp.dll": {
-            "assemblyVersion": "0.0.0.0",
-            "fileVersion": "0.0.0.0"
-          }
-        }
       }
     }
   },
@@ -1567,13 +1510,6 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
-    },
-    "GlmSharp/0.9.8": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-09/3MF8WhtFwfrE7bHwzhDhVTAQB2OvbzNVHLT8NFwNIdnGrud6PcyplHBxOaw2MMsgfm2cYsgwkj1YGttupwg==",
-      "path": "glmsharp/0.9.8",
-      "hashPath": "glmsharp.0.9.8.nupkg.sha512"
     },
     "Libuv/1.9.1": {
       "type": "package",
@@ -1722,12 +1658,12 @@
       "path": "netstandard.library/1.6.0",
       "hashPath": "netstandard.library.1.6.0.nupkg.sha512"
     },
-    "Remotion.Linq/2.1.2": {
+    "Remotion.Linq/2.2.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-iEHT2fNOuTxhchbaOks+9Ea4YKvp454T/2mZm7CiUqIbUFl7ruK+2SVSvogkBODdxyk7eCpOAQSsowNxO8kKaw==",
-      "path": "remotion.linq/2.1.2",
-      "hashPath": "remotion.linq.2.1.2.nupkg.sha512"
+      "sha512": "sha512-fK/76UmpC0FXBlGDFVPLJHQlDLYnGC+XY3eoDgCgbtrhi0vzbXDQ3n/IYHhqSKqXQfGw/u04A1drWs7rFVkRjw==",
+      "path": "remotion.linq/2.2.0",
+      "hashPath": "remotion.linq.2.2.0.nupkg.sha512"
     },
     "runtime.native.System/4.0.0": {
       "type": "package",
@@ -1826,27 +1762,6 @@
       "sha512": "sha512-vDnp6CTVC9dKQHwLVF4GLNdCJqGMUuxyZLLlorDjgnVOOO7koPR20/tqt1A53gnNy/Id93Nzq7K2ILLvBQWvGQ==",
       "path": "sharpdx.xinput/4.0.1",
       "hashPath": "sharpdx.xinput.4.0.1.nupkg.sha512"
-    },
-    "SharpVk/0.4.2": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-0CzZJWKw6CTmxKOXzCCyTKCD7tZB6g2+tm2VSSCXWTHlIMHxlRzbH5BaqkYCGo9Y23wp0hPuz2U3NifMH1VI6w==",
-      "path": "sharpvk/0.4.2",
-      "hashPath": "sharpvk.0.4.2.nupkg.sha512"
-    },
-    "SharpVk.Glfw/0.4.1": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-/WqdTW3bqxKkVjh/O7xqMXQjx/+5jmkTY1pOYJW2E7JGTlHx5EJGlcqjKFT2JH3vv1l02bQ5rfDFOQZK5/VevA==",
-      "path": "sharpvk.glfw/0.4.1",
-      "hashPath": "sharpvk.glfw.0.4.1.nupkg.sha512"
-    },
-    "SharpVk.Shanq/0.4.1": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-yYxVJZ4+b5pIoHhCnIoXgY7SpWdj+387cyhysgvGR5kO7iLz55qDyOTI2J/wT2QD1Sgn+pzKr7tcbiZlIO7izQ==",
-      "path": "sharpvk.shanq/0.4.1",
-      "hashPath": "sharpvk.shanq.0.4.1.nupkg.sha512"
     },
     "System.AppContext/4.1.0": {
       "type": "package",
@@ -2212,13 +2127,6 @@
       "path": "system.runtime/4.1.0",
       "hashPath": "system.runtime.4.1.0.nupkg.sha512"
     },
-    "System.Runtime.CompilerServices.Unsafe/4.4.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-9dLLuBxr5GNmOfl2jSMcsHuteEg32BEfUotmmUkmZjpR3RpVHE8YQwt0ow3p6prwA1ME8WqDVZqrr8z6H8G+Kw==",
-      "path": "system.runtime.compilerservices.unsafe/4.4.0",
-      "hashPath": "system.runtime.compilerservices.unsafe.4.4.0.nupkg.sha512"
-    },
     "System.Runtime.Extensions/4.1.0": {
       "type": "package",
       "serviceable": true,
@@ -2422,13 +2330,6 @@
       "path": "system.threading.timer/4.0.1",
       "hashPath": "system.threading.timer.4.0.1.nupkg.sha512"
     },
-    "System.ValueTuple/4.4.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-BahUww/+mdP4ARCAh2RQhQTg13wYLVrBb9SYVgW8ZlrwjraGCXHGjo0oIiUfZ34LUZkMMR+RAzR7dEY4S1HeQQ==",
-      "path": "system.valuetuple/4.4.0",
-      "hashPath": "system.valuetuple.4.4.0.nupkg.sha512"
-    },
     "System.Xml.ReaderWriter/4.0.11": {
       "type": "package",
       "serviceable": true,
@@ -2463,11 +2364,6 @@
       "sha512": "sha512-FLhdYJx4331oGovQypQ8JIw2kEmNzCsjVOVYY/16kZTUoquZG85oVn7yUhBE2OZt1yGPSXAL0HTEfzjlbNpM7Q==",
       "path": "system.xml.xpath.xdocument/4.0.1",
       "hashPath": "system.xml.xpath.xdocument.4.0.1.nupkg.sha512"
-    },
-    "SharpVk.Shanq.GlmSharp/0.0.0.0": {
-      "type": "reference",
-      "serviceable": false,
-      "sha512": ""
     }
   }
 }

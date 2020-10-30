@@ -34,9 +34,17 @@ namespace Inignoto.Tiles
         private bool blocksMovement = true;
         private bool visible = true;
         private bool replaceable = false;
+        private bool FullSpace;
+
+        private bool Opaque = true;
+
+        public int light_red { get; private set; }
+        public int light_green { get; private set; }
+        public int light_blue { get; private set; }
 
         public Tile(string name, SoundEffect[] sound, bool solid = true, int hits = 1)
         {
+            SetLight(0, 0, 0);
             this.step_sound = sound;
             this.name = name;
             TileManager.REGISTRY.Add(this.name, this);
@@ -50,10 +58,39 @@ namespace Inignoto.Tiles
 
         public string TranslatedName => name;
 
+        public Tile SetLight(int R, int G, int B)
+        {
+            light_red = R;
+            light_green = G;
+            light_blue = B;
+            return this;
+        }
+
         public RayBox[] GetCollisionBoxes(TileData state)
         {
             RayBox box = new Raytracing.RayBox(new Vector3f(0, 0, 0), new Vector3f(1, 1, 1));
             return new RayBox[] { box };
+        }
+
+        public Tile SetTransparent()
+        {
+            Opaque = false;
+            return this;
+        }
+
+        public bool IsOpaque()
+        {
+            return Opaque;
+        }
+        public Tile SetFull()
+        {
+            FullSpace = true;
+            return this;
+        }
+
+        public bool TakesUpEntireSpace()
+        {
+            return this.FullSpace;
         }
 
         public bool IsVisible()
@@ -72,9 +109,19 @@ namespace Inignoto.Tiles
             return GetRayTraceType() == rayTraceType;
         }
 
-        internal bool IsRaytraceTypeOrSolid(TileRayTraceType rayTraceType)
+        public bool IsOpaqueOrNotBlock()
+        {
+            return Opaque || rayTraceType != TileRayTraceType.BLOCK;
+        }
+
+        public bool IsRaytraceTypeOrSolid(TileRayTraceType rayTraceType)
         {
             return IsRaytraceType(rayTraceType) || solid;
+        }
+
+        public bool IsRaytraceTypeOrSolidAndOpaque(TileRayTraceType rayTraceType)
+        {
+            return Opaque && (IsRaytraceTypeOrSolid(rayTraceType));
         }
 
         public bool BlocksMovement()
@@ -111,6 +158,7 @@ namespace Inignoto.Tiles
         }
 
         public TileData DefaultData => stateHolder.data[0];
+
     }
 
 }

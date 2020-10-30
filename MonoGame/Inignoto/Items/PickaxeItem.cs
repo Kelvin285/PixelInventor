@@ -1,4 +1,6 @@
 ﻿using Inignoto.Entities;
+using Inignoto.Inventory;
+using Inignoto.Math;
 using Inignoto.Tiles;
 using Microsoft.Xna.Framework;
 using System;
@@ -21,6 +23,7 @@ namespace Inignoto.Items
         {
             if (result == null) return false;
 
+            user.world.entities.Add(new ItemEntity(user.world, new Vector3f(result.pos.x + 0.5f, result.pos.y + 0.5f, result.pos.z + 0.5f), new ItemStack(TileManager.GetTile(result.data.tile_id))));
             user.world.SetVoxel(result.pos, TileManager.AIR.DefaultData);
 
             return true;

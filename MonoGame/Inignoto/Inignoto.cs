@@ -22,6 +22,8 @@ using Inignoto.Audio;
 using Inignoto.Items;
 using System.Windows.Forms;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using static Inignoto.VulkanMain;
 
 namespace Inignoto
 {
@@ -61,12 +63,24 @@ namespace Inignoto
         public bool VULKAN_ENABLED = false;
 
         public Rectangle ClientBounds;
-            
+
+        public readonly int target_width = 1920;
+        public readonly int target_height = 1080;
+
+        private Matrix content_scale;
+
         public Inignoto()
         {
+
             graphics = new GraphicsDeviceManager(this);
             graphics.GraphicsProfile = GraphicsProfile.HiDef;
+            graphics.PreferMultiSampling = false;
+
             
+            float scaleX = graphics.PreferredBackBufferWidth / target_width;
+            float scaleY = graphics.PreferredBackBufferHeight / target_height;
+
+
             Content.RootDirectory = "Content";
             running = true;
         }
@@ -174,6 +188,7 @@ namespace Inignoto
             base.OnExiting(sender, args);
         }
 
+
         bool space = false;
         /// <summary>
         /// Allows the game to run logic such as updating the world,
@@ -182,6 +197,10 @@ namespace Inignoto
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
+
+            if (graphics.SynchronizeWithVerticalRetrace != Settings.VSYNC)
+            graphics.SynchronizeWithVerticalRetrace = Settings.VSYNC;
+            
             if (!VULKAN_ENABLED)
             {
                 ClientBounds = Window.ClientBounds;
@@ -208,18 +227,33 @@ namespace Inignoto
                                GraphicsDevice.DisplayMode.AspectRatio,
                 0.01f, 1000f);
 
-            mousePos = Mouse.GetState().Position;
+            if (VULKAN_ENABLED)
+            {
+                Vec3f mp = VulkanMain.GetMousePos();
+                lastMousePos = new Point(mousePos.X, mousePos.Y);
+                mousePos = new Point((int)mp.x, (int)mp.y);
+            } else
+            {
+                mousePos = Mouse.GetState().Position;
+            }
+            
 
             UpdateInput(gameTime);
 
             camera.Update(gameTime);
 
+            
+            if (VULKAN_ENABLED) {
+                VulkanMain.UpdateCamera();
+            }
+
+
             world.Update(camera.position.Vector, gameTime);
 
             base.Update(gameTime);
+
             lastMousePos = new Point(mousePos.X, mousePos.Y);
 
-            
 
             if (!IsActive) mouse_captured = false;
             else
@@ -228,13 +262,23 @@ namespace Inignoto
             if (mouse_captured)
             {
                 if (!VULKAN_ENABLED)
-                Mouse.SetPosition(width / 2, -height / 2);
-                mousePos = new Point(width / 2, -height / 2);
-                lastMousePos = new Point(width / 2, -height / 2);
+                {
+                    Mouse.SetPosition(width / 2, -height / 2);
+                    mousePos = new Point(width / 2, -height / 2);
+                    lastMousePos = new Point(width / 2, -height / 2);
+                }
+                
                 IsMouseVisible = false;
             } else
             {
-                IsMouseVisible = true;
+                try
+                {
+                    IsMouseVisible = true;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
             }
             lastFrame = currentFrame;
             currentFrame++;
@@ -242,7 +286,7 @@ namespace Inignoto
 
         private void UpdateInput(GameTime gameTime)
         {
-
+            
             InputSetting.Update();
 
             int width = ClientBounds.Right - ClientBounds.Left;
@@ -270,10 +314,8 @@ namespace Inignoto
         public void UpdateVulkan()
         {
             int begin = System.DateTime.Now.Millisecond;
-            while (running)
-            {
-                ClientBounds = new Rectangle(vulkan.window.Bounds.X, vulkan.window.Bounds.Y, vulkan.window.Bounds.Width, vulkan.window.Bounds.Height);
-                
+            while (running && VULKAN_ENABLED)
+            {                
                 int start = System.DateTime.Now.Millisecond;
                 Update(time);
                 RenderVulkan(time);
@@ -294,10 +336,9 @@ namespace Inignoto
 
         public void TryStartVulkan()
         {
-           
             VULKAN_ENABLED = true;
             vulkan = new VulkanMain();
-            vulkan.Init();
+            Debug.WriteLine("VULKAN ENABLED = " + VULKAN_ENABLED);
             if (VULKAN_ENABLED)
             {
                 ThreadStart start = new ThreadStart(UpdateVulkan);
@@ -307,7 +348,6 @@ namespace Inignoto
 
                 vulkan.Run();
             }
-
         }
 
         protected void RenderVulkan(GameTime time)
@@ -327,7 +367,6 @@ namespace Inignoto
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-
             GameResources.effect.Time = (float)gameTime.TotalGameTime.TotalSeconds;
 
             int width = Window.ClientBounds.Right - Window.ClientBounds.Left;
@@ -342,7 +381,6 @@ namespace Inignoto
             GameResources.effect.View = camera.ViewMatrix;
 
             GraphicsDevice.BlendState = BlendState.NonPremultiplied;
-
 
             ItemManager.DrawItems(gameTime);
 
@@ -375,6 +413,7 @@ namespace Inignoto
             hud.Render(GraphicsDevice, spriteBatch, width, height, gameTime);
 
             spriteBatch.End();
+
 
             base.Draw(gameTime);
 

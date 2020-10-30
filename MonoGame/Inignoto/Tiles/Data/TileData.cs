@@ -1,4 +1,7 @@
 ﻿using Inignoto.Utilities;
+using Inignoto.World.Chunks;
+using SharpDX.MediaFoundation;
+using System;
 using System.Collections.Generic;
 using static Inignoto.Tiles.Tile;
 
@@ -142,5 +145,54 @@ namespace Inignoto.Tiles.Data
             return texture;
         }
 
+        public void UpdateLightWhenPlaced(Chunk chunk, int x, int y, int z)
+        {
+            Tile tile = TileManager.GetTile(tile_id);
+
+            if (tile == TileManager.AIR) return;
+
+            if (!chunk.NeedsToGenerate())
+            {
+                if (tile.light_red > 0 || tile.light_green > 0 || tile.light_blue > 0)
+                chunk.SetLight(x, y, z, tile.light_red, tile.light_green, tile.light_blue, -1);
+
+                if (tile.IsOpaque())
+                {
+                    chunk.RemoveLight(x, y, z, true, false, false, false);
+                    chunk.RemoveLight(x, y, z, false, true, false, false);
+                    chunk.RemoveLight(x, y, z, false, false, true, false);
+                    chunk.RemoveLight(x, y, z, false, false, false, true);
+                }
+                else
+                {
+                    chunk.PropogateLights(x, y, z, true, true, true, true);
+                }
+            }
+            
+        }
+
+        public void UpdateLightWhenRemoved(Chunk chunk, int x, int y, int z)
+        {
+            Tile tile = TileManager.GetTile(tile_id);
+
+            if (tile == TileManager.AIR) return;
+
+            if (!chunk.NeedsToGenerate())
+            {
+                if (!tile.IsOpaque())
+                {
+                    chunk.RemoveLight(x, y, z, true, false, false, false);
+                    chunk.RemoveLight(x, y, z, false, true, false, false);
+                    chunk.RemoveLight(x, y, z, false, false, true, false);
+                    chunk.RemoveLight(x, y, z, false, false, false, true);
+                }
+                else
+                {
+                    chunk.PropogateLights(x, y, z, true, true, true, true);
+                }
+            }
+        }
+
     }
+
 }

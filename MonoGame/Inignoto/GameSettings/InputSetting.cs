@@ -1,8 +1,8 @@
 ﻿using Microsoft.Xna.Framework.Input;
-using SharpVk.Glfw;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -52,7 +52,13 @@ namespace Inignoto.GameSettings
         {
             if (Inignoto.game.VULKAN_ENABLED)
             {
-                return VK_PRESSED;
+                if (Mouse)
+                {
+                    return VulkanMain.IsMouseButtonDown(Input);
+                } else
+                {
+                    return VulkanMain.IsKeyDown(Input);
+                }
             }
             if (Mouse)
             {

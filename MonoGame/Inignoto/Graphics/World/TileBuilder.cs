@@ -108,8 +108,8 @@ namespace Inignoto.Graphics.World
             }
             else v2 = (int)z % data.num_y;
 
-            float u = (location.X + u2 * atlas.GetWidth()) / (float)atlas.GetWidth();
-            float v = (location.Y + v2 * atlas.GetHeight()) / (float)atlas.GetHeight();
+            float u = (location.X + u2 * location.Width / data.num_x) / (float)atlas.GetWidth();
+            float v = (location.Y + v2 * location.Height / data.num_y) / (float)atlas.GetHeight();
             float w = location.Width / (float)atlas.GetWidth();
             float h = location.Height / (float)atlas.GetHeight();
 
@@ -157,8 +157,8 @@ namespace Inignoto.Graphics.World
             for (int i = 0; i < inds.Length; i++)
             {
                 indices.Add(inds[i] + index);
-                
             }
+
             index+=4;
             return index;
         }

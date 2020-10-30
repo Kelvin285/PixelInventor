@@ -43,10 +43,6 @@
       "frameworks": {
         "netcoreapp3.1": {
           "dependencies": {
-            "GlmSharp": {
-              "target": "Package",
-              "version": "[0.9.8, )"
-            },
             "MonoGame.Content.Builder.Task": {
               "target": "Package",
               "version": "[3.8.0.1641, )"
@@ -55,17 +51,9 @@
               "target": "Package",
               "version": "[3.8.0.1641, )"
             },
-            "SharpVk": {
+            "Remotion.Linq": {
               "target": "Package",
-              "version": "[0.4.2, )"
-            },
-            "SharpVk.Glfw": {
-              "target": "Package",
-              "version": "[0.4.1, )"
-            },
-            "SharpVk.Shanq": {
-              "target": "Package",
-              "version": "[0.4.1, )"
+              "version": "[2.2.0, )"
             }
           },
           "imports": [

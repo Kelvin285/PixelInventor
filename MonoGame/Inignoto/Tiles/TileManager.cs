@@ -24,6 +24,8 @@ namespace Inignoto.Tiles
         public static Tile MALECHITE;
         public static Tile SMOOTH_STONE_STAIRS;
         public static Tile WATER;
+        public static Tile GLOWING_CRYSTAL;
+        public static Tile GLASS;
 
         private static bool TEXTURES_LOADED = false;
 
@@ -38,10 +40,19 @@ namespace Inignoto.Tiles
 
         public static void Loadtiles()
         {
-            AIR = new Tile("Inignoto:air", null, false).SetRayTraceType(Tile.TileRayTraceType.GAS).SetVisible(false).SetBlocksMovement(false).SetReplaceable(true);
-            DIRT = new Tile("Inignoto:dirt", SoundEffects.step_soil);
-            GRASS = new Tile("Inignoto:grass", SoundEffects.step_grass);
-            WATER = new Tile("Inignoto:water", null, false).SetBlocksMovement(false).SetRayTraceType(Tile.TileRayTraceType.FLUID).SetReplaceable(true);
+            AIR = new Tile("Inignoto:air", null, false).SetRayTraceType(Tile.TileRayTraceType.GAS).SetTransparent().SetVisible(false).SetBlocksMovement(false).SetReplaceable(true);
+            DIRT = new Tile("Inignoto:dirt", SoundEffects.step_soil).SetFull();
+            STONE = new Tile("Inignoto:stone", null).SetFull();
+            SMOOTH_STONE = new Tile("Inignoto:smooth_stone", null).SetFull();
+            SAND = new Tile("Inignoto:sand", null).SetFull();
+            LEAVES = new Tile("Inignoto:leaves", null);
+            LOG = new Tile("Inignoto:log", null).SetFull();
+            GRASS = new Tile("Inignoto:grass", SoundEffects.step_grass).SetFull();
+            PURPLE_GRASS = new Tile("Inignoto:purple_grass", SoundEffects.step_grass).SetFull();
+            WATER = new Tile("Inignoto:water", null, false).SetBlocksMovement(false).SetTransparent().SetRayTraceType(Tile.TileRayTraceType.FLUID).SetReplaceable(true);
+            GLOWING_CRYSTAL = new Tile("Inignoto:glowing_crystal", null).SetFull().SetLight(10, 14, 15).SetTransparent();
+            MALECHITE = new Tile("Inignoto:malechite", null).SetFull().SetLight(0, 8, 0).SetTransparent();
+            GLASS = new Tile("Inignoto:glass", null).SetFull().SetTransparent();
         }
 
         public static void TryLoadTileTextures()

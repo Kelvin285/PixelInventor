@@ -87,6 +87,12 @@ namespace Inignoto.World
         public void FixChunkBorders()
         {
             chunkManager.FixChunkBorders();
+            TickChunks();
+        }
+
+        public void TickChunks()
+        {
+            chunkManager.UpdateChunks();
         }
 
         public void Update(Vector3 camera_position, GameTime time)
@@ -128,10 +134,9 @@ namespace Inignoto.World
 
         public void Render(GraphicsDevice device, GameEffect effect, GameTime time)
         {
-
             effect.Radius = radius;
             effect.Area = (int)Inignoto.game.player.area;
-            effect.FogDistance = GameSettings.Settings.HORIZONTAL_VIEW * Constants.CHUNK_SIZE;
+            effect.FogDistance = GameSettings.Settings.HORIZONTAL_VIEW * Constants.CHUNK_SIZE + 100;
             effect.CameraPos = Inignoto.game.camera.position.Vector;
             effect.WorldRender = true;
 
@@ -357,8 +362,8 @@ namespace Inignoto.World
             {
 
                 chunk.SetVoxel(x, y, z, voxel);
-                //chunk.MarkForRebuild(raytraceType);
-                chunk.BuildMesh();
+                chunk.MarkForRebuild();
+                //chunk.BuildMesh();
                 
                 if (TileManager.GetTile(voxel.tile_id).IsVisible() == false)
                 {

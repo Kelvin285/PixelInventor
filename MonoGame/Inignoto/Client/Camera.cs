@@ -5,6 +5,8 @@ using Microsoft.Xna.Framework.Input;
 using static Inignoto.World.World;
 using Inignoto.Entities.Client.Player;
 using Inignoto.World.RaytraceResult;
+using Microsoft.Xna.Framework.Graphics;
+using Inignoto.GameSettings;
 
 namespace Inignoto.Client
 {
@@ -15,10 +17,18 @@ namespace Inignoto.Client
 
         public TileRaytraceResult highlightedTile;
 
+        public BoundingFrustum frustum;
+
         public Camera()
         {
             position = new Vector3f(0, 0, 0);
             rotation = new Vector3f(0, 0, 0);
+
+            frustum = new BoundingFrustum(ViewMatrix * Matrix.CreatePerspectiveFieldOfView(
+                               MathHelper.ToRadians(Settings.FIELD_OF_VIEW),
+                               Inignoto.game.GraphicsDevice.DisplayMode.AspectRatio,
+                0.01f, 1000f));
+            
         }
 
         public Vector3f Forward
@@ -63,7 +73,11 @@ namespace Inignoto.Client
             Vector3f eyePosition = player.GetEyePosition();
 
             highlightedTile = world.RayTraceTiles(eyePosition, new Vector3f(eyePosition).Add(Forward.Mul(player.ReachDistance)), Tiles.Tile.TileRayTraceType.BLOCK);
-
+            
+            frustum.Matrix = ViewMatrix * Matrix.CreatePerspectiveFieldOfView(
+                               MathHelper.ToRadians(Settings.FIELD_OF_VIEW),
+                               Inignoto.game.GraphicsDevice.DisplayMode.AspectRatio,
+                0.01f, 1000f);
         }
     }
 }

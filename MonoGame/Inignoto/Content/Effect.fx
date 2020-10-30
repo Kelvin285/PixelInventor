@@ -14,6 +14,7 @@ float fog_distance;
 float4 fog_color;
 bool water;
 float time;
+bool transparent;
 
 float3 camera_pos;
 
@@ -99,8 +100,6 @@ VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
 
     float4 viewPosition = mul(worldPosition, View);
 
-    if (viewPosition.z > 1) output.Color.a = 0;
-
     if (water) {
 
         float val = abs(sin(rand(float2(worldPosition.x, worldPosition.z)) + worldPosition.x + time));
@@ -171,14 +170,14 @@ float GetFog(VertexShaderOutput input) {
 
 float4 OpaquePixelShaderFunction(VertexShaderOutput input) : COLOR0
 {
-    float4 light = float4(max(input.Light.xyz, input.Light.w), 1);
+    float4 light = min(float4(input.Light.xyz, 0) + float4(input.Light.w, input.Light.w, input.Light.w, 1), 1.1f);
 
 	float4 textureColor = tex2D(textureSampler, input.TextureCoordinate);
 	float depth = min(1, max(0, distance(input.PixelPos.xyz, float3(0, 0, 0)) / fog_distance));
 
     float fog = GetFog(input);
-    if (radius > 0) {
-        if (fog > depth) depth = fog;
+    if (radius <= 0) {
+        fog = 0;
     }
 
     depth = max(0, min(1, depth));
@@ -191,19 +190,23 @@ float4 OpaquePixelShaderFunction(VertexShaderOutput input) : COLOR0
 	final_color.g = lerp(final_color.g, fog_color.g, depth);
 	final_color.b = lerp(final_color.b, fog_color.b, depth);
     
+    final_color.r = lerp(final_color.r, 1, fog);
+    final_color.g = lerp(final_color.g, 1, fog);
+    final_color.b = lerp(final_color.b, 1, fog);
+    
 	return final_color;
 }
 
 float4 TransparentPixelShaderFunction(VertexShaderOutput input) : COLOR0
 {
-    float4 light = float4(max(input.Light.xyz, input.Light.w), 1);
+    float4 light = min(float4(input.Light.xyz, 0) + float4(input.Light.w, input.Light.w, input.Light.w, 1), 1.1f);
 
     float4 textureColor = tex2D(textureSampler, input.TextureCoordinate);
     float depth = min(1, max(0, distance(input.PixelPos.xyz, float3(0, 0, 0)) / fog_distance));
 
     float fog = GetFog(input);
-    if (radius > 0) {
-        if (fog > depth) depth = fog;
+    if (radius <= 0) {
+        fog = 0;
     }
 
     depth = max(0, min(1, depth));
@@ -216,12 +219,15 @@ float4 TransparentPixelShaderFunction(VertexShaderOutput input) : COLOR0
     final_color.g = lerp(final_color.g, fog_color.g, depth);
     final_color.b = lerp(final_color.b, fog_color.b, depth);
 
+    final_color.r = lerp(final_color.r, 1, fog);
+    final_color.g = lerp(final_color.g, 1, fog);
+    final_color.b = lerp(final_color.b, 1, fog);
+
     return final_color;
 }
 
 technique Specular
 {
-
     pass Pass2
     {
         AlphaBlendEnable = true;
