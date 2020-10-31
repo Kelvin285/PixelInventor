@@ -10,6 +10,7 @@ namespace Inignoto.GameSettings
         public static int VERTICAL_VIEW = 4;
         public static float FIELD_OF_VIEW = 90;
         public static float MOUSE_SENSITIVITY = 0.05f;
+        public static bool FULLSCREEN = false;
 
 
         public static float MASTER_VOLUME = 100;
@@ -32,6 +33,7 @@ namespace Inignoto.GameSettings
         public static InputSetting ATTACK = new InputSetting(0, true);
         public static InputSetting USE = new InputSetting(1, true);
         public static InputSetting PERSPECTIVE_SWITCH = new InputSetting(Keys.F5, false);
+        public static InputSetting FULLSCREEN_KEY = new InputSetting(Keys.F11, false);
 
         public static bool VSYNC = false;
 
@@ -114,6 +116,10 @@ namespace Inignoto.GameSettings
                     {
                         bool.TryParse(b, out VSYNC);
                     }
+                    if (a.Equals("FULLSCREEN"))
+                    {
+                        bool.TryParse(b, out FULLSCREEN);
+                    }
                     if (a.Equals("FORWARD"))
                     {
                         FORWARD.Read(b);
@@ -158,6 +164,10 @@ namespace Inignoto.GameSettings
                     {
                         PERSPECTIVE_SWITCH.Read(b);
                     }
+                    if (a.Equals("FULLSCREEN_KEY"))
+                    {
+                        FULLSCREEN_KEY.Read(b);
+                    }
                     for (int i = 0; i < 10; i++)
                     {
                         if (a.Equals("HOTBAR_KEY"+i))
@@ -191,6 +201,7 @@ namespace Inignoto.GameSettings
             str += GetSaveString("GUI_VOLUME", "" + GUI_VOLUME);
 
             str += GetSaveString("VSYNC", "" + VSYNC);
+            str += GetSaveString("FULLSCREEN", "" + FULLSCREEN);
 
             str += GetSaveString("FORWARD", FORWARD.Write());
             str += GetSaveString("BACKWARD", BACKWARD.Write());
@@ -203,6 +214,7 @@ namespace Inignoto.GameSettings
             str += GetSaveString("USE", USE.Write());
             str += GetSaveString("INVENTORY", INVENTORY.Write());
             str += GetSaveString("PERSPECTIVE_SWITCH", PERSPECTIVE_SWITCH.Write());
+            str += GetSaveString("FULLSCREEN_KEY", FULLSCREEN_KEY.Write());
 
             for (int i = 0; i < 10; i++)
             {

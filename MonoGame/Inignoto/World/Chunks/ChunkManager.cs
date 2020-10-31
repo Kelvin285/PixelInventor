@@ -11,6 +11,9 @@ using System;
 using System.Diagnostics;
 using System.Reflection.Metadata.Ecma335;
 using System.Net.NetworkInformation;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Linq;
 
 namespace Inignoto.World.Chunks
 {
@@ -23,6 +26,7 @@ namespace Inignoto.World.Chunks
         public readonly List<Chunk> rendering;
         public readonly List<Chunk> updating;
         private List<Chunk> buildQueue;
+        private List<Chunk> building;
 
         public int current_x { get; private set; }
         public int current_y { get; private set; }
@@ -49,14 +53,12 @@ namespace Inignoto.World.Chunks
             current_xyz = new Vector3(0, 0, 0);
             rendering = new List<Chunk>();
             updating = new List<Chunk>();
+            building = new List<Chunk>();
         }
 
         public void GenerateChunks(ChunkGenerator generator)
         {
             Chunk closest = null;
-
-            int H_VIEW = GameSettings.Settings.HORIZONTAL_VIEW;
-            int V_VIEW = GameSettings.Settings.VERTICAL_VIEW;
             chunksToBuild.Sort();
             if (chunksToBuild.Count > 0)
             {
@@ -70,27 +72,48 @@ namespace Inignoto.World.Chunks
                 buildQueue.Add(closest);
                 chunksToBuild.Remove(closest);
             }
+            List<Chunk> a = new List<Chunk>();
+            Parallel.ForEach(chunksToBuild.Cast<Chunk>(), chunk =>
+            {
+                if (chunk != null)
+                {
+                    generator.GenerateChunk(chunk);
+
+                    chunk.SetGenerated();
+                    buildQueue.Add(chunk);
+                    a.Add(chunk);
+                }
+            });
+            for (int i = 0; i < a.Count; i++)
+            {
+                chunksToBuild.Remove(a[i]);
+            }
+
+            BuildChunks();
+
         }
 
         public void BuildChunks()
         {
-            Chunk closest = null;
-            try
+            
+            if (modifiedChunks || current_x != last_x || current_y != last_y || current_z != last_z)
             {
-                buildQueue.Sort();
-                if (buildQueue.Count > 0)
+                building.Clear();
+                for (int i = 0; i < rendering.Count; i++)
                 {
-                    closest = buildQueue[0];
+                    building.Add(rendering[i]);
                 }
-                if (closest != null)
-                {
-                    closest.BuildMesh();
-                    buildQueue.Remove(closest);
-                }
-            } catch (Exception e)
-            {
-
             }
+            building.Sort();
+            Parallel.ForEach(building.Cast<Chunk>(), chunk => {
+                if (chunk != null)
+                {
+                    if (chunk.NeedsToRebuild())
+                    {
+                        chunk.BuildMesh();
+                    }
+                }
+            });
         }
 
         public void BeginUpdate(Vector3 camera)
@@ -238,10 +261,14 @@ namespace Inignoto.World.Chunks
 
             if (modifiedChunks || current_x != last_x || current_y != last_y || current_z != last_z)
             {
-                rendering.Clear();
-                foreach (Chunk chunk in chunks.Values)
+                lock (rendering)
                 {
-                    rendering.Add(chunk);
+                    rendering.Clear();
+                    foreach (Chunk chunk in chunks.Values)
+                    {
+                        if (!chunk.Empty)
+                        rendering.Add(chunk);
+                    }
                 }
             }
                 
@@ -260,17 +287,18 @@ namespace Inignoto.World.Chunks
 
                 if (!IsChunkWithinFrustum(rendering[i]))
                 {
-                    if (rendering[i].NeedsToRebuild())
-                        if (!buildQueue.Contains(rendering[i]))
-                            buildQueue.Add(rendering[i]);
                     continue;
                 }
+
                 if (rendering[i].NeedsToRebuild())
                 {
-                    rendering[i].BuildMesh();
+                    if (Vector3.Distance(current_xyz, rendering[i].cpos) <= Constants.ACTIVE_CHUNK_DISTANCE)
+                    {
+                        rendering[i].BuildMesh();
+                    }
                 }
 
-                    chunkRenderer.RenderChunk(device, effect, rendering[i]);
+                chunkRenderer.RenderChunk(device, effect, rendering[i]);
 
                 if (rendering[i].waterMesh != null || rendering[i].secondWaterMesh != null)
                 {

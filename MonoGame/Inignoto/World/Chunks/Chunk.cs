@@ -38,10 +38,14 @@ namespace Inignoto.World.Chunks
         public bool transparentRebuild = false;
 
         private int solid_voxels = 0;
+        private int air_voxels = 0;
+
 
         private bool lightRebuild = false;
 
         public bool Full => solid_voxels >= Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE;
+        public bool Empty => air_voxels >= Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE;
+
 
         public List<int> sunlightBfsQueue;
         public List<int> sunlightRemovalBfsQueue;
@@ -1174,7 +1178,17 @@ namespace Inignoto.World.Chunks
                     }
                 }
                 TileData last = voxels[GetIndexFor(x, y, z)];
-
+                if (last != voxel)
+                {
+                    if (last != TileManager.AIR.DefaultData && voxel == TileManager.AIR.DefaultData)
+                    {
+                        air_voxels++;
+                    } else
+                    {
+                        air_voxels--;
+                    }
+                }
+                
                 
                 voxels[GetIndexFor(x, y, z)] = voxel;
                 if (last != null)
@@ -1314,12 +1328,18 @@ namespace Inignoto.World.Chunks
 
         public int CompareTo(Chunk obj)
         {
-            if (Inignoto.game.world.chunkManager == null) return 0;
-            Vector3 pos = Inignoto.game.world.chunkManager.current_xyz;
-            float dist1 = Vector3.Distance(cpos, pos);
-            float dist2 = Vector3.Distance(obj.cpos, pos);
-            if (dist1 == dist2) return 0;
-            if (dist1 < dist2) return -1;
+            if (obj == null) return 1;
+            try
+            {
+                Vector3 pos = obj.chunkManager.current_xyz;
+                float dist1 = Vector3.Distance(cpos, pos);
+                float dist2 = Vector3.Distance(obj.cpos, pos);
+                if (dist1 == dist2) return 0;
+                if (dist1 < dist2) return -1;
+            } catch (Exception e)
+            {
+                return 0;
+            }
             return 1;
         }
     }

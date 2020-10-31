@@ -47,8 +47,6 @@ namespace Inignoto
         public ClientPlayerEntity player;
 
         public Thread world_thread;
-        public Thread rerender_thread;
-        public Thread build_chunk_thread;
         public bool running = true;
 
         public Hud hud;
@@ -121,32 +119,6 @@ namespace Inignoto
             world_thread = new Thread(world_thread_start);
             world_thread.IsBackground = true;
             world_thread.Start();
-
-            ThreadStart rerender_thread_start = new ThreadStart(FixWorldChunkBorders);
-            rerender_thread = new Thread(rerender_thread_start);
-            rerender_thread.IsBackground = true;
-            rerender_thread.Start();
-
-            ThreadStart chunk_thread_start = new ThreadStart(BuildChunks);
-            build_chunk_thread = new Thread(chunk_thread_start);
-            build_chunk_thread.IsBackground = true;
-            build_chunk_thread.Start();
-        }
-
-        public static void BuildChunks()
-        {
-            while (Inignoto.game.running)
-            {
-                if (Inignoto.game.world != null)
-                {
-                    World.World world = Inignoto.game.world;
-                    if (world.chunkManager != null)
-                    {
-                        world.chunkManager.BuildChunks();
-                    }
-                }
-            }
-            
         }
 
         public static void UpdateWorldGeneration()
@@ -154,19 +126,8 @@ namespace Inignoto
             while (Inignoto.game.running)
             {
                 Inignoto.game.world.UpdateChunkGeneration();
-                Thread.Sleep(5);
             }
         }
-
-        public static void FixWorldChunkBorders()
-        {
-            while (Inignoto.game.running)
-            {                
-                Inignoto.game.world.FixChunkBorders();
-                Thread.Sleep(5);
-            }
-        }
-
         /// <summary>
         /// LoadContent will be called once per game and is the place to load
         /// all of your content.
@@ -266,6 +227,20 @@ namespace Inignoto
                     Console.WriteLine(e.Message);
                 }
             }
+            if (graphics.IsFullScreen != Settings.FULLSCREEN)
+            {
+                if (Settings.FULLSCREEN)
+                {
+                    graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+                    graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+                } else
+                {
+                    graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width / 2;
+                    graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height / 2;
+                }
+                graphics.ToggleFullScreen();
+                graphics.ApplyChanges();
+            }
             lastFrame = currentFrame;
             currentFrame++;
         }
@@ -278,6 +253,11 @@ namespace Inignoto
             int width = ClientBounds.Right - ClientBounds.Left;
             int height = ClientBounds.Bottom - ClientBounds.Top;
             hud.Update(gameTime, width, height);
+
+            if (Settings.FULLSCREEN_KEY.IsJustPressed())
+            {
+                Settings.FULLSCREEN = !Settings.FULLSCREEN;
+            }
 
             if (Settings.INVENTORY.IsJustPressed())
             {

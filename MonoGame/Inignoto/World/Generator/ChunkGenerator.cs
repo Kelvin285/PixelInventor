@@ -25,6 +25,7 @@ namespace Inignoto.World.Generator
             {
                 for (int chunk_z = 0; chunk_z < Constants.CHUNK_SIZE; chunk_z++)
                 {
+                    
                     int x = chunk_x + chunk.GetX() * Constants.CHUNK_SIZE;
                     int z = chunk_z + chunk.GetZ() * Constants.CHUNK_SIZE;
 
@@ -43,16 +44,18 @@ namespace Inignoto.World.Generator
                             if (y < voxel_height - 1)
                             {
                                 chunk.SetVoxel(chunk_x, chunk_y, chunk_z, TileManager.DIRT.DefaultData);
-                            } else
+                            }
+                            else
                             {
                                 chunk.SetVoxel(chunk_x, chunk_y, chunk_z, TileManager.GRASS.DefaultData);
                             }
-                        } else
+                        }
+                        else
                         {
                             chunk.SetLight(chunk_x, chunk_y, chunk_z, -1, -1, -1, 15);
-                            
+
                             chunk.SetVoxel(chunk_x, chunk_y, chunk_z, TileManager.AIR.DefaultData);
-                            
+
                             if (y <= 0)
                             {
                                 chunk.SetVoxel(chunk_x, chunk_y, chunk_z, TileManager.WATER.DefaultData);
@@ -61,8 +64,6 @@ namespace Inignoto.World.Generator
                     }
                 }
             }
-            chunk.SetGenerated();
-
             chunk.UpdateLights();
             //chunk.BuildMesh();
             chunk.MarkForRebuild();
@@ -72,7 +73,7 @@ namespace Inignoto.World.Generator
         {
             float diameter = radius * 2;
             float length = diameter * 2;
-            
+
             if (x >= 0 && z >= 0 && x <= length && z <= length)
             {
                 if (z < diameter)
@@ -80,7 +81,8 @@ namespace Inignoto.World.Generator
                     float lat = (x / length) * MathHelper.TwoPi * radius;
                     float lon = (z / diameter) * radius;
                     return GetPolarHeight(lat, lon);
-                } else
+                }
+                else
                 {
                     if (Vector2.Distance(new Vector2(x, z), new Vector2(radius, diameter + radius)) <= radius)
                     {
@@ -112,7 +114,7 @@ namespace Inignoto.World.Generator
 
         public float GetPolarHeight(float x, float y)
         {
-            return noise.GetValue(x, y) * 10.0f;
+            return noise.GetSimplex(x, y * 2.0f) * 50.0f;
         }
     }
 }
