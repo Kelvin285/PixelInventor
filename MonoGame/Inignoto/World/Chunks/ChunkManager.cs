@@ -9,6 +9,8 @@ using Inignoto.Graphics.Mesh;
 using Inignoto.Effects;
 using System;
 using System.Diagnostics;
+using System.Reflection.Metadata.Ecma335;
+using System.Net.NetworkInformation;
 
 namespace Inignoto.World.Chunks
 {
@@ -18,18 +20,23 @@ namespace Inignoto.World.Chunks
 
         private readonly Dictionary<Vector3, Chunk> chunks;
         private List<Chunk> chunksToBuild;
-        public readonly List<Chunk> secondaryChunksToRerender;
-
         public readonly List<Chunk> rendering;
+        public readonly List<Chunk> updating;
+        private List<Chunk> buildQueue;
 
-        private int current_x, current_y, current_z;
+        public int current_x { get; private set; }
+        public int current_y { get; private set; }
+        public int current_z { get; private set; }
         private int last_x, last_y, last_z;
+
+        public Vector3 current_xyz { get; private set; }
 
         private readonly World world;
 
         private bool start = false;
 
         private bool modifiedChunks = false;
+
         
         public ChunkManager(World world)
         {
@@ -38,136 +45,51 @@ namespace Inignoto.World.Chunks
             chunkRenderer = new ChunkRenderer();
             chunksToBuild = new List<Chunk>();
             //chunksToRerender = new List<Chunk>();
-            secondaryChunksToRerender = new List<Chunk>();
-
+            buildQueue = new List<Chunk>();
+            current_xyz = new Vector3(0, 0, 0);
             rendering = new List<Chunk>();
+            updating = new List<Chunk>();
         }
 
-        private int iterations = 0;
         public void GenerateChunks(ChunkGenerator generator)
         {
-            float distance = float.MaxValue;
             Chunk closest = null;
 
             int H_VIEW = GameSettings.Settings.HORIZONTAL_VIEW;
             int V_VIEW = GameSettings.Settings.VERTICAL_VIEW;
-
-            for (int i = 0; i < chunksToBuild.Count; i++)
+            chunksToBuild.Sort();
+            if (chunksToBuild.Count > 0)
             {
-                Chunk c = chunksToBuild[i];
-                if (c == null) continue;
-                if (System.Math.Abs(c.GetX() - current_x) > H_VIEW + 1 ||
-                    System.Math.Abs(c.GetY() - current_y) > V_VIEW + 1 ||
-                    System.Math.Abs(c.GetZ() - current_z) > H_VIEW + 1) {
-
-                    if (System.Math.Abs(c.GetX() - (current_x + (int)((world.radius * 4) / Constants.CHUNK_SIZE))) > H_VIEW + 1)
-                    {
-                        if (System.Math.Abs(c.GetX() - (current_x - (int)((world.radius * 4) / Constants.CHUNK_SIZE))) > H_VIEW + 1)
-                        {
-
-                            chunksToBuild.Remove(c);
-                            continue;
-                        }
-                    }
-
-                }
-                if (chunksToBuild[i].NeedsToGenerate())
-                {
-                    //generator.GenerateChunk(chunksToBuild[i]);
-                    //chunksToBuild[i].SetGenerated();
-                    Chunk chunk = chunksToBuild[i];
-                    
-                    float dist = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x, current_y, current_z));
-                    if (dist < distance) {
-                        distance = dist;
-                        closest = chunk;
-                    }
-
-                    dist = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x + (int)((world.radius * 4) / Constants.CHUNK_SIZE), current_y, current_z));
-                    if (dist < distance)
-                    {
-                        distance = dist;
-                        closest = chunk;
-                    }
-
-                    dist = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x - (int)((world.radius * 4) / Constants.CHUNK_SIZE), current_y, current_z));
-                    if (dist < distance)
-                    {
-                        distance = dist;
-                        closest = chunk;
-                    }
-
-                } else
-                {
-                    chunksToBuild.Remove(chunksToBuild[i]);
-                }
+                closest = chunksToBuild[0];
             }
             if (closest != null)
             {
                 generator.GenerateChunk(closest);
+
                 closest.SetGenerated();
+                buildQueue.Add(closest);
                 chunksToBuild.Remove(closest);
             }
         }
 
-        public void FixChunkBorders()
+        public void BuildChunks()
         {
-
-            float distance = float.MaxValue;
             Chunk closest = null;
-
-            int H_VIEW = GameSettings.Settings.HORIZONTAL_VIEW;
-            int V_VIEW = GameSettings.Settings.VERTICAL_VIEW;
-
-            int size = secondaryChunksToRerender.Count;
-            for (int i = 0; i < secondaryChunksToRerender.Count && i < size; i++)
+            try
+            {
+                buildQueue.Sort();
+                if (buildQueue.Count > 0)
+                {
+                    closest = buildQueue[0];
+                }
+                if (closest != null)
+                {
+                    closest.BuildMesh();
+                    buildQueue.Remove(closest);
+                }
+            } catch (Exception e)
             {
 
-                Chunk chunk = secondaryChunksToRerender[i];
-
-
-                if (chunk == null)
-                {
-                    secondaryChunksToRerender.RemoveAt(i);
-                    continue;
-                }
-                if (!IsChunkWithinFrustum(chunk)) continue;
-                float dist = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x, current_y, current_z));
-                if (dist < distance)
-                {
-                    distance = dist;
-                    closest = chunk;
-                }
-
-                dist = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x + (int)((world.radius * 4) / Constants.CHUNK_SIZE), current_y, current_z));
-                if (dist < distance)
-                {
-                    distance = dist;
-                    closest = chunk;
-                }
-
-                dist = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x - (int)((world.radius * 4) / Constants.CHUNK_SIZE), current_y, current_z));
-                if (dist < distance)
-                {
-                    distance = dist;
-                    closest = chunk;
-                }
-            }
-            if (closest != null)
-            {
-                Chunk chunk = closest;
-                chunk.mesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, chunk);
-                if (chunk.secondWaterMesh != null)
-                    chunk.secondWaterMesh.SetPosition(new Microsoft.Xna.Framework.Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
-
-                if (chunk.waterMesh != null)
-                {
-                    chunk.waterMesh.Dispose();
-                }
-
-                chunk.transparentRebuild = false;
-
-                secondaryChunksToRerender.Remove(chunk);
             }
         }
 
@@ -176,7 +98,9 @@ namespace Inignoto.World.Chunks
             current_x = (int)System.Math.Floor(camera.X / Constants.CHUNK_SIZE);
             current_y = (int)System.Math.Floor(camera.Y / Constants.CHUNK_SIZE);
             current_z = (int)System.Math.Floor(camera.Z / Constants.CHUNK_SIZE);
-            
+
+            current_xyz = new Vector3(current_x, current_y, current_z);
+
             if (last_x != current_x || last_y != current_y || last_z != current_z || !start)
             {
                 last_x = current_x;
@@ -217,7 +141,8 @@ namespace Inignoto.World.Chunks
                 {
                     if (System.Math.Abs(x - (current_x - (int)((world.radius * 4) / Constants.CHUNK_SIZE))) > H_VIEW + 1)
                     {
-                        chunks.Remove(new Vector3(x, y, z));
+                        lock (chunks)
+                            chunks.Remove(new Vector3(x, y, z));
                         modifiedChunks = true;
                         return true;
 
@@ -238,38 +163,23 @@ namespace Inignoto.World.Chunks
         }
 
         public void UpdateChunks() {
-            
-
-            int H_VIEW = Constants.ACTIVE_CHUNK_DISTANCE;
-            int V_VIEW = Constants.ACTIVE_CHUNK_DISTANCE;
-
-
-            int rad = (int)((world.radius * 4.0f) / Constants.CHUNK_SIZE);
-
-            for (int y = -V_VIEW; y < V_VIEW; y++)
+            if (modifiedChunks || current_x != last_x || current_y != last_y || current_z != last_z)
             {
-                for (int z = -H_VIEW; z < H_VIEW; z++)
+                updating.Clear();
+                lock(chunks)
+                foreach (Chunk chunk in chunks.Values)
                 {
-                    for (int x = -H_VIEW; x < H_VIEW; x++)
-                    {
-                        int X = x + current_x;
-                        int Y = y + current_y;
-                        int Z = z + current_z;
-
-                        int W = X;
-                        if (W < 0) W += rad;
-                        if (W >= rad) W -= rad;
-
-                        Chunk chunk = TryGetChunk(W, Y, Z);
-                        if (chunk != null)
-                        {
-                            float distance = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x, current_y, current_z));
-                            chunk.Tick(distance);
-
-                        }
-                        
-                    }
+                    if (!TryUnloadChunk(chunk.GetX(), chunk.GetY(), chunk.GetZ()))
+                        updating.Add(chunk);
                 }
+                updating.Sort();
+            }
+            for (int i = 0; i < updating.Count; i++)
+            {
+                Chunk chunk = updating[i];
+                if (chunk == null) continue;
+                float distance = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x, current_y, current_z));
+                chunk.Tick(distance);
             }
         }
 
@@ -293,29 +203,13 @@ namespace Inignoto.World.Chunks
                         int W = X;
                         if (W < 0) W += rad;
                         if (W >= rad) W -= rad;
-
-                        TryAddChunk(W, Y, Z);
+                        lock (chunks)
+                            TryAddChunk(W, Y, Z);
                     }
                 }
 
             }
 
-        }
-
-        public void RenderVulkan()
-        {
-            rendering.Clear();
-
-            if (modifiedChunks)
-                foreach (Chunk chunk in chunks.Values)
-                {
-                    rendering.Add(chunk);
-                }
-
-            for (int i = 0; i < rendering.Count; i++)
-            {
-                TryUnloadChunk(rendering[i].GetX(), rendering[i].GetY(), rendering[i].GetZ());
-            }
         }
 
         public bool IsChunkWithinFrustum(Chunk chunk)
@@ -347,7 +241,6 @@ namespace Inignoto.World.Chunks
                 rendering.Clear();
                 foreach (Chunk chunk in chunks.Values)
                 {
-                    if (!TryUnloadChunk(chunk.GetX(), chunk.GetY(), chunk.GetZ()))
                     rendering.Add(chunk);
                 }
             }
@@ -355,7 +248,7 @@ namespace Inignoto.World.Chunks
 
             List<Chunk> waterRender = new List<Chunk>();
             List<Chunk> transparentRender = new List<Chunk>();
-
+            
             for (int i = 0; i < rendering.Count; i++)
             {
                 
@@ -363,14 +256,21 @@ namespace Inignoto.World.Chunks
                 {
                     continue;
                 }
-                if (!IsChunkWithinFrustum(rendering[i])) continue;
+                
 
+                if (!IsChunkWithinFrustum(rendering[i]))
+                {
+                    if (rendering[i].NeedsToRebuild())
+                        if (!buildQueue.Contains(rendering[i]))
+                            buildQueue.Add(rendering[i]);
+                    continue;
+                }
                 if (rendering[i].NeedsToRebuild())
                 {
                     rendering[i].BuildMesh();
                 }
 
-                chunkRenderer.RenderChunk(device, effect, rendering[i]);
+                    chunkRenderer.RenderChunk(device, effect, rendering[i]);
 
                 if (rendering[i].waterMesh != null || rendering[i].secondWaterMesh != null)
                 {
@@ -382,28 +282,24 @@ namespace Inignoto.World.Chunks
                     transparentRender.Add(rendering[i]);
                 }
             }
-            
             GameResources.effect.Water = true;
             for (int i = 0; i < waterRender.Count; i++)
             {
                 chunkRenderer.RenderChunk(device, effect, waterRender[i], true);
             }
             GameResources.effect.Water = false;
-            GameResources.effect.Transparent = true;
-
             for (int i = 0; i < transparentRender.Count; i++)
             {
                 chunkRenderer.RenderChunk(device, effect, transparentRender[i], false, true);
             }
-            GameResources.effect.Transparent = false;
 
         }
 
         public void QueueForRerender(Chunk chunk)
         {
-            if (!secondaryChunksToRerender.Contains(chunk))
+            if (!buildQueue.Contains(chunk))
             {
-                secondaryChunksToRerender.Add(chunk);
+                buildQueue.Add(chunk);
             }
         }
     }

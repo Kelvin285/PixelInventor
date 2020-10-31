@@ -26,6 +26,7 @@ namespace Inignoto.Tiles
         public static Tile WATER;
         public static Tile GLOWING_CRYSTAL;
         public static Tile GLASS;
+        public static Tile RED_GLASS;
 
         private static bool TEXTURES_LOADED = false;
 
@@ -50,9 +51,10 @@ namespace Inignoto.Tiles
             GRASS = new Tile("Inignoto:grass", SoundEffects.step_grass).SetFull();
             PURPLE_GRASS = new Tile("Inignoto:purple_grass", SoundEffects.step_grass).SetFull();
             WATER = new Tile("Inignoto:water", null, false).SetBlocksMovement(false).SetTransparent().SetRayTraceType(Tile.TileRayTraceType.FLUID).SetReplaceable(true);
-            GLOWING_CRYSTAL = new Tile("Inignoto:glowing_crystal", null).SetFull().SetLight(10, 14, 15).SetTransparent();
-            MALECHITE = new Tile("Inignoto:malechite", null).SetFull().SetLight(0, 8, 0).SetTransparent();
+            GLOWING_CRYSTAL = new Tile("Inignoto:glowing_crystal", null).SetFull().SetLight(10, 14, 15);
+            MALECHITE = new Tile("Inignoto:malechite", null).SetFull().SetLight(0, 8, 0);
             GLASS = new Tile("Inignoto:glass", null).SetFull().SetTransparent();
+            RED_GLASS = new Tile("Inignoto:red_glass", null).SetFull().SetTransparent().SetTint(15, 0, 0, 10);
         }
 
         public static void TryLoadTileTextures()

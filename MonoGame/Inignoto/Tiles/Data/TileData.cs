@@ -1,7 +1,5 @@
 ﻿using Inignoto.Utilities;
 using Inignoto.World.Chunks;
-using SharpDX.MediaFoundation;
-using System;
 using System.Collections.Generic;
 using static Inignoto.Tiles.Tile;
 
@@ -153,19 +151,26 @@ namespace Inignoto.Tiles.Data
 
             if (!chunk.NeedsToGenerate())
             {
-                if (tile.light_red > 0 || tile.light_green > 0 || tile.light_blue > 0)
-                chunk.SetLight(x, y, z, tile.light_red, tile.light_green, tile.light_blue, -1);
-
-                if (tile.IsOpaque())
+                if (tile.glowing)
                 {
-                    chunk.RemoveLight(x, y, z, true, false, false, false);
-                    chunk.RemoveLight(x, y, z, false, true, false, false);
-                    chunk.RemoveLight(x, y, z, false, false, true, false);
-                    chunk.RemoveLight(x, y, z, false, false, false, true);
+                    chunk.SetLight(x, y, z, tile.light_red, tile.light_green, tile.light_blue, -1);
                 }
                 else
                 {
-                    chunk.PropogateLights(x, y, z, true, true, true, true);
+                    if (tile.tinted)
+                    {
+                        chunk.PropogateLights(x, y, z, tile.RedTint > 0, tile.GreenTint > 0, tile.BlueTint > 0, true);
+                        chunk.RemoveLight(x, y, z, tile.RedTint == 0, tile.GreenTint == 0, tile.BlueTint == 0, false);
+                        chunk.PropogateLights(x, y, z, tile.RedTint > 0, tile.GreenTint > 0, tile.BlueTint > 0, true);
+                    }
+                    else
+                    {
+                        if (tile.IsOpaque())
+                        {
+                            chunk.RemoveLight(x, y, z, true, true, true, true);
+                            chunk.PropogateLights(x, y, z, true, true, true, true);
+                        }
+                    }
                 }
             }
             
@@ -179,17 +184,22 @@ namespace Inignoto.Tiles.Data
 
             if (!chunk.NeedsToGenerate())
             {
-                if (!tile.IsOpaque())
+                if (tile.glowing)
                 {
-                    chunk.RemoveLight(x, y, z, true, false, false, false);
-                    chunk.RemoveLight(x, y, z, false, true, false, false);
-                    chunk.RemoveLight(x, y, z, false, false, true, false);
-                    chunk.RemoveLight(x, y, z, false, false, false, true);
-                }
-                else
+                    chunk.RemoveLight(x, y, z, tile.light_red > 0, tile.light_green > 0, tile.light_blue > 0, true);
+                } else
                 {
-                    chunk.PropogateLights(x, y, z, true, true, true, true);
+                    if (tile.tinted)
+                    {
+                        chunk.RemoveLight(x, y, z, tile.RedTint > 0, tile.GreenTint > 0, tile.BlueTint > 0, false);
+                        chunk.PropogateLights(x, y, z, tile.RedTint == 0, tile.GreenTint == 0, tile.BlueTint == 0, true);
+                    } else
+                    {
+                        chunk.PropogateLights(x, y, z, true, true, true, true);
+                    }
+                    
                 }
+                
             }
         }
 

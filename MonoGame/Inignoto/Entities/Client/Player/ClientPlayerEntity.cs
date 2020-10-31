@@ -663,8 +663,8 @@ namespace Inignoto.Entities.Client.Player
                     look.X += rot * GameSettings.Settings.MOUSE_SENSITIVITY;
                 }
 
-                if (look.X >= 85) look.X = 85;
-                if (look.X <= -85) look.X = -85;
+                if (look.X >= 89) look.X = 89;
+                if (look.X <= -89) look.X = -89;
             }
             
             Vector3f cpos = new Vector3f();

@@ -50,16 +50,6 @@ namespace Inignoto.GameSettings
 
         public bool IsPressed()
         {
-            if (Inignoto.game.VULKAN_ENABLED)
-            {
-                if (Mouse)
-                {
-                    return VulkanMain.IsMouseButtonDown(Input);
-                } else
-                {
-                    return VulkanMain.IsKeyDown(Input);
-                }
-            }
             if (Mouse)
             {
                 switch (Input) {

@@ -276,7 +276,12 @@ namespace Inignoto.Graphics.Models
         public static GameModel LoadModel(ResourcePath path, Texture2D texture)
         {
             GameModel model = new GameModel();
-            
+
+            Console.WriteLine("Object = " + path);
+            Console.WriteLine("Id = " + path.modid);
+            Console.WriteLine("Path = " + path.path);
+            Console.WriteLine("Root = " + path.root);
+
             string str = FileUtils.LoadFileAsString(path);
             List<Part> parts = new List<Part>();
 
@@ -293,42 +298,43 @@ namespace Inignoto.Graphics.Models
                     String[] data = s.Trim().Split(' ');
                     if (data[0].Contains("Position"))
                     {
-                        float x = float.Parse(data[1]);
-                        float y = float.Parse(data[2]);
-                        float z = float.Parse(data[3]);
-                        part.SetPosition(new Vector3f(x, y, z));
+                        
+                        float x = (float)double.Parse(data[1]);
+                        float y = (float)double.Parse(data[2]);
+                        float z = (float)double.Parse(data[3]);
+                        part.SetPosition(new Vector3f((float)x, (float)y, (float)z));
                     }
                     else
                     if (data[0].Contains("Rotation"))
                     {
-                        float x = float.Parse(data[1]);
-                        float y = float.Parse(data[2]);
-                        float z = float.Parse(data[3]);
-                        float w = float.Parse(data[4]);
+                        float x = (float)double.Parse(data[1]);
+                        float y = (float)double.Parse(data[2]);
+                        float z = (float)double.Parse(data[3]);
+                        float w = (float)double.Parse(data[4]);
                         part.SetRotation(new Quaternionf(x, y, z, w));
                     }
                     else
                     if (data[0].Contains("Size"))
                     {
-                        int x = (int)float.Parse(data[1]);
-                        int y = (int)float.Parse(data[2]);
-                        int z = (int)float.Parse(data[3]);
+                        int x = (int)int.Parse(data[1]);
+                        int y = (int)int.Parse(data[2]);
+                        int z = (int)int.Parse(data[3]);
                         part.size = new Vector3f(x, y, z);
                     }
                     else
                     if (data[0].Contains("Scale"))
                     {
-                        float x = float.Parse(data[1]);
-                        float y = float.Parse(data[2]);
-                        float z = float.Parse(data[3]);
+                        float x = (float)double.Parse(data[1]);
+                        float y = (float)double.Parse(data[2]);
+                        float z = (float)double.Parse(data[3]);
                         part.SetScale(new Vector3f(x, y, z));
                     }
                     else
                     if (data[0].Contains("Angles"))
                     {
-                        float x = float.Parse(data[1]);
-                        float y = float.Parse(data[2]);
-                        float z = float.Parse(data[3]);
+                        float x = (float)double.Parse(data[1]);
+                        float y = (float)double.Parse(data[2]);
+                        float z = (float)double.Parse(data[3]);
                         part.axisAngles = new Vector3f(x, y, z);
                     }
                     else
@@ -344,16 +350,16 @@ namespace Inignoto.Graphics.Models
                     else
                     if (data[0].Contains("Origin"))
                     {
-                        float x = float.Parse(data[1]);
-                        float y = float.Parse(data[2]);
-                        float z = float.Parse(data[3]);
+                        float x = (float)double.Parse(data[1]);
+                        float y = (float)double.Parse(data[2]);
+                        float z = (float)double.Parse(data[3]);
                         part.origin = new Vector3f(x, y, z);
                     }
                     else
                     if (data[0].Contains("UV"))
                     {
-                        int x = (int)float.Parse(data[1]);
-                        int y = (int)float.Parse(data[2]);
+                        int x = (int)(float)double.Parse(data[1]);
+                        int y = (int)(float)double.Parse(data[2]);
                         part.uv = new Vector2(x, y);
                         part.BuildPart(texture);
                         parts.Add(part);

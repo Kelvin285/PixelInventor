@@ -61,6 +61,8 @@ namespace Inignoto.World.Generator
                     }
                 }
             }
+            chunk.SetGenerated();
+
             chunk.UpdateLights();
             //chunk.BuildMesh();
             chunk.MarkForRebuild();

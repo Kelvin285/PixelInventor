@@ -1,0 +1,16 @@
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto Cross-Platform\bin\Release\netcoreapp3.1\linux-arm\Content\cylinder_sphere.xnb
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto Cross-Platform\bin\Release\netcoreapp3.1\linux-arm\Content\Effect.xnb
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto Cross-Platform\bin\Release\netcoreapp3.1\linux-arm\Inignoto Cross-Platform
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto Cross-Platform\bin\Release\netcoreapp3.1\linux-arm\Inignoto Cross-Platform.deps.json
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto Cross-Platform\bin\Release\netcoreapp3.1\linux-arm\Inignoto Cross-Platform.runtimeconfig.json
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto Cross-Platform\bin\Release\netcoreapp3.1\linux-arm\Inignoto Cross-Platform.runtimeconfig.dev.json
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto Cross-Platform\bin\Release\netcoreapp3.1\linux-arm\Inignoto Cross-Platform.dll
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto Cross-Platform\bin\Release\netcoreapp3.1\linux-arm\Inignoto Cross-Platform.pdb
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto Cross-Platform\bin\Release\netcoreapp3.1\linux-arm\MonoGame.Framework.dll
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto Cross-Platform\obj\Release\netcoreapp3.1\linux-arm\Inignoto Cross-Platform.AssemblyInfoInputs.cache
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto Cross-Platform\obj\Release\netcoreapp3.1\linux-arm\Inignoto Cross-Platform.AssemblyInfo.cs
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto Cross-Platform\obj\Release\netcoreapp3.1\linux-arm\Inignoto Cross-Platform.csproj.CoreCompileInputs.cache
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto Cross-Platform\obj\Release\netcoreapp3.1\linux-arm\Inignoto Cross-Platform.csproj.CopyComplete
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto Cross-Platform\obj\Release\netcoreapp3.1\linux-arm\Inignoto Cross-Platform.dll
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto Cross-Platform\obj\Release\netcoreapp3.1\linux-arm\Inignoto Cross-Platform.pdb
+C:\Users\lolga\Desktop\Coding\Inignoto\Inignoto\Inignoto\Inignoto Cross-Platform\obj\Release\netcoreapp3.1\linux-arm\Inignoto Cross-Platform.genruntimeconfig.cache

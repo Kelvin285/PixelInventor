@@ -1,0 +1,3 @@
+Source File,Dest File,Processor Type,Content Type,Source File Size,Dest File Size,Build Seconds
+"C:/Users/lolga/Desktop/Coding/Inignoto/Inignoto/Inignoto/Inignoto Cross-Platform/Content/cylinder_sphere.obj","C:/Users/lolga/Desktop/Coding/Inignoto/Inignoto/Inignoto/Inignoto Cross-Platform/Content/bin/DesktopGL/Content/cylinder_sphere.xnb","ModelProcessor","ModelContent",53728,25130,0.177025
+"C:/Users/lolga/Desktop/Coding/Inignoto/Inignoto/Inignoto/Inignoto Cross-Platform/Content/Effect.fx","C:/Users/lolga/Desktop/Coding/Inignoto/Inignoto/Inignoto/Inignoto Cross-Platform/Content/bin/DesktopGL/Content/Effect.xnb","EffectProcessor","CompiledEffectContent",6945,12532,0.4950056

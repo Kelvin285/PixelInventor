@@ -6,8 +6,6 @@ using Inignoto.Graphics.Mesh;
 using Microsoft.Xna.Framework.Graphics;
 using Inignoto.Tiles.Data;
 using Inignoto.Tiles;
-using SharpDX.Direct2D1;
-using System.Xml.Serialization;
 using System;
 
 namespace Inignoto.Graphics.World

@@ -39,11 +39,6 @@ namespace Inignoto.Graphics.Mesh
             worldMatrix = Matrix.CreateWorld(new Vector3(0, 0, 0), Vector3.Forward, Vector3.Up);
             this.lines = lines;
             this.texture = texture;
-
-            if (Inignoto.game.VULKAN_ENABLED)
-            {
-                //VulkanMain.CreateMesh(triangleVertices, triangleVertices.Length);
-            }
         }
 
         public Vector3 GetPosition()

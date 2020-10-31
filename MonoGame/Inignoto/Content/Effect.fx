@@ -1,10 +1,10 @@
 ﻿#if OPENGL
 #define SV_POSITION POSITION
-#define VS_SHADERMODEL vs_5_0
-#define PS_SHADERMODEL ps_5_0
+#define VS_SHADERMODEL vs_3_0
+#define PS_SHADERMODEL ps_3_0
 #else
-#define VS_SHADERMODEL vs_5_0
-#define PS_SHADERMODEL ps_5_0
+#define VS_SHADERMODEL vs_3_0
+#define PS_SHADERMODEL ps_3_0
 #endif
 
 float4x4 World;
@@ -14,7 +14,6 @@ float fog_distance;
 float4 fog_color;
 bool water;
 float time;
-bool transparent;
 
 float3 camera_pos;
 
@@ -67,13 +66,13 @@ VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
     
     output.Light = input.Color;
 
-    int CAM_CX = (int)(camera_pos.x) / 16u - 4;
-    int CAM_CY = (int)(camera_pos.y) / 16u - 2;
-    int CAM_CZ = (int)(camera_pos.z) / 16u - 4;
+    int CAM_CX = (int)(camera_pos.x) / 16 - 4;
+    int CAM_CY = (int)(camera_pos.y) / 16 - 2;
+    int CAM_CZ = (int)(camera_pos.z) / 16 - 4;
 
-    int CX = (int)(worldPosition.x) / 16u - CAM_CX;
-    int CY = (int)(worldPosition.y) / 16u - CAM_CY;
-    int CZ = (int)(worldPosition.z) / 16u - CAM_CZ;
+    int CX = (int)(worldPosition.x) / 16 - CAM_CX;
+    int CY = (int)(worldPosition.y) / 16 - CAM_CY;
+    int CZ = (int)(worldPosition.z) / 16 - CAM_CZ;
     
     if (world_render == true) {
         float r = radius;

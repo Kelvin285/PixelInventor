@@ -86,7 +86,6 @@ namespace Inignoto.World
 
         public void FixChunkBorders()
         {
-            chunkManager.FixChunkBorders();
             TickChunks();
         }
 
@@ -115,21 +114,6 @@ namespace Inignoto.World
                     }
                 }
             }
-        }
-
-        public void RenderVulkan(GameTime time)
-        {
-
-            for (int i = 0; i < entities.Count; i++)
-            {
-                Entity entity = entities[i];
-                if (entity != null)
-                {
-                    //entity.Render(device, effect, time);
-                }
-            }
-
-            chunkManager.RenderVulkan();
         }
 
         public void Render(GraphicsDevice device, GameEffect effect, GameTime time)

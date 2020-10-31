@@ -1,4 +1,6 @@
-﻿namespace Inignoto.Utilities
+﻿using System.Diagnostics;
+
+namespace Inignoto.Utilities
 {
     public class ResourcePath
     {
@@ -12,6 +14,7 @@
         public ResourcePath(string resource_path, string root)
         {
             string[] data = resource_path.Split(':');
+            Debug.WriteLine(resource_path);
             modid = data[0];
             path = data[1];
             this.root = root;

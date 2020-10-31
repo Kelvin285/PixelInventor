@@ -18,8 +18,6 @@ namespace Inignoto.Effects
         public Vector4 FogColor { get => GetFloat4("fog_color"); set => SetFloat4("fog_color", value); }
         public float Time { get => GetFloat("time"); set => SetFloat("time", value); }
         public bool Water { get => GetBool("water"); set => SetBool("water", value); }
-        public bool Transparent { get => GetBool("transparent"); set => SetBool("transparent", value); }
-
         public Vector4 ObjectColor { get => GetFloat4("color"); set => SetFloat4("color", value); }
 
         public float Radius { get => GetFloat("radius"); set => SetFloat("radius", value); }

@@ -30,6 +30,8 @@ namespace Inignoto.Tiles
         public readonly int hits = 1;
         public readonly bool solid = true;
 
+        public bool tinted { get; private set; }
+
         private TileRayTraceType rayTraceType = TileRayTraceType.BLOCK;
         private bool blocksMovement = true;
         private bool visible = true;
@@ -41,6 +43,18 @@ namespace Inignoto.Tiles
         public int light_red { get; private set; }
         public int light_green { get; private set; }
         public int light_blue { get; private set; }
+
+        public bool glowing { get; private set; }
+
+        public bool allows_red_light { get; private set; }
+        public bool allows_green_light { get; private set; }
+        public bool allows_blue_light { get; private set; }
+        public bool allows_sunlight { get; private set; }
+
+        public int RedTint { get; private set; }
+        public int GreenTint { get; private set; }
+        public int BlueTint { get; private set; }
+        public int SunTint { get; private set; }
 
         public Tile(string name, SoundEffect[] sound, bool solid = true, int hits = 1)
         {
@@ -54,15 +68,21 @@ namespace Inignoto.Tiles
             stateHolder = new TileDataHolder(this);
             this.solid = solid;
             this.hits = hits;
+            BlockLight(true, true, true, true);
         }
 
         public string TranslatedName => name;
 
         public Tile SetLight(int R, int G, int B)
         {
+            allows_red_light = R > 0;
+            allows_green_light = G > 0;
+            allows_blue_light = B > 0;
             light_red = R;
             light_green = G;
             light_blue = B;
+
+            glowing = R > 0 || G > 0 || B > 0;
             return this;
         }
 
@@ -72,8 +92,29 @@ namespace Inignoto.Tiles
             return new RayBox[] { box };
         }
 
+        public Tile BlockLight(bool red, bool green, bool blue, bool sun)
+        {
+            allows_red_light = !red;
+            allows_green_light = !green;
+            allows_blue_light = !blue;
+            allows_sunlight = !sun;
+            return this;
+        }
+
+        public Tile SetTint(int redlight, int greenlight, int bluelight, int sunlight)
+        {
+            BlockLight(redlight == 0, greenlight == 0, bluelight == 0, sunlight == 0);
+            RedTint = redlight;
+            GreenTint = greenlight;
+            BlueTint = bluelight;
+            SunTint = sunlight;
+            tinted = true;
+            return this;
+        }
+
         public Tile SetTransparent()
         {
+            BlockLight(false, false, false, false);
             Opaque = false;
             return this;
         }
@@ -82,6 +123,12 @@ namespace Inignoto.Tiles
         {
             return Opaque;
         }
+
+        public bool IsOpaqueAndNotGlowing()
+        {
+            return Opaque && !glowing;
+        }
+
         public Tile SetFull()
         {
             FullSpace = true;
