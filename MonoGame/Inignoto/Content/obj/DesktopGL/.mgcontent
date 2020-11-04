@@ -5,9 +5,11 @@
   <Config />
   <SourceFiles>
     <File>C:/Users/lolga/Desktop/Coding/Inignoto/Inignoto/Inignoto/Inignoto Cross-Platform/Content/cylinder_sphere.obj</File>
-    <File>C:/Users/lolga/Desktop/Coding/Inignoto/Inignoto/Inignoto/Inignoto Cross-Platform/Content/Effect.fx</File>
+    <File>C:/Users/lolga/Desktop/Coding/Inignoto/Inignoto/Inignoto/Inignoto Cross-Platform/Content/PostProcessing.fx</File>
+    <File>C:/Users/lolga/Desktop/Coding/Inignoto/Inignoto/Inignoto/Inignoto Cross-Platform/Content/ShadowMapsGenerate.fx</File>
   </SourceFiles>
   <DestFiles>
+    <File xsi:nil="true" />
     <File xsi:nil="true" />
     <File xsi:nil="true" />
   </DestFiles>

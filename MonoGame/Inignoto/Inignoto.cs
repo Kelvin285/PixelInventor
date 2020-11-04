@@ -38,7 +38,7 @@ namespace Inignoto
 
         public bool mouse_captured = false;
 
-        private Matrix projectionMatrix;
+        public Matrix projectionMatrix { get; private set; }
         public Camera camera;
 
         public List<GameSound> SoundsToDispose = new List<GameSound>();
@@ -315,9 +315,38 @@ namespace Inignoto
 
             TileManager.TryLoadTileTextures();
 
+            GameResources.shadowMap.Begin(camera.position.Vector, world.sunLook);
+            //GameResources.shadowMap.Begin(camera.position.Vector, camera.Forward.Vector);
+            world.Render(GraphicsDevice, GameResources.shadowMap._ShadowMapGenerate, gameTime);
+            GameResources.shadowMap.End();
+
+            /*
+            GraphicsDevice.SetRenderTarget(GameResources.shadowImage);
+            GameResources.effect.ShadowRender = true;
+
             world.Render(GraphicsDevice, GameResources.effect, gameTime);
 
+            GameResources.effect.ShadowRender = false;
 
+            GraphicsDevice.SetRenderTarget(GameResources.lightImage);
+            
+            GameResources.effect.LightRender = true;
+
+            world.Render(GraphicsDevice, GameResources.effect, gameTime);
+
+            GameResources.effect.LightRender = false;
+            */
+            GraphicsDevice.SetRenderTarget(GameResources.gameImage);
+
+            world.Render(GraphicsDevice, GameResources.effect, gameTime);
+
+            GraphicsDevice.SetRenderTarget(null);
+
+            spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, GameResources.postProcessing);
+
+            spriteBatch.Draw(GameResources.gameImage, new Rectangle(0, 0, width, height), Color.White);
+
+            spriteBatch.End();
 
             spriteBatch.Begin(SpriteSortMode.Deferred,
               BlendState.NonPremultiplied,
@@ -325,8 +354,9 @@ namespace Inignoto
 
             hud.Render(GraphicsDevice, spriteBatch, width, height, gameTime);
 
-            spriteBatch.End();
+            spriteBatch.Draw(GameResources.shadowMap.shadowMapRenderTarget, new Rectangle(0, 0, width / 2, height / 2), Color.White);
 
+            spriteBatch.End();
 
             base.Draw(gameTime);
 

@@ -6,6 +6,7 @@ using static Inignoto.Tiles.Tile;
 using Inignoto.Tiles.Data;
 using Inignoto.Graphics.Textures;
 using Inignoto.Graphics.Mesh;
+using System;
 
 namespace Inignoto.Graphics.World
 {
@@ -13,47 +14,47 @@ namespace Inignoto.Graphics.World
     {
         private static readonly Vector3f[] LEFT = new Vector3f[]
                 {
-                    new Vector3f(0, 0, 1),
-                    new Vector3f(0, 1, 1),
-                    new Vector3f(0, 1, 0),
-                    new Vector3f(0, 0, 0)
+                    new Vector3f(-0.005f, -0.005f, 1.005f),
+                    new Vector3f(-0.005f, 1.005f, 1.005f),
+                    new Vector3f(-0.005f, 1.005f, -0.005f),
+                    new Vector3f(-0.005f, -0.005f, -0.005f)
                 };
         private static readonly Vector3f[] FRONT =
             {
-                new Vector3f(0, 0, 0),
-                new Vector3f(0, 1, 0),
-                new Vector3f(1, 1, 0),
-                new Vector3f(1, 0, 0)
+                new Vector3f(-0.005f, -0.005f, -0.005f),
+                new Vector3f(-0.005f, 1.005f, -0.005f),
+                new Vector3f(1.005f, 1.005f, -0.005f),
+                new Vector3f(1.005f, -0.005f, -0.005f)
             };
 
         private static readonly Vector3f[] BACK =
            {
-                new Vector3f(1, 0, 1),
-                new Vector3f(1, 1, 1),
-                new Vector3f(0, 1, 1),
-                new Vector3f(0, 0, 1)
+                new Vector3f(1.005f, -0.005f, 1.005f),
+                new Vector3f(1.005f, 1.005f, 1.005f),
+                new Vector3f(-0.005f, 1.005f, 1.005f),
+                new Vector3f(-0.005f, -0.005f, 1.005f)
             };
 
         private static readonly Vector3f[] RIGHT = new Vector3f[]
                 {
-                    new Vector3f(1, 0, 0),
-                    new Vector3f(1, 1, 0),
-                    new Vector3f(1, 1, 1),
-                    new Vector3f(1, 0, 1)
+                    new Vector3f(1.005f, -0.005f, -0.005f),
+                    new Vector3f(1.005f, 1.005f, -0.005f),
+                    new Vector3f(1.005f, 1.005f, 1.005f),
+                    new Vector3f(1.005f, -0.005f, 1.005f)
                 };
         private static readonly Vector3f[] TOP = new Vector3f[]
                 {
-                    new Vector3f(0, 1, 0),
-                    new Vector3f(0, 1, 1),
-                    new Vector3f(1, 1, 1),
-                    new Vector3f(1, 1, 0)
+                    new Vector3f(-0.005f, 1.005f, -0.005f),
+                    new Vector3f(-0.005f, 1.005f, 1.005f),
+                    new Vector3f(1.005f, 1.005f, 1.005f),
+                    new Vector3f(1.005f, 1.005f, -0.005f)
                 };
         private static readonly Vector3f[] BOTTOM = new Vector3f[]
                 {
-                    new Vector3f(0, 0, 1),
-                    new Vector3f(0, 0, 0),
-                    new Vector3f(1, 0, 0),
-                    new Vector3f(1, 0, 1)
+                    new Vector3f(-0.005f, -0.005f, 1.005f),
+                    new Vector3f(-0.005f, -0.005f, -0.005f),
+                    new Vector3f(1.005f, -0.005f, -0.005f),
+                    new Vector3f(1.005f, -0.005f, 1.005f)
                 };
 
         public static Mesh.Mesh BuildTile(float x, float y, float z, TileData data, GraphicsDevice device)
@@ -64,24 +65,25 @@ namespace Inignoto.Graphics.World
             List<Color> colors = new List<Color>();
             List<Vector2> textures = new List<Vector2>();
             List<int> indices = new List<int>();
+            List<int> normals = new List<int>();
             int index = 0;
 
-            index = BuildFace(x, y, z, data, TileFace.LEFT, vertices, colors, textures, indices, index);
-            index = BuildFace(x, y, z, data, TileFace.RIGHT, vertices, colors, textures, indices, index);
-            index = BuildFace(x, y, z, data, TileFace.FRONT, vertices, colors, textures, indices, index);
-            index = BuildFace(x, y, z, data, TileFace.BACK, vertices, colors, textures, indices, index);
-            index = BuildFace(x, y, z, data, TileFace.TOP, vertices, colors, textures, indices, index);
-            index = BuildFace(x, y, z, data, TileFace.BOTTOM, vertices, colors, textures, indices, index);
+            index = BuildFace(x, y, z, data, TileFace.LEFT, vertices, colors, textures, indices, normals, index);
+            index = BuildFace(x, y, z, data, TileFace.RIGHT, vertices, colors, textures, indices, normals, index);
+            index = BuildFace(x, y, z, data, TileFace.FRONT, vertices, colors, textures, indices, normals, index);
+            index = BuildFace(x, y, z, data, TileFace.BACK, vertices, colors, textures, indices, normals, index);
+            index = BuildFace(x, y, z, data, TileFace.TOP, vertices, colors, textures, indices, normals, index);
+            index = BuildFace(x, y, z, data, TileFace.BOTTOM, vertices, colors, textures, indices, normals, index);
 
             for (int i = 0; i < indices.Count; i++)
             {
                 int ind = indices[i];
-                vpct.Add(new VertexPositionLightTexture(vertices[ind], colors[ind], textures[ind]));
+                vpct.Add(new VertexPositionLightTexture(vertices[ind], colors[ind], textures[ind], normals[ind]));
             }
             return new Mesh.Mesh(device, vpct.ToArray(), false, Textures.Textures.tiles.GetTexture());
         }
 
-        public static int BuildFace(float x, float y, float z, TileData data, TileFace face, List<Vector3> vertices, List<Color> colors, List<Vector2> textures, List<int> indices, int index)
+        public static int BuildFace(float x, float y, float z, TileData data, TileFace face, List<Vector3> vertices, List<Color> colors, List<Vector2> textures, List<int> indices, List<int> normals, int index)
         {
             Vector3f[] verts = FRONT;
 
@@ -120,9 +122,10 @@ namespace Inignoto.Graphics.World
             textures.Add(new Vector2(u, v));
             textures.Add(new Vector2(u + w, v));
             textures.Add(new Vector2(u + w, v + h));
+            
+            for (int i = 0; i < 4; i++)
+            normals.Add((int)face);
 
-
-            Quaternionf rotation = new Quaternionf();
             if (face == TileFace.LEFT)
             {
                 verts = LEFT;

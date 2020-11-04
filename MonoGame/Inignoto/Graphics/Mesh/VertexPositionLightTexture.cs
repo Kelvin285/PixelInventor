@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Runtime.InteropServices;
 
 namespace Inignoto.Graphics.Mesh
@@ -10,9 +11,10 @@ namespace Inignoto.Graphics.Mesh
         public Vector3 Position;
         public Color Color;
         public Vector2 TextureCoordinate;
+        public float Normal;
         public static readonly VertexDeclaration VertexDeclaration;
 
-        public VertexPositionLightTexture(Vector3 position, Color color, Vector2 textureCoordinate, int light = 0, int sunlight = 15)
+        public VertexPositionLightTexture(Vector3 position, Color color, Vector2 textureCoordinate, int normal, int light = 0, int sunlight = 15)
         {
             Position = position;
             int light_r = light & 0b1111;
@@ -22,6 +24,7 @@ namespace Inignoto.Graphics.Mesh
             Color = new Color(light_r / 15.0f, light_g / 15.0f, light_b / 15.0f, sunlight / 15.0f);
 
             TextureCoordinate = textureCoordinate;
+            Normal = normal;
         }
 
         VertexDeclaration IVertexType.VertexDeclaration
@@ -39,18 +42,19 @@ namespace Inignoto.Graphics.Mesh
                 var hashCode = Position.GetHashCode();
                 hashCode = (hashCode * 397) ^ Color.GetHashCode();
                 hashCode = (hashCode * 397) ^ TextureCoordinate.GetHashCode();
+                hashCode = (hashCode * 397) ^ Normal.GetHashCode();
                 return hashCode;
             }
         }
 
         public override string ToString()
         {
-            return "{{Position:" + this.Position + " Color:" + this.Color + " TextureCoordinate:" + this.TextureCoordinate + "}}";
+            return "{{Position:" + Position + " Color:" + Color + " TextureCoordinate:" + TextureCoordinate + " Normal: " + Normal + "}}";
         }
 
         public static bool operator ==(VertexPositionLightTexture left, VertexPositionLightTexture right)
         {
-            return (((left.Position == right.Position) && (left.Color == right.Color)) && (left.TextureCoordinate == right.TextureCoordinate));
+            return (((left.Position == right.Position) && (left.Color == right.Color)) && (left.TextureCoordinate == right.TextureCoordinate) && (left.Normal == right.Normal));
         }
 
         public static bool operator !=(VertexPositionLightTexture left, VertexPositionLightTexture right)
@@ -75,7 +79,8 @@ namespace Inignoto.Graphics.Mesh
             {
                 new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.Position, 0),
                 new VertexElement(12, VertexElementFormat.Color, VertexElementUsage.Color, 0),
-                new VertexElement(16, VertexElementFormat.Vector2, VertexElementUsage.TextureCoordinate, 0)
+                new VertexElement(16, VertexElementFormat.Vector2, VertexElementUsage.TextureCoordinate, 0),
+                new VertexElement(24, VertexElementFormat.Single, VertexElementUsage.Normal, 0)
             };
             VertexDeclaration = new VertexDeclaration(elements);
         }

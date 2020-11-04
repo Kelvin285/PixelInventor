@@ -12,7 +12,7 @@ using System.Transactions;
 
 namespace Inignoto.World.Chunks
 {
-    public class Chunk :  IComparable<Chunk>
+    public class Chunk : IComparable<Chunk>
     {
         private readonly TileData[] voxels;
         private readonly int[] light;
@@ -46,6 +46,7 @@ namespace Inignoto.World.Chunks
         public bool Full => solid_voxels >= Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE;
         public bool Empty => air_voxels >= Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE;
 
+        public bool Occluded => TestOcclusion();
 
         public List<int> sunlightBfsQueue;
         public List<int> sunlightRemovalBfsQueue;
@@ -101,6 +102,32 @@ namespace Inignoto.World.Chunks
             }
         }
 
+        private bool TestOcclusion()
+        {
+            if (Full)
+            {
+                Chunk c = chunkManager.TryGetChunk(GetX() - 1, GetY(), GetZ());
+                if (c != null)
+                    if (!c.Full) return false;
+                c = chunkManager.TryGetChunk(GetX() + 1, GetY(), GetZ());
+                if (c != null)
+                    if (!c.Full) return false;
+                c = chunkManager.TryGetChunk(GetX(), GetY() - 1, GetZ());
+                if (c != null)
+                    if (!c.Full) return false;
+                c = chunkManager.TryGetChunk(GetX(), GetY() + 1, GetZ());
+                if (c != null)
+                    if (!c.Full) return false;
+                c = chunkManager.TryGetChunk(GetX(), GetY(), GetZ() - 1);
+                if (c != null)
+                    if (!c.Full) return false;
+                c = chunkManager.TryGetChunk(GetX(), GetY(), GetZ() + 1);
+                if (c != null)
+                    if (!c.Full) return false;
+
+            }
+            return false;
+        }
         public int GetRedLight(int x, int y, int z)
         {
             return GetLight(x, y, z) & 0b1111;

@@ -38,3 +38,21 @@
 /processorParam:DebugMode=Auto
 /build:Effect.fx
 
+#begin PostProcessing.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:PostProcessing.fx
+
+#begin ShadowMapsGenerate.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:ShadowMapsGenerate.fx
+
+#begin ShadowMapsGenerate.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:ShadowMapsGenerate.fx
+

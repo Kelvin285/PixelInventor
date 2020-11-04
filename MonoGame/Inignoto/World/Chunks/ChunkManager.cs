@@ -58,36 +58,31 @@ namespace Inignoto.World.Chunks
 
         public void GenerateChunks(ChunkGenerator generator)
         {
-            Chunk closest = null;
-            chunksToBuild.Sort();
-            if (chunksToBuild.Count > 0)
+            lock(chunksToBuild)
             {
-                closest = chunksToBuild[0];
-            }
-            if (closest != null)
-            {
-                generator.GenerateChunk(closest);
-
-                closest.SetGenerated();
-                buildQueue.Add(closest);
-                chunksToBuild.Remove(closest);
-            }
-            List<Chunk> a = new List<Chunk>();
-            Parallel.ForEach(chunksToBuild.Cast<Chunk>(), chunk =>
-            {
-                if (chunk != null)
+                chunksToBuild.Sort();
+                if (chunksToBuild.Count > 2)
                 {
-                    generator.GenerateChunk(chunk);
+                    List<Chunk> a = new List<Chunk>();
+                    Parallel.ForEach(chunksToBuild.Cast<Chunk>(), chunk =>
+                    {
+                        if (chunk != null)
+                        {
+                            generator.GenerateChunk(chunk);
 
-                    chunk.SetGenerated();
-                    buildQueue.Add(chunk);
-                    a.Add(chunk);
+                            chunk.SetGenerated();
+                            buildQueue.Add(chunk);
+                            a.Add(chunk);
+                        }
+                    });
+                    for (int i = 0; i < a.Count; i++)
+                    {
+                        chunksToBuild.Remove(a[i]);
+                    }
                 }
-            });
-            for (int i = 0; i < a.Count; i++)
-            {
-                chunksToBuild.Remove(a[i]);
             }
+            
+            
 
             BuildChunks();
 
@@ -98,22 +93,39 @@ namespace Inignoto.World.Chunks
             
             if (modifiedChunks || current_x != last_x || current_y != last_y || current_z != last_z)
             {
-                building.Clear();
-                for (int i = 0; i < rendering.Count; i++)
+                lock (building)
                 {
-                    building.Add(rendering[i]);
-                }
-            }
-            building.Sort();
-            Parallel.ForEach(building.Cast<Chunk>(), chunk => {
-                if (chunk != null)
-                {
-                    if (chunk.NeedsToRebuild())
+                    building.Clear();
+                    lock (rendering)
                     {
-                        chunk.BuildMesh();
+                        for (int i = 0; i < rendering.Count; i++)
+                        {
+                            building.Add(rendering[i]);
+                        }
                     }
                 }
-            });
+                
+            }
+            lock (building)
+            if (building.Count > 2)
+            {
+                Parallel.ForEach(building.Cast<Chunk>(), chunk => {
+                    if (chunk != null)
+                    {
+                        if (chunk.NeedsToRebuild() && !chunk.Empty)
+                        {
+                            chunk.BuildMesh();
+                        } else if (!chunk.Empty)
+                        {
+                            if (world.random.Next(100) == 0)
+                            {
+                                chunk.BuildMesh();
+                            }
+                        }
+                    }
+                });
+            }
+            
         }
 
         public void BeginUpdate(Vector3 camera)
@@ -146,6 +158,7 @@ namespace Inignoto.World.Chunks
             {
                 Chunk chunk = new Chunk(x, y, z, world);
                 chunks.Add(position, chunk);
+                lock(chunksToBuild)
                 chunksToBuild.Add(chunk);
                 modifiedChunks = true;
                 return chunk;
@@ -197,13 +210,15 @@ namespace Inignoto.World.Chunks
                 }
                 updating.Sort();
             }
-            for (int i = 0; i < updating.Count; i++)
+            if (updating.Count > 2)
+            Parallel.ForEach(updating.Cast<Chunk>(), chunk =>
             {
-                Chunk chunk = updating[i];
-                if (chunk == null) continue;
-                float distance = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x, current_y, current_z));
-                chunk.Tick(distance);
-            }
+                if (chunk != null)
+                {
+                    float distance = Vector3.Distance(new Vector3(chunk.GetX(), chunk.GetY(), chunk.GetZ()), new Vector3(current_x, current_y, current_z));
+                    chunk.Tick(distance);
+                }
+            });
         }
 
         private void Update()
@@ -213,6 +228,7 @@ namespace Inignoto.World.Chunks
 
 
             int rad = (int)((world.radius * 4.0f) / Constants.CHUNK_SIZE);
+
             for (int y = -V_VIEW; y < V_VIEW; y++)
             {
                 for (int z = -H_VIEW; z < H_VIEW; z++)
@@ -232,12 +248,13 @@ namespace Inignoto.World.Chunks
                 }
 
             }
+            
 
         }
 
         public bool IsChunkWithinFrustum(Chunk chunk)
         {
-
+            if (GameResources.drawing_shadows) return true;
             Vector3 min = new Vector3(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE);
             Vector3 max = min + new Vector3(Constants.CHUNK_SIZE);
             BoundingBox box = new BoundingBox(min, max);
@@ -266,7 +283,7 @@ namespace Inignoto.World.Chunks
                     rendering.Clear();
                     foreach (Chunk chunk in chunks.Values)
                     {
-                        if (!chunk.Empty)
+                        if (!chunk.Empty && !chunk.Occluded)
                         rendering.Add(chunk);
                     }
                 }
@@ -289,6 +306,7 @@ namespace Inignoto.World.Chunks
                 {
                     continue;
                 }
+
 
                 if (rendering[i].NeedsToRebuild())
                 {

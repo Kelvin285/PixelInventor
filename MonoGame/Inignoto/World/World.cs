@@ -16,7 +16,6 @@ using System;
 using Inignoto.Graphics.Mesh;
 using Inignoto.Graphics.Textures;
 using Inignoto.Effects;
-using System.Security.Cryptography.X509Certificates;
 
 namespace Inignoto.World
 {
@@ -70,6 +69,8 @@ namespace Inignoto.World
 
         public float radius { get; private set; }
 
+        public Vector3 sunLook = new Vector3(1, -1, 0);
+
         public World()
         {
             chunkManager = new ChunkManager(this);
@@ -96,7 +97,7 @@ namespace Inignoto.World
 
         public void Update(Vector3 camera_position, GameTime time)
         {
-            this.gameTime = time;
+            gameTime = time;
             chunkManager.BeginUpdate(camera_position);
             for (int i = 0; i < entities.Count; i++)
             {
@@ -119,8 +120,15 @@ namespace Inignoto.World
         public void Render(GraphicsDevice device, GameEffect effect, GameTime time)
         {
             effect.Radius = radius;
-            effect.Area = (int)Inignoto.game.player.area;
-            effect.FogDistance = GameSettings.Settings.HORIZONTAL_VIEW * Constants.CHUNK_SIZE + 100;
+            if (!GameResources.drawing_shadows)
+            {
+                effect.Area = (int)Inignoto.game.player.area;
+                effect.FogDistance = GameSettings.Settings.HORIZONTAL_VIEW * Constants.CHUNK_SIZE + 100;
+                effect.ShadowView = GameResources.shadowMap.view;
+                effect.ShadowProjection = GameResources.shadowMap.projection;
+                effect.SunLook = sunLook;
+            }
+
             effect.CameraPos = Inignoto.game.camera.position.Vector;
             effect.WorldRender = true;
 
@@ -144,14 +152,22 @@ namespace Inignoto.World
             }
             RenderTileSelection(device, effect);
 
-            GameResources.effect.ObjectColor = GameResources.effect.FogColor;
+            if (!GameResources.drawing_shadows)
+                GameResources.effect.ObjectColor = GameResources.effect.FogColor;
             skybox.SetPosition(Inignoto.game.player.position.Vector);
-            skybox.Draw(effect, device);
-            GameResources.effect.ObjectColor = Color.White.ToVector4();
+                skybox.Draw(effect, device);
+            if (!GameResources.drawing_shadows)
+                GameResources.effect.ObjectColor = Color.White.ToVector4();
 
 
             RasterizerState rasterizerState = new RasterizerState();
             rasterizerState.CullMode = CullMode.CullClockwiseFace;
+
+            if (GameResources.drawing_shadows)
+            {
+                //rasterizerState.CullMode = CullMode.None;
+            }
+
             device.RasterizerState = rasterizerState;
 
             chunkManager.Render(device, effect);
@@ -185,106 +201,82 @@ namespace Inignoto.World
             VertexPositionLightTexture[] vpct =
             { 
                 new VertexPositionLightTexture(
-                    new Vector3(0, 0, 0), Color.White, new Vector2(0, 0)),
+                    new Vector3(0, 0, 0), Color.White, new Vector2(0, 0), (int)TileFace.FRONT),
                 new VertexPositionLightTexture(
-                    new Vector3(1, 0, 0), Color.White, new Vector2(0, 0)),
+                    new Vector3(0, 1, 0), Color.White, new Vector2(0, 0), (int)TileFace.FRONT),
                 new VertexPositionLightTexture(
-                    new Vector3(1, 0, 0), Color.White, new Vector2(0, 0)),
+                    new Vector3(1, 1, 0), Color.White, new Vector2(0, 0), (int)TileFace.FRONT),
                 new VertexPositionLightTexture(
-                    new Vector3(1, 1, 0), Color.White, new Vector2(0, 0)),
+                    new Vector3(1, 1, 0), Color.White, new Vector2(0, 0), (int)TileFace.FRONT),
                 new VertexPositionLightTexture(
-                    new Vector3(1, 1, 0), Color.White, new Vector2(0, 0)),
+                    new Vector3(1, 0, 0), Color.White, new Vector2(0, 0), (int)TileFace.FRONT),
                 new VertexPositionLightTexture(
-                    new Vector3(0, 1, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 1, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 0, 0), Color.White, new Vector2(0, 0)),
+                    new Vector3(0, 1, 0), Color.White, new Vector2(0, 0), (int)TileFace.FRONT),
 
                 new VertexPositionLightTexture(
-                    new Vector3(0, 0, 1), Color.White, new Vector2(0, 0)),
+                    new Vector3(1, 0, 1), Color.White, new Vector2(0, 0), (int)TileFace.BACK),
                 new VertexPositionLightTexture(
-                    new Vector3(1, 0, 1), Color.White, new Vector2(0, 0)),
+                    new Vector3(1, 1, 1), Color.White, new Vector2(0, 0), (int)TileFace.BACK),
                 new VertexPositionLightTexture(
-                    new Vector3(1, 0, 1), Color.White, new Vector2(0, 0)),
+                    new Vector3(0, 1, 1), Color.White, new Vector2(0, 0), (int)TileFace.BACK),
                 new VertexPositionLightTexture(
-                    new Vector3(1, 1, 1), Color.White, new Vector2(0, 0)),
+                    new Vector3(0, 1, 1), Color.White, new Vector2(0, 0), (int)TileFace.BACK),
                 new VertexPositionLightTexture(
-                    new Vector3(1, 1, 1), Color.White, new Vector2(0, 0)),
+                    new Vector3(0, 0, 1), Color.White, new Vector2(0, 0), (int)TileFace.BACK),
                 new VertexPositionLightTexture(
-                    new Vector3(0, 1, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 1, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 0, 1), Color.White, new Vector2(0, 0)),
+                    new Vector3(1, 0, 1), Color.White, new Vector2(0, 0), (int)TileFace.BACK),
 
                 new VertexPositionLightTexture(
-                    new Vector3(0, 0, 0), Color.White, new Vector2(0, 0)),
+                    new Vector3(0, 0, 1), Color.White, new Vector2(0, 0), (int)TileFace.LEFT),
                 new VertexPositionLightTexture(
-                    new Vector3(1, 0, 0), Color.White, new Vector2(0, 0)),
+                    new Vector3(0, 1, 1), Color.White, new Vector2(0, 0), (int)TileFace.LEFT),
                 new VertexPositionLightTexture(
-                    new Vector3(1, 0, 0), Color.White, new Vector2(0, 0)),
+                    new Vector3(0, 1, 0), Color.White, new Vector2(0, 0), (int)TileFace.LEFT),
                 new VertexPositionLightTexture(
-                    new Vector3(1, 0, 1), Color.White, new Vector2(0, 0)),
+                    new Vector3(0, 1, 0), Color.White, new Vector2(0, 0), (int)TileFace.LEFT),
                 new VertexPositionLightTexture(
-                    new Vector3(1, 0, 1), Color.White, new Vector2(0, 0)),
+                    new Vector3(0, 0, 1), Color.White, new Vector2(0, 0), (int)TileFace.LEFT),
                 new VertexPositionLightTexture(
-                    new Vector3(0, 0, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 0, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 0, 0), Color.White, new Vector2(0, 0)),
+                    new Vector3(0, 0, 0), Color.White, new Vector2(0, 0), (int)TileFace.LEFT),
 
                 new VertexPositionLightTexture(
-                    new Vector3(0, 1, 0), Color.White, new Vector2(0, 0)),
+                    new Vector3(1, 0, 0), Color.White, new Vector2(0, 0), (int)TileFace.RIGHT),
                 new VertexPositionLightTexture(
-                    new Vector3(1, 1, 0), Color.White, new Vector2(0, 0)),
+                    new Vector3(1, 1, 0), Color.White, new Vector2(0, 0), (int)TileFace.RIGHT),
                 new VertexPositionLightTexture(
-                    new Vector3(1, 1, 0), Color.White, new Vector2(0, 0)),
+                    new Vector3(1, 1, 1), Color.White, new Vector2(0, 0), (int)TileFace.RIGHT),
                 new VertexPositionLightTexture(
-                    new Vector3(1, 1, 1), Color.White, new Vector2(0, 0)),
+                    new Vector3(1, 1, 1), Color.White, new Vector2(0, 0), (int)TileFace.RIGHT),
                 new VertexPositionLightTexture(
-                    new Vector3(1, 1, 1), Color.White, new Vector2(0, 0)),
+                    new Vector3(1, 0, 1), Color.White, new Vector2(0, 0), (int)TileFace.RIGHT),
                 new VertexPositionLightTexture(
-                    new Vector3(0, 1, 1), Color.White, new Vector2(0, 0)),
+                    new Vector3(1, 0, 0), Color.White, new Vector2(0, 0), (int)TileFace.RIGHT),
+
                 new VertexPositionLightTexture(
-                    new Vector3(0, 1, 1), Color.White, new Vector2(0, 0)),
+                    new Vector3(0, 1, 0), Color.White, new Vector2(0, 0), (int)TileFace.TOP),
                 new VertexPositionLightTexture(
-                    new Vector3(0, 1, 0), Color.White, new Vector2(0, 0)),
+                    new Vector3(0, 1, 1), Color.White, new Vector2(0, 0), (int)TileFace.TOP),
+                new VertexPositionLightTexture(
+                    new Vector3(1, 1, 1), Color.White, new Vector2(0, 0), (int)TileFace.TOP),
+                new VertexPositionLightTexture(
+                    new Vector3(1, 1, 1), Color.White, new Vector2(0, 0), (int)TileFace.TOP),
+                new VertexPositionLightTexture(
+                    new Vector3(1, 1, 0), Color.White, new Vector2(0, 0), (int)TileFace.TOP),
+                new VertexPositionLightTexture(
+                    new Vector3(0, 1, 0), Color.White, new Vector2(0, 0), (int)TileFace.TOP),
 
                  new VertexPositionLightTexture(
-                    new Vector3(0, 0, 0), Color.White, new Vector2(0, 0)),
+                    new Vector3(0, 0, 1), Color.White, new Vector2(0, 0), (int)TileFace.BOTTOM),
                 new VertexPositionLightTexture(
-                    new Vector3(0, 0, 1), Color.White, new Vector2(0, 0)),
+                    new Vector3(0, 0, 0), Color.White, new Vector2(0, 0), (int)TileFace.BOTTOM),
                 new VertexPositionLightTexture(
-                    new Vector3(0, 0, 1), Color.White, new Vector2(0, 0)),
+                    new Vector3(1, 0, 0), Color.White, new Vector2(0, 0), (int)TileFace.BOTTOM),
                 new VertexPositionLightTexture(
-                    new Vector3(0, 1, 1), Color.White, new Vector2(0, 0)),
+                    new Vector3(1, 0, 0), Color.White, new Vector2(0, 0), (int)TileFace.BOTTOM),
                 new VertexPositionLightTexture(
-                    new Vector3(0, 1, 1), Color.White, new Vector2(0, 0)),
+                    new Vector3(1, 0, 1), Color.White, new Vector2(0, 0), (int)TileFace.BOTTOM),
                 new VertexPositionLightTexture(
-                    new Vector3(0, 1, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 1, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 0, 0), Color.White, new Vector2(0, 0)),
-
-                 new VertexPositionLightTexture(
-                    new Vector3(1, 0, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 0, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 0, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 1, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 1, 1), Color.White, new Vector2(0, 0)),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 1, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 1, 0), Color.White, new Vector2(0, 0)),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 0, 0), Color.White, new Vector2(0, 0)),
+                    new Vector3(0, 0, 1), Color.White, new Vector2(0, 0), (int)TileFace.BOTTOM)
             };
             for (int i = 0; i < vpct.Length; i++)
             {

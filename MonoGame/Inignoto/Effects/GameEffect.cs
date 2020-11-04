@@ -13,6 +13,12 @@ namespace Inignoto.Effects
         public Matrix World { get => GetMatrix("World"); set => SetMatrix("World", value); }
         public Matrix View { get => GetMatrix("View"); set => SetMatrix("View", value); }
         public Matrix Projection { get => GetMatrix("Projection"); set => SetMatrix("Projection", value); }
+        public Matrix Projection2 { get => GetMatrix("Projection2"); set => SetMatrix("Projection2", value); }
+        public Matrix Projection3 { get => GetMatrix("Projection3"); set => SetMatrix("Projection3", value); }
+
+        public Matrix ShadowView { get => GetMatrix("ShadowView"); set => SetMatrix("ShadowView", value); }
+        public Matrix ShadowProjection { get => GetMatrix("ShadowProjection"); set => SetMatrix("ShadowProjection", value); }
+
 
         public float FogDistance { get => GetFloat("fog_distance"); set => SetFloat("fog_distance", value); }
         public Vector4 FogColor { get => GetFloat4("fog_color"); set => SetFloat4("fog_color", value); }
@@ -25,6 +31,7 @@ namespace Inignoto.Effects
         public bool WorldRender { get => GetBool("world_render"); set => SetBool("world_render", value); }
 
         public Vector3 CameraPos { get => GetFloat3("camera_pos"); set => SetFloat3("camera_pos", value); }
+        public Vector3 SunLook { get => GetFloat3("sunLook"); set => SetFloat3("sunLook", value); }
 
         public GameEffect(GraphicsDevice graphicsDevice, byte[] effectCode) : base(graphicsDevice, effectCode)
         {

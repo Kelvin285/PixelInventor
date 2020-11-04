@@ -1,5 +1,6 @@
 ﻿using Inignoto.Effects;
 using Inignoto.Graphics.Mesh;
+using Inignoto.Graphics.World;
 using Inignoto.Math;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -138,6 +139,7 @@ namespace Inignoto.Graphics.Models
 
         public static Mesh.Mesh BuildMesh(Part part, Texture2D texture, float[] texCoords)
         {
+
             float size_x = part.size.X;
             float size_y = part.size.Y;
             float size_z = part.size.Z;
@@ -216,10 +218,36 @@ namespace Inignoto.Graphics.Models
             }
 
             VertexPositionLightTexture[] vpct = new VertexPositionLightTexture[indices.Length];
+            //F, B, L, R, T, B
 
+            List<int> normals = new List<int>();
+            normals.Add((int)Tiles.Tile.TileFace.FRONT);
+            normals.Add((int)Tiles.Tile.TileFace.FRONT);
+            normals.Add((int)Tiles.Tile.TileFace.FRONT);
+            normals.Add((int)Tiles.Tile.TileFace.FRONT);
+            normals.Add((int)Tiles.Tile.TileFace.BACK);
+            normals.Add((int)Tiles.Tile.TileFace.BACK);
+            normals.Add((int)Tiles.Tile.TileFace.BACK);
+            normals.Add((int)Tiles.Tile.TileFace.BACK);
+            normals.Add((int)Tiles.Tile.TileFace.LEFT);
+            normals.Add((int)Tiles.Tile.TileFace.LEFT);
+            normals.Add((int)Tiles.Tile.TileFace.LEFT);
+            normals.Add((int)Tiles.Tile.TileFace.LEFT);
+            normals.Add((int)Tiles.Tile.TileFace.RIGHT);
+            normals.Add((int)Tiles.Tile.TileFace.RIGHT);
+            normals.Add((int)Tiles.Tile.TileFace.RIGHT);
+            normals.Add((int)Tiles.Tile.TileFace.RIGHT);
+            normals.Add((int)Tiles.Tile.TileFace.TOP);
+            normals.Add((int)Tiles.Tile.TileFace.TOP);
+            normals.Add((int)Tiles.Tile.TileFace.TOP);
+            normals.Add((int)Tiles.Tile.TileFace.TOP);
+            normals.Add((int)Tiles.Tile.TileFace.BOTTOM);
+            normals.Add((int)Tiles.Tile.TileFace.BOTTOM);
+            normals.Add((int)Tiles.Tile.TileFace.BOTTOM);
+            normals.Add((int)Tiles.Tile.TileFace.BOTTOM);
             for (int i = 0; i < indices.Length; i++)
             {
-                vpct[i] = new VertexPositionLightTexture(new Vector3(vertices[indices[i] * 3], vertices[indices[i] * 3 + 1], vertices[indices[i] * 3 + 2]), Color.White, new Vector2(texCoords[indices[i] * 2], texCoords[indices[i] * 2 + 1]));
+                vpct[i] = new VertexPositionLightTexture(new Vector3(vertices[indices[i] * 3], vertices[indices[i] * 3 + 1], vertices[indices[i] * 3 + 2]), Color.White, new Vector2(texCoords[indices[i] * 2], texCoords[indices[i] * 2 + 1]), normals[indices[i]]);
             }
             return new Mesh.Mesh(Inignoto.game.GraphicsDevice, vpct, false, texture);
         }

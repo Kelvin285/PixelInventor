@@ -89,6 +89,14 @@ namespace Inignoto.Graphics.Mesh
             {
                 if (texture == null) continue;
                 effect.Parameters["ModelTexture"].SetValue(texture);
+                
+                if (!GameResources.drawing_shadows)
+                {
+                    if (GameResources.shadowMap.shadowMapRenderTarget == null) continue;
+                    effect.Parameters["ShadowTexture"].SetValue(GameResources.shadowMap.shadowMapRenderTarget);
+                }
+                
+
                 pass.Apply();
 
                 //device.DrawUserPrimitives(lines ? PrimitiveType.LineList : PrimitiveType.TriangleList, triangleVertices, 0, Length);
