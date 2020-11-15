@@ -18,12 +18,20 @@ namespace Inignoto.Items
 {
     public class Item
     {
+        public enum ActionResult
+        {
+            BLOCK, ENTITY, MISS
+        }
         public string Name { get; private set; }
         public string TranslatedName { get => Name; }
         public readonly int max_stack;
 
-        public readonly double cooldown;
-        protected double cooldown_time = 0;
+        public double CurrentCooldown { get; protected set; }
+        public double BlockHitCooldown { get; protected set; }
+        public double EntityHitCooldown { get; protected set; }
+        public double MissCooldown { get; protected set; }
+
+        public double CooldownTime { get; protected set; }
 
         public Mesh Mesh { get; protected set; }
         public GameModel Model { get; protected set; }
@@ -36,11 +44,15 @@ namespace Inignoto.Items
 
         public bool canBreakBlocks { get; protected set; }
 
+        public bool Using = false;
+
         public Item(string name, int max_stack = 64, double cooldown = 1.0f, bool model = true, Vector3 position = new Vector3(), Vector3 rotation = new Vector3(), Vector3 scale = new Vector3())
         {
             Name = name;
             this.max_stack = max_stack;
-            this.cooldown = cooldown;
+            BlockHitCooldown = cooldown;
+            EntityHitCooldown = cooldown;
+            MissCooldown = cooldown;
             this.position = position;
             this.rotation = rotation;
             this.scale = scale;
@@ -83,38 +95,77 @@ namespace Inignoto.Items
             return this;
         }
            
-        public void TryAttack(Entity user, GameTime time, World.RaytraceResult.TileRaytraceResult result)
+        public bool TryAttack(Entity user, GameTime time, World.RaytraceResult.TileRaytraceResult result)
         {
-            if (time.TotalGameTime.TotalMilliseconds > cooldown_time)
+            if (time.TotalGameTime.TotalMilliseconds > CooldownTime)
             {
-                if (Attack(user, time, result))
-                cooldown_time = time.TotalGameTime.TotalMilliseconds + cooldown * 1000;
+                ActionResult action = Attack(user, time, result);
+                if (action == ActionResult.BLOCK)
+                {
+                    CurrentCooldown = BlockHitCooldown;
+                }
+                if (action == ActionResult.ENTITY)
+                {
+                    CurrentCooldown = EntityHitCooldown;
+                }
+                if (action == ActionResult.MISS)
+                {
+                    CurrentCooldown = MissCooldown;
+                }
+                CooldownTime = time.TotalGameTime.TotalMilliseconds + CurrentCooldown * 1000;
+                return true;
             }
+            return false;
         }
 
-        public void TryUse(Entity user, GameTime time)
+        public bool TryUse(Entity user, GameTime time)
         {
-            if (time.TotalGameTime.TotalMilliseconds > cooldown_time)
-            {
-                if (Use(user, time))
-                cooldown_time = time.TotalGameTime.TotalMilliseconds + cooldown * 1000;
-            }
 
+            if (time.TotalGameTime.TotalMilliseconds > CooldownTime)
+            {
+                Using = true;
+                ActionResult action = Use(user, time);
+
+                if (action == ActionResult.BLOCK)
+                {
+                    CurrentCooldown = BlockHitCooldown;
+                }
+                if (action == ActionResult.ENTITY)
+                {
+                    CurrentCooldown = EntityHitCooldown;
+                }
+                if (action == ActionResult.MISS)
+                {
+                    CurrentCooldown = MissCooldown;
+                }
+                CooldownTime = time.TotalGameTime.TotalMilliseconds + CurrentCooldown * 1000;
+                return true;
+            }
+            return false;
         }
 
         public virtual void TryStopUsing(Entity user, GameTime time)
         {
+            if (Using)
+            {
+                StopUsing(user, time);
+                Using = false;
+            }
+        }
+
+        public virtual void StopUsing(Entity user, GameTime time)
+        {
 
         }
 
-        protected virtual bool Attack(Entity user, GameTime time, World.RaytraceResult.TileRaytraceResult result)
+        protected virtual ActionResult Attack(Entity user, GameTime time, World.RaytraceResult.TileRaytraceResult result)
         {
-            return true;
+            return ActionResult.MISS;
         }
 
-        protected virtual bool Use(Entity user, GameTime time)
+        protected virtual ActionResult Use(Entity user, GameTime time)
         {
-            return true;
+            return ActionResult.MISS;
         }
 
         public virtual Texture2D GetRenderTexture()

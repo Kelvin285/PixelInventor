@@ -40,6 +40,8 @@ namespace Inignoto.Tiles
 
         private bool Opaque = true;
 
+        public bool Overlay { get; private set; }
+
         public int light_red { get; private set; }
         public int light_green { get; private set; }
         public int light_blue { get; private set; }
@@ -83,6 +85,12 @@ namespace Inignoto.Tiles
             light_blue = B;
 
             glowing = R > 0 || G > 0 || B > 0;
+            return this;
+        }
+
+        public Tile SetOverlay()
+        {
+            Overlay = true;
             return this;
         }
 

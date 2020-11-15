@@ -1,4 +1,5 @@
 ﻿using Inignoto.Audio;
+using Inignoto.Common;
 using Inignoto.Effects;
 using Inignoto.GameSettings;
 using Inignoto.Graphics.Fonts;
@@ -39,7 +40,7 @@ namespace Inignoto.Graphics.Gui
         private int PHYSICAL = 0, DIGITAL = 1, SANDBOX = 2;
         private int current_inventory = 0;
 
-
+        private KeyReader keyReader;
         public InventoryGui(PhysicalInventory inventory)
         {
             OverrideHealthbar = true;
@@ -54,6 +55,7 @@ namespace Inignoto.Graphics.Gui
             open_sound.Play();
 
             this.inventory = inventory;
+            keyReader = new KeyReader(16);
         }
 
         public override void Close()
@@ -245,53 +247,29 @@ namespace Inignoto.Graphics.Gui
                 }
             }
 
-            for (int i = 0; i < 256; i++)
-            {
-                if (Keyboard.GetState().IsKeyDown((Keys)i))
-                {
-                    if (!pressed[i])
-                    {
-                        pressed[i] = true;
+            keyReader.finished = false;
+            keyReader.Update(gameTime);
+            searchstring = keyReader.text;
 
-                        if (i == (int)Keys.Back)
-                        {
-                            if (searchstring.Length - 1 >= 0)
-                            searchstring = searchstring.Substring(0, searchstring.Length - 1);
-                        }
-                        else
-                        if (i == (int)Keys.Space)
-                        {
-                            searchstring += " ";
-                        } else
-                        {
-                            string add = ((Keys)i).ToString();
-                            if (add.Length == 1)
-                                searchstring += add;
-                        }
-                        search_items.Clear();
-                        if (searchstring.Trim().Length > 0)
-                        {
-                            has_none = true;
-                            foreach (Item item in ItemManager.ITEM_LIST)
-                            {
-                                if (item.Name.ToLower().Replace("_", " ").Contains(searchstring.ToLower().Trim()))
-                                {
-                                    search_items.Add(item);
-                                    has_none = false;
-                                }
-                            }
-                            page = 0;
-                        } else
-                        {
-                            has_none = false;
-                        }
-                    }
-                } else
+            search_items.Clear();
+            if (searchstring.Trim().Length > 0)
+            {
+                has_none = true;
+                foreach (Item item in ItemManager.ITEM_LIST)
                 {
-                    pressed[i] = false;
+                    if (item.Name.ToLower().Replace("_", " ").Contains(searchstring.ToLower().Trim()))
+                    {
+                        search_items.Add(item);
+                        has_none = false;
+                    }
                 }
+                page = 0;
             }
-            
+            else
+            {
+                has_none = false;
+            }
+
             //283, 155
             string pagestr = (page + 1) + "/" + (pages + 1);
             DrawString(spriteBatch, width, height, X + 283 * 3 + 5 + 25 - (int)(10 * (pagestr.Length / 2.0f)), Y + 155 * 3 - 5, 0.5f, FontManager.mandrill_bold, pagestr, Color.White);

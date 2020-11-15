@@ -15,6 +15,8 @@ namespace Inignoto.World.Chunks
     public class Chunk : IComparable<Chunk>
     {
         private readonly TileData[] voxels;
+        private readonly TileData[] overlayVoxels;
+
         private readonly int[] light;
         private readonly int[] sunlight;
 
@@ -63,9 +65,12 @@ namespace Inignoto.World.Chunks
             this.z = z;
             this.world = world;
             voxels = new TileData[Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE];
+            overlayVoxels = new TileData[Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE];
+
             light = new int[voxels.Length];
             sunlight = new int[voxels.Length];
             chunkManager = world.GetChunkManager();
+
 
             sunlightBfsQueue = new List<int>();
             sunlightRemovalBfsQueue = new List<int>();
@@ -128,6 +133,19 @@ namespace Inignoto.World.Chunks
             }
             return false;
         }
+
+        public void Dispose()
+        {
+            sunlightBfsQueue.Clear();
+            sunlightRemovalBfsQueue.Clear();
+            redBfsQueue.Clear();
+            redRemovalBfsQueue.Clear();
+            greenBfsQueue.Clear();
+            greenRemovalBfsQueue.Clear();
+            blueBfsQueue.Clear();
+            blueRemovalBfsQueue.Clear();
+        }
+
         public int GetRedLight(int x, int y, int z)
         {
             return GetLight(x, y, z) & 0b1111;
@@ -249,10 +267,6 @@ namespace Inignoto.World.Chunks
 
                 if (tile.tinted)
                 {
-                    r = (int)MathF.Max(r, sun);
-                    g = (int)MathF.Max(g, sun);
-                    b = (int)MathF.Max(b, sun);
-                    sun = 0;
                     if (r > tile.RedTint) r = tile.RedTint - (int)MathF.Max(GetRedLight(x, y, z) - r, 0);
                     if (g > tile.GreenTint) g = tile.GreenTint - (int)MathF.Max(GetGreenLight(x, y, z) - r, 0);
                     if (b > tile.BlueTint) b = tile.BlueTint - (int)MathF.Max(GetBlueLight(x, y, z) - r, 0);
@@ -1125,38 +1139,74 @@ namespace Inignoto.World.Chunks
             {
                 Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY() + 1, GetZ());
                 if (chunk != null)
-                chunk.MarkForLightBuild();
+                chunk.MarkForRebuild();
             }
             if (cd)
             {
                 Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY() - 1, GetZ());
                 if (chunk != null)
-                    chunk.MarkForLightBuild();
+                    chunk.MarkForRebuild();
             }
             if (cl)
             {
                 Chunk chunk = world.chunkManager.TryGetChunk(GetX() - 1, GetY(), GetZ());
                 if (chunk != null)
-                    chunk.MarkForLightBuild();
+                    chunk.MarkForRebuild();
             }
             if (cr)
             {
                 Chunk chunk = world.chunkManager.TryGetChunk(GetX() + 1, GetY(), GetZ());
                 if (chunk != null)
-                    chunk.MarkForLightBuild();
+                    chunk.MarkForRebuild();
             }
             if (cf)
             {
                 Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY(), GetZ() + 1);
                 if (chunk != null)
-                    chunk.MarkForLightBuild();
+                    chunk.MarkForRebuild();
             }
             if (cb)
             {
                 Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY(), GetZ() - 1);
                 if (chunk != null)
-                    chunk.MarkForLightBuild();
+                    chunk.MarkForRebuild();
             }
+        }
+
+        public TileData GetOverlayVoxel(int x, int y, int z)
+        {
+            if (IsInsideChunk(x, y, z))
+            {
+                TileData data = overlayVoxels[GetIndexFor(x, y, z)];
+                if (data == null) return TileManager.AIR.DefaultData;
+                return data;
+            }
+
+            Chunk chunk = GetAdjacentChunkForLocation(x, y, z, out int X, out int Y, out int Z);
+
+            if (chunk != null)
+            {
+                return chunk.GetOverlayVoxel(X, Y, Z);
+            }
+
+            return TileManager.AIR.DefaultData;
+        }
+
+        public bool SetOverlayVoxel(int x, int y, int z, TileData voxel)
+        {
+            if (IsInsideChunk(x, y, z))
+            {
+                overlayVoxels[GetIndexFor(x, y, z)] = voxel;
+                return true;
+            }
+
+            Chunk chunk = GetAdjacentChunkForLocation(x, y, z, out int X, out int Y, out int Z);
+
+            if (chunk != null)
+            {
+                return chunk.SetOverlayVoxel(X, Y, Z, voxel);
+            }
+            return false;
         }
 
         public TileData GetVoxel(int x, int y, int z)
@@ -1168,11 +1218,18 @@ namespace Inignoto.World.Chunks
                 return data;
             }
 
-            Chunk chunk = GetAdjacentChunkForLocation(x, y, z, out int X, out int Y, out int Z);
+            Chunk chunk = GetAdjacentChunkForLocation(x, y, z, out int X, out int Y, out int Z, out int CX, out int CY, out int CZ);
 
             if (chunk != null)
             {
                 return chunk.GetVoxel(X, Y, Z);
+            } else
+            {
+                if (chunkManager.HasStructureChunk(CX, CY, CZ))
+                {
+                    StructureChunk schunk = chunkManager.GetOrCreateStructureChunk(CX, CY, CZ);
+                    return schunk.GetTile(X, Y, Z);
+                }
             }
 
             return TileManager.AIR.DefaultData;
@@ -1218,19 +1275,29 @@ namespace Inignoto.World.Chunks
                 
                 
                 voxels[GetIndexFor(x, y, z)] = voxel;
+
                 if (last != null)
                     last.UpdateLightWhenRemoved(this, x, y, z);
                 
                 if (voxel != null)
                     voxel.UpdateLightWhenPlaced(this, x, y, z);
+
+                if (voxel == TileManager.AIR.DefaultData)
+                {
+                    SetOverlayVoxel(x, y, z, TileManager.AIR.DefaultData);
+                }
                 return true;
             }
 
-            Chunk chunk = GetAdjacentChunkForLocation(x, y, z, out int X, out int Y, out int Z);
+            Chunk chunk = GetAdjacentChunkForLocation(x, y, z, out int X, out int Y, out int Z, out int CX, out int CY, out int CZ);
 
             if (chunk != null)
             {
                 return chunk.SetVoxel(X, Y, Z, voxel);
+            } else
+            {
+                StructureChunk schunk = chunkManager.GetOrCreateStructureChunk(CX, CY, CZ);
+                schunk.SetTile(X, Y, Z, voxel);
             }
             return false;
         }
@@ -1253,6 +1320,10 @@ namespace Inignoto.World.Chunks
             return chunkManager.TryGetChunk(X, Y, Z);
         }
         public Chunk GetAdjacentChunkForLocation(int xx, int yy, int zz, out int x, out int y, out int z)
+        {
+            return GetAdjacentChunkForLocation(xx, yy, zz, out x, out y, out z, out int CX, out int CY, out int CZ);
+        }
+        public Chunk GetAdjacentChunkForLocation(int xx, int yy, int zz, out int x, out int y, out int z, out int CX, out int CY, out int CZ)
         {
             int X = GetX();
             int Y = GetY();
@@ -1290,7 +1361,9 @@ namespace Inignoto.World.Chunks
                 z += Constants.CHUNK_SIZE;
                 Z--;
             }
-            
+            CX = X;
+            CY = Y;
+            CZ = Z;
             return chunkManager.TryGetChunk(X, Y, Z);
         }
 
@@ -1322,14 +1395,8 @@ namespace Inignoto.World.Chunks
         bool extendedRebuild = false;
         public void MarkForRebuild(bool queue = false, bool extend = true)
         {
-            if (queue)
-            {
-                chunkManager.QueueForRerender(this);
-            } else
-            {
-                extendedRebuild = extend;
-                rebuilding = true;
-            }
+            extendedRebuild = extend;
+            rebuilding = true;
         }
 
         public void FinishRebuilding()
@@ -1365,6 +1432,7 @@ namespace Inignoto.World.Chunks
                 if (dist1 < dist2) return -1;
             } catch (Exception e)
             {
+                Console.WriteLine(e.Message);
                 return 0;
             }
             return 1;

@@ -47,31 +47,36 @@ namespace Inignoto
         public ClientPlayerEntity player;
 
         public Thread world_thread;
+        public Thread structure_thread;
+
         public bool running = true;
 
         public Hud hud;
+
+        public bool paused;
 
         public long currentFrame = 0;
         public long lastFrame = 0;
 
         public Rectangle ClientBounds;
 
+        public ClientSystem client_system;
+
         public readonly int target_width = 1920;
         public readonly int target_height = 1080;
-
-        private Matrix content_scale;
-
+        
         public Inignoto()
         {
 
             graphics = new GraphicsDeviceManager(this);
             graphics.GraphicsProfile = GraphicsProfile.HiDef;
             graphics.PreferMultiSampling = false;
-
+            TargetElapsedTime = TimeSpan.FromSeconds(1.0f / 60.0f);
             
             float scaleX = graphics.PreferredBackBufferWidth / target_width;
             float scaleY = graphics.PreferredBackBufferHeight / target_height;
 
+            client_system = new ClientSystem();
 
             Content.RootDirectory = "Content";
             running = true;
@@ -119,15 +124,29 @@ namespace Inignoto
             world_thread = new Thread(world_thread_start);
             world_thread.IsBackground = true;
             world_thread.Start();
+
+            ThreadStart structure_thread_start = new ThreadStart(UpdateWorldStructures);
+            structure_thread = new Thread(structure_thread_start);
+            structure_thread.IsBackground = true;
+            structure_thread.Start();
         }
 
         public static void UpdateWorldGeneration()
         {
-            while (Inignoto.game.running)
+            while (game.running)
             {
-                Inignoto.game.world.UpdateChunkGeneration();
+                game.world.UpdateChunkGeneration();
             }
         }
+
+        public static void UpdateWorldStructures()
+        {
+            while (game.running)
+            {
+                game.world.chunkManager.StructureGeneration();
+            }
+        }
+
         /// <summary>
         /// LoadContent will be called once per game and is the place to load
         /// all of your content.
@@ -158,8 +177,6 @@ namespace Inignoto
             base.OnExiting(sender, args);
         }
 
-
-        bool space = false;
         /// <summary>
         /// Allows the game to run logic such as updating the world,
         /// checking for collisions, gathering input, and playing audio.
@@ -205,7 +222,7 @@ namespace Inignoto
             lastMousePos = new Point(mousePos.X, mousePos.Y);
 
 
-            if (!IsActive) mouse_captured = false;
+            if (!IsActive || paused) mouse_captured = false;
             else
                 mouse_captured = Hud.openGui == null;
 
@@ -263,7 +280,7 @@ namespace Inignoto
             {
                 if (Hud.openGui == null)
                 {
-                    Hud.openGui = new InventoryGui(Inignoto.game.player.Inventory);
+                    Hud.openGui = new InventoryGui(game.player.Inventory);
                 } else
                 {
                     Hud.openGui.Close();
@@ -280,6 +297,7 @@ namespace Inignoto
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
+            
             GameResources.effect.Time = (float)gameTime.TotalGameTime.TotalSeconds;
 
             int width = Window.ClientBounds.Right - Window.ClientBounds.Left;
@@ -304,6 +322,8 @@ namespace Inignoto
 
             camera.position = lastPos;
             camera.rotation = lastRot;
+
+                
             GameResources.effect.View = camera.ViewMatrix;
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
@@ -315,34 +335,26 @@ namespace Inignoto
 
             TileManager.TryLoadTileTextures();
 
-            GameResources.shadowMap.Begin(camera.position.Vector, world.sunLook);
-            //GameResources.shadowMap.Begin(camera.position.Vector, camera.Forward.Vector);
-            world.Render(GraphicsDevice, GameResources.shadowMap._ShadowMapGenerate, gameTime);
-            GameResources.shadowMap.End();
+            if (Settings.SHADOWS)
+            {
+                GameResources.shadowMap.Begin(camera.position.Vector, world.sunLook, 0);
+                world.Render(GraphicsDevice, GameResources.shadowMap._ShadowMapGenerate, gameTime);
+                GameResources.shadowMap.Begin(camera.position.Vector, world.sunLook, 1);
+                world.Render(GraphicsDevice, GameResources.shadowMap._ShadowMapGenerate, gameTime);
+                GameResources.shadowMap.Begin(camera.position.Vector, world.sunLook, 2);
+                world.Render(GraphicsDevice, GameResources.shadowMap._ShadowMapGenerate, gameTime);
+                GameResources.shadowMap.End();
+            }
 
-            /*
-            GraphicsDevice.SetRenderTarget(GameResources.shadowImage);
-            GameResources.effect.ShadowRender = true;
-
-            world.Render(GraphicsDevice, GameResources.effect, gameTime);
-
-            GameResources.effect.ShadowRender = false;
-
-            GraphicsDevice.SetRenderTarget(GameResources.lightImage);
-            
-            GameResources.effect.LightRender = true;
-
-            world.Render(GraphicsDevice, GameResources.effect, gameTime);
-
-            GameResources.effect.LightRender = false;
-            */
             GraphicsDevice.SetRenderTarget(GameResources.gameImage);
+            //GraphicsDevice.SetRenderTarget(null);
 
             world.Render(GraphicsDevice, GameResources.effect, gameTime);
 
             GraphicsDevice.SetRenderTarget(null);
+            
 
-            spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, GameResources.postProcessing);
+            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullCounterClockwise, GameResources.postProcessing);
 
             spriteBatch.Draw(GameResources.gameImage, new Rectangle(0, 0, width, height), Color.White);
 
@@ -352,9 +364,16 @@ namespace Inignoto
               BlendState.NonPremultiplied,
               SamplerState.PointClamp);
 
+            client_system.RenderBackground(spriteBatch, GraphicsDevice, gameTime, width, height);
+
             hud.Render(GraphicsDevice, spriteBatch, width, height, gameTime);
 
-            spriteBatch.Draw(GameResources.shadowMap.shadowMapRenderTarget, new Rectangle(0, 0, width / 2, height / 2), Color.White);
+            client_system.Render(spriteBatch, GraphicsDevice, gameTime, width, height);
+
+
+            //spriteBatch.Draw(GameResources.shadowMap.shadowMapRenderTarget[0], new Rectangle(0, 0, width / 2, height / 2), Color.White);
+            //spriteBatch.Draw(GameResources.shadowMap.shadowMapRenderTarget[1], new Rectangle(width / 2, 0, width / 2, height / 2), Color.White);
+            //spriteBatch.Draw(GameResources.shadowMap.shadowMapRenderTarget[2], new Rectangle(0, height / 2, width / 2, height / 2), Color.White);
 
             spriteBatch.End();
 

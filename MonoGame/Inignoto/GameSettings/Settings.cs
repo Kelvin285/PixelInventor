@@ -22,20 +22,27 @@ namespace Inignoto.GameSettings
         public static float MUSIC_VOLUME = 100;
         public static float GUI_VOLUME = 100;
 
+        public static bool VSYNC = false;
+        public static bool SHADOWS = false;
+        public static bool PARALLEL_CHUNK_GENERATION = false;
+
+        public static bool HEAD_BOBBING = true;
+
         public static InputSetting FORWARD = new InputSetting(Keys.W, false);
         public static InputSetting BACKWARD = new InputSetting(Keys.S, false);
         public static InputSetting LEFT = new InputSetting(Keys.A, false);
         public static InputSetting RIGHT = new InputSetting(Keys.D, false);
         public static InputSetting JUMP = new InputSetting(Keys.Space, false);
         public static InputSetting SNEAK = new InputSetting(Keys.LeftControl, false);
+        public static InputSetting RUN = new InputSetting(Keys.LeftShift, false);
         public static InputSetting CRAWL = new InputSetting(Keys.C, false);
         public static InputSetting INVENTORY = new InputSetting(Keys.Escape, false);
         public static InputSetting ATTACK = new InputSetting(0, true);
         public static InputSetting USE = new InputSetting(1, true);
         public static InputSetting PERSPECTIVE_SWITCH = new InputSetting(Keys.F5, false);
         public static InputSetting FULLSCREEN_KEY = new InputSetting(Keys.F11, false);
+        public static InputSetting CHAT = new InputSetting(Keys.Enter, false);
 
-        public static bool VSYNC = false;
 
 
         public static InputSetting[] HOTBAR_KEYS = new InputSetting[10];
@@ -120,6 +127,18 @@ namespace Inignoto.GameSettings
                     {
                         bool.TryParse(b, out FULLSCREEN);
                     }
+                    if (a.Equals("SHADOWS"))
+                    {
+                        bool.TryParse(b, out SHADOWS);
+                    }
+                    if (a.Equals("PARALLEL_CHUNK_GENERATION"))
+                    {
+                        bool.TryParse(b, out PARALLEL_CHUNK_GENERATION);
+                    }
+                    if (a.Equals("HEAD_BOBBING"))
+                    {
+                        bool.TryParse(b, out HEAD_BOBBING);
+                    }
                     if (a.Equals("FORWARD"))
                     {
                         FORWARD.Read(b);
@@ -144,6 +163,10 @@ namespace Inignoto.GameSettings
                     {
                         SNEAK.Read(b);
                     }
+                    if (a.Equals("RUN"))
+                    {
+                        RUN.Read(b);
+                    }
                     if (a.Equals("CRAWL"))
                     {
                         CRAWL.Read(b);
@@ -167,6 +190,10 @@ namespace Inignoto.GameSettings
                     if (a.Equals("FULLSCREEN_KEY"))
                     {
                         FULLSCREEN_KEY.Read(b);
+                    }
+                    if (a.Equals("CHAT_KEY"))
+                    {
+                        CHAT.Read(b);
                     }
                     for (int i = 0; i < 10; i++)
                     {
@@ -199,9 +226,12 @@ namespace Inignoto.GameSettings
             str += GetSaveString("AMBIENT_VOLUME", "" + AMBIENT_VOLUME);
             str += GetSaveString("MUSIC_VOLUME", "" + MUSIC_VOLUME);
             str += GetSaveString("GUI_VOLUME", "" + GUI_VOLUME);
+            str += GetSaveString("PARALLEL_CHUNK_GENERATION", "" + PARALLEL_CHUNK_GENERATION);
+            str += GetSaveString("HEAD_BOBBING", "" + HEAD_BOBBING);
 
             str += GetSaveString("VSYNC", "" + VSYNC);
             str += GetSaveString("FULLSCREEN", "" + FULLSCREEN);
+            str += GetSaveString("SHADOWS", "" + SHADOWS);
 
             str += GetSaveString("FORWARD", FORWARD.Write());
             str += GetSaveString("BACKWARD", BACKWARD.Write());
@@ -209,12 +239,14 @@ namespace Inignoto.GameSettings
             str += GetSaveString("RIGHT", RIGHT.Write());
             str += GetSaveString("JUMP", JUMP.Write());
             str += GetSaveString("SNEAK", SNEAK.Write());
+            str += GetSaveString("RUN", RUN.Write());
             str += GetSaveString("CRAWL", CRAWL.Write());
             str += GetSaveString("ATTACK", ATTACK.Write());
             str += GetSaveString("USE", USE.Write());
             str += GetSaveString("INVENTORY", INVENTORY.Write());
             str += GetSaveString("PERSPECTIVE_SWITCH", PERSPECTIVE_SWITCH.Write());
             str += GetSaveString("FULLSCREEN_KEY", FULLSCREEN_KEY.Write());
+            str += GetSaveString("CHAT_KEY", CHAT.Write());
 
             for (int i = 0; i < 10; i++)
             {

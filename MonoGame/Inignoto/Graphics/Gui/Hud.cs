@@ -209,6 +209,10 @@ namespace Inignoto.Graphics.Gui
 
         protected virtual void UpdateKeys()
         {
+            if (Inignoto.game.paused)
+            {
+                return;
+            }
             for (int i = 0; i < Settings.HOTBAR_KEYS.Length; i++)
             {
                 if (Settings.HOTBAR_KEYS[i].IsPressed())
@@ -233,7 +237,7 @@ namespace Inignoto.Graphics.Gui
             last_scroll = current_scroll;
         }
 
-        public void DrawItem(SpriteBatch spriteBatch, int width, int height, ItemStack stack, int x, int y, float scaleX, float scaleY)
+        public static void DrawItem(SpriteBatch spriteBatch, int width, int height, ItemStack stack, int x, int y, float scaleX, float scaleY)
         {
             Draw(spriteBatch, width, height, stack.item.GetRenderTexture(), new Rectangle(x - 11 * 3, y, (int)(192 * scaleX), (int)(108 * scaleY)), Color.White);
             if (stack.item.max_stack > 1)
@@ -247,7 +251,7 @@ namespace Inignoto.Graphics.Gui
 
 
 
-        protected void Draw(SpriteBatch batch, int width, int height, Texture2D texture, Rectangle r1, Rectangle r2, Color color, float rotation)
+        public static void Draw(SpriteBatch batch, int width, int height, Texture2D texture, Rectangle r1, Rectangle r2, Color color, float rotation)
         {
             float x = r1.X * (width / 1920.0f);
             float y = r1.Y * (height / 1080.0f);
@@ -256,7 +260,7 @@ namespace Inignoto.Graphics.Gui
             batch.Draw(texture, new Rectangle((int)x, (int)y, (int)w, (int)h), r2, color);
         }
 
-        protected void Draw(SpriteBatch batch, int width, int height, Texture2D texture, Rectangle r1, Rectangle r2, Color color)
+        public static void Draw(SpriteBatch batch, int width, int height, Texture2D texture, Rectangle r1, Rectangle r2, Color color)
         {
             if (texture == null) return;
             float x = r1.X * (width / 1920.0f);
@@ -266,7 +270,7 @@ namespace Inignoto.Graphics.Gui
             batch.Draw(texture, new Rectangle((int)x, (int)y, (int)w, (int)h), r2, color);
         }
 
-        protected void Draw(SpriteBatch batch, int width, int height, Texture2D texture, Rectangle r1, Color color)
+        public static void Draw(SpriteBatch batch, int width, int height, Texture2D texture, Rectangle r1, Color color)
         {
             if (texture == null) return;
             float x = r1.X * (width / 1920.0f);
@@ -276,7 +280,7 @@ namespace Inignoto.Graphics.Gui
             batch.Draw(texture, new Rectangle((int)x, (int)y, (int)w, (int)h), color);
         }
 
-        protected void DrawString(SpriteBatch batch, int W, int H, int x, int y, float size, BitmapFont font, string str, Color color)
+        public static void DrawString(SpriteBatch batch, int W, int H, int x, int y, float size, BitmapFont font, string str, Color color)
         {
             char[] ch = str.ToCharArray();
             int I = 0;

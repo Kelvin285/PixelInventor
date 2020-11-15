@@ -10,6 +10,7 @@ using Inignoto.Graphics.Textures;
 using Inignoto.Graphics.World;
 using Inignoto.Math;
 using Inignoto.Tiles;
+using Inignoto.Tiles.Data;
 using Inignoto.Utilities;
 using Inignoto.World.RaytraceResult;
 using Microsoft.Xna.Framework;
@@ -23,21 +24,33 @@ namespace Inignoto.Items
     {
 
         public readonly Tile tile;
+        public TileData overlay { get; private set; }
 
         public TileItem(Tile tile, int max_stack = 64) : base(tile.name, max_stack, 0.25f, false)
         {
             this.tile = tile;
-            if (tile.IsVisible())
-            Mesh = TileBuilder.BuildTile(-0.5f, -0.5f, -0.5f, tile.DefaultData, Inignoto.game.GraphicsDevice);
+            overlay = TileManager.AIR.DefaultData;
+            BuildMesh();
         }
 
-        protected override bool Attack(Entity user, GameTime time, World.RaytraceResult.TileRaytraceResult result)
+        private void BuildMesh()
         {
-            base.Attack(user, time, result);
-            return true;
+            if (tile.IsVisible())
+                Mesh = TileBuilder.BuildTile(-0.5f, -0.5f, -0.5f, tile.DefaultData, overlay, Inignoto.game.GraphicsDevice);
         }
 
-        protected override bool Use(Entity user, GameTime time)
+        public void SetOverlay(TileData overlay)
+        {
+            this.overlay = overlay;
+            BuildMesh();
+        }
+
+        protected override ActionResult Attack(Entity user, GameTime time, World.RaytraceResult.TileRaytraceResult result)
+        {
+            return result != null ? ActionResult.BLOCK : ActionResult.MISS;
+        }
+
+        protected override ActionResult Use(Entity user, GameTime time)
         {
             World.World world = user.world;
 
@@ -45,12 +58,16 @@ namespace Inignoto.Items
 
             TileRaytraceResult result = world.RayTraceTiles(eyePosition, new Vector3f(eyePosition).Add(user.ForwardLook.Mul(user.ReachDistance)), Tiles.Tile.TileRayTraceType.BLOCK);
 
-            if (result == null) return false;
+            if (result == null) return ActionResult.MISS;
 
             Vector3f normal = result.intersection.normal;
 
             TilePos pos = new World.World.TilePos(result.pos.x + normal.X, result.pos.y + normal.Y, result.pos.z + normal.Z);
-            if (TileManager.GetTile(world.GetVoxel(pos).tile_id).IsReplaceable())
+            if (tile.Overlay)
+            {
+                pos = new World.World.TilePos(result.pos.x, result.pos.y, result.pos.z);
+            }
+            if (TileManager.GetTile(world.GetVoxel(pos).tile_id).IsReplaceable() || tile.Overlay)
             {
                 bool intersects = false;
                 foreach (Entity e in world.entities)
@@ -69,7 +86,13 @@ namespace Inignoto.Items
                 }
                 if (!intersects)
                 {
-                    world.SetVoxel(pos, tile.DefaultData);
+                    if (!tile.Overlay)
+                    {
+                        world.SetVoxel(pos, tile.DefaultData);
+                    } else
+                    {
+                        world.SetVoxel(pos, world.GetVoxel(pos.x, pos.y, pos.z), tile.DefaultData);
+                    }
                     if (user is PlayerEntity)
                     {
                         PlayerEntity player = (PlayerEntity)user;
@@ -92,15 +115,15 @@ namespace Inignoto.Items
                         sound.Play();
                         Inignoto.game.SoundsToDispose.Add(sound);
                     }
-                    return true;
+                    return ActionResult.BLOCK;
                 }
             }
-            return false;
+            return ActionResult.MISS;
         }
 
-        public override void TryStopUsing(Entity user, GameTime time)
+        public override void StopUsing(Entity user, GameTime time)
         {
-            cooldown_time = time.TotalGameTime.TotalMilliseconds;
+            CooldownTime = time.TotalGameTime.TotalMilliseconds;
         }
 
 

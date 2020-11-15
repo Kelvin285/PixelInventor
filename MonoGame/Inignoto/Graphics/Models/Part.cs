@@ -247,7 +247,7 @@ namespace Inignoto.Graphics.Models
             normals.Add((int)Tiles.Tile.TileFace.BOTTOM);
             for (int i = 0; i < indices.Length; i++)
             {
-                vpct[i] = new VertexPositionLightTexture(new Vector3(vertices[indices[i] * 3], vertices[indices[i] * 3 + 1], vertices[indices[i] * 3 + 2]), Color.White, new Vector2(texCoords[indices[i] * 2], texCoords[indices[i] * 2 + 1]), normals[indices[i]]);
+                vpct[i] = new VertexPositionLightTexture(new Vector3(vertices[indices[i] * 3], vertices[indices[i] * 3 + 1], vertices[indices[i] * 3 + 2]), Color.White, new Vector4(texCoords[indices[i] * 2], texCoords[indices[i] * 2 + 1], -1, -1), normals[indices[i]]);
             }
             return new Mesh.Mesh(Inignoto.game.GraphicsDevice, vpct, false, texture);
         }

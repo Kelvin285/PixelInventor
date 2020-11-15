@@ -24,7 +24,7 @@ namespace Inignoto.Tiles.Data
 
         public TileData(int tile, int state, ResourcePath location, int index)
         {
-            this.tile_id = tile;
+            tile_id = tile;
             this.state = state;
             this.location = location;
             this.index = index;
@@ -159,16 +159,13 @@ namespace Inignoto.Tiles.Data
                 {
                     if (tile.tinted)
                     {
-                        chunk.PropogateLights(x, y, z, tile.RedTint > 0, tile.GreenTint > 0, tile.BlueTint > 0, true);
                         chunk.RemoveLight(x, y, z, tile.RedTint == 0, tile.GreenTint == 0, tile.BlueTint == 0, false);
-                        chunk.PropogateLights(x, y, z, tile.RedTint > 0, tile.GreenTint > 0, tile.BlueTint > 0, true);
                     }
                     else
                     {
                         if (tile.IsOpaque())
                         {
                             chunk.RemoveLight(x, y, z, true, true, true, true);
-                            chunk.PropogateLights(x, y, z, true, true, true, true);
                         }
                     }
                 }
@@ -186,22 +183,15 @@ namespace Inignoto.Tiles.Data
             {
                 if (tile.glowing)
                 {
-                    chunk.RemoveLight(x, y, z, tile.light_red > 0, tile.light_green > 0, tile.light_blue > 0, true);
+                    chunk.RemoveLight(x, y, z, true, true, true, true);
                 } else
                 {
-                    if (tile.tinted)
-                    {
-                        chunk.RemoveLight(x, y, z, tile.RedTint > 0, tile.GreenTint > 0, tile.BlueTint > 0, false);
-                        chunk.PropogateLights(x, y, z, tile.RedTint == 0, tile.GreenTint == 0, tile.BlueTint == 0, true);
-                    } else
-                    {
-                        chunk.PropogateLights(x, y, z, true, true, true, true);
-                    }
-                    
+                    chunk.PropogateLights(x, y, z, true, true, true, true);
                 }
                 
             }
         }
+
 
     }
 

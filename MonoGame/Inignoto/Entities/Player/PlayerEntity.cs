@@ -30,15 +30,19 @@ namespace Inignoto.Entities.Player
         public float UseTimer = 0;
         public float PlaceTimer = 0;
 
+        public long UID = 0;
+
         public PhysicalInventory Inventory { get; protected set; }
 
-        public PlayerEntity(World.World world, Vector3f position) : base(world, position)
+        public PlayerEntity(World.World world, Vector3f position, long UID) : base(world, position)
         {
             position.Y = world.properties.generator.GetHeight(position.X, position.Z, world.radius) + 1;
             ReachDistance = 4.0f;
             SpawnPosition = new Vector3f(position);
 
-            Name = "Test Username 1234";
+            this.UID = UID;
+
+            Name = "TestUsername";
 
             Name = Name.Substring(0, System.Math.Min(Name.Length, 18));
             Inventory = new PhysicalInventory(this);
@@ -81,9 +85,9 @@ namespace Inignoto.Entities.Player
             else PlaceTimer = 0;
         }
 
-        public override void DamageEntity(float damage)
+        public void DamageEntity(float damage, bool ignore_sandbox)
         {
-            if (gamemode == Gamemode.SURVIVAL)
+            if (gamemode == Gamemode.SURVIVAL || ignore_sandbox)
             {
                 base.DamageEntity(damage);
             } else
@@ -91,6 +95,11 @@ namespace Inignoto.Entities.Player
                 damage = 0;
             }
 
+        }
+
+        public override void DamageEntity(float damage)
+        {
+            DamageEntity(damage, false);
         }
 
     }

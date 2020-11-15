@@ -9,6 +9,10 @@ using Microsoft.Xna.Framework.Graphics;
 using Inignoto.Effects;
 using Microsoft.Xna.Framework;
 using Inignoto.Graphics.Shadows;
+using Inignoto.World.Biomes;
+using Inignoto.Math;
+using Inignoto.World.Structures;
+using Inignoto.Common.Commands;
 
 namespace Inignoto.Utilities
 {
@@ -23,6 +27,8 @@ namespace Inignoto.Utilities
 
         public static Effect postProcessing;
 
+        public static RasterizerState CULL_CLOCKWISE_RASTERIZER_STATE;
+        public static RasterizerState DEFAULT_RASTERIZER_STATE;
 
         public static void LoadResources()
         {
@@ -32,9 +38,12 @@ namespace Inignoto.Utilities
             TileDataHolder.Initialize();
             ItemManager.LoadItems();
             SoundEffects.LoadSoundEffects();
+            BiomeManager.RegisterBiomes();
+            StructureManager.RegisterStructures();
+            CommandManager.RegisterCommands();
 
             Inignoto.game.world = new World.World();
-            Inignoto.game.player = new Entities.Client.Player.ClientPlayerEntity(Inignoto.game.world, new Math.Vector3f(Inignoto.game.world.radius * 2, 10, Inignoto.game.world.radius));
+            Inignoto.game.player = new Entities.Client.Player.ClientPlayerEntity(Inignoto.game.world, new Vector3f(Inignoto.game.world.radius * 2, 10, Inignoto.game.world.radius));
             Inignoto.game.hud = new Graphics.Gui.Hud();
 
             effect = new GameEffect(Inignoto.game.Content.Load<Effect>("Effect"));
@@ -46,7 +55,14 @@ namespace Inignoto.Utilities
 
             shadowImage = new RenderTarget2D(Inignoto.game.GraphicsDevice, 2048, 2048, false, SurfaceFormat.Single, DepthFormat.Depth24, 2, RenderTargetUsage.DiscardContents);
             lightImage = new RenderTarget2D(Inignoto.game.GraphicsDevice, 2048, 2048, false, SurfaceFormat.Color, DepthFormat.Depth16);
-            gameImage = new RenderTarget2D(Inignoto.game.GraphicsDevice, 2048, 2048, false, SurfaceFormat.Color, DepthFormat.Depth16);
+            gameImage = new RenderTarget2D(Inignoto.game.GraphicsDevice, 2048, 2048, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8);
+
+            CULL_CLOCKWISE_RASTERIZER_STATE = new RasterizerState();
+            CULL_CLOCKWISE_RASTERIZER_STATE.CullMode = CullMode.CullClockwiseFace;
+
+            DEFAULT_RASTERIZER_STATE = new RasterizerState();
+            DEFAULT_RASTERIZER_STATE.CullMode = CullMode.None;
+
 
             //new RenderTarget2D(Inignoto.game.GraphicsDevice, width, height, false, SurfaceFormat.Color, DepthFormat.Depth16);
         }

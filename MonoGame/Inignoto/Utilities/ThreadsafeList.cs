@@ -34,6 +34,14 @@ namespace Inignoto.Utilities
             return default(T);
         }
 
+        public void Clear()
+        {
+            lock(current)
+            {
+                current = new T[0];
+            }
+        }
+
         public void Add(T t)
         {
             bool changed = false;

@@ -15,12 +15,12 @@ namespace Inignoto.Items
             
         }
 
-        protected override bool Attack(Entity user, GameTime time, World.RaytraceResult.TileRaytraceResult result)
+        protected override ActionResult Attack(Entity user, GameTime time, World.RaytraceResult.TileRaytraceResult result)
         {
             return base.Attack(user, time, result);
         }
 
-        protected override bool Use(Entity user, GameTime time)
+        protected override ActionResult Use(Entity user, GameTime time)
         {
             return base.Use(user, time);
         }

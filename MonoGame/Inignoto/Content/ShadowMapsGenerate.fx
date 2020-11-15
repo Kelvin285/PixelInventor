@@ -41,8 +41,10 @@ struct VertexPositionColorTexture
 {
     float4 Position : POSITION0;
     float4 Color : COLOR0;
-	float2 TextureCoordinate : TEXCOORD0;
+    float2 TextureCoordinate : TEXCOORD0;
     float Normal : NORMAL0;
+    float4 Hue : COLOR1;
+    float2 OverlayTextureCoordinate : TEXCOORD1;
 };
 
 struct VertexShaderOutput

@@ -27,6 +27,8 @@ namespace Inignoto.Tiles
         public static Tile GLOWING_CRYSTAL;
         public static Tile GLASS;
         public static Tile RED_GLASS;
+        public static Tile SNOW;
+        public static Tile ICE;
 
         private static bool TEXTURES_LOADED = false;
 
@@ -48,13 +50,15 @@ namespace Inignoto.Tiles
             SAND = new Tile("Inignoto:sand", null).SetFull();
             LEAVES = new Tile("Inignoto:leaves", null);
             LOG = new Tile("Inignoto:log", null).SetFull();
-            GRASS = new Tile("Inignoto:grass", SoundEffects.step_grass).SetFull();
+            GRASS = new Tile("Inignoto:grass", SoundEffects.step_grass).SetFull().SetOverlay();
             PURPLE_GRASS = new Tile("Inignoto:purple_grass", SoundEffects.step_grass).SetFull();
             WATER = new Tile("Inignoto:water", null, false).SetBlocksMovement(false).SetTransparent().SetRayTraceType(Tile.TileRayTraceType.FLUID).SetReplaceable(true);
             GLOWING_CRYSTAL = new Tile("Inignoto:glowing_crystal", null).SetFull().SetLight(10, 14, 15);
             MALECHITE = new Tile("Inignoto:malechite", null).SetFull().SetLight(0, 8, 0);
             GLASS = new Tile("Inignoto:glass", null).SetFull().SetTransparent();
             RED_GLASS = new Tile("Inignoto:red_glass", null).SetFull().SetTransparent().SetTint(15, 0, 0, 10);
+            SNOW = new Tile("Inignoto:snow", null).SetFull();
+            ICE = new Tile("Inignoto:ice", null).SetFull();
         }
 
         public static void TryLoadTileTextures()
@@ -64,7 +68,7 @@ namespace Inignoto.Tiles
             {
                 if (tile.IsVisible() == false) continue;
 
-                Mesh mesh = TileBuilder.BuildTile(0, 0, 0, tile.DefaultData, Inignoto.game.GraphicsDevice);
+                Mesh mesh = TileBuilder.BuildTile(0, 0, 0, tile.DefaultData, TileManager.AIR.DefaultData, Inignoto.game.GraphicsDevice);
 
                 Textures.TILE_ITEMS.Add(tile.DefaultData, mesh.CreateTexture(Textures.tiles.GetTexture(), GameResources.effect, Inignoto.game.GraphicsDevice, new Vector3(-0.75f, -0.2f, -1.4f), Quaternion.CreateFromYawPitchRoll(45 * 3.14f / 180, 30 * 3.14f / 180, 0), 128, 128));
 

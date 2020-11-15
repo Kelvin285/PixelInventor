@@ -7,8 +7,9 @@ using System;
 
 namespace Inignoto.Graphics.Mesh
 {
-    public class Mesh
+    public class Mesh : IDisposable
     {
+
         public Matrix worldMatrix;
         readonly VertexPositionLightTexture[] triangleVertices;
         VertexBuffer vertexBuffer;
@@ -18,17 +19,24 @@ namespace Inignoto.Graphics.Mesh
         public Texture2D texture;
 
         public Vector3 scale = new Vector3(1.0f);
+        public Vector3 position = new Vector3(0.0f);
         public Quaternion rotation = new Quaternion();
 
         public bool empty = false;
 
         public Mesh(GraphicsDevice device, VertexPositionLightTexture[] triangleVertices, bool lines = false, Texture2D texture = null)
         {
+            if (device == null)
+            {
+                return;
+            }
+            if (triangleVertices == null) return;
             if (triangleVertices.Length == 0)
             {
                 empty = true;
                 return;
             }
+            
             this.triangleVertices = triangleVertices;
             vertexBuffer = new VertexBuffer(device, typeof(
                            VertexPositionLightTexture), triangleVertices.Length, BufferUsage.
@@ -43,11 +51,20 @@ namespace Inignoto.Graphics.Mesh
 
         public Vector3 GetPosition()
         {
-            return this.worldMatrix.Translation;
+            return worldMatrix.Translation;
         }
 
         public void SetPosition(Vector3 position)
         {
+            this.position = position;
+            worldMatrix.Translation = position;
+        }
+
+        public void SetPosition(float x, float y, float z)
+        {
+            position.X = x;
+            position.Y = y;
+            position.Z = z;
             worldMatrix.Translation = position;
         }
 
@@ -93,7 +110,9 @@ namespace Inignoto.Graphics.Mesh
                 if (!GameResources.drawing_shadows)
                 {
                     if (GameResources.shadowMap.shadowMapRenderTarget == null) continue;
-                    effect.Parameters["ShadowTexture"].SetValue(GameResources.shadowMap.shadowMapRenderTarget);
+                    effect.Parameters["ShadowTexture"].SetValue(GameResources.shadowMap.shadowMapRenderTarget[0]);
+                    effect.Parameters["ShadowTexture2"].SetValue(GameResources.shadowMap.shadowMapRenderTarget[1]);
+                    effect.Parameters["ShadowTexture3"].SetValue(GameResources.shadowMap.shadowMapRenderTarget[2]);
                 }
                 
 
@@ -137,7 +156,7 @@ namespace Inignoto.Graphics.Mesh
 
             return (Texture2D)target;
         }
-
+        
         public void Dispose()
         {
             if (vertexBuffer != null)

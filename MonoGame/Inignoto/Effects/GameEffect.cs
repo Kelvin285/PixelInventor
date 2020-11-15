@@ -18,6 +18,8 @@ namespace Inignoto.Effects
 
         public Matrix ShadowView { get => GetMatrix("ShadowView"); set => SetMatrix("ShadowView", value); }
         public Matrix ShadowProjection { get => GetMatrix("ShadowProjection"); set => SetMatrix("ShadowProjection", value); }
+        public Matrix ShadowProjection2 { get => GetMatrix("ShadowProjection2"); set => SetMatrix("ShadowProjection2", value); }
+        public Matrix ShadowProjection3 { get => GetMatrix("ShadowProjection3"); set => SetMatrix("ShadowProjection3", value); }
 
 
         public float FogDistance { get => GetFloat("fog_distance"); set => SetFloat("fog_distance", value); }
@@ -25,6 +27,7 @@ namespace Inignoto.Effects
         public float Time { get => GetFloat("time"); set => SetFloat("time", value); }
         public bool Water { get => GetBool("water"); set => SetBool("water", value); }
         public Vector4 ObjectColor { get => GetFloat4("color"); set => SetFloat4("color", value); }
+        public Vector4 ObjectLight { get => GetFloat4("ObjectLight"); set => SetFloat4("ObjectLight", value); }
 
         public float Radius { get => GetFloat("radius"); set => SetFloat("radius", value); }
         public float Area { get => GetFloat("area"); set => SetFloat("area", value); }
@@ -48,7 +51,7 @@ namespace Inignoto.Effects
         public void Init()
         {
             ObjectColor = new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-
+            ObjectLight = new Vector4(-1, -1, -1, -1);
             FogDistance = 500.0f;
             FogColor = new Vector4(Color.CornflowerBlue.R / 255.0f, Color.CornflowerBlue.G / 255.0f, Color.CornflowerBlue.B / 255.0f, 1.0f);
 
@@ -58,60 +61,62 @@ namespace Inignoto.Effects
 
         public Matrix GetMatrix(string name)
         {
+            if (Parameters[name] == null) return new Matrix();
             return Parameters[name].GetValueMatrix();
         }
 
         public void SetMatrix(string name, Matrix matrix)
         {
+            if (Parameters[name] == null) return;
             Parameters[name].SetValue(matrix);
         }
 
         public float GetFloat(string name)
         {
+            if (Parameters[name] == null) return 0;
             return Parameters[name].GetValueSingle();
         }
 
         public void SetFloat(string name, float value)
         {
+            if (Parameters[name] == null) return;
             Parameters[name].SetValue(value);
         }
 
         public bool GetBool(string name)
         {
+            if (Parameters[name] == null) return false;
             return Parameters[name].GetValueBoolean();
         }
 
         public void SetBool(string name, bool value)
         {
+            if (Parameters[name] == null) return;
             Parameters[name].SetValue(value);
         }
 
         public Vector4 GetFloat4(string name)
         {
+            if (Parameters[name] == null) return new Vector4();
             return Parameters[name].GetValueVector4();
         }
 
         public void SetFloat4(string name, Vector4 value)
         {
+            if (Parameters[name] == null) return;
             Parameters[name].SetValue(value);
         }
 
         public Vector3 GetFloat3(string name)
         {
+            if (Parameters[name] == null) return new Vector3();
             return Parameters[name].GetValueVector3();
         }
 
         public void SetFloat3(string name, Vector3 value)
         {
+            if (Parameters[name] == null) return;
             Parameters[name].SetValue(value);
-        }
-
-        public void SetChunk(int i, Vector3 position, bool[] voxels, bool empty = false)
-        {
-            Parameters["chunks["+i+"].position"].SetValue(position);
-            for (int j = 0; j < voxels.Length; j++)
-                Parameters["chunks[" + i + "].voxels["+j+"]"].SetValue(voxels[j]);
-            Parameters["chunks[" + i + "].empty"].SetValue(empty);
         }
     }
 }

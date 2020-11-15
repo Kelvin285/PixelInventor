@@ -11,7 +11,7 @@ namespace Inignoto.Graphics.Shadows
 {
     public class ShadowMap
     {
-        public RenderTarget2D shadowMapRenderTarget;
+        public RenderTarget2D[] shadowMapRenderTarget = new RenderTarget2D[3];
         public GameEffect _ShadowMapGenerate;
 
         public Matrix view;
@@ -24,44 +24,46 @@ namespace Inignoto.Graphics.Shadows
         {
             //            target = new RenderTarget2D(Inignoto.game.GraphicsDevice, width, height, false, SurfaceFormat.Color, DepthFormat.Depth16);
 
-            shadowMapRenderTarget = new RenderTarget2D(Inignoto.game.GraphicsDevice, 2048, 2048, false, SurfaceFormat.Single, DepthFormat.Depth24, 2, RenderTargetUsage.DiscardContents);
+            shadowMapRenderTarget[0] = new RenderTarget2D(Inignoto.game.GraphicsDevice, 2048, 2048, false, SurfaceFormat.Single, DepthFormat.Depth24, 2, RenderTargetUsage.DiscardContents);
+            shadowMapRenderTarget[1] = new RenderTarget2D(Inignoto.game.GraphicsDevice, 2048, 2048, false, SurfaceFormat.Single, DepthFormat.Depth24, 2, RenderTargetUsage.DiscardContents);
+            shadowMapRenderTarget[2] = new RenderTarget2D(Inignoto.game.GraphicsDevice, 2048, 2048, false, SurfaceFormat.Single, DepthFormat.Depth24, 2, RenderTargetUsage.DiscardContents);
+
             _ShadowMapGenerate = new GameEffect(Inignoto.game.Content.Load<Effect>("ShadowMapsGenerate"));
 
-            Update(lightPosition, _lightDirection);
+            Update(lightPosition, _lightDirection, 0);
         }
-        public void Update(Vector3 lightPosition, Vector3 lightDirection)
+        public void Update(Vector3 lightPosition, Vector3 lightDirection, int map)
         {
             Matrix lightView = Matrix.CreateLookAt(lightPosition,
                         lightPosition + lightDirection,
                         new Vector3(0f, 1f, 0f));
 
             float size = 25;
-
+            float size2 = 100;
+            float size3 = 300;
             Matrix lightProjection = Matrix.CreateOrthographic(size, size, -size, size);
-            Matrix lightProjection2 = Matrix.CreateOrthographic(size * 2, size * 2, -size * 2, size * 2);
-            Matrix lightProjection3 = Matrix.CreateOrthographic(size * 4, size * 4, -size * 4, size * 4);
+            Matrix lightProjection2 = Matrix.CreateOrthographic(size2, size2, -size2, size2);
+            Matrix lightProjection3 = Matrix.CreateOrthographic(size3, size3, -size3, size3);
 
             _ShadowMapGenerate.CameraPos = lightPosition;
             _ShadowMapGenerate.View = lightView;
-            _ShadowMapGenerate.Projection = lightProjection;
-            //_ShadowMapGenerate.Projection2 = lightProjection2;
-            //_ShadowMapGenerate.Projection3 = lightProjection3;
-
-
+            if (map == 0) _ShadowMapGenerate.Projection = lightProjection;
+            if (map == 1) _ShadowMapGenerate.Projection = lightProjection2;
+            if (map == 2) _ShadowMapGenerate.Projection = lightProjection3;
             //_ShadowMapGenerate.Projection = Inignoto.game.projectionMatrix;
 
             view = lightView;
             projection = lightProjection;
-            projection2 = lightProjection;
-            projection3 = lightProjection;
+            projection2 = lightProjection2;
+            projection3 = lightProjection3;
 
         }
 
-        public void Begin(Vector3 lightPosition, Vector3 lightDirection)
+        public void Begin(Vector3 lightPosition, Vector3 lightDirection, int map)
         {
-            Inignoto.game.GraphicsDevice.SetRenderTarget(shadowMapRenderTarget);
+            Inignoto.game.GraphicsDevice.SetRenderTarget(shadowMapRenderTarget[map]);
             GameResources.drawing_shadows = true;
-            Update(lightPosition, lightDirection);
+            Update(lightPosition, lightDirection, map);
         }
 
         public void End()

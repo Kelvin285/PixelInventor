@@ -36,7 +36,50 @@ namespace Inignoto.Math
 
         public float Z { get => vector.Z; set => vector.Z = value; }
 
+        public static Vector3f operator *(Vector3f a, Vector3f b)
+        {
+            a.X *= b.X;
+            a.Y *= b.Y;
+            a.Z *= b.Z;
+            return a;
+        }
+        public static Vector3f operator *(Vector3f a, float b)
+        {
+            a.X *= b;
+            a.Y *= b;
+            a.Z *= b;
+            return a;
+        }
+        public static Vector3f operator /(Vector3f a, Vector3f b)
+        {
+            a.X /= b.X;
+            a.Y /= b.Y;
+            a.Z /= b.Z;
+            return a;
+        }
+        public static Vector3f operator /(Vector3f a, float b)
+        {
+            a.X /= b;
+            a.Y /= b;
+            a.Z /= b;
+            return a;
+        }
 
+        public static Vector3f operator +(Vector3f a, Vector3f b)
+        {
+            a.X += b.X;
+            a.Y += b.Y;
+            a.Z += b.Z;
+            return a;
+        }
+
+        public static Vector3f operator -(Vector3f a, Vector3f b)
+        {
+            a.X -= b.X;
+            a.Y -= b.Y;
+            a.Z -= b.Z;
+            return a;
+        }
         public Vector3f Set(float x, float y, float z)
         {
             vector.X = x;

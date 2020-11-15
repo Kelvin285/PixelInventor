@@ -2,7 +2,9 @@
 using Inignoto.Effects;
 using Inignoto.Math;
 using Inignoto.Tiles;
+using Inignoto.Utilities;
 using Inignoto.World;
+using Inignoto.World.Chunks;
 using Inignoto.World.RaytraceResult;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
@@ -52,6 +54,9 @@ namespace Inignoto.Entities
         public float stamina = 100.0f;
         public float defense = 0.0f;
 
+        public double arm_swing = 0;
+        protected double render_arm_swing = 0;
+
         protected List<GameSound> SoundsToDispose = new List<GameSound>();
 
         protected double WalkCycle;
@@ -65,6 +70,11 @@ namespace Inignoto.Entities
         public Vector3f ForwardLook
         {
             get => new Vector3f(Vector3.Forward).Rotate(Quaternion.CreateFromYawPitchRoll((look.Y - 1) * ((float)System.Math.PI / 180.0f), look.X * ((float)System.Math.PI / 180.0f), look.Z * ((float)System.Math.PI / 180.0f)));
+        }
+
+        public Vector3f UpLook
+        {
+            get => new Vector3f(Vector3.Forward).Rotate(Quaternion.CreateFromYawPitchRoll((look.Y - 1) * ((float)System.Math.PI / 180.0f), (look.X + 90) * ((float)System.Math.PI / 180.0f), look.Z * ((float)System.Math.PI / 180.0f)));
         }
 
         public Vector3f ForwardMotionVector
@@ -98,6 +108,12 @@ namespace Inignoto.Entities
 
         public virtual void Update(GameTime time)
         {
+            float delta = (float)time.ElapsedGameTime.TotalSeconds * 60;
+            if (arm_swing > 0)
+            {
+                arm_swing -= delta;
+            }
+            render_arm_swing = MathHelper.Lerp((float)render_arm_swing, (float)arm_swing, 0.25f);
             DoPhysicsUpdates(time);
             if (OnGround)
             {
@@ -236,9 +252,47 @@ namespace Inignoto.Entities
             
         }
 
+        public virtual void PreRender(GameEffect effect)
+        {
+            if (!GameResources.drawing_shadows)
+            {
+                if (effect.WorldRender)
+                {
+                    Chunk chunk = world.TryGetChunk(GetTilePos());
+                    if (chunk != null)
+                    {
+                        int X = GetTilePos().x % Constants.CHUNK_SIZE;
+                        int Y = GetTilePos().y % Constants.CHUNK_SIZE;
+                        int Z = GetTilePos().z % Constants.CHUNK_SIZE;
+                        if (X < 0) X = Constants.CHUNK_SIZE - X;
+                        if (Y < 0) Y = Constants.CHUNK_SIZE - Y;
+                        if (Z < 0) Z = Constants.CHUNK_SIZE - Z;
+
+                        float r = chunk.GetRedLight(X, Y, Z) / 15.0f;
+                        float g = chunk.GetGreenLight(X, Y, Z) / 15.0f;
+                        float b = chunk.GetBlueLight(X, Y, Z) / 15.0f;
+                        float sun = chunk.GetSunlight(X, Y, Z) / 15.0f;
+
+                        effect.ObjectLight = new Vector4(r, g, b, sun);
+                    }
+
+                }
+            }
+        }
         public virtual void Render(GraphicsDevice device, GameEffect effect, GameTime time, bool showModel = false)
         {
+           
+        }
 
+        public virtual void PostRender(GameEffect effect)
+        {
+            if (!GameResources.drawing_shadows)
+            {
+                if (effect.WorldRender)
+                {
+                    effect.ObjectLight = new Vector4(-1, -1, -1, -1);
+                }
+            }
         }
         
         public virtual float GetEyeHeight()
@@ -251,7 +305,7 @@ namespace Inignoto.Entities
             if (Crawling) return 0.025f * (float)time.ElapsedGameTime.TotalSeconds * 60;
             if (Crouching) return 0.035f * (float)time.ElapsedGameTime.TotalSeconds * 60;
             if (Running) return 0.11f * (float)time.ElapsedGameTime.TotalSeconds * 60;
-            return 0.055f * (float)time.ElapsedGameTime.TotalSeconds * 60;
+            return 0.075f * (float)time.ElapsedGameTime.TotalSeconds * 60;
         }
 
         public virtual Vector3f GetEyePosition()
@@ -261,7 +315,7 @@ namespace Inignoto.Entities
 
         public TilePos GetTilePos()
         {
-            return new TilePos(position.X + size.X * 0.5f, position.Y, position.Z + size.Z * 0.5f);
+            return new TilePos(position.X + size.X * 0.5f, position.Y + 0.5f, position.Z + size.Z * 0.5f);
         }
 
         public virtual void DamageEntity(float damage)

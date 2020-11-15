@@ -14,6 +14,9 @@ float4x4 Projection;
 float4x4 ShadowView;
 float4x4 ShadowProjection;
 
+float4x4 ShadowProjection2;
+float4x4 ShadowProjection3;
+
 float fog_distance;
 float4 fog_color;
 bool water;
@@ -23,6 +26,7 @@ float3 camera_pos;
 float3 sunLook;
 
 float4 color;
+float4 ObjectLight;
 
 float radius;
 float area;
@@ -30,6 +34,9 @@ float area;
 bool world_render;
 
 texture ShadowTexture;
+texture ShadowTexture2;
+texture ShadowTexture3;
+
 texture ModelTexture;
 
 
@@ -52,6 +59,26 @@ sampler2D shadowSampler = sampler_state {
     AddressV = Clamp;
 };
 
+sampler2D shadowSampler2 = sampler_state {
+
+    Texture = (ShadowTexture2);
+    MagFilter = Point;
+    MinFilter = Point;
+    MipFilter = Point;
+    AddressU = Clamp;
+    AddressV = Clamp;
+};
+
+sampler2D shadowSampler3 = sampler_state {
+
+    Texture = (ShadowTexture3);
+    MagFilter = Point;
+    MinFilter = Point;
+    MipFilter = Point;
+    AddressU = Clamp;
+    AddressV = Clamp;
+};
+
 
 struct VertexPositionColorTexture
 {
@@ -59,6 +86,8 @@ struct VertexPositionColorTexture
     float4 Color : COLOR0;
 	float2 TextureCoordinate : TEXCOORD0;
     float Normal : NORMAL0;
+    float4 Hue : COLOR1;
+    float2 OverlayTextureCoordinate : TEXCOORD1;
 };
 
 struct VertexShaderOutput
@@ -71,6 +100,7 @@ struct VertexShaderOutput
     float4 Light : TEXCOORD2;
     float Dot : TEXCOORD3;
     float3 Normal : TEXCOORD4;
+    float2 OverlayTextureCoordinate : TEXCOORD5;
 };
 
 float rand(in float2 uv)
@@ -144,6 +174,7 @@ VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
 
 
     output.TextureCoordinate = input.TextureCoordinate;
+    output.OverlayTextureCoordinate = input.OverlayTextureCoordinate;
 
     output.PixelPos = output.Position;
 
@@ -158,7 +189,6 @@ VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
 
     //cross(normal, float3(0, -1, 0))
     output.Dot = dot(output.Normal, -sunLook);
-
 
     return output;
 }
@@ -207,69 +237,94 @@ float GetFog(VertexShaderOutput input) {
     return depth;
 }
 
-float CalcShadowTermPCF(float light_space_depth, float ndotl, float2 shadow_coord)
-{
-    float shadow_term = 0;
-
-    //float2 v_lerps = frac(ShadowMapSize * shadow_coord);
-
-    float DepthBias = 0.02f;
-    float variableBias = clamp(0.001 * tan(acos(ndotl)), 0, DepthBias);
-    //float variableBias = 0.02f;
-
-    //safe to assume it's a square
-    float size = 5.0f / 2048.0f;
-
-    
-    float samples[4];
-    samples[0] = (light_space_depth - variableBias < tex2D(shadowSampler, shadow_coord).r);
-    samples[1] = (light_space_depth - variableBias < tex2D(shadowSampler, shadow_coord + float2(size, 0)).r);
-    samples[2] = (light_space_depth - variableBias < tex2D(shadowSampler, shadow_coord + float2(0, size)).r);
-    samples[3] = (light_space_depth - variableBias < tex2D(shadowSampler, shadow_coord + float2(size, size)).r);
-
-    shadow_term = (samples[0] + samples[1] + samples[2] + samples[3]) / 4.0;
-    //shadow_term = lerp(lerp(samples[0],samples[1],0.5f),lerp(samples[2],samples[3], 0.5f), 0.25f);
-    
-    return shadow_term;
-}
-
 
 float4 OpaquePixelShaderFunction(VertexShaderOutput input, float2 vPos : VPOS) : COLOR0
 {
     float4x4 LightViewProj = mul(ShadowView, ShadowProjection);
     float4 lightingPosition = mul(input.WorldPos, LightViewProj);
 
+    float4x4 LightViewProj2 = mul(ShadowView, ShadowProjection2);
+    float4 lightingPosition2 = mul(input.WorldPos, LightViewProj2);
+
+    float4x4 LightViewProj3 = mul(ShadowView, ShadowProjection3);
+    float4 lightingPosition3 = mul(input.WorldPos, LightViewProj3);
+
     float2 ShadowTexCoord = 0.5 * lightingPosition.xy / lightingPosition.w + float2(0.5, 0.5);
     ShadowTexCoord.y = 1.0f - ShadowTexCoord.y;
+
+    float2 ShadowTexCoord2 = 0.5 * lightingPosition2.xy / lightingPosition2.w + float2(0.5, 0.5);
+    ShadowTexCoord2.y = 1.0f - ShadowTexCoord2.y;
+
+    float2 ShadowTexCoord3 = 0.5 * lightingPosition3.xy / lightingPosition3.w + float2(0.5, 0.5);
+    ShadowTexCoord3.y = 1.0f - ShadowTexCoord3.y;
     
     float shadow = 1.0f;
+    float shadow2 = 1.0f;
+    float shadow3 = 1.0f;
     float ShadowBias = 0.005f;
 
-    float shadowdepth = tex2D(shadowSampler, ShadowTexCoord).r;
+    float depth1 = tex2D(shadowSampler, ShadowTexCoord).r;
+    float depth2 = tex2D(shadowSampler2, ShadowTexCoord2).r;
+    float depth3 = tex2D(shadowSampler3, ShadowTexCoord3).r;
 
+
+    
 
     //float ndotl = cross(normal, float3(0, -1, 0));
     float ndotl = input.Dot;
 
-    float ourdepth = (lightingPosition.z / lightingPosition.w);
-    
-    if (shadowdepth > 0 && input.Normal.x == 0)
-        if (shadowdepth < ourdepth - ShadowBias)
+    float ourdepth1 = (lightingPosition.z / lightingPosition.w);
+    float ourdepth2 = (lightingPosition2.z / lightingPosition2.w);
+    float ourdepth3 = (lightingPosition3.z / lightingPosition3.w);
+
+
+    if (depth1 > 0 && input.Normal.x == 0)
+        if (depth1 < ourdepth1 - ShadowBias)
             shadow = 0.5f;
+
+    if (depth2 > 0 && input.Normal.x == 0)
+        if (depth2 < ourdepth2 - ShadowBias * 2)
+            shadow2 = 0.5f;
+
+    if (depth3 > 0 && input.Normal.x == 0)
+        if (depth3 < ourdepth3 - ShadowBias * 4)
+            shadow3 = 0.5f;
              //shadow = CalcShadowTermPCF(lightingPosition.z, ndotl, ShadowTexCoord);
+    if (ShadowTexCoord.x < 0 || ShadowTexCoord.x > 1 || ShadowTexCoord.y < 0 || ShadowTexCoord.y > 1) {
+        shadow = shadow2;
+    }
+
+    if (ShadowTexCoord2.x < 0 || ShadowTexCoord2.x > 1 || ShadowTexCoord2.y < 0 || ShadowTexCoord2.y > 1) {
+        shadow = shadow3;
+    }
 
     ndotl = max(0, ndotl);
     ndotl = (ndotl + 1) / 2;
     shadow = min(shadow, ndotl);
-    
+
+
     if (!world_render) shadow = 1;
 
     float sun = min(input.Light.w, shadow);
+    float sun2 = min(ObjectLight.w, shadow);
+
+    if (world_render)
+    {
+        sun *= max(0.1, -sunLook.y);
+        sun2 *= max(0.1, -sunLook.y);
+    }
 
     float4 light = min(float4(input.Light.xyz, 1) + float4(sun, sun, sun, 1), 1.1f);
+    float4 light2 = min(float4(ObjectLight.xyz, 1) + float4(sun2, sun2, sun2, 1), 1.1f);
 
+    light = max(light, light2);
 
 	float4 textureColor = tex2D(textureSampler, input.TextureCoordinate);
+    float4 textureColor2 = tex2D(textureSampler, input.OverlayTextureCoordinate);
+    if (textureColor2.a > 0 && input.OverlayTextureCoordinate.x >= 0) {
+        float3 col = lerp(textureColor.xyz, textureColor2.xyz, textureColor2.w);
+        textureColor = float4(col, min(textureColor.w + textureColor2.w, 1));
+    }
 	float depth = min(1, max(0, distance(input.PixelPos.xyz, float3(0, 0, 0)) / fog_distance));
     
     float fog = GetFog(input);
@@ -290,10 +345,6 @@ float4 OpaquePixelShaderFunction(VertexShaderOutput input, float2 vPos : VPOS) :
     final_color.r = lerp(final_color.r, 1, fog);
     final_color.g = lerp(final_color.g, 1, fog);
     final_color.b = lerp(final_color.b, 1, fog);
-    
-    //final_color = lerp(final_color, float4(ndotl, ndotl, ndotl, 1), 0.98f);
-    //final_color = lerp(final_color, float4(input.Normal, 1), 0.98f);
-
 
 	return final_color;
 }
@@ -303,6 +354,11 @@ float4 TransparentPixelShaderFunction(VertexShaderOutput input) : COLOR0
     float4 light = min(float4(input.Light.xyz, 1), 1.1f);
 
     float4 textureColor = tex2D(textureSampler, input.TextureCoordinate);
+    float4 textureColor2 = tex2D(textureSampler, input.OverlayTextureCoordinate);
+    if (textureColor2.a > 0 && input.OverlayTextureCoordinate.x >= 0) {
+        float3 col = lerp(textureColor.xyz, textureColor2.xyz, textureColor2.w);
+        textureColor = float4(col, min(textureColor.w + textureColor2.w, 1));
+    }
     float depth = min(1, max(0, distance(input.PixelPos.xyz, float3(0, 0, 0)) / fog_distance));
 
     float fog = GetFog(input);
@@ -314,7 +370,11 @@ float4 TransparentPixelShaderFunction(VertexShaderOutput input) : COLOR0
 
     if (textureColor.a <= 0 || textureColor.a == 1) clip(-1);
 
-    float4 final_color = textureColor * input.Color;
+    float sun = 1;
+    if (world_render)
+        sun = max(0.1, -sunLook.y);
+
+    float4 final_color = textureColor * input.Color * float4(sun, sun, sun, 1);
 
     final_color.r = lerp(final_color.r, fog_color.r, depth);
     final_color.g = lerp(final_color.g, fog_color.g, depth);
@@ -330,20 +390,7 @@ float4 TransparentPixelShaderFunction(VertexShaderOutput input) : COLOR0
 
 technique Specular
 {
-    pass Pass2
-    {
-        AlphaBlendEnable = true;
-        ZEnable = true;
-        ZWriteEnable = false;
-
-        // Final Colour = srcColour * srcAlpha + destColour * (1 - srcAlpha)
-        SrcBlend = SrcAlpha; // Normal Alpha Blending
-        DestBlend = InvSrcAlpha; // Normal Alpha Blending
-        BlendOp = Add; // Normal Alpha Blending
-
-        VertexShader = compile VS_SHADERMODEL VertexShaderFunction();
-        PixelShader = compile PS_SHADERMODEL TransparentPixelShaderFunction();
-    }
+   
 
     pass Pass1
     {
@@ -358,5 +405,20 @@ technique Specular
 
         VertexShader = compile VS_SHADERMODEL VertexShaderFunction();
         PixelShader = compile PS_SHADERMODEL OpaquePixelShaderFunction();
+    }
+
+    pass Pass2
+    {
+        AlphaBlendEnable = true;
+        ZEnable = true;
+        ZWriteEnable = false;
+
+        // Final Colour = srcColour * srcAlpha + destColour * (1 - srcAlpha)
+        SrcBlend = SrcAlpha; // Normal Alpha Blending
+        DestBlend = InvSrcAlpha; // Normal Alpha Blending
+        BlendOp = Add; // Normal Alpha Blending
+
+        VertexShader = compile VS_SHADERMODEL VertexShaderFunction();
+        PixelShader = compile PS_SHADERMODEL TransparentPixelShaderFunction();
     }
 }

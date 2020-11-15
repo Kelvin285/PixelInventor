@@ -39,5 +39,15 @@ namespace Inignoto.Math
             if (b >= System.Math.PI) return (float)-cos;
             return (float)cos;
         }
+
+        public static double Distance2(double x1, double y1, double x2, double y2)
+        {
+            return System.Math.Sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+        }
+
+        public static double Distance3(double x1, double y1, double z1, double x2, double y2, double z2)
+        {
+            return System.Math.Sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) + (z1 - z2) * (z1 - z2));
+        }
     }
 }
