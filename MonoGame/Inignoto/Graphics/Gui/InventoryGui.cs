@@ -429,7 +429,17 @@ namespace Inignoto.Graphics.Gui
 
         public override void PreRender(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime time)
         {
+            Inignoto.game.projectionMatrix = Matrix.CreatePerspectiveFieldOfView(
+                               MathHelper.ToRadians(90),
+                               Inignoto.game.GraphicsDevice.DisplayMode.AspectRatio,
+                0.01f, 1000f);
+            GameResources.effect.Projection = Inignoto.game.projectionMatrix;
             DrawPlayer(device, GameResources.effect, 1920, 1080, time);
+            Inignoto.game.projectionMatrix = Matrix.CreatePerspectiveFieldOfView(
+                               MathHelper.ToRadians(Settings.FIELD_OF_VIEW),
+                               Inignoto.game.GraphicsDevice.DisplayMode.AspectRatio,
+                0.01f, 1000f);
+            GameResources.effect.Projection = Inignoto.game.projectionMatrix;
         }
 
 

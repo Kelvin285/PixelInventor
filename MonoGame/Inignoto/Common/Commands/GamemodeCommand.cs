@@ -5,12 +5,13 @@ using Inignoto.Items;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using static Inignoto.Entities.Player.PlayerEntity;
 
 namespace Inignoto.Common.Commands
 {
-    public class GiveCommand : Command
+    public class GamemodeCommand : Command
     {
-        public GiveCommand() : base("give")
+        public GamemodeCommand() : base("mode")
         {
 
         }
@@ -26,26 +27,40 @@ namespace Inignoto.Common.Commands
             {
                 return AutoCompletePlayername(current);
             } else
+            if (spaces == 2)
             {
-                if (spaces == 2)
-                {
-                    return AutoCompleteItem(current);
-                }
+                return AutoCompleteList(current, new string[] { "survival", "sandbox", "freecam" });
             }
             return string.Empty;
         }
 
         public override void Execute(long sender, string[] data)
         {
-            
-            if (data.Length == 3 || data.Length == 4)
+            if (data.Length == 3)
             {
                 string player = data[1];
-                string item = data[2];
-                int count = 1;
+                string gamemode = data[2];
+
+                int GM = -1;
+                switch (gamemode)
+                {
+                    case "survival":
+                        GM = 0;
+                        break;
+                    case "sandbox":
+                        GM = 1;
+                        break;
+                    case "freecam":
+                        GM = 2;
+                        break;
+                    default: break;
+                }
+                if (int.TryParse(gamemode, out int gm))
+                {
+                    GM = gm;
+                }
 
                 PlayerEntity PLAYER = null;
-                Item ITEM = null;
 
                 foreach (long key in Inignoto.game.client_system.PLAYERS.Keys)
                 {
@@ -57,43 +72,30 @@ namespace Inignoto.Common.Commands
                     }
                 }
 
-                foreach (string key in ItemManager.REGISTRY.Keys)
-                {
-                    if (key.Equals(item))
-                    {
-                        ITEM = ItemManager.REGISTRY[key];
-                    }
-                }
-
                 if (PLAYER == null)
                 {
                     Inignoto.game.client_system.SendChatMessage(-1, "Could not find a player by the name of: " + player);
                     return;
                 }
 
-                if (ITEM == null)
+                if (PLAYER == null)
                 {
-                    Inignoto.game.client_system.SendChatMessage(-1, "Could not find the item: " + item);
+                    Inignoto.game.client_system.SendChatMessage(-1, player + " is currently in " + PLAYER.gamemode.ToString() + " mode.");
                     return;
                 }
 
-                if (count < 0)
+                switch (GM)
                 {
-                    Inignoto.game.client_system.SendChatMessage(-1, "Item count must be greater than zero!");
-                    return;
+                    case 0: PLAYER.gamemode = Gamemode.SURVIVAL; break;
+                    case 1: PLAYER.gamemode = Gamemode.SANDBOX; break;
+                    case 2: PLAYER.gamemode = Gamemode.FREECAM; break;
+                    default: break;
                 }
-
-                if (data.Length == 4)
-                {
-                    count = int.TryParse(data[3], out int r) ? (int)MathF.Max(0, r) : 1;
-                }
-
-                Inignoto.game.world.entities.Add(new ItemEntity(Inignoto.game.world, PLAYER.GetEyePosition(), new ItemStack(ITEM, count), 0));
-                Inignoto.game.client_system.SendChatMessage(-1, "Gave " + count + " " + item + (count > 1 ? "s" : "") + " to " + player);
+                Inignoto.game.client_system.SendChatMessage(-1, "Set the mode of " + player + " to " + PLAYER.gamemode.ToString());
             } else
             {
                 Inignoto.game.client_system.SendChatMessage(-1, "INVALID COMMAND USAGE!");
-                Inignoto.game.client_system.SendChatMessage(-1, "Use: /give [playername] [item] <count>");
+                Inignoto.game.client_system.SendChatMessage(-1, "Use: /mode [playername] [mode (survival, freecam, sandbox)]");
             }
         }
     }

@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using Inignoto.Audio;
 using Inignoto.Items;
 using System.Runtime.CompilerServices;
+using System.Runtime;
 
 namespace Inignoto
 {
@@ -29,16 +30,23 @@ namespace Inignoto
     /// </summary>
     public class Inignoto : Game
     {
+        public enum GameState {
+            MENU, GAME
+        }
+
+        public GameState game_state = GameState.MENU;
+
+
         public static Inignoto game;
         private GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
 
-        public Point mousePos;
-        public Point lastMousePos;
+        public Point mousePos = new Point();
+        public Point lastMousePos = new Point();
 
         public bool mouse_captured = false;
 
-        public Matrix projectionMatrix { get; private set; }
+        public Matrix projectionMatrix;
         public Camera camera;
 
         public List<GameSound> SoundsToDispose = new List<GameSound>();
@@ -47,7 +55,6 @@ namespace Inignoto
         public ClientPlayerEntity player;
 
         public Thread world_thread;
-        public Thread structure_thread;
 
         public bool running = true;
 
@@ -80,6 +87,7 @@ namespace Inignoto
 
             Content.RootDirectory = "Content";
             running = true;
+            
         }
 
         /// <summary>
@@ -124,26 +132,14 @@ namespace Inignoto
             world_thread = new Thread(world_thread_start);
             world_thread.IsBackground = true;
             world_thread.Start();
-
-            ThreadStart structure_thread_start = new ThreadStart(UpdateWorldStructures);
-            structure_thread = new Thread(structure_thread_start);
-            structure_thread.IsBackground = true;
-            structure_thread.Start();
         }
 
         public static void UpdateWorldGeneration()
         {
             while (game.running)
             {
+                if (game.game_state == GameState.GAME)
                 game.world.UpdateChunkGeneration();
-            }
-        }
-
-        public static void UpdateWorldStructures()
-        {
-            while (game.running)
-            {
-                game.world.chunkManager.StructureGeneration();
             }
         }
 
@@ -155,7 +151,6 @@ namespace Inignoto
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-
             // TODO: use this.Content to load your game content here
         }
 
@@ -184,7 +179,6 @@ namespace Inignoto
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-
             if (graphics.SynchronizeWithVerticalRetrace != Settings.VSYNC)
             graphics.SynchronizeWithVerticalRetrace = Settings.VSYNC;
 
@@ -215,14 +209,15 @@ namespace Inignoto
 
             camera.Update(gameTime);
 
-            world.Update(camera.position.Vector, gameTime);
+            if (game.game_state == GameState.GAME)
+                world.Update(camera.position.Vector, gameTime);
 
             base.Update(gameTime);
 
             lastMousePos = new Point(mousePos.X, mousePos.Y);
 
 
-            if (!IsActive || paused) mouse_captured = false;
+            if (!IsActive || paused || !(game_state == GameState.GAME)) mouse_captured = false;
             else
                 mouse_captured = Hud.openGui == null;
 
@@ -235,14 +230,7 @@ namespace Inignoto
                 IsMouseVisible = false;
             } else
             {
-                try
-                {
-                    IsMouseVisible = true;
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.Message);
-                }
+                IsMouseVisible = true;
             }
             if (graphics.IsFullScreen != Settings.FULLSCREEN)
             {
@@ -262,6 +250,7 @@ namespace Inignoto
             currentFrame++;
         }
 
+        private Rectangle screen_rect = new Rectangle(0, 0, 0, 0);
         private void UpdateInput(GameTime gameTime)
         {
             
@@ -276,20 +265,21 @@ namespace Inignoto
                 Settings.FULLSCREEN = !Settings.FULLSCREEN;
             }
 
-            if (Settings.INVENTORY.IsJustPressed())
-            {
-                if (Hud.openGui == null)
+            if (game.game_state == GameState.GAME)
+                if (Settings.INVENTORY.IsJustPressed())
                 {
-                    Hud.openGui = new InventoryGui(game.player.Inventory);
-                } else
-                {
-                    Hud.openGui.Close();
+                    if (Hud.openGui == null)
+                    {
+                        Hud.openGui = new InventoryGui(game.player.Inventory);
+                    } else
+                    {
+                        Hud.openGui.Close();
+                    }
                 }
-            }
-            if (Hud.openGui != null)
-            {
-                Hud.openGui.Update(gameTime, width, height);
-            }
+                if (Hud.openGui != null)
+                {
+                    Hud.openGui.Update(gameTime, width, height);
+                }
         }
         /// <summary>
         /// This is called when the game should draw itself.
@@ -327,36 +317,37 @@ namespace Inignoto
             GameResources.effect.View = camera.ViewMatrix;
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            RasterizerState rasterizerState = new RasterizerState();
-            rasterizerState.CullMode = CullMode.None;
-            GraphicsDevice.RasterizerState = rasterizerState;
+            GraphicsDevice.RasterizerState = GameResources.DEFAULT_RASTERIZER_STATE;
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             GraphicsDevice.SamplerStates[0] = SamplerState.PointClamp;
 
             TileManager.TryLoadTileTextures();
 
-            if (Settings.SHADOWS)
-            {
-                GameResources.shadowMap.Begin(camera.position.Vector, world.sunLook, 0);
-                world.Render(GraphicsDevice, GameResources.shadowMap._ShadowMapGenerate, gameTime);
-                GameResources.shadowMap.Begin(camera.position.Vector, world.sunLook, 1);
-                world.Render(GraphicsDevice, GameResources.shadowMap._ShadowMapGenerate, gameTime);
-                GameResources.shadowMap.Begin(camera.position.Vector, world.sunLook, 2);
-                world.Render(GraphicsDevice, GameResources.shadowMap._ShadowMapGenerate, gameTime);
-                GameResources.shadowMap.End();
-            }
+            if (game.game_state == GameState.GAME)
+                if (Settings.SHADOWS)
+                {
+                    GameResources.shadowMap.Begin(camera.position.Vector, world.sunLook, 0);
+                    world.Render(GraphicsDevice, GameResources.shadowMap._ShadowMapGenerate, gameTime);
+                    GameResources.shadowMap.Begin(camera.position.Vector, world.sunLook, 1);
+                    world.Render(GraphicsDevice, GameResources.shadowMap._ShadowMapGenerate, gameTime);
+                    GameResources.shadowMap.Begin(camera.position.Vector, world.sunLook, 2);
+                    world.Render(GraphicsDevice, GameResources.shadowMap._ShadowMapGenerate, gameTime);
+                    GameResources.shadowMap.End();
+                }
 
             GraphicsDevice.SetRenderTarget(GameResources.gameImage);
-            //GraphicsDevice.SetRenderTarget(null);
 
-            world.Render(GraphicsDevice, GameResources.effect, gameTime);
+            if (game.game_state == GameState.GAME)
+                world.Render(GraphicsDevice, GameResources.effect, gameTime);
 
             GraphicsDevice.SetRenderTarget(null);
             
 
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullCounterClockwise, GameResources.postProcessing);
 
-            spriteBatch.Draw(GameResources.gameImage, new Rectangle(0, 0, width, height), Color.White);
+            screen_rect.Width = width;
+            screen_rect.Height = height;
+            spriteBatch.Draw(GameResources.gameImage, screen_rect, Color.White);
 
             spriteBatch.End();
 
@@ -369,11 +360,6 @@ namespace Inignoto
             hud.Render(GraphicsDevice, spriteBatch, width, height, gameTime);
 
             client_system.Render(spriteBatch, GraphicsDevice, gameTime, width, height);
-
-
-            //spriteBatch.Draw(GameResources.shadowMap.shadowMapRenderTarget[0], new Rectangle(0, 0, width / 2, height / 2), Color.White);
-            //spriteBatch.Draw(GameResources.shadowMap.shadowMapRenderTarget[1], new Rectangle(width / 2, 0, width / 2, height / 2), Color.White);
-            //spriteBatch.Draw(GameResources.shadowMap.shadowMapRenderTarget[2], new Rectangle(0, height / 2, width / 2, height / 2), Color.White);
 
             spriteBatch.End();
 

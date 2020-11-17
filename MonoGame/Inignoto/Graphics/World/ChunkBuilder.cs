@@ -372,20 +372,20 @@ namespace Inignoto.Graphics.World
                 {
                     chunk.secondWaterMesh.Dispose();
                 }
-                chunk.secondWaterMesh = new Mesh.Mesh(device, vpct2.ToArray());
+                chunk.secondWaterMesh = Mesh.Mesh.Get(device, vpct2.ToArray());
             }
             if (invisible >= Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE) return null;
             if (chunk.secondTransparencyMesh != null)
             {
                 chunk.secondTransparencyMesh.Dispose();
             }
-            chunk.secondTransparencyMesh = new Mesh.Mesh(device, vpct3.ToArray());
+            chunk.secondTransparencyMesh = Mesh.Mesh.Get(device, vpct3.ToArray());
 
             if (chunk.mesh != null)
             {
                 chunk.mesh.Dispose();
             }
-            return new Mesh.Mesh(device, vpct.ToArray());
+            return Mesh.Mesh.Get(device, vpct.ToArray());
         }
 
         private static void AddLight(List<int> light, List<int> sunlight, int LIGHT, int SUNLIGHT)

@@ -4,17 +4,53 @@ using Inignoto.Utilities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
 
 namespace Inignoto.Graphics.Mesh
 {
     public class Mesh : IDisposable
     {
 
+        public static List<Mesh> unloadedMeshPool = new List<Mesh>();
+        public static List<Mesh> loadedMeshPool = new List<Mesh>();
+
+        public static Mesh Get(GraphicsDevice device, VertexPositionLightTexture[] triangleVertices, bool lines = false, Texture2D texture = null)
+        {
+            if (unloadedMeshPool.Count > 0)
+            {
+                Mesh mesh = unloadedMeshPool[0];
+                lock(unloadedMeshPool)
+                unloadedMeshPool.Remove(mesh);
+                loadedMeshPool.Add(mesh);
+                mesh.Reconstruct(device, triangleVertices, lines, texture);
+                return mesh;
+            } else
+            {
+                Mesh mesh = new Mesh(device, triangleVertices, lines, texture);
+                loadedMeshPool.Add(mesh);
+                return mesh;
+            }
+        }
+
+        public static void FinishUsing(Mesh mesh)
+        {
+            if (loadedMeshPool.Contains(mesh))
+            {
+                unloadedMeshPool.Add(mesh);
+                lock(loadedMeshPool)
+                loadedMeshPool.Remove(mesh);
+            } else
+            {
+                if (!unloadedMeshPool.Contains(mesh)) unloadedMeshPool.Add(mesh);
+            }
+            
+        }
+
         public Matrix worldMatrix;
-        readonly VertexPositionLightTexture[] triangleVertices;
+        VertexPositionLightTexture[] triangleVertices;
         VertexBuffer vertexBuffer;
 
-        public readonly bool lines;
+        public bool lines;
 
         public Texture2D texture;
 
@@ -23,7 +59,43 @@ namespace Inignoto.Graphics.Mesh
         public Quaternion rotation = new Quaternion();
 
         public bool empty = false;
+        public bool IsDisposed => vertexBuffer != null ? vertexBuffer.IsDisposed : true;
+        public int Length => triangleVertices.Length;
 
+
+        private void Reconstruct(GraphicsDevice device, VertexPositionLightTexture[] triangleVertices, bool lines = false, Texture2D texture = null)
+        {
+            empty = true;
+            this.triangleVertices = null;
+            vertexBuffer = null;
+            this.lines = false;
+            this.texture = null;
+            SetScale(new Vector3(1.0f));
+            SetPosition(new Vector3());
+            SetRotation(new Quaternion());
+
+            if (device == null)
+            {
+                return;
+            }
+            if (triangleVertices == null) return;
+            if (triangleVertices.Length == 0)
+            {
+                empty = true;
+                return;
+            }
+
+            this.triangleVertices = triangleVertices;
+            vertexBuffer = new VertexBuffer(device, typeof(
+                           VertexPositionLightTexture), triangleVertices.Length, BufferUsage.
+                           WriteOnly);
+
+            vertexBuffer.SetData(this.triangleVertices);
+
+            worldMatrix = Matrix.CreateWorld(new Vector3(0, 0, 0), Vector3.Forward, Vector3.Up);
+            this.lines = lines;
+            this.texture = texture;
+        }
         public Mesh(GraphicsDevice device, VertexPositionLightTexture[] triangleVertices, bool lines = false, Texture2D texture = null)
         {
             if (device == null)
@@ -78,9 +150,6 @@ namespace Inignoto.Graphics.Mesh
             this.rotation = rotation;
         }
 
-        public bool IsDisposed => vertexBuffer != null ? vertexBuffer.IsDisposed : true;
-        public int Length => triangleVertices.Length;
-
         public void Draw(GameEffect effect, GraphicsDevice device)
         {
             Draw(texture, effect, device, worldMatrix);
@@ -118,8 +187,8 @@ namespace Inignoto.Graphics.Mesh
 
                 pass.Apply();
 
-                //device.DrawUserPrimitives(lines ? PrimitiveType.LineList : PrimitiveType.TriangleList, triangleVertices, 0, Length);
                 device.DrawPrimitives(lines ? PrimitiveType.LineList : PrimitiveType.TriangleList, 0, Length);
+
             }
         }
 
@@ -161,6 +230,7 @@ namespace Inignoto.Graphics.Mesh
         {
             if (vertexBuffer != null)
             vertexBuffer.Dispose();
+            FinishUsing(this);
         }
     }
 }

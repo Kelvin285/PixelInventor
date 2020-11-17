@@ -23,8 +23,8 @@ namespace Inignoto.Entities
 
         public Vector3f velocity;
         public Vector3f size;
-        
-        public bool OnGround { get; protected set; }
+
+        public bool OnGround;
         public bool LastOnGround { get; protected set; }
 
         public bool Running { get; protected set; }
@@ -304,7 +304,7 @@ namespace Inignoto.Entities
         {
             if (Crawling) return 0.025f * (float)time.ElapsedGameTime.TotalSeconds * 60;
             if (Crouching) return 0.035f * (float)time.ElapsedGameTime.TotalSeconds * 60;
-            if (Running) return 0.11f * (float)time.ElapsedGameTime.TotalSeconds * 60;
+            if (Running) return 0.12f * (float)time.ElapsedGameTime.TotalSeconds * 60;
             return 0.075f * (float)time.ElapsedGameTime.TotalSeconds * 60;
         }
 

@@ -10,8 +10,8 @@ namespace Inignoto.GameSettings
 {
     public class InputSetting
     {
-        public int Input { get; private set; }
-        public bool Mouse { get; private set; }
+        public int Input;
+        public bool Mouse;
 
         private bool justPressed = false;
 

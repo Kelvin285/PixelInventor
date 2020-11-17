@@ -1,4 +1,5 @@
 ﻿using Inignoto.Items;
+using Inignoto.Tiles;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -20,7 +21,7 @@ namespace Inignoto.Common.Commands
         protected string AutoCompletePlayername(string current)
         {
             string[] split = current.Split(' ');
-            if (split.Length == 1)
+            if (current.EndsWith(' '))
             {
                 foreach (var key in Inignoto.game.client_system.PLAYERS.Keys)
                 {
@@ -47,13 +48,46 @@ namespace Inignoto.Common.Commands
             return string.Empty;
         }
 
+        protected string AutoCompleteList(string current, string[] list)
+        {
+            string[] split = current.Split(' ');
+            if (current.EndsWith(' '))
+            {
+                return current.Substring(0, current.Length - split[split.Length - 1].Length) + list[0];
+            } else
+            {
+                bool equals = false;
+                foreach (var key in list)
+                {
+                    if (key.ToLower().Contains(split[split.Length - 1].ToLower()) &&
+                        !key.ToLower().Equals(split[split.Length - 1].ToLower()))
+                    {
+                        return current.Substring(0, current.Length - split[split.Length - 1].Length) + key;
+                    }
+                    if (equals)
+                    {
+                        return current.Substring(0, current.Length - split[split.Length - 1].Length) + key;
+                    }
+                    if (key.ToLower().Equals(split[split.Length - 1].ToLower())) equals = true;
+                }
+            }
+            return string.Empty;
+        }
+
         protected string AutoCompleteItem(string current)
         {
             string[] split = current.Split(' ');
-            if (split.Length == 1)
+
+            if (current.EndsWith(' '))
             {
+                bool air = false;
                 foreach (var key in ItemManager.REGISTRY.Keys)
                 {
+                    if (!air)
+                    {
+                        air = true;
+                        continue;
+                    }
                     return current + key;
                 }
             }
@@ -68,7 +102,38 @@ namespace Inignoto.Common.Commands
                         air = true;
                         continue;
                     }
-                    if (key.ToLower().StartsWith(split[split.Length - 1].ToLower()) &&
+                    if (key.ToLower().Contains(split[split.Length - 1].ToLower()) &&
+                        !key.ToLower().Equals(split[split.Length - 1].ToLower()))
+                    {
+                        return current.Substring(0, current.Length - split[split.Length - 1].Length) + key;
+                    }
+                    if (equals)
+                    {
+                        return current.Substring(0, current.Length - split[split.Length - 1].Length) + key;
+                    }
+                    if (key.ToLower().Equals(split[split.Length - 1].ToLower())) equals = true;
+                }
+            }
+            return string.Empty;
+        }
+
+        protected string AutoCompleteTile(string current)
+        {
+            string[] split = current.Split(' ');
+
+            if (current.EndsWith(' '))
+            {
+                foreach (var key in TileManager.REGISTRY.Keys)
+                {
+                    return current + key;
+                }
+            }
+            else
+            {
+                bool equals = false;
+                foreach (var key in TileManager.REGISTRY.Keys)
+                {
+                    if (key.ToLower().Contains(split[split.Length - 1].ToLower()) &&
                         !key.ToLower().Equals(split[split.Length - 1].ToLower()))
                     {
                         return current.Substring(0, current.Length - split[split.Length - 1].Length) + key;

@@ -474,5 +474,13 @@ namespace Inignoto.Graphics.Models
             editMode = EditMode.ANIMATION;
         }
 
+        public void Dispose()
+        {
+            foreach (Part part in this.Parts)
+            {
+                part.Dispose();
+            }
+        }
+
     }
 }

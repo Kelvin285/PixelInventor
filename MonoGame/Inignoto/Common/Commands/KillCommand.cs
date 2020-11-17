@@ -53,6 +53,11 @@ namespace Inignoto.Common.Commands
                     return;
                 }
                 PLAYER.DamageEntity(float.MaxValue, true);
+                Inignoto.game.client_system.SendChatMessage(-1, "Killed " + player);
+            } else
+            {
+                Inignoto.game.client_system.SendChatMessage(-1, "INVALID COMMAND USAGE!");
+                Inignoto.game.client_system.SendChatMessage(-1, "Use: /kill [playername]");
             }
         }
     }

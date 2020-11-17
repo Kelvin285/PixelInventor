@@ -25,8 +25,8 @@ namespace Inignoto.Graphics.Shadows
             //            target = new RenderTarget2D(Inignoto.game.GraphicsDevice, width, height, false, SurfaceFormat.Color, DepthFormat.Depth16);
 
             shadowMapRenderTarget[0] = new RenderTarget2D(Inignoto.game.GraphicsDevice, 2048, 2048, false, SurfaceFormat.Single, DepthFormat.Depth24, 2, RenderTargetUsage.DiscardContents);
-            shadowMapRenderTarget[1] = new RenderTarget2D(Inignoto.game.GraphicsDevice, 2048, 2048, false, SurfaceFormat.Single, DepthFormat.Depth24, 2, RenderTargetUsage.DiscardContents);
-            shadowMapRenderTarget[2] = new RenderTarget2D(Inignoto.game.GraphicsDevice, 2048, 2048, false, SurfaceFormat.Single, DepthFormat.Depth24, 2, RenderTargetUsage.DiscardContents);
+            shadowMapRenderTarget[1] = new RenderTarget2D(Inignoto.game.GraphicsDevice, 2048 * 2, 2048 * 2, false, SurfaceFormat.Single, DepthFormat.Depth24, 2, RenderTargetUsage.DiscardContents);
+            shadowMapRenderTarget[2] = new RenderTarget2D(Inignoto.game.GraphicsDevice, 2048 * 4, 2048 * 4, false, SurfaceFormat.Single, DepthFormat.Depth24, 2, RenderTargetUsage.DiscardContents);
 
             _ShadowMapGenerate = new GameEffect(Inignoto.game.Content.Load<Effect>("ShadowMapsGenerate"));
 

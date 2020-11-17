@@ -55,13 +55,24 @@ namespace Inignoto.World
                 this.y = (int)System.Math.Floor(y);
                 this.z = (int)System.Math.Floor(z);
             }
-        }
+
+            public static bool operator ==(TilePos a, TilePos b)
+            {
+                return a.x == b.x && a.y == b.y && a.z == b.z;
+            }
+
+            public static bool operator !=(TilePos a, TilePos b)
+            {
+                return !(a == b);
+            }
+            }
 
         public readonly ChunkManager chunkManager;
         public readonly WorldProperties properties;
         public readonly List<Entity> entities;
 
         private Mesh skybox;
+        private Mesh sun;
         public Vector4 SkyColor = new Vector4(0, 0, 0, 0);
 
         public GameTime gameTime { get; private set; }
@@ -74,8 +85,11 @@ namespace Inignoto.World
 
         public float DayTime = 6000;
 
-        public World()
+        public string name;
+
+        public World(string name = "New World")
         {
+            this.name = name;
             chunkManager = new ChunkManager(this);
             properties = new WorldProperties();
             entities = new List<Entity>();
@@ -86,7 +100,7 @@ namespace Inignoto.World
             skybox.texture = Textures.white_square;
             skybox.scale = new Vector3(1000, 1000, 1000);
 
-            BuildSelectionBox();
+            BuildMeshes();
         }
 
         public void UpdateChunkGeneration()
@@ -160,8 +174,6 @@ namespace Inignoto.World
                 skybox.Draw(effect, device);
                 GameResources.effect.ObjectColor = Constants.COLOR_WHITE;
 
-                //DRAW TILE SELECTION
-                RenderTileSelection(device, effect);
             }
 
             effect.CameraPos = Inignoto.game.camera.position.Vector;
@@ -184,111 +196,40 @@ namespace Inignoto.World
 
             device.RasterizerState = GameResources.DEFAULT_RASTERIZER_STATE;
 
+            //DRAW TILE SELECTION
+            RenderTileSelection(device, effect);
+
             effect.WorldRender = false;
         }
 
         private Mesh selectionBox;
+        private Mesh selectionFace;
         public void RenderTileSelection(GraphicsDevice device, GameEffect effect)
         {
             TileRaytraceResult result = Inignoto.game.camera.highlightedTile;
             if (result != null)
             {
                 TilePos hitPos = result.pos;
+                
+                selectionBox.SetPosition(new Vector3(hitPos.x + 0.5f, hitPos.y + 0.5f, hitPos.z + 0.5f));
+                selectionBox.Draw(Textures.white_square, effect, device);
 
-                selectionBox.SetPosition(hitPos.x, hitPos.y, hitPos.z);
-                selectionBox.Draw(Textures.tiles.GetTexture(), effect, device);
+                effect.ObjectColor = new Vector4(2, 2, 2, 0.1f);
+                selectionFace.SetPosition(new Vector3(hitPos.x + 0.5f, hitPos.y + 0.5f, hitPos.z + 0.5f) + result.intersection.normal.Vector * 0.01f);
+                selectionFace.Draw(Textures.white_square, effect, device);
+                effect.ObjectColor = new Vector4(1, 1, 1, 1);
             }
         }
 
-        public void BuildSelectionBox()
+        public void BuildMeshes()
         {
-            VertexPositionLightTexture[] vpct =
-            { 
-                new VertexPositionLightTexture(
-                    new Vector3(0, 0, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.FRONT),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 1, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.FRONT),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 1, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.FRONT),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 1, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.FRONT),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 0, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.FRONT),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 1, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.FRONT),
+            selectionBox = TileBuilder.BuildTile(-0.5f, -0.5f, -0.5f, TileManager.DIRT.DefaultData, TileManager.AIR.DefaultData, Inignoto.game.GraphicsDevice, true);
 
-                new VertexPositionLightTexture(
-                    new Vector3(1, 0, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.BACK),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 1, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.BACK),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 1, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.BACK),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 1, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.BACK),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 0, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.BACK),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 0, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.BACK),
+            selectionBox.SetScale(new Vector3(1.01f));
 
-                new VertexPositionLightTexture(
-                    new Vector3(0, 0, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.LEFT),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 1, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.LEFT),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 1, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.LEFT),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 1, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.LEFT),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 0, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.LEFT),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 0, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.LEFT),
+            selectionFace = TileBuilder.BuildTile(-0.5f, -0.5f, -0.5f, TileManager.DIRT.DefaultData, TileManager.AIR.DefaultData, Inignoto.game.GraphicsDevice, false);
 
-                new VertexPositionLightTexture(
-                    new Vector3(1, 0, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.RIGHT),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 1, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.RIGHT),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 1, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.RIGHT),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 1, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.RIGHT),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 0, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.RIGHT),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 0, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.RIGHT),
-
-                new VertexPositionLightTexture(
-                    new Vector3(0, 1, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.TOP),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 1, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.TOP),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 1, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.TOP),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 1, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.TOP),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 1, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.TOP),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 1, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.TOP),
-
-                 new VertexPositionLightTexture(
-                    new Vector3(0, 0, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.BOTTOM),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 0, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.BOTTOM),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 0, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.BOTTOM),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 0, 0), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.BOTTOM),
-                new VertexPositionLightTexture(
-                    new Vector3(1, 0, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.BOTTOM),
-                new VertexPositionLightTexture(
-                    new Vector3(0, 0, 1), Color.White, new Vector4(0, 0, -1, -1), (int)TileFace.BOTTOM)
-            };
-            for (int i = 0; i < vpct.Length; i++)
-            {
-                vpct[i].Position -= new Vector3(0.5f);
-                vpct[i].Position *= 1.01f;
-                vpct[i].Position += new Vector3(0.5f);
-            }
-            selectionBox = new Mesh(Inignoto.game.GraphicsDevice, vpct, true);
+            selectionFace.SetScale(new Vector3(0.99f));
         }
 
         public ChunkManager GetChunkManager()
@@ -384,8 +325,7 @@ namespace Inignoto.World
             {
                 chunk.SetVoxel(x, y, z, voxel);
                 chunk.SetOverlayVoxel(x, y, z, overlay);
-                //chunk.MarkForRebuild();
-                chunk.BuildMesh();
+                chunk.MarkForRebuild();
                 
                 if (TileManager.GetTile(voxel.tile_id).IsVisible() == false)
                 {

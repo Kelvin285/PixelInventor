@@ -38,6 +38,7 @@ namespace Inignoto.Tiles.Data
 
         public TileData getStateFor(int state)
         {
+            if (state < 0 || state > data.Count) return data[0];
             return data[state];
         }
     }

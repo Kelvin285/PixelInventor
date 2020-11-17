@@ -177,13 +177,14 @@ namespace Inignoto.Entities.Client.Player
                     }
                 case Gamemode.FREECAM:
                     {
-                        FreecamMotion(time);
+                        if (!(Hud.openGui is InventoryGui || Inignoto.game.paused))
+                            FreecamMotion(time);
                         break;
                     }
                 case Gamemode.SANDBOX:
                     {
                         if (!(Hud.openGui is InventoryGui || Inignoto.game.paused))
-                        NormalMotion(time);
+                            NormalMotion(time);
                         break;
                     }
 
@@ -273,7 +274,7 @@ namespace Inignoto.Entities.Client.Player
                 right = GetMovementSpeed(time);
             }
 
-            if (Inignoto.game.paused)
+            if (Inignoto.game.paused || Hud.openGui is InventoryGui)
             {
                 trueMotion.X *= 0;
                 trueMotion.Z *= 0;
@@ -281,7 +282,8 @@ namespace Inignoto.Entities.Client.Player
 
             Walking = walking;
 
-            if (Settings.JUMP.IsPressed() && !(Hud.openGui is InventoryGui))
+            if (!(Hud.openGui is InventoryGui || Inignoto.game.paused))
+            if (Settings.JUMP.IsPressed())
             {
                 if (OnGround)
                 {
@@ -333,8 +335,16 @@ namespace Inignoto.Entities.Client.Player
                 LastTappedSpace = 0;
             }
 
-            Running = Settings.RUN.IsPressed();
-            Crouching = Settings.SNEAK.IsPressed();
+            if (!(Hud.openGui is InventoryGui || Inignoto.game.paused))
+            {
+                Running = Settings.RUN.IsPressed();
+                Crouching = Settings.SNEAK.IsPressed();
+            } else
+            {
+                Running = false;
+                Crouching = false;
+            }
+                
 
             if (walking)
             {
@@ -363,13 +373,14 @@ namespace Inignoto.Entities.Client.Player
 
                 WalkCycleSpeed = speed / 1000.0f;
             }
-            
-            if (Keyboard.GetState().IsKeyDown(Keys.C))
-            {
-                if (!justPressedC) Crawling = !Crawling;
-                if (BlockAboveHead) Crawling = true;
-                justPressedC = true;
-            }
+
+            if (!(Hud.openGui is InventoryGui || Inignoto.game.paused))
+                if (Keyboard.GetState().IsKeyDown(Keys.C))
+                {
+                    if (!justPressedC) Crawling = !Crawling;
+                    if (BlockAboveHead) Crawling = true;
+                    justPressedC = true;
+                }
             else justPressedC = false;
 
             if (!walking)
@@ -500,6 +511,7 @@ namespace Inignoto.Entities.Client.Player
             
 
             float delta = (float)time.ElapsedGameTime.TotalSeconds * 60;
+            
             if (!OnGround && !Flying)
             {
                 if (velocity.Y > 0)
@@ -917,6 +929,7 @@ namespace Inignoto.Entities.Client.Player
 
         public override void Render(GraphicsDevice device, GameEffect effect, GameTime time, bool showModel = false)
         {
+            if (gamemode == Gamemode.FREECAM) showModel = false;
             if (shoes_model != null)
                 foreach (Part part in shoes_model.Parts)
                 {
@@ -1007,6 +1020,7 @@ namespace Inignoto.Entities.Client.Player
                 }
             }
 
+            if (Inignoto.game.game_state == Inignoto.GameState.GAME)
             if (Settings.ATTACK.IsPressed() || Settings.USE.IsPressed())
             {
                 model.animationSpeed = 5.0f / 60.0f;

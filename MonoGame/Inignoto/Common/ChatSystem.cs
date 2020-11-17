@@ -15,7 +15,7 @@ namespace Inignoto.Common
     {
 
         public Color CHATBOX_GRAY = new Color(0.1f, 0.1f, 0.1f, 0.5f);
-        public static int character_limit = 50;
+        public static int character_limit = 150;
 
         public struct ChatMessage {
             public double TTL;
@@ -31,6 +31,12 @@ namespace Inignoto.Common
                 this.UID = UID;
                 TTL = 60;
 
+                string name = "";
+                if (UID >= 0)
+                {
+                    name = system.PLAYERS[UID].Name;
+                }
+
                 if (msg.StartsWith("/") || msg.Length == 0) return;
                 for (int i = 0; i < msg.Length; i++)
                 {
@@ -38,9 +44,9 @@ namespace Inignoto.Common
                     end = false;
                     if (I == 0 && UID >= 0)
                     {
-                        if (current.Length >= character_limit - system.PLAYERS[UID].Name.Length + 4 - 5)
+                        if (current.Length >= character_limit - name.Length + 4 - 5)
                         {
-                            message.Add(system.PLAYERS[UID].Name + " >> " + current);
+                            message.Add(name + " >> " + current);
                             current = "";
                             end = true;
                             I++;
@@ -58,7 +64,7 @@ namespace Inignoto.Common
                     
                 }
                 if (!end)
-                    if (I == 0) message.Add(system.PLAYERS[UID].Name + " >> " + current);
+                    if (I == 0) message.Add(name + " >> " + current);
                     else message.Add(current);
 
             }
@@ -81,6 +87,7 @@ namespace Inignoto.Common
         private bool chatting = false;
         private bool pressed_chat = false;
         private bool pressed_tab = false;
+        private bool pressed_command = false;
 
         public void Render(SpriteBatch batch, GraphicsDevice device, GameTime time, int width, int height)
         {
@@ -122,23 +129,47 @@ namespace Inignoto.Common
         public void RenderBackground(SpriteBatch batch, GraphicsDevice device, GameTime time, int width, int height)
         {
 
-            if (Settings.CHAT.IsPressed())
+            if (Inignoto.game.hud.renderGui == null)
             {
-                if (!pressed_chat)
+                if (Settings.CHAT.IsPressed())
                 {
-                    if (!chatting)
+                    if (!pressed_chat)
                     {
-                        keyReader.text = "";
-                        keyReader.finished = false;
-                        chatting = true;
-                        Inignoto.game.paused = true;
-                    }
+                        if (!chatting)
+                        {
+                            keyReader.text = "";
+                            keyReader.finished = false;
+                            chatting = true;
+                            Inignoto.game.paused = true;
+                        }
 
-                    pressed_chat = true;
+                        pressed_chat = true;
+                    }
                 }
-            } else
-            {
-                pressed_chat = false;
+                else
+                {
+                    pressed_chat = false;
+                }
+                if (Keyboard.GetState().IsKeyDown(Keys.OemQuestion) && !(
+                        Keyboard.GetState().IsKeyDown(Keys.LeftShift) || Keyboard.GetState().IsKeyDown(Keys.RightShift)))
+                {
+                    if (!pressed_command)
+                    {
+                        if (!chatting)
+                        {
+                            keyReader.text = "";
+                            keyReader.finished = false;
+                            chatting = true;
+                            Inignoto.game.paused = true;
+                        }
+
+                        pressed_command = true;
+                    }
+                }
+                else
+                {
+                    pressed_command = false;
+                }
             }
 
             double delta = time.ElapsedGameTime.TotalMilliseconds * 60;

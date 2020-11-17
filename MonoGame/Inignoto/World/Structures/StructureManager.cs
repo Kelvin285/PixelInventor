@@ -12,7 +12,7 @@ namespace Inignoto.World.Structures
         public static BasicTreeStructure BASIC_TREE;
         public static void RegisterStructures()
         {
-            RegisterStructure(BASIC_TREE = new BasicTreeStructure());
+            RegisterStructure(BASIC_TREE = new BasicTreeStructure("trees/oak_tree1.structure", new World.TilePos(2, 1, 3)));
         }
 
         public static void RegisterStructure(Structure structure)

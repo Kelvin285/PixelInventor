@@ -59,7 +59,7 @@ namespace Inignoto.Graphics.World
                             chunk.mesh.Draw(Textures.Textures.tiles.GetTexture(), effect, device, Matrix.CreateTranslation(-chunk.GetWorld().radius * 4 + chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
 
                     }
-                    if (chunk.secondMesh != null)
+                    else if (chunk.secondMesh != null)
                     {
                         if (chunk.secondMesh.empty) return;
                         chunk.secondMesh.Draw(Textures.Textures.tiles.GetTexture(), effect, device, Matrix.CreateTranslation(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
@@ -90,7 +90,7 @@ namespace Inignoto.Graphics.World
                             chunk.waterMesh.Draw(Textures.Textures.tiles.GetTexture(), effect, device, Matrix.CreateTranslation(-chunk.GetWorld().radius * 4 + chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
 
                     }
-                    if (chunk.secondWaterMesh != null)
+                    else if (chunk.secondWaterMesh != null)
                     {
                         if (chunk.secondWaterMesh.empty) return;
                         chunk.secondWaterMesh.Draw(Textures.Textures.tiles.GetTexture(), effect, device, Matrix.CreateTranslation(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
@@ -122,7 +122,7 @@ namespace Inignoto.Graphics.World
                         chunk.transparencyMesh.Draw(Textures.Textures.tiles.GetTexture(), effect, device, Matrix.CreateTranslation(-chunk.GetWorld().radius * 4 + chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));
 
                 }
-                if (chunk.secondTransparencyMesh != null)
+                else if (chunk.secondTransparencyMesh != null)
                 {
                     if (chunk.secondTransparencyMesh.empty) return;
                     chunk.secondTransparencyMesh.Draw(Textures.Textures.tiles.GetTexture(), effect, device, Matrix.CreateTranslation(chunk.GetX() * Constants.CHUNK_SIZE, chunk.GetY() * Constants.CHUNK_SIZE, chunk.GetZ() * Constants.CHUNK_SIZE));

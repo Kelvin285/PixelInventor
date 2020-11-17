@@ -41,7 +41,6 @@ namespace Inignoto.Graphics.Gui
 
         public virtual void PreRender(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime time)
         {
-
         }
 
         public virtual void Render(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime time)
@@ -183,6 +182,10 @@ namespace Inignoto.Graphics.Gui
 
         protected void RenderHealthbar(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime time, int x = 0, int y = 0)
         {
+            if (openGui is MainMenu)
+            {
+                return;
+            }
             //healthbar
 
             Draw(spriteBatch, width, height, Textures.Textures.hud, new Rectangle(x + 10 - heartBeat, y + 10 - heartBeat, 32 + heartBeat * 2, 32 + heartBeat * 2), new Rectangle(2, 0, 9, 9), Color.White);
@@ -209,10 +212,17 @@ namespace Inignoto.Graphics.Gui
 
         protected virtual void UpdateKeys()
         {
-            if (Inignoto.game.paused)
+            if (Inignoto.game.paused || Inignoto.game.game_state != Inignoto.GameState.GAME)
             {
+                if (Inignoto.game.game_state != Inignoto.GameState.GAME)
+                {
+                    Inignoto.game.player.Inventory.hotbar[0].SetToAir();
+                    Inignoto.game.player.Inventory.selected = 0;
+                }
                 return;
             }
+
+
             for (int i = 0; i < Settings.HOTBAR_KEYS.Length; i++)
             {
                 if (Settings.HOTBAR_KEYS[i].IsPressed())

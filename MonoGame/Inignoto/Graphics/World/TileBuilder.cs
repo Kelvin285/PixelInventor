@@ -59,7 +59,7 @@ namespace Inignoto.Graphics.World
                     new Vector3f(1 + offset, -offset, -offset),
                     new Vector3f(1 + offset, -offset, 1 + offset)
                 };
-        public static Mesh.Mesh BuildTile(float x, float y, float z, TileData data, TileData overlay, GraphicsDevice device)
+        public static Mesh.Mesh BuildTile(float x, float y, float z, TileData data, TileData overlay, GraphicsDevice device, bool lines = false)
         {
             List<VertexPositionLightTexture> vpct = new List<VertexPositionLightTexture>();
 
@@ -70,22 +70,22 @@ namespace Inignoto.Graphics.World
             List<int> normals = new List<int>();
             int index = 0;
 
-            index = BuildFace(x, y, z, data, overlay, TileFace.LEFT, vertices, colors, textures, indices, normals, index);
-            index = BuildFace(x, y, z, data, overlay, TileFace.RIGHT, vertices, colors, textures, indices, normals, index);
-            index = BuildFace(x, y, z, data, overlay, TileFace.FRONT, vertices, colors, textures, indices, normals, index);
-            index = BuildFace(x, y, z, data, overlay, TileFace.BACK, vertices, colors, textures, indices, normals, index);
-            index = BuildFace(x, y, z, data, overlay, TileFace.TOP, vertices, colors, textures, indices, normals, index);
-            index = BuildFace(x, y, z, data, overlay, TileFace.BOTTOM, vertices, colors, textures, indices, normals, index);
+            index = BuildFace(x, y, z, data, overlay, TileFace.LEFT, vertices, colors, textures, indices, normals, index, lines);
+            index = BuildFace(x, y, z, data, overlay, TileFace.RIGHT, vertices, colors, textures, indices, normals, index, lines);
+            index = BuildFace(x, y, z, data, overlay, TileFace.FRONT, vertices, colors, textures, indices, normals, index, lines);
+            index = BuildFace(x, y, z, data, overlay, TileFace.BACK, vertices, colors, textures, indices, normals, index, lines);
+            index = BuildFace(x, y, z, data, overlay, TileFace.TOP, vertices, colors, textures, indices, normals, index, lines);
+            index = BuildFace(x, y, z, data, overlay, TileFace.BOTTOM, vertices, colors, textures, indices, normals, index, lines);
 
             for (int i = 0; i < indices.Count; i++)
             {
                 int ind = indices[i];
                 vpct.Add(new VertexPositionLightTexture(vertices[ind], colors[ind], textures[ind], normals[ind]));
             }
-            return new Mesh.Mesh(device, vpct.ToArray(), false, Textures.Textures.tiles.GetTexture());
+            return Mesh.Mesh.Get(device, vpct.ToArray(), lines, Textures.Textures.tiles.GetTexture());
         }
 
-        public static int BuildFace(float x, float y, float z, TileData data, TileData overlay, TileFace face, List<Vector3> vertices, List<Color> colors, List<Vector4> textures, List<int> indices, List<int> normals, int index)
+        public static int BuildFace(float x, float y, float z, TileData data, TileData overlay, TileFace face, List<Vector3> vertices, List<Color> colors, List<Vector4> textures, List<int> indices, List<int> normals, int index, bool lines = false)
         {
             Vector3f[] verts = FRONT;
             TextureAtlas atlas = Textures.Textures.tiles;
@@ -190,14 +190,27 @@ namespace Inignoto.Graphics.World
             vertices.Add(verts[3].Vector + new Vector3(x, y, z));
             colors.Add(Color.White);
 
-            indices.Add(0 + index);
-            indices.Add(1 + index);
-            indices.Add(2 + index);
-            indices.Add(2 + index);
-            indices.Add(3 + index);
-            indices.Add(0 + index);
+            if (!lines)
+            {
+                indices.Add(0 + index);
+                indices.Add(1 + index);
+                indices.Add(2 + index);
+                indices.Add(2 + index);
+                indices.Add(3 + index);
+                indices.Add(0 + index);
+            } else
+            {
+                indices.Add(0 + index);
+                indices.Add(1 + index);
+                indices.Add(1 + index);
+                indices.Add(2 + index);
+                indices.Add(2 + index);
+                indices.Add(3 + index);
+                indices.Add(3 + index);
+                indices.Add(0 + index);
+            }
 
-            index +=4;
+            index += 4;
             return index;
         }
     }

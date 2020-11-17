@@ -64,7 +64,8 @@ namespace Inignoto.Utilities
             DEFAULT_RASTERIZER_STATE.CullMode = CullMode.None;
 
 
-            //new RenderTarget2D(Inignoto.game.GraphicsDevice, width, height, false, SurfaceFormat.Color, DepthFormat.Depth16);
+            //Inignoto.game.game_state = Inignoto.GameState.GAME;
+            Hud.openGui = new MainMenu();
         }
 
         public static void Dispose()

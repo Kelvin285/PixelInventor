@@ -22,6 +22,11 @@ namespace Inignoto.Graphics.Textures
         public static Texture2D font_mandrill_bold;
         public static Texture2D item_browser;
 
+        public static Texture2D[] title_animation;
+        public static Texture2D inignoto_logo;
+        public static Texture2D title_moon;
+        public static Texture2D moon_clip;
+
         public static Dictionary<TileData, Texture2D> TILE_ITEMS = new Dictionary<TileData, Texture2D>();
 
         private static List<Texture> textures = new List<Texture>();
@@ -38,6 +43,17 @@ namespace Inignoto.Graphics.Textures
             font_mandrill_regular = LoadTexture(new ResourcePath("Inignoto", "fonts/mandrill/mandrill_regular_48.png", "assets"));
             font_mandrill_bold = LoadTexture(new ResourcePath("Inignoto", "fonts/mandrill/mandrill_bold_48.png", "assets"));
             item_browser = LoadTexture(new ResourcePath("Inignoto", "textures/gui/item_browser.png", "assets"));
+
+            title_animation = new Texture2D[4];
+            for (int i = 0; i < 4; i++)
+            {
+                title_animation[i] = LoadTexture(new ResourcePath("Inignoto", "textures/gui/title_background/sprite_" + i + ".png", "assets"));
+            }
+
+            inignoto_logo = LoadTexture(new ResourcePath("Inignoto", "textures/gui/title_background/inignoto.png", "assets"));
+            title_moon = LoadTexture(new ResourcePath("Inignoto", "textures/gui/title_background/moon.png", "assets"));
+            moon_clip = LoadTexture(new ResourcePath("Inignoto", "textures/gui/title_background/moon_clip.png", "assets"));
+
 
             FontManager.LoadFonts();
         }

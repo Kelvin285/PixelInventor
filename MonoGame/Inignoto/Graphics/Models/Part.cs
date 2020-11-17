@@ -249,7 +249,8 @@ namespace Inignoto.Graphics.Models
             {
                 vpct[i] = new VertexPositionLightTexture(new Vector3(vertices[indices[i] * 3], vertices[indices[i] * 3 + 1], vertices[indices[i] * 3 + 2]), Color.White, new Vector4(texCoords[indices[i] * 2], texCoords[indices[i] * 2 + 1], -1, -1), normals[indices[i]]);
             }
-            return new Mesh.Mesh(Inignoto.game.GraphicsDevice, vpct, false, texture);
+            Mesh.Mesh mesh = Mesh.Mesh.Get(Inignoto.game.GraphicsDevice, vpct, false, texture);
+            return mesh;
         }
 
         public static KeyTransformation GetOrCreateKeyTransformation(int frame, Part part)
@@ -520,6 +521,12 @@ namespace Inignoto.Graphics.Models
         public Quaternionf GetActualRotation()
         {
             return this.rotation;
+        }
+
+        public void Dispose()
+        {
+            mesh.Dispose();
+            Mesh.Mesh.FinishUsing(mesh);
         }
 
         public void Render(GraphicsDevice device, GameEffect effect)

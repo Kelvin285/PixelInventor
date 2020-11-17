@@ -54,6 +54,8 @@ namespace Inignoto.Entities.Player
         {
             base.Update(time);
 
+            if (gamemode == Gamemode.SURVIVAL) Flying = false;
+
             ReachDistance = gamemode != Gamemode.SANDBOX ? 4.5f : 8.0f;
 
             size.Y = 1.85f;

@@ -43,6 +43,7 @@ namespace Inignoto.Utilities
         public static Dictionary<string, string> LoadFileAsDataList(ResourcePath resource_path)
         {
             string file_contents = LoadFileAsString(resource_path);
+            
             return DataUtils.GetDataList(file_contents);
         }
 
@@ -64,10 +65,11 @@ namespace Inignoto.Utilities
             {
                 Directory.CreateDirectory(GetResourcePath(directory));
             }
-            FileStream stream = GetStreamForPath(resource_path, FileMode.OpenOrCreate);
-            StreamWriter writer = new StreamWriter(stream);
-            writer.WriteAsync(write);
-            writer.Close();
+            if (File.Exists(GetResourcePath(resource_path)))
+            {
+                File.Delete(GetResourcePath(resource_path));
+            }
+            File.WriteAllText(GetResourcePath(resource_path), write);
         }
     }
 }
