@@ -104,5 +104,121 @@ namespace Inignoto.Inventory
             a = add;
             return -1;
         }
+
+
+        public string Save()
+        {
+            string str = "";
+            for (int i = 0; i < hotbar.Length; i++)
+            {
+                if (hotbar[i] != null)
+                {
+                    string item = hotbar[i].item.Name;
+                    int count = hotbar[i].count;
+                    str += item + "," + count + "\n";
+                } else
+                {
+                    str += "NULL\n";
+                }
+            }
+            for (int i = 0; i < inventory.Length; i++)
+            {
+                if (inventory[i] != null)
+                {
+                    string item = inventory[i].item.Name;
+                    int count = inventory[i].count;
+                    str += item + "," + count + "\n";
+                }
+                else
+                {
+                    str += "NULL\n";
+                }
+            }
+            for (int i = 0; i < accessory.Length; i++)
+            {
+                if (accessory[i] != null)
+                {
+                    string item = accessory[i].item.Name;
+                    int count = accessory[i].count;
+                    str += item + "," + count + "\n";
+                }
+                else
+                {
+                    str += "NULL\n";
+                }
+            }
+            ItemStack[] other = { head, chest, legs, offhand, trashStack };
+            for (int i = 0; i < other.Length; i++)
+            {
+                if (other[i] != null)
+                {
+                    string item = other[i].item.Name;
+                    int count = other[i].count;
+                    str += item + "," + count + "\n";
+                }
+                else
+                {
+                    str += "NULL\n";
+                }
+            }
+            return str;
+        }
+
+        public void Load(string file)
+        {
+            string[] data = file.Split("\n");
+            int I = 1;
+            for (int i = 0; i < hotbar.Length; i++)
+            {
+                if (!data[I].Equals("NULL"))
+                {
+                    string[] item = data[I].Split(",");
+                    hotbar[i] = new ItemStack(ItemManager.REGISTRY[item[0]], int.Parse(item[1]));
+                } else
+                {
+                    hotbar[i] = null;
+                }
+                I++;
+            }
+            for (int i = 0; i < inventory.Length; i++)
+            {
+                if (!data[I].Equals("NULL"))
+                {
+                    string[] item = data[I].Split(",");
+                    inventory[i] = new ItemStack(ItemManager.REGISTRY[item[0]], int.Parse(item[1]));
+                }
+                I++;
+            }
+            for (int i = 0; i < accessory.Length; i++)
+            {
+                if (!data[I].Equals("NULL"))
+                {
+                    string[] item = data[I].Split(",");
+                    accessory[i] = new ItemStack(ItemManager.REGISTRY[item[0]], int.Parse(item[1]));
+                } else
+                {
+                    accessory[i] = null;
+                }
+                I++;
+            }
+            ItemStack[] other = { head, chest, legs, offhand, trashStack };
+            for (int i = 0; i < other.Length; i++)
+            {
+                if (!data[I].Equals("NULL"))
+                {
+                    string[] item = data[I].Split(",");
+                    other[i] = new ItemStack(ItemManager.REGISTRY[item[0]], int.Parse(item[1]));
+                } else
+                {
+                    other[i] = null;
+                }
+                I++;
+            }
+            head = other[0];
+            chest = other[1];
+            legs = other[2];
+            offhand = other[3];
+            trashStack = other[4];
+        }
     }
 }

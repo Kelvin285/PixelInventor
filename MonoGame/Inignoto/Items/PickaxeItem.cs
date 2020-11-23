@@ -15,11 +15,18 @@ namespace Inignoto.Items
 {
     public class PickaxeItem : ToolItem
     {
+        public int strength = 1;
         public PickaxeItem(string name, double cooldown = 1.0f, bool model = true, Vector3 position = new Vector3(), Vector3 rotation = new Vector3(), Vector3 scale = new Vector3()) : base(name, cooldown, model, position, rotation, scale)
         {
             BlockHitCooldown = 0.5f;
             MissCooldown = 0.5f;
             EntityHitCooldown = 0.5f;
+        }
+
+        public PickaxeItem SetStrength(int strength)
+        {
+            this.strength = strength;
+            return this;
         }
 
         protected override ActionResult Attack(Entity user, GameTime time, World.RaytraceResult.TileRaytraceResult result)
@@ -33,8 +40,7 @@ namespace Inignoto.Items
 
             if (result == null) return ActionResult.MISS;
 
-            user.world.entities.Add(new ItemEntity(user.world, new Vector3f(result.pos.x + 0.5f, result.pos.y + 0.5f, result.pos.z + 0.5f), new ItemStack(TileManager.GetTile(result.data.tile_id))));
-            user.world.SetVoxel(result.pos, TileManager.AIR.DefaultData);
+            user.world.MineVoxel(result.pos, strength);
 
             return ActionResult.BLOCK;
         }

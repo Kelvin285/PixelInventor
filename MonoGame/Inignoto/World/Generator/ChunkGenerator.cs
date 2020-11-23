@@ -22,6 +22,12 @@ namespace Inignoto.World.Generator
         
         public void GenerateChunk(Chunks.Chunk chunk)
         {
+            if (chunk.Load())
+            {
+                chunk.UpdateLights();
+                chunk.MarkForRebuild();
+                return;
+            }
             for (int chunk_x = 0; chunk_x < Constants.CHUNK_SIZE; chunk_x++)
             {
                 for (int chunk_z = 0; chunk_z < Constants.CHUNK_SIZE; chunk_z++)
@@ -30,7 +36,7 @@ namespace Inignoto.World.Generator
                     int x = chunk_x + chunk.GetX() * Constants.CHUNK_SIZE;
                     int z = chunk_z + chunk.GetZ() * Constants.CHUNK_SIZE;
 
-                    float height = GetHeight(x, z, chunk.GetWorld().radius);
+                    float height = GetHeight(x, z, chunk.GetWorld().radius, chunk.GetWorld().properties.infinite);
                     SurfaceBiome biome = GetSurfaceBiome(x, z);
 
                     int voxel_height = (int)height;
@@ -72,8 +78,12 @@ namespace Inignoto.World.Generator
 
         }
 
-        public float GetHeight(float x, float z, float radius)
+        public float GetHeight(float x, float z, float radius, bool infinite)
         {
+            if (infinite)
+            {
+                return GetPolarHeight(x, z, true);
+            }
             float diameter = radius * 2;
             float length = diameter * 2;
 
@@ -115,8 +125,9 @@ namespace Inignoto.World.Generator
             return -100;
         }
 
-        public float GetPolarHeight(float X, float Z)
+        public float GetPolarHeight(float X, float Z, bool infinite = false)
         {
+            if (!infinite)
             Z *= 2.0f;
             float height = 0;
             float i = 0;

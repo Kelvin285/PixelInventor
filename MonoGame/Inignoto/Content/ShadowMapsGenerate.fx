@@ -54,6 +54,8 @@ struct VertexShaderOutput
 	float2 TextureCoordinate : TEXCOORD0;
     float4 WorldPos : TEXCOORD1;
     float4 Light : TEXCOORD2;
+    float Dot : COLOR1;
+    float3 Normal : TEXCOORD3;
 };
 
 float rand(in float2 uv)
@@ -120,13 +122,17 @@ VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
     float depth = output.Position.z / output.Position.w;
 
     output.Color = float4(depth, 0, 0, 1);
+    output.Normal = input.Normal;
     
+    output.Dot = dot(input.Normal, -sunLook);
 
     return output;
 }
 
 float4 OpaquePixelShaderFunction(VertexShaderOutput input) : COLOR0
 {
+    if (input.Normal.y != 0) clip(-1);
+    if (input.Dot < 0) return float4(0, 0, 0, 0);
 	float4 textureColor = tex2D(textureSampler, input.TextureCoordinate);
 	if (textureColor.a != 1) clip(-1);
 
@@ -139,6 +145,8 @@ float4 OpaquePixelShaderFunction(VertexShaderOutput input) : COLOR0
 
 float4 TransparentPixelShaderFunction(VertexShaderOutput input) : COLOR0
 {
+    if (input.Normal.y != 0) clip(-1);
+    if (input.Dot < 0) return float4(0, 0, 0, 0);
     float4 textureColor = tex2D(textureSampler, input.TextureCoordinate);
 	if (textureColor.a < 1) clip(-1);
 

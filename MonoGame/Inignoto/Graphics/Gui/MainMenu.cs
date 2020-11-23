@@ -10,6 +10,11 @@ using Inignoto.Math;
 using Inignoto.Utilities;
 using Inignoto.Graphics.Fonts;
 using Inignoto.GameSettings;
+using System.IO;
+using Inignoto.World;
+using Inignoto.Common;
+using static Inignoto.Entities.Player.PlayerEntity;
+using Inignoto.Entities.Client.Player;
 
 namespace Inignoto.Graphics.Gui
 {
@@ -31,20 +36,39 @@ namespace Inignoto.Graphics.Gui
 
         private enum MenuState
         {
-            TITLE, SETTINGS
+            TITLE, SETTINGS, SINGLEPLAYER, MULTIPLAYER
         }
 
         private enum SettingsState {
             GRAPHICS, CONTROLS, AUDIO, SELECT
         }
 
+        private enum SingleplayerState {
+            SELECT, CREATE
+        }
+
         private MenuState menu_state = MenuState.TITLE;
         private SettingsState settings_state = SettingsState.SELECT;
+        private SingleplayerState singleplayer_state = SingleplayerState.SELECT;
 
         private int controls_page = 0;
         public int controls_pages = 3;
+        public int world_page = 0;
 
         private InputSetting selected_input = null;
+
+        private List<WorldProperties> worlds = new List<WorldProperties>();
+
+        public bool inGame;
+
+        public MainMenu(bool inGame = false)
+        {
+            this.inGame = inGame;
+            if (inGame)
+            {
+                menu_state = MenuState.SETTINGS;
+            }
+        }
 
         public override void Render(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime gameTime)
         {
@@ -89,6 +113,361 @@ namespace Inignoto.Graphics.Gui
             else if (menu_state == MenuState.SETTINGS)
             {
                 RenderSettings(device, spriteBatch, width, height, gameTime, clicked);
+            } else if (menu_state == MenuState.SINGLEPLAYER)
+            {
+                RenderSingleplayer(device, spriteBatch, width, height, gameTime, clicked);
+            }
+        }
+
+        private bool delete_world = false;
+        private WorldProperties deleting = null;
+        private WorldProperties creating = null;
+        KeyReader name_reader = null;
+        KeyReader seed_reader = new KeyReader(20);
+        public void RenderSingleplayer(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime gameTime, bool clicked)
+        {
+            int w = 300;
+
+            int mouse_x = (int)(Inignoto.game.mousePos.X * (1920.0 / width));
+            int mouse_y = (int)(Inignoto.game.mousePos.Y * (1080.0 / height));
+
+            void DrawCenteredString(int x, int y, string str, Color color)
+            {
+                int strwidth = (int)(FontManager.mandrill_regular.width + FontManager.mandrill_regular.spacing) * str.Length;
+                DrawString(spriteBatch, width, height, 1920 / 2 - w - 40 + (w - strwidth) / 2 + w / 2, 1080 / 2 - 50 + y, 1.0f, FontManager.mandrill_regular, str, color);
+            }
+
+            bool DrawButton(int x, int y, string str, float font_size = 1.0f, bool left_align = false)
+            {
+                int X = x + 1920 / 2 - w - 40;
+                int Y = 1080 / 2 - 50 + y;
+                int W = w * 2;
+                int H = 75;
+
+                Color color = Color.White;
+                Color color2 = Color.LightSlateGray;
+
+                bool flag = false;
+
+                if (mouse_x >= X && mouse_y >= Y && mouse_x <= X + W && mouse_y <= Y + H)
+                {
+                    flag = true;
+                    color = Color.Gray;
+                    color2 = Color.LightGray;
+                }
+
+                Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(x + 1920 / 2 - w - 40, 1080 / 2 - 50 + y, w * 2, 75), color2);
+                int strwidth = (int)((FontManager.mandrill_regular.width + FontManager.mandrill_regular.spacing) * str.Length * font_size);
+                if (!left_align)
+                {
+                    DrawString(spriteBatch, width, height, x + 1920 / 2 - w - 40 + (w - strwidth) / 2 + w / 2, 1080 / 2 - 50 + y, font_size, FontManager.mandrill_regular, str, color);
+                } else
+                {
+                    DrawString(spriteBatch, width, height, x + 1920 / 2 - w - 40, 1080 / 2 - 50 + y, font_size, FontManager.mandrill_regular, str, color);
+                }
+                return flag;
+            }
+
+            if (singleplayer_state == SingleplayerState.SELECT)
+            {
+                for (int i = world_page * 10; i < worlds.Count && i < world_page * 10 + 10; i++)
+                {
+                    int x = i % 2;
+                    int y = (i - x) / 2;
+                    int X = (x * 2) * 325 - 325;
+                    int Y = y * 100 - 300;
+                    string name = worlds[i].name;
+                    float scale = 1.0f;
+                    if (delete_world && deleting == worlds[i])
+                    {
+                        name = "Click again to delete";
+                        scale = 0.75f;
+                    }
+                    if (DrawButton(X, Y, name, scale))
+                    {
+                        if (clicked)
+                        {
+                            if (delete_world)
+                            {
+                                if (deleting == worlds[i])
+                                {
+                                    ResourcePath directory = new ResourcePath("", "", "Worlds/" + worlds[i].name);
+                                    if (Directory.Exists(FileUtils.GetResourcePath(directory)))
+                                        Directory.Delete(FileUtils.GetResourcePath(directory), true);
+                                    worlds.Remove(worlds[i]);
+                                    world_page = 0;
+                                    break;
+                                }
+                                deleting = worlds[i];
+                            } else
+                            {
+                                Inignoto.game.world.Construct(worlds[i].name, worlds[i]);
+                                openGui = null;
+                                //Inignoto.game.player = new Entities.Client.Player.ClientPlayerEntity(Inignoto.game.world, new Vector3f(Inignoto.game.world.radius * 2, 10, Inignoto.game.world.radius));
+                                Inignoto.game.world.entities.Add(Inignoto.game.player);
+                                Inignoto.game.player.position = new Vector3f(Inignoto.game.world.radius * 2, 10, Inignoto.game.world.radius);
+                                Inignoto.game.player.position.Y = Inignoto.game.world.properties.generator.GetHeight(Inignoto.game.player.position.X, Inignoto.game.player.position.Z, Inignoto.game.world.radius, Inignoto.game.world.properties.infinite) + 1;
+                                Inignoto.game.game_state = Inignoto.GameState.GAME;
+                                Inignoto.game.player.OnGround = true;
+                                Inignoto.game.player.FallStart = Inignoto.game.player.position.Y;
+                                Inignoto.game.player.gamemode = worlds[i].default_gamemode;
+                                Inignoto.game.player.health = 100.0f;
+                                Inignoto.game.player.Load();
+                                return;
+                            }
+                            
+                        }
+                    }
+                }
+                if (world_page * 10 + 10 < worlds.Count)
+                {
+                    if (DrawButton(325, 200, "next"))
+                    {
+                        if (clicked)
+                        {
+                            world_page++;
+                        }
+                    }
+                }
+                if (world_page > 0)
+                {
+                    if (DrawButton(-325, 200, "back"))
+                    {
+                        if (clicked)
+                        {
+                            world_page--;
+                        }
+                    }
+                }
+                if (DrawButton(0, 400, "back"))
+                {
+                    if (clicked)
+                    {
+                        menu_state = MenuState.TITLE;
+                        delete_world = false;
+                        deleting = null;
+                    }
+                }
+                if (DrawButton(-325, 300, !delete_world ? "delete" : "cancel"))
+                {
+                    if (clicked)
+                    {
+                        delete_world = !delete_world;
+                        deleting = null;
+                    }
+                }
+                if (DrawButton(325, 300, "create"))
+                {
+                    if (clicked)
+                    {
+                        singleplayer_state = SingleplayerState.CREATE;
+                        creating = new WorldProperties("New World");
+                        name_reader = null;
+                        delete_world = false;
+                        deleting = null;
+                        seed_reader.finished = true;
+                        seed_reader.text = ""+new Random().Next();
+                    }
+                }
+            }
+            else if (singleplayer_state == SingleplayerState.CREATE)
+            {
+                double DrawSlider(int x, int y, string str, double value, double max)
+                {
+                    int X = x + 1920 / 2 - w - 40;
+                    int Y = 1080 / 2 - 50 + y;
+                    int W = w * 2;
+                    int H = 75;
+
+                    Color color = Color.DarkGray;
+                    Color color2 = Color.LightSlateGray;
+                    Color color3 = Color.White;
+
+                    int SLIDER_X = (int)((W - 15) * (value / max));
+                    if (mouse_x >= X - 5 && mouse_y >= Y && mouse_x <= X + W + 5 && mouse_y <= Y + H)
+                    {
+                        if (Mouse.GetState().LeftButton == ButtonState.Pressed && mouse_released)
+                        {
+                            SLIDER_X = (int)MathF.Min((W - 15), MathF.Max(0, mouse_x - X));
+                            color = Color.Gray;
+                            color2 = Color.LightGray;
+                            color3 = Color.Gray;
+                        }
+                    }
+                    Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(x + 1920 / 2 - w - 40, 1080 / 2 - 50 + y, w * 2, 75), color2);
+                    int strwidth = (int)(FontManager.mandrill_regular.width + FontManager.mandrill_regular.spacing) * str.Length;
+                    Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(x + 1920 / 2 - w - 40 + SLIDER_X, 1080 / 2 - 50 + y, 15, 75), color);
+                    DrawString(spriteBatch, width, height, x + 1920 / 2 - w - 40 + (w - strwidth) / 2 + w / 2 - 15, 1080 / 2 - 50 + y, 1.0f, FontManager.mandrill_regular, str, color3);
+
+
+                    return MathF.Max(0, MathF.Min((float)max, (float)(max * SLIDER_X / (W - 15))));
+                }
+
+                double gravity = DrawSlider(-325, 0, "gravity: " + creating.gravity, creating.gravity, 9.81f);
+
+                if (clicked && seed_reader.finished == false)
+                {
+                    seed_reader.finished = true;
+                }
+
+                string SEED = "seed: " + seed_reader.text;
+                if (seed_reader.finished == false)
+                {
+                    SEED += (gameTime.TotalGameTime.TotalMilliseconds % 1000 <= 500 ? "|" : "");
+                }
+                if (DrawButton(325, 0, SEED, 0.9f, true))
+                {
+                    if (clicked)
+                    {
+                        seed_reader.finished = false;
+                    }
+                }
+
+                if (DrawButton(-325, 100, "Infinite: " + creating.infinite))
+                {
+                    if (clicked)
+                    {
+                        creating.infinite = !creating.infinite;
+                    }
+                }
+
+                if (DrawButton(325, 100, "Mode: " + creating.default_gamemode.ToString()))
+                {
+                    if (clicked)
+                    {
+                        int gm = (int)creating.default_gamemode;
+                        gm++;
+                        gm %= 3;
+                        creating.default_gamemode = (Gamemode)gm;
+                    }
+                }
+
+                Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(325 - 30, 300, 1920 - 325 * 2, 75), Color.Gray);
+
+                
+                if (name_reader != null)
+                {
+                    DrawString(spriteBatch, width, height, 325 - 30, 300, 1.0f, FontManager.mandrill_regular, creating.name + (gameTime.TotalGameTime.TotalMilliseconds % 1000 <= 500 ? "|" : ""), Color.White);
+                }
+                else
+                {
+                    DrawString(spriteBatch, width, height, 325 - 30, 300, 1.0f, FontManager.mandrill_regular, creating.name, Color.White);
+                }
+
+
+
+                if (clicked && name_reader != null)
+                {
+                    name_reader = null;
+                }
+                if (mouse_x > 325 - 30 && mouse_y > 300 && mouse_x < 325 - 30 + 1920 - 325 * 2 && mouse_y < 375)
+                {
+                    if (clicked)
+                    {
+                        name_reader = new KeyReader(45);
+                        name_reader.text = creating.name;
+                    }
+                }
+                if (seed_reader.finished == false)
+                {
+                    seed_reader.Update(gameTime);
+                    string str = "";
+                    for (int i = 0; i < seed_reader.text.Length; i++)
+                    {
+
+                        if (char.IsLetterOrDigit(seed_reader.text[i]) || seed_reader.text[i] == ' ')
+                        {
+                            str += seed_reader.text[i];
+                        }
+                    }
+                    seed_reader.text = str;
+                }
+
+                if (name_reader != null)
+                {
+                    name_reader.Update(gameTime);
+                    string str = "";
+                    for (int i = 0; i < name_reader.text.Length; i++)
+                    {
+                        
+                        if (char.IsLetterOrDigit(name_reader.text[i]) || name_reader.text[i] == ' ')
+                        {
+                            str += name_reader.text[i];
+                        }
+                    }
+                    
+                    name_reader.text = str;
+                    creating.name = name_reader.text;
+                    if (name_reader.finished)
+                    {
+                        name_reader = null;
+                    }
+                }
+
+                if (mouse_released)
+                {
+                    creating.gravity = (float)MathF.Max(1, MathF.Round((float)gravity * 10) / 10.0f);
+                }
+
+                if (DrawButton(-325, 300, "back"))
+                {
+                    if (clicked)
+                    {
+                        singleplayer_state = SingleplayerState.SELECT;
+                    }
+                }
+                if (creating.name.Trim().Equals(""))
+                {
+                    DrawButton(325, 300, "Enter a name first!");
+                }
+                else
+                if (DrawButton(325, 300, "create"))
+                {
+                    if (clicked)
+                    {
+                        int match = 0;
+                        do
+                        {
+                            match = 0;
+                            for (int j = 0; j < worlds.Count; j++)
+                            {
+                                if (creating.name.Equals(worlds[j].name))
+                                {
+                                    creating.name += "_";
+                                    match++;
+                                }
+                            }
+                        } while (match > 0);
+
+                        if (int.TryParse(seed_reader.text, out int r))
+                        {
+                            creating.seed = r;
+                        } else
+                        {
+                            string str = "";
+                            for (int i = 0; i < seed_reader.text.Length; i++)
+                            {
+                                if (char.IsDigit(seed_reader.text[i]))
+                                {
+                                    str += seed_reader.text[i];
+                                } else
+                                {
+                                    str += (int)seed_reader.text[i];
+                                }
+                            }
+                            if (int.TryParse(str, out int s))
+                            {
+                                creating.seed = s;
+                            } else
+                            {
+                                creating.seed = new Random().Next();
+                            }
+                        }
+
+                        worlds.Add(creating);
+                        singleplayer_state = SingleplayerState.SELECT;
+                    }
+                }
             }
         }
 
@@ -187,13 +566,36 @@ namespace Inignoto.Graphics.Gui
                         mouse_released = false;
                     }
                 }
-                if (DrawButton(0, 300, "back"))
+                if (!inGame)
                 {
-                    if (clicked)
+                    if (DrawButton(0, 300, "back"))
                     {
-                        menu_state = MenuState.TITLE;
+                        if (clicked)
+                        {
+                            menu_state = MenuState.TITLE;
+                        }
+                    }
+                } else
+                {
+                    if (DrawButton(-325, 300, "exit to menu"))
+                    {
+                        if (clicked)
+                        {
+                            Inignoto.game.world.Dispose();
+                            Inignoto.game.game_state = Inignoto.GameState.MENU;
+                            menu_state = MenuState.TITLE;
+                            inGame = false;
+                        }
+                    }
+                    if (DrawButton(325, 300, "back to game"))
+                    {
+                        if (clicked)
+                        {
+                            openGui = null;
+                        }
                     }
                 }
+                
 
                 DrawCenteredString(0, -100, "Settings", Color.White);
             } else
@@ -276,7 +678,7 @@ namespace Inignoto.Graphics.Gui
                     
                     if (controls_page == 0)
                     {
-                        float sensitivity = (int)DrawSlider(325, -300, "Mouse Sensitivity: " + (int)(Settings.MOUSE_SENSITIVITY * 100), Settings.MOUSE_SENSITIVITY * 100, 100.0f);
+                        float sensitivity = (int)System.Math.Round(DrawSlider(325, -300, "Mouse Sensitivity: " + (int)(Settings.MOUSE_SENSITIVITY * 100), Settings.MOUSE_SENSITIVITY * 100, 100.0f));
 
                         DrawControl(-325, -300, "Forward", Settings.FORWARD);
                         DrawControl(-325, -200, "Backward", Settings.BACKWARD);
@@ -311,7 +713,7 @@ namespace Inignoto.Graphics.Gui
                             {
                                 int i = x + y * 2;
 
-                                DrawControl(325 * x * 2 - 325, y * 100 - 300, "Hotbar " + i, Settings.HOTBAR_KEYS[i]);
+                                DrawControl(325 * x * 2 - 325, y * 100 - 300, "Hotbar " + (i + 1), Settings.HOTBAR_KEYS[i]);
 
                             }
                         }
@@ -367,14 +769,6 @@ namespace Inignoto.Graphics.Gui
                         }
                     }
 
-                    if (DrawButton(-325, 200, "Shadows: " + Settings.SHADOWS))
-                    {
-                        if (clicked)
-                        {
-                            Settings.SHADOWS = !Settings.SHADOWS;
-                        }
-                    }
-
                     if (DrawButton(325, -200, "Head Bobbing: " + Settings.HEAD_BOBBING))
                     {
                         if (clicked)
@@ -399,6 +793,28 @@ namespace Inignoto.Graphics.Gui
                         }
                     }
 
+
+                    if (DrawButton(325, 100, "Shadows: " + (Settings.SHADOWS ? Settings.FANCY_SHADOWS ? "Fancy" : "Normal" : "Off")))
+                    {
+                        if (clicked)
+                        {
+                            if (Settings.SHADOWS == false)
+                            {
+                                Settings.SHADOWS = true;
+                            } else
+                            {
+                                if (Settings.FANCY_SHADOWS == false)
+                                {
+                                    Settings.FANCY_SHADOWS = true;
+                                } else
+                                {
+                                    Settings.FANCY_SHADOWS = false;
+                                    Settings.SHADOWS = false;
+                                }
+                            }
+                        }
+                    }
+
                     if (mouse_released)
                     {
                         Settings.HORIZONTAL_VIEW = (int)MathF.Max(4, x_view);
@@ -411,17 +827,17 @@ namespace Inignoto.Graphics.Gui
                     DrawCenteredString(0, -300, "Audio Settings", Color.White);
 
 
-                    float master = (int)DrawSlider(-325, -200, "Master: " + Settings.MASTER_VOLUME + " / 100", Settings.MASTER_VOLUME, 100.0f);
-                    float music = (int)DrawSlider(325, -200, "Music: " + Settings.MUSIC_VOLUME + " / 100", Settings.MUSIC_VOLUME, 100.0f);
+                    float master = (int)System.Math.Round(DrawSlider(-325, -200, "Master: " + Settings.MASTER_VOLUME + " / 100", Settings.MASTER_VOLUME, 100.0f));
+                    float music = (int)System.Math.Round(DrawSlider(325, -200, "Music: " + Settings.MUSIC_VOLUME + " / 100", Settings.MUSIC_VOLUME, 100.0f));
 
 
-                    float player = (int)DrawSlider(-325, -100, "Players: " + Settings.PLAYER_VOLUME + " / 100", Settings.PLAYER_VOLUME, 100.0f);
-                    float creature = (int)DrawSlider(-325, 0, "Creatures: " + Settings.CREATURE_VOLUME + " / 100", Settings.CREATURE_VOLUME, 100.0f);
-                    float enemy = (int)DrawSlider(-325, 100, "Hostile: " + Settings.ENEMY_VOLUME + " / 100", Settings.ENEMY_VOLUME, 100.0f);
+                    float player = (int)System.Math.Round(DrawSlider(-325, -100, "Players: " + Settings.PLAYER_VOLUME + " / 100", Settings.PLAYER_VOLUME, 100.0f));
+                    float creature = (int)System.Math.Round(DrawSlider(-325, 0, "Creatures: " + Settings.CREATURE_VOLUME + " / 100", Settings.CREATURE_VOLUME, 100.0f));
+                    float enemy = (int)System.Math.Round(DrawSlider(-325, 100, "Hostile: " + Settings.ENEMY_VOLUME + " / 100", Settings.ENEMY_VOLUME, 100.0f));
                     
-                    float block = (int)DrawSlider(325, -100, "Blocks: " + Settings.BLOCK_VOLUME + " / 100", Settings.BLOCK_VOLUME, 100.0f);
-                    float ambient = (int)DrawSlider(325, 0, "Ambience: " + Settings.AMBIENT_VOLUME + " / 100", Settings.AMBIENT_VOLUME, 100.0f);
-                    float gui = (int)DrawSlider(325, 100, "Gui: " + Settings.GUI_VOLUME + " / 100", Settings.GUI_VOLUME, 100.0f);
+                    float block = (int)System.Math.Round(DrawSlider(325, -100, "Blocks: " + Settings.BLOCK_VOLUME + " / 100", Settings.BLOCK_VOLUME, 100.0f));
+                    float ambient = (int)System.Math.Round(DrawSlider(325, 0, "Ambience: " + Settings.AMBIENT_VOLUME + " / 100", Settings.AMBIENT_VOLUME, 100.0f));
+                    float gui = (int)System.Math.Round(DrawSlider(325, 100, "Gui: " + Settings.GUI_VOLUME + " / 100", Settings.GUI_VOLUME, 100.0f));
                    
                     if (mouse_released)
                     {
@@ -497,7 +913,30 @@ namespace Inignoto.Graphics.Gui
                 return flag;
             }
             
-            DrawButton(0, "singleplayer");
+            if (DrawButton(0, "singleplayer"))
+            {
+                if (clicked)
+                {
+                    menu_state = MenuState.SINGLEPLAYER;
+
+                    worlds.Clear();
+                    string path = FileUtils.GetResourcePath(new ResourcePath("", "", "Worlds"));
+                    if (!Directory.Exists(path))
+                    {
+                        Directory.CreateDirectory(path);
+                    }
+                    string[] files = FileUtils.GetAllDirectories(new ResourcePath("", "", "Worlds"));
+                    if (files.Length > 0)
+                    {
+                        foreach(string file in files)
+                        {
+                            string[] s = file.Split(Path.DirectorySeparatorChar);
+                            WorldProperties properties = new WorldProperties(s[s.Length - 1]);
+                            worlds.Add(properties);
+                        }
+                    }
+                }
+            }
 
             DrawButton(100, "multiplayer");
 
@@ -520,6 +959,12 @@ namespace Inignoto.Graphics.Gui
 
         public void DrawPlayer(GraphicsDevice device, GameEffect effect, int width, int height, GameTime time)
         {
+            Inignoto.game.player.arm_swing = 0;
+            Inignoto.game.player.TryPlayAnimation(Inignoto.game.player.idle);
+            Inignoto.game.player.look.X = 0;
+            Inignoto.game.player.look.Y = 0;
+            Inignoto.game.player.look.Z = 0;
+            Inignoto.game.player.FallStart = Inignoto.game.player.position.Y;
             Inignoto.game.projectionMatrix = Matrix.CreatePerspectiveFieldOfView(
                                MathHelper.ToRadians(90),
                                Inignoto.game.GraphicsDevice.DisplayMode.AspectRatio,

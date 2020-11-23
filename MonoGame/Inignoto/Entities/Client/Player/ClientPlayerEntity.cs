@@ -375,7 +375,7 @@ namespace Inignoto.Entities.Client.Player
             }
 
             if (!(Hud.openGui is InventoryGui || Inignoto.game.paused))
-                if (Keyboard.GetState().IsKeyDown(Keys.C))
+                if (Settings.CRAWL.IsJustPressed())
                 {
                     if (!justPressedC) Crawling = !Crawling;
                     if (BlockAboveHead) Crawling = true;
@@ -518,19 +518,19 @@ namespace Inignoto.Entities.Client.Player
                 {
                     if (GameSettings.Settings.JUMP.IsPressed())
                     {
-                        velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.0075f * delta);
+                        velocity.Y = MathHelper.Lerp(velocity.Y, -1 * world.properties.gravity / 9.81f, 0.0075f * delta) ;
                     } else
                     {
-                        velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.01f * delta);
+                        velocity.Y = MathHelper.Lerp(velocity.Y, -1 * world.properties.gravity / 9.81f, 0.01f * delta);
                     }
                 } else
                 {
                     if (GameSettings.Settings.SNEAK.IsPressed())
                     {
-                        velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.0125f * delta);
+                        velocity.Y = MathHelper.Lerp(velocity.Y, -1 * world.properties.gravity / 9.81f, 0.0125f * delta);
                     }
                     else
-                        velocity.Y = MathHelper.Lerp(velocity.Y, -1, 0.01f * delta);
+                        velocity.Y = MathHelper.Lerp(velocity.Y, -1 * world.properties.gravity / 9.81f, 0.01f * delta);
                 }
 
                 float d = System.Math.Abs(FallStart - position.Y);
@@ -826,12 +826,12 @@ namespace Inignoto.Entities.Client.Player
                 if (mousePos.X != lastMousePos.X)
                 {
                     float rot = -(mousePos.X - lastMousePos.X);
-                    look.Y += rot * GameSettings.Settings.MOUSE_SENSITIVITY;
+                    look.Y += rot * Settings.MOUSE_SENSITIVITY;
                 }
                 if (mousePos.Y != lastMousePos.Y)
                 {
                     float rot = -(mousePos.Y - lastMousePos.Y);
-                    look.X += rot * GameSettings.Settings.MOUSE_SENSITIVITY;
+                    look.X += rot * Settings.MOUSE_SENSITIVITY;
                 }
 
                 if (look.X >= 89) look.X = 89;

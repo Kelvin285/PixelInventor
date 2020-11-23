@@ -11,6 +11,7 @@ namespace Inignoto.GameSettings
         public static float FIELD_OF_VIEW = 90;
         public static float MOUSE_SENSITIVITY = 0.05f;
         public static bool FULLSCREEN = false;
+        public static bool FANCY_SHADOWS = true;
 
 
         public static float MASTER_VOLUME = 100;
@@ -131,6 +132,10 @@ namespace Inignoto.GameSettings
                     {
                         bool.TryParse(b, out SHADOWS);
                     }
+                    if (a.Equals("FANCY_SHADOWS"))
+                    {
+                        bool.TryParse(b, out FANCY_SHADOWS);
+                    }
                     if (a.Equals("PARALLEL_CHUNK_GENERATION"))
                     {
                         bool.TryParse(b, out PARALLEL_CHUNK_GENERATION);
@@ -232,6 +237,7 @@ namespace Inignoto.GameSettings
             str += GetSaveString("VSYNC", "" + VSYNC);
             str += GetSaveString("FULLSCREEN", "" + FULLSCREEN);
             str += GetSaveString("SHADOWS", "" + SHADOWS);
+            str += GetSaveString("FANCY_SHADOWS", "" + FANCY_SHADOWS);
 
             str += GetSaveString("FORWARD", FORWARD.Write());
             str += GetSaveString("BACKWARD", BACKWARD.Write());

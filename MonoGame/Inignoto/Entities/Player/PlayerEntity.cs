@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Inignoto.Client;
 using Inignoto.Inventory;
 using Inignoto.Math;
+using Inignoto.Utilities;
 using Inignoto.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -36,7 +38,8 @@ namespace Inignoto.Entities.Player
 
         public PlayerEntity(World.World world, Vector3f position, long UID) : base(world, position)
         {
-            position.Y = world.properties.generator.GetHeight(position.X, position.Z, world.radius) + 1;
+            gamemode = world.properties.default_gamemode;
+            position.Y = world.properties.generator.GetHeight(position.X, position.Z, world.radius, world.properties.infinite) + 1;
             ReachDistance = 4.0f;
             SpawnPosition = new Vector3f(position);
 
@@ -48,6 +51,8 @@ namespace Inignoto.Entities.Player
             Inventory = new PhysicalInventory(this);
 
             soundType = Audio.SoundType.PLAYERS;
+
+            Load();
         }
 
         public override void Update(GameTime time)
@@ -102,6 +107,64 @@ namespace Inignoto.Entities.Player
         public override void DamageEntity(float damage)
         {
             DamageEntity(damage, false);
+        }
+
+        public override void Save()
+        {
+            ResourcePath directory = new ResourcePath("Players", "", "Worlds/" + world.name);
+            ResourcePath file = new ResourcePath("Players", "player" + UID + ".player", "Worlds/" + world.name);
+            if (!Directory.Exists(FileUtils.GetResourcePath(directory)))
+            {
+                Directory.CreateDirectory(FileUtils.GetResourcePath(directory));
+            }
+            if (File.Exists(FileUtils.GetResourcePath(file)))
+            {
+                File.Delete(FileUtils.GetResourcePath(file));
+            }
+            string str = "";
+            str += UID + "\n";
+            str += position.X + "\n";
+            str += position.Y + "\n";
+            str += position.Z + "\n";
+            str += health + "\n";
+            str += hunger + "\n";
+            str += look.X + "\n";
+            str += look.Y + "\n";
+            str += look.Z + "\n";
+            str += stamina + "\n";
+            str += (int)gamemode + "\n";
+            str += "INVENTORY\n";
+            str += Inventory.Save();
+            File.WriteAllText(FileUtils.GetResourcePath(file), str);
+        }
+
+        public override void Load()
+        {
+            ResourcePath directory = new ResourcePath("Players", "", "Worlds/" + world.name);
+            ResourcePath file = new ResourcePath("Players", "player"+UID+".player", "Worlds/" + world.name);
+            if (!Directory.Exists(FileUtils.GetResourcePath(directory)))
+            {
+                return;
+            }
+            if (!File.Exists(FileUtils.GetResourcePath(file)))
+            {
+                return;
+            }
+            string str = File.ReadAllText(FileUtils.GetResourcePath(file));
+            string[] split = str.Split("INVENTORY");
+            Inventory.Load(split[1]);
+            string[] data = split[0].Split("\n");
+            UID = long.Parse(data[0]);
+            position.X = float.Parse(data[1]);
+            position.Y = float.Parse(data[2]);
+            position.Z = float.Parse(data[3]);
+            health = float.Parse(data[4]);
+            hunger = float.Parse(data[5]);
+            look.X = float.Parse(data[6]);
+            look.Y = float.Parse(data[7]);
+            look.Z = float.Parse(data[8]);
+            stamina = float.Parse(data[9]);
+            gamemode = (Gamemode)int.Parse(data[10]);
         }
 
     }

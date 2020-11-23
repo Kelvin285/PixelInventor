@@ -45,7 +45,7 @@ namespace Inignoto.World.Chunks
 
         private bool start = false;
 
-        private bool modifiedChunks = false;
+        private bool modifiedChunks = true;
 
         
         public ChunkManager(World world)
@@ -66,6 +66,19 @@ namespace Inignoto.World.Chunks
 
         public void GenerateChunks(ChunkGenerator generator)
         {
+            chunksToBuild.Sort();
+            if (chunksToBuild.Count > 0)
+            {
+                Chunk chunk = chunksToBuild[0];
+                if (chunk != null)
+                {
+                    generator.GenerateChunk(chunk);
+
+                    chunk.SetGenerated();
+                    chunk.BuildMesh();
+                }
+                chunksToBuild.Remove(chunk);
+            }
             if (Settings.PARALLEL_CHUNK_GENERATION)
             {
                 ////lock(chunksToBuild)
@@ -98,40 +111,31 @@ namespace Inignoto.World.Chunks
 
                                 chunk.SetGenerated();
 
-
-                                chunk.BuildMesh();
+                                //chunk.BuildMesh();
 
                             }
-                            
-
-                            //buildQueue.Add(chunk);
                         }
                     });
                 }
-            } else
-            {
-                chunksToBuild.Sort();
-                if (chunksToBuild.Count > 0)
-                {
-                    Chunk chunk = chunksToBuild[0];
-                    if (chunk != null)
-                    {
-                        generator.GenerateChunk(chunk);
-
-                        chunk.SetGenerated();
-                        chunk.BuildMesh();
-                    }
-                    chunksToBuild.Remove(chunk);
-                }
             }
             
+        }
+
+        internal void Dispose()
+        {
+            lock(chunks)
+            {
+                foreach(Chunk chunk in chunks.Values)
+                {
+                    chunk.Dispose();
+                }
+            }
         }
 
         public void StructureGeneration()
         {
             try
             {
-                
                 lock (structureChunks)
                 {
                     List<long> remove = new List<long>();
@@ -146,6 +150,7 @@ namespace Inignoto.World.Chunks
                             {
                                 if (!chunk.NeedsToGenerate())
                                 {
+                                    bool modified = chunk.modified;
                                     remove.Add(key);
                                     if (schunk != null)
                                     {
@@ -161,7 +166,8 @@ namespace Inignoto.World.Chunks
                                             }
                                         }
                                     }
-                                    chunk.BuildMesh();
+                                    chunk.modified = modified;
+                                    chunk.MarkForRebuild();
                                 }
                             }
 
@@ -233,8 +239,9 @@ namespace Inignoto.World.Chunks
             } else
             {
                 Chunk chunk = Chunk.GetChunk(x, y, z, world);
-                chunks.Add(index, chunk);
-                ////lock(chunksToBuild)
+
+                lock(chunks) chunks.Add(index, chunk);
+
                 chunksToBuild.Add(chunk);
                 modifiedChunks = true;
                 return chunk;
@@ -256,7 +263,7 @@ namespace Inignoto.World.Chunks
                         chunks.TryGetValue(index, out Chunk chunk);
                         chunk.Dispose();
                         Chunk.DisposeChunk(chunk);
-                        chunks.Remove(index);
+                        lock (chunks) chunks.Remove(index);
                         modifiedChunks = true;
                         return true;
 
@@ -305,25 +312,17 @@ namespace Inignoto.World.Chunks
             if (modifiedChunks || current_x != last_x || current_y != last_y || current_z != last_z)
             {
                 updating.Clear();
-                ////lock(chunks)
-                for (int i = 0; i < rendering.Count; i++)
+                lock (chunks) foreach (Chunk chunk in chunks.Values)
                 {
-                    if (Vector3.Distance(rendering[i].cpos, current_xyz) <= Constants.ACTIVE_CHUNK_DISTANCE)
-                   updating.Add(rendering[i]);
+                    if (chunk != null)
+                    {
+                        if (Vector3.Distance(chunk.cpos, current_xyz) <= Constants.ACTIVE_CHUNK_DISTANCE)
+                            updating.Add(chunk);
+                    }
+                    
                 }
                 updating.Sort();
             }
-            for (int i = 0; i < updating.Count; i++)
-            {
-                Chunk chunk = updating[i];
-                if (chunk != null)
-                {
-                    float distance = (float)IMathHelper.Distance3(chunk.GetX(), chunk.GetY(), chunk.GetZ(), current_x, current_y, current_z);
-                    chunk.Tick(distance);
-                }
-            }
-            /*
-            if (updating.Count > 2)
             Parallel.ForEach(updating.Cast<Chunk>(), chunk =>
             {
                 if (chunk != null)
@@ -332,7 +331,7 @@ namespace Inignoto.World.Chunks
                     chunk.Tick(distance);
                 }
             });
-            */
+            
         }
 
         private void Update()

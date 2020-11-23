@@ -39,7 +39,7 @@ namespace Inignoto.Entities
 
         public int TicksExisted { get; protected set; }
 
-        public float FallStart { get; protected set; }
+        public float FallStart;
 
         public bool BlockAboveHead { get; protected set; }
 
@@ -329,7 +329,13 @@ namespace Inignoto.Entities
         public virtual void LandOnGround()
         {
             //minimum damage = 10
-            float damage = System.Math.Abs(FallStart - position.Y) / 5;
+            float damage = (position.Y - FallStart) / 5;
+
+            damage *= world.properties.gravity / 9.81f;
+            if (world.properties.gravity < 4)
+            {
+                damage = 0;
+            }
             if (damage > 1)
             {
                 DamageEntity(damage * damage * damage * 5);
@@ -484,6 +490,16 @@ namespace Inignoto.Entities
                 sound.Play();
                 SoundsToDispose.Add(sound);
             }
+        }
+
+        public virtual void Save()
+        {
+            
+        }
+
+        public virtual void Load()
+        {
+
         }
     }
 }

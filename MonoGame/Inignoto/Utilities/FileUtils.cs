@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace Inignoto.Utilities
@@ -16,7 +17,7 @@ namespace Inignoto.Utilities
             {
                 separator = Path.DirectorySeparatorChar;
             }
-            string new_path = root + separator + modid + separator + path;
+            string new_path = root + separator + ((modid.Length > 0) ? (modid + separator) : "") + path;
             string[] split = new_path.Split(separator);
             
             return Path.Combine(new_path);
@@ -33,10 +34,8 @@ namespace Inignoto.Utilities
             {
                 return "";
             }
-            FileStream stream = GetStreamForPath(resource_path, FileMode.Open);
-            StreamReader reader = new StreamReader(stream);
-            string str = reader.ReadToEnd();
-            reader.Close();
+
+            string str = File.ReadAllText(GetResourcePath(resource_path));
             return str;
         }
 

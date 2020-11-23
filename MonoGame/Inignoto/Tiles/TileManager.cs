@@ -44,21 +44,21 @@ namespace Inignoto.Tiles
         public static void Loadtiles()
         {
             AIR = new Tile("Inignoto:air", null, false).SetRayTraceType(Tile.TileRayTraceType.GAS).SetTransparent().SetVisible(false).SetBlocksMovement(false).SetReplaceable(true);
-            DIRT = new Tile("Inignoto:dirt", SoundEffects.step_soil).SetFull();
-            STONE = new Tile("Inignoto:stone", null).SetFull();
-            SMOOTH_STONE = new Tile("Inignoto:smooth_stone", null).SetFull();
-            SAND = new Tile("Inignoto:sand", null).SetFull();
-            LEAVES = new Tile("Inignoto:leaves", null);
-            LOG = new Tile("Inignoto:log", null).SetFull();
-            GRASS = new Tile("Inignoto:grass", SoundEffects.step_grass).SetFull().SetOverlay();
-            PURPLE_GRASS = new Tile("Inignoto:purple_grass", SoundEffects.step_grass).SetFull();
+            DIRT = new Tile("Inignoto:dirt", SoundEffects.step_soil, true, 3).SetFull();
+            STONE = new Tile("Inignoto:stone", null, true, 7).SetFull();
+            SMOOTH_STONE = new Tile("Inignoto:smooth_stone", null, true, 7).SetFull();
+            SAND = new Tile("Inignoto:sand", null, true, 3).SetFull();
+            LEAVES = new Tile("Inignoto:leaves", null, true, 1);
+            LOG = new Tile("Inignoto:log", null, true, 5).SetFull();
+            GRASS = new Tile("Inignoto:grass", SoundEffects.step_grass, true, 4).SetFull().SetOverlay();
+            PURPLE_GRASS = new Tile("Inignoto:purple_grass", SoundEffects.step_grass, true, 4).SetFull();
             WATER = new Tile("Inignoto:water", null, false).SetBlocksMovement(false).SetTransparent().SetRayTraceType(Tile.TileRayTraceType.FLUID).SetReplaceable(true);
-            GLOWING_CRYSTAL = new Tile("Inignoto:glowing_crystal", null).SetFull().SetLight(10, 14, 15);
-            MALECHITE = new Tile("Inignoto:malechite", null).SetFull().SetLight(0, 8, 0);
-            GLASS = new Tile("Inignoto:glass", null).SetFull().SetTransparent();
-            RED_GLASS = new Tile("Inignoto:red_glass", null).SetFull().SetTransparent().SetTint(15, 0, 0, 10);
-            SNOW = new Tile("Inignoto:snow", null).SetFull();
-            ICE = new Tile("Inignoto:ice", null).SetFull();
+            GLOWING_CRYSTAL = new Tile("Inignoto:glowing_crystal", null, true, 4).SetFull().SetLight(10, 14, 15);
+            MALECHITE = new Tile("Inignoto:malechite", null, true, 4).SetFull().SetLight(0, 8, 0);
+            GLASS = new Tile("Inignoto:glass", null, true, 2).SetFull().SetTransparent();
+            RED_GLASS = new Tile("Inignoto:red_glass", null, true, 2).SetFull().SetTransparent().SetTint(15, 0, 0, 10);
+            SNOW = new Tile("Inignoto:snow", null, true, 3).SetFull();
+            ICE = new Tile("Inignoto:ice", null, true, 3).SetFull();
         }
 
         public static void TryLoadTileTextures()

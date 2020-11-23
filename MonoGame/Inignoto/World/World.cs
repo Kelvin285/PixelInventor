@@ -16,6 +16,10 @@ using System;
 using Inignoto.Graphics.Mesh;
 using Inignoto.Graphics.Textures;
 using Inignoto.Effects;
+using Inignoto.World.Generator;
+using Inignoto.Entities.Player;
+using static Inignoto.Entities.Player.PlayerEntity;
+using Inignoto.Inventory;
 
 namespace Inignoto.World
 {
@@ -67,9 +71,9 @@ namespace Inignoto.World
             }
             }
 
-        public readonly ChunkManager chunkManager;
-        public readonly WorldProperties properties;
-        public readonly List<Entity> entities;
+        public ChunkManager chunkManager;
+        public WorldProperties properties;
+        public List<Entity> entities;
 
         private Mesh skybox;
         private Mesh sun;
@@ -77,7 +81,7 @@ namespace Inignoto.World
 
         public GameTime gameTime { get; private set; }
 
-        public readonly Random random;
+        public Random random;
 
         public float radius { get; private set; }
 
@@ -87,11 +91,14 @@ namespace Inignoto.World
 
         public string name;
 
-        public World(string name = "New World")
+        public World(int seed = 0, string name = "New World")
         {
             this.name = name;
             chunkManager = new ChunkManager(this);
-            properties = new WorldProperties();
+            properties = new WorldProperties(name);
+            properties.seed = seed;
+            properties.Load();
+            ChunkGenerator.noise.SetSeed(properties.seed);
             entities = new List<Entity>();
             random = new Random();
             radius = 4096;
@@ -103,14 +110,36 @@ namespace Inignoto.World
             BuildMeshes();
         }
 
+        public void Construct(string name, WorldProperties properties)
+        {
+            
+            this.name = name;
+            chunkManager = new ChunkManager(this);
+            this.properties = properties;
+            this.properties.Load();
+            ChunkGenerator.noise.SetSeed(properties.seed);
+            entities.Clear();
+            radius = 4096;
+
+            DayTime = 6000;
+
+            BuildMeshes();
+        }
+
+
+        public void Dispose()
+        {
+            chunkManager.Dispose();
+            properties.Save();
+            foreach (Entity entity in entities)
+            {
+                entity.Save();
+            }
+        }
+
         public void UpdateChunkGeneration()
         {
             chunkManager.GenerateChunks(properties.generator);
-        }
-
-        public void FixChunkBorders()
-        {
-            TickChunks();
         }
 
         public void TickChunks()
@@ -136,7 +165,7 @@ namespace Inignoto.World
             for (int i = 0; i < entities.Count; i++)
             {
                 Chunk chunk = TryGetChunk(entities[i].position.X, entities[i].position.Y, entities[i].position.Z);
-                if (entities[i].TicksExisted > 0)
+                if (entities[i].TicksExisted > 0 || entities[i] is PlayerEntity && ((PlayerEntity)entities[i]).gamemode == Gamemode.FREECAM)
                 {
                     entities[i].Update(time);
                     continue;
@@ -147,6 +176,10 @@ namespace Inignoto.World
                     {
                         entities[i].Update(time);
                     }
+                } else
+                {
+
+                    entities[i].velocity.Mul(0);
                 }
             }
         }
@@ -299,6 +332,34 @@ namespace Inignoto.World
                 return chunk.GetVoxel(x, y, z);
             }
             return TileManager.AIR.DefaultData;
+        }
+
+        public void MineVoxel(TilePos pos, int strength)
+        {
+            if (pos.x < 0) pos.x += (int)(radius * 4);
+            if (pos.x > (int)(radius * 4)) pos.x -= (int)(radius * 4);
+            int cx = (int)System.Math.Floor((float)pos.x / Constants.CHUNK_SIZE);
+            int cy = (int)System.Math.Floor((float)pos.y / Constants.CHUNK_SIZE);
+            int cz = (int)System.Math.Floor((float)pos.z / Constants.CHUNK_SIZE);
+
+            int x = pos.x - cx * Constants.CHUNK_SIZE;
+            int y = pos.y - cy * Constants.CHUNK_SIZE;
+            int z = pos.z - cz * Constants.CHUNK_SIZE;
+
+            Chunk chunk = chunkManager.TryGetChunk(cx, cy, cz);
+            if (chunk != null)
+            {
+                int index = chunk.GetIndexFor(x, y, z);
+                chunk.voxels[index].mining_time += strength;
+                if (chunk.voxels[index].mining_time >= TileManager.GetTile(chunk.voxels[index].voxel.tile_id).hits)
+                {
+                    entities.Add(new ItemEntity(this, new Vector3f(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f), new ItemStack(TileManager.GetTile(chunk.voxels[index].voxel.tile_id))));
+
+                    chunk.voxels[index].mining_time = 0;
+                    chunk.SetVoxel(x, y, z, TileManager.AIR.DefaultData);
+                    chunk.MarkForRebuild();
+                }
+            }
         }
 
         public void SetVoxel(TilePos pos, TileData voxel)

@@ -54,7 +54,8 @@ namespace Inignoto
         public World.World world;
         public ClientPlayerEntity player;
 
-        public Thread world_thread;
+        public Thread world_generation_thread;
+        public Thread world_tick_thread;
 
         public bool running = true;
 
@@ -129,11 +130,25 @@ namespace Inignoto
             GameResources.LoadResources();
 
             ThreadStart world_thread_start = new ThreadStart(UpdateWorldGeneration);
-            world_thread = new Thread(world_thread_start);
-            world_thread.IsBackground = true;
-            world_thread.Start();
-        }
+            world_generation_thread = new Thread(world_thread_start);
+            world_generation_thread.IsBackground = true;
+            world_generation_thread.Start();
 
+            ThreadStart world_tick_start = new ThreadStart(TickWorld);
+            world_tick_thread = new Thread(world_tick_start);
+            world_tick_thread.IsBackground = true;
+            world_tick_thread.Start();
+        }
+        public static void TickWorld()
+        {
+            while (game.running)
+            {
+                if (game.game_state == GameState.GAME)
+                {
+                    game.world.TickChunks();
+                }
+            }
+        }
         public static void UpdateWorldGeneration()
         {
             while (game.running)
@@ -328,11 +343,13 @@ namespace Inignoto
                 {
                     GameResources.shadowMap.Begin(camera.position.Vector, world.sunLook, 0);
                     world.Render(GraphicsDevice, GameResources.shadowMap._ShadowMapGenerate, gameTime);
+
                     GameResources.shadowMap.Begin(camera.position.Vector, world.sunLook, 1);
                     world.Render(GraphicsDevice, GameResources.shadowMap._ShadowMapGenerate, gameTime);
                     GameResources.shadowMap.Begin(camera.position.Vector, world.sunLook, 2);
                     world.Render(GraphicsDevice, GameResources.shadowMap._ShadowMapGenerate, gameTime);
                     GameResources.shadowMap.End();
+                    
                 }
 
             GraphicsDevice.SetRenderTarget(GameResources.gameImage);

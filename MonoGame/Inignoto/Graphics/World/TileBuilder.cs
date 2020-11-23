@@ -82,7 +82,7 @@ namespace Inignoto.Graphics.World
                 int ind = indices[i];
                 vpct.Add(new VertexPositionLightTexture(vertices[ind], colors[ind], textures[ind], normals[ind]));
             }
-            return Mesh.Mesh.Get(device, vpct.ToArray(), lines, Textures.Textures.tiles.GetTexture());
+            return new Mesh.Mesh(device, vpct.ToArray(), lines, Textures.Textures.tiles.GetTexture());
         }
 
         public static int BuildFace(float x, float y, float z, TileData data, TileData overlay, TileFace face, List<Vector3> vertices, List<Color> colors, List<Vector4> textures, List<int> indices, List<int> normals, int index, bool lines = false)

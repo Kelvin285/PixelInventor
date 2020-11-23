@@ -1,5 +1,6 @@
 ﻿using Inignoto.Utilities;
 using Inignoto.World.Chunks;
+using System;
 using System.Collections.Generic;
 using static Inignoto.Tiles.Tile;
 
@@ -192,7 +193,10 @@ namespace Inignoto.Tiles.Data
             }
         }
 
-
+        public void Tick(int cx, int cy, int cz, Chunk chunk)
+        {
+            
+        }
     }
 
 }

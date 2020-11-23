@@ -13,6 +13,7 @@ using Inignoto.World.Biomes;
 using Inignoto.Math;
 using Inignoto.World.Structures;
 using Inignoto.Common.Commands;
+using Inignoto.Crafting;
 
 namespace Inignoto.Utilities
 {
@@ -41,6 +42,7 @@ namespace Inignoto.Utilities
             BiomeManager.RegisterBiomes();
             StructureManager.RegisterStructures();
             CommandManager.RegisterCommands();
+            CraftingManager.RegisterRecipes();
 
             Inignoto.game.world = new World.World();
             Inignoto.game.player = new Entities.Client.Player.ClientPlayerEntity(Inignoto.game.world, new Vector3f(Inignoto.game.world.radius * 2, 10, Inignoto.game.world.radius));
@@ -55,7 +57,7 @@ namespace Inignoto.Utilities
 
             shadowImage = new RenderTarget2D(Inignoto.game.GraphicsDevice, 2048, 2048, false, SurfaceFormat.Single, DepthFormat.Depth24, 2, RenderTargetUsage.DiscardContents);
             lightImage = new RenderTarget2D(Inignoto.game.GraphicsDevice, 2048, 2048, false, SurfaceFormat.Color, DepthFormat.Depth16);
-            gameImage = new RenderTarget2D(Inignoto.game.GraphicsDevice, 2048, 2048, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8);
+            gameImage = new RenderTarget2D(Inignoto.game.GraphicsDevice, 1920, 1080, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8);
 
             CULL_CLOCKWISE_RASTERIZER_STATE = new RasterizerState();
             CULL_CLOCKWISE_RASTERIZER_STATE.CullMode = CullMode.CullClockwiseFace;
@@ -74,6 +76,12 @@ namespace Inignoto.Utilities
             SoundEffects.Dispose();
 
             InventoryGui.Dispose();
+
+            if (Inignoto.game.game_state == Inignoto.GameState.GAME)
+            if (Inignoto.game.world != null)
+            {
+                Inignoto.game.world.Dispose();
+            }
             //effect.Dispose();
             //shadowMap.Dispose();
         }

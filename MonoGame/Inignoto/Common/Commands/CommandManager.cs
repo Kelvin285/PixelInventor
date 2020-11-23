@@ -14,6 +14,7 @@ namespace Inignoto.Common.Commands
         public static Command FILL;
         public static Command REPLACE;
         public static Command STRUCTURE;
+        public static Command SEED;
 
         public static void RegisterCommands()
         {
@@ -23,6 +24,7 @@ namespace Inignoto.Common.Commands
             RegisterCommand(FILL = new FillCommand());
             RegisterCommand(REPLACE = new ReplaceCommand());
             RegisterCommand(STRUCTURE = new StructureCommand());
+            RegisterCommand(SEED = new SeedCommand());
         }
 
         public static void RegisterCommand(Command command)

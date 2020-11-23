@@ -216,7 +216,7 @@ namespace Inignoto.Graphics.Gui
             {
                 if (Inignoto.game.game_state != Inignoto.GameState.GAME)
                 {
-                    Inignoto.game.player.Inventory.hotbar[0].SetToAir();
+                    Inignoto.game.player.Inventory.hotbar[0] = null;
                     Inignoto.game.player.Inventory.selected = 0;
                 }
                 return;

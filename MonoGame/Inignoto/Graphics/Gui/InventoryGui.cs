@@ -1,5 +1,6 @@
 ﻿using Inignoto.Audio;
 using Inignoto.Common;
+using Inignoto.Crafting;
 using Inignoto.Effects;
 using Inignoto.GameSettings;
 using Inignoto.Graphics.Fonts;
@@ -36,9 +37,14 @@ namespace Inignoto.Graphics.Gui
 
         private RenderTarget2D target;
 
+        private bool mouse_pressed = false;
 
         private int PHYSICAL = 0, DIGITAL = 1, SANDBOX = 2;
         private int current_inventory = 0;
+
+        private int recipe_index = 0;
+
+        private List<CraftingRecipe> recipes = new List<CraftingRecipe>();
 
         private KeyReader keyReader;
         public InventoryGui(PhysicalInventory inventory)
@@ -56,6 +62,8 @@ namespace Inignoto.Graphics.Gui
 
             this.inventory = inventory;
             keyReader = new KeyReader(16);
+
+            UpdateRecipes();
         }
 
         public override void Close()
@@ -69,6 +77,7 @@ namespace Inignoto.Graphics.Gui
             return rect.Contains(mx, my);
         }
 
+        private int last_scroll;
         public void RenderMainInventory(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime time)
         {
             int mouse_x = (int)(Inignoto.game.mousePos.X * (1920.0 / width));
@@ -116,6 +125,66 @@ namespace Inignoto.Graphics.Gui
             //228, 105 <- First inventory slot
             //Horizontal spacing: 1 px
             //Vertical Spacing: 24 px
+
+            if (last_scroll - Mouse.GetState().ScrollWheelValue < 0)
+            {
+                recipe_index++;
+                if (recipe_index > recipes.Count - 7) recipe_index = recipes.Count - 7;
+            }
+            if (last_scroll - Mouse.GetState().ScrollWheelValue > 0)
+            {
+                recipe_index--;
+                if (recipe_index < 0) recipe_index = 0;
+            }
+
+            last_scroll = Mouse.GetState().ScrollWheelValue;
+
+            for (int i = recipe_index; i < recipes.Count && i < recipe_index + 9; i++)
+            {
+                int x = 228 + (i - recipe_index) * 31 + 15;
+                int y = 105 - 31 * 2;
+
+                Color color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+
+                if (i - recipe_index == 0 || i == recipes.Count || i - recipe_index == 8)
+                {
+                    color.A = 255 / 2;
+                }
+                if (i - recipe_index == 1 || i == recipes.Count - 1 || i - recipe_index == 7)
+                {
+                    color.A -= 255 / 4;
+                }
+
+                ItemStack stack = recipes[i].output;
+                
+                if (MouseInSpace(mouse_x, mouse_y, new Rectangle(x * 3, y * 3 + drop, 90, 90)))
+                {
+                    //24, 330
+                    Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(x * 3, y * 3 + drop, 90, 90), new Rectangle(24, 330, 30, 30), color);
+
+                    for (int ii = 0; ii < recipes[i].input.Length; ii++)
+                    {
+                        ItemStack stack2 = recipes[i].input[ii];
+
+                        if (stack2 != null)
+                        {
+                            if (stack2.item.GetRenderTexture() != null)
+                                DrawItem(spriteBatch, width, height, stack2, x * 3 + ii * 31 * 3 - (int)(recipes[i].input.Length * 31 * 3 / 2.0) + (recipes[i].input.Length % 2 == 1 ? (int)(31 * 3 / 2.0) : 0), y * 3 + drop + 31 * 3, 0.75f, 0.75f);
+
+                        }
+                    }
+                } else
+                {
+                    Draw(spriteBatch, width, height, Textures.Textures.inventory, new Rectangle(x * 3, y * 3 + drop, 90, 90), new Rectangle(54, 300, 30, 30), color);
+                }
+
+                if (stack != null)
+                {
+                    if (stack.item.GetRenderTexture() != null)
+                        DrawItem(spriteBatch, width, height, stack, x * 3, y * 3 + drop, 0.75f, 0.75f);
+
+                }
+            }
 
             for (int i = 0; i < 10; i++)
             {
@@ -323,6 +392,10 @@ namespace Inignoto.Graphics.Gui
 
         public override void Render(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime time)
         {
+
+
+            
+
             float delta = (float)time.ElapsedGameTime.TotalSeconds * 60;
 
             if (!closing)
@@ -350,7 +423,58 @@ namespace Inignoto.Graphics.Gui
             int mouse_x = (int)(Inignoto.game.mousePos.X * (1920.0 / width));
             int mouse_y = (int)(Inignoto.game.mousePos.Y * (1080.0 / height));
 
+            
+
+
             int drop = -(int)(DropdownAnimation * 360 * 3);
+
+            bool DrawButton(int x, int y, string str, float font_size = 1.0f)
+            {
+                int w = 100;
+                int X = x + 1920 / 2 - w - 40;
+                int Y = 1080 / 2 - 50 + y;
+                int W = w * 2;
+                int H = 50;
+
+                Color color = Color.White;
+                Color color2 = Color.LightSlateGray;
+
+                bool flag = false;
+
+                if (mouse_x >= X && mouse_y >= Y && mouse_x <= X + W && mouse_y <= Y + H)
+                {
+                    flag = true;
+                    color = Color.Gray;
+                    color2 = Color.LightGray;
+                }
+
+                Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(x + 1920 / 2 - w - 40, Y, w * 2, H), color2);
+                int strwidth = (int)((FontManager.mandrill_regular.width + FontManager.mandrill_regular.spacing) * str.Length * font_size);
+                DrawString(spriteBatch, width, height, x + 1920 / 2 - w - 40 + (w - strwidth) / 2 + w / 2, Y, font_size, FontManager.mandrill_regular, str, color);
+
+                return flag;
+            }
+
+            bool clicked = false;
+
+            if (Mouse.GetState().LeftButton == ButtonState.Pressed)
+            {
+                if (!mouse_pressed)
+                {
+                    mouse_pressed = true;
+                    clicked = true;
+                }
+            }
+            else
+            {
+                mouse_pressed = false;
+            }
+
+            if (DrawButton(875, 500, "Settings", 0.75f))
+            {
+                if (clicked)
+                    openGui = new MainMenu(true);
+            }
 
 
             if (inventory.grabStack != null)
@@ -367,7 +491,7 @@ namespace Inignoto.Graphics.Gui
             //40, 44, 20, 19 <- Backpack
             //63, 44, 22, 19 <- computer
 
-
+            
             if (this.MouseInSpace(mouse_x, mouse_y, new Rectangle(2 * 3, 2 * 3 + 40 * 3 + drop, 38 * 3, 38 * 3)))
             {
                 //digital inventory icon (Computer)
@@ -487,14 +611,178 @@ namespace Inignoto.Graphics.Gui
         {
             
         }
-        
+
+        private int grabTick = 0;
+        public void UpdateRecipes()
+        {
+            foreach(CraftingRecipe recipe in CraftingManager.REGISTRY)
+            {
+                bool has = true;
+                foreach (ItemStack stack in recipe.input)
+                {
+                    int count = 0;
+                    if (stack != null)
+                    {
+                        foreach (ItemStack s in inventory.hotbar)
+                        {
+                            if (s != null)
+                            {
+                                if (s.item == stack.item)
+                                {
+                                    count += s.count;
+                                }
+                            }
+                        }
+
+                        foreach (ItemStack s in inventory.inventory)
+                        {
+                            if (s != null)
+                            {
+                                if (s.item == stack.item)
+                                {
+                                    count += s.count;
+                                }
+                            }
+                        }
+
+                        if (count < stack.count)
+                        {
+                            has = false;
+                            break;
+                        }
+                    } else
+                    {
+                        has = false;
+                    }
+                    
+                }
+
+                if (has)
+                {
+                    if (!recipes.Contains(recipe))
+                    {
+                        recipes.Add(recipe);
+                    }
+                } else
+                {
+                    if (recipes.Contains(recipe))
+                    {
+                        recipes.Remove(recipe);
+                    }
+                }
+                
+            }
+            if (recipe_index > recipes.Count - 7) recipe_index = recipes.Count - 7;
+        }
+
         public void UpdateMainInventory(GameTime time, int width, int height)
         {
             int mouse_x = (int)(Inignoto.game.mousePos.X * (1920.0 / width));
             int mouse_y = (int)(Inignoto.game.mousePos.Y * (1080.0 / height));
             int drop = -(int)(DropdownAnimation * 360 * 3);
 
-            for (int i = 0; i < 10; i++)
+
+            if (Settings.USE.IsPressed())
+            {
+                grabTick++;
+                if (grabTick > 10) grabTick = 0;
+            } else
+            {
+                grabTick = 0;
+            }
+
+            for (int i = recipe_index; i < recipes.Count && i < recipe_index + 9; i++)
+            {
+                int x = 228 + (i - recipe_index) * 31 + 15;
+                int y = 105 - 31 * 2;
+
+
+                ItemStack stack = recipes[i].output;
+                if (stack != null)
+                    if (MouseInSpace(mouse_x, mouse_y, new Rectangle(x * 3, y * 3 + drop, 90, 90)))
+                    {
+                        if (Settings.ATTACK.IsJustPressed() || Settings.USE.IsPressed() && grabTick == 0)
+                        {
+                        
+
+                            if (inventory.grabStack == null)
+                            {
+                                inventory.grabStack = new ItemStack(stack.item, stack.count);
+                            } else
+                            {
+                                if (inventory.grabStack.item != stack.item)
+                                {
+                                    continue;
+                                }
+                                if (inventory.grabStack.count + stack.count > stack.item.max_stack)
+                                {
+                                    continue;
+                                }
+                                inventory.grabStack.count += stack.count;
+                            }
+                            for (int ii = 0; ii < recipes[i].input.Length; ii++)
+                            {
+                                ItemStack s = recipes[i].input[ii];
+                                int count = 0;
+                                for(int j = 0; j < inventory.hotbar.Length; j++)
+                                {
+                                    ItemStack st = inventory.hotbar[j];
+                                    if (count < s.count)
+                                    {
+                                        if (st != null)
+                                        {
+                                            if (st.item == s.item)
+                                            {
+                                                while (st.count > 0)
+                                                {
+                                                    st.count--;
+                                                    count++;
+                                                    if (count >= s.count) break;
+                                                }
+                                                if (st.count <= 0)
+                                                {
+                                                    inventory.hotbar[j] = null;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else break;
+                                }
+
+                                for (int j = 0; j < inventory.inventory.Length; j++)
+                                {
+                                    ItemStack st = inventory.inventory[j];
+                                    if (count < s.count)
+                                    {
+                                        if (st != null)
+                                        {
+                                            if (st.item == s.item)
+                                            {
+                                                while (st.count > 0)
+                                                {
+                                                    st.count--;
+                                                    count++;
+                                                    if (count >= s.count) break;
+                                                }
+                                                if (st.count <= 0)
+                                                {
+                                                    inventory.inventory[j] = null;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else break;
+                                }
+                                UpdateRecipes();
+                                    return;
+                            }
+                        }
+                    }
+            }
+
+                    for (int i = 0; i < 10; i++)
             {
                 for (int j = 0; j < 3; j++)
                 {
@@ -503,6 +791,7 @@ namespace Inignoto.Graphics.Gui
 
                     if (MouseInSpace(mouse_x, mouse_y, new Rectangle(x * 3, y * 3 + drop, 90, 90)))
                     {
+                        UpdateRecipes();
                         UpdateSlot(mouse_x, mouse_y, drop, inventory.inventory[i + j * 10], out inventory.inventory[i + j * 10], SlotType.NORMAL);
                     }
                 }
@@ -510,6 +799,7 @@ namespace Inignoto.Graphics.Gui
 
             if (MouseInSpace(mouse_x, mouse_y, new Rectangle(228 * 3, 252 * 3 + drop, 90, 90))) //Trash slot
             {
+                UpdateRecipes();
                 UpdateSlot(mouse_x, mouse_y, drop, inventory.trashStack, out inventory.trashStack, SlotType.TRASH);
             }
         }

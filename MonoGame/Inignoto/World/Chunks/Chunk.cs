@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 using Inignoto.Graphics.Gui;
 using System.Transactions;
+using System.IO;
 
 namespace Inignoto.World.Chunks
 {
@@ -19,14 +20,17 @@ namespace Inignoto.World.Chunks
 
         public static void DisposeChunk(Chunk chunk)
         {
+            /*
             lock(loadedChunkPool)
                 loadedChunkPool.Remove(chunk);
             //lock(unloadedChunkPool)
                 unloadedChunkPool.Add(chunk);
+            */
         }
 
         public static Chunk GetChunk(int x, int y, int z, World world)
         {
+            /*
             if (unloadedChunkPool.Count > 0)
             {
                 Chunk chunk = null;
@@ -47,6 +51,8 @@ namespace Inignoto.World.Chunks
                     loadedChunkPool.Add(chunk);
                 return chunk;
             }
+            */
+            return new Chunk(x, y, z, world);
             
         }
         public struct Voxel
@@ -55,16 +61,18 @@ namespace Inignoto.World.Chunks
             public TileData overlay;
             public int light;
             public int sunlight;
+            public int mining_time;
             public Voxel(TileData voxel)
             {
                 this.voxel = voxel;
                 overlay = TileManager.AIR.DefaultData;
                 light = 0x000000;
                 sunlight = 0xff;
+                mining_time = 0;
             }
         }
 
-        private readonly Voxel[] voxels;
+        public readonly Voxel[] voxels;
 
         private int x, y, z;
         public Vector3 cpos;
@@ -87,6 +95,8 @@ namespace Inignoto.World.Chunks
 
         private int solid_voxels = 0;
         private int air_voxels = 0;
+
+        public bool modified = false;
 
 
         private bool lightRebuild = false;
@@ -119,29 +129,32 @@ namespace Inignoto.World.Chunks
             chunkManager = world.GetChunkManager();
 
 
-            sunlightBfsQueue = new List<int>();
-            sunlightRemovalBfsQueue = new List<int>();
-            redRemovalBfsQueue = new List<int>();
-            greenRemovalBfsQueue = new List<int>();
-            blueRemovalBfsQueue = new List<int>();
-            redBfsQueue = new List<int>();
-            greenBfsQueue = new List<int>();
-            blueBfsQueue = new List<int>();
+            sunlightBfsQueue = new List<int>(voxels.Length);
+            sunlightRemovalBfsQueue = new List<int>(voxels.Length);
+            redRemovalBfsQueue = new List<int>(voxels.Length);
+            greenRemovalBfsQueue = new List<int>(voxels.Length);
+            blueRemovalBfsQueue = new List<int>(voxels.Length);
+            redBfsQueue = new List<int>(voxels.Length);
+            greenBfsQueue = new List<int>(voxels.Length);
+            blueBfsQueue = new List<int>(voxels.Length);
             cpos = new Vector3(x, y, z);
         }
 
         private void Construct(int x, int y, int z, World world)
         {
+            modified = false;
             this.x = x;
             this.y = y;
             this.z = z;
             this.world = world;
             solid_voxels = 0;
-            
+            air_voxels = voxels.Length;
             for (int i = 0; i < voxels.Length; i++)
             {
-                voxels[i] = new Voxel(TileManager.AIR.DefaultData);
-                air_voxels++;
+                voxels[i].light = 0;
+                voxels[i].sunlight = 0;
+                voxels[i].overlay = TileManager.AIR.DefaultData;
+                voxels[i].voxel = TileManager.AIR.DefaultData;
             }
 
             mesh = null;
@@ -170,12 +183,78 @@ namespace Inignoto.World.Chunks
             cpos.Z = z;
         }
 
+
+        public void Save()
+        {
+            if (!modified) return;
+            ResourcePath directory = new ResourcePath("Chunks", "", "Worlds/" + world.name);
+            ResourcePath file = new ResourcePath("Chunks", "Chunk_"+GetX()+"_"+GetY()+"_"+GetZ()+".chunk", "Worlds/" + world.name);
+            if (!Directory.Exists(FileUtils.GetResourcePath(directory)))
+            {
+                Directory.CreateDirectory(FileUtils.GetResourcePath(directory));
+            }
+            if (File.Exists(FileUtils.GetResourcePath(file)))
+            {
+                File.Delete(FileUtils.GetResourcePath(file));
+            }
+
+            string str = "";
+            for(int i = 0; i < voxels.Length; i++)
+            {
+                str += voxels[i].voxel.index + "_" + voxels[i].overlay.index;
+                if (i < voxels.Length - 1)
+                {
+                    str += "\n";
+                }
+            }
+            File.WriteAllText(FileUtils.GetResourcePath(file), str);
+        }
+
+        public bool Load()
+        {
+            modified = false;
+            ResourcePath directory = new ResourcePath("Chunks", "", "Worlds/" + world.name);
+            ResourcePath file = new ResourcePath("Chunks", "Chunk_" + GetX() + "_" + GetY() + "_" + GetZ() + ".chunk", "Worlds/" + world.name);
+            if (!Directory.Exists(FileUtils.GetResourcePath(directory)))
+            {
+                return false;
+            }
+            if (!File.Exists(FileUtils.GetResourcePath(file)))
+            {
+                return false;
+            }
+            string str = File.ReadAllText(FileUtils.GetResourcePath(file));
+            string[] data = str.Split("\n");
+            for (int i = 0; i < voxels.Length; i++)
+            {
+                voxels[i].light = 0;
+                voxels[i].sunlight = 15;
+            }
+            int index = 0;
+            foreach (string s in data)
+            {
+
+                string[] voxel = s.Split("_");
+                int tile = int.Parse(voxel[0]);
+                int overlay = int.Parse(voxel[1]);
+
+                int x = index % Constants.CHUNK_SIZE;
+                int y = ((index - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
+                int z = (index - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
+
+                SetVoxel(x, y, z, TileDataHolder.REGISTRY[tile]);
+                SetOverlayVoxel(x, y, z, TileDataHolder.REGISTRY[overlay]);
+                index++;
+            }
+            return true;
+        }
+
         public void BuildMesh()
         {
             UpdateLights();
             secondMesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, this);
             if (secondMesh != null)
-                secondMesh.SetPosition(new Microsoft.Xna.Framework.Vector3(GetX() * Constants.CHUNK_SIZE, GetY() * Constants.CHUNK_SIZE, GetZ() * Constants.CHUNK_SIZE));
+                secondMesh.SetPosition(new Vector3(GetX() * Constants.CHUNK_SIZE, GetY() * Constants.CHUNK_SIZE, GetZ() * Constants.CHUNK_SIZE));
 
             FinishRebuilding();
             if (mesh != null)
@@ -223,14 +302,41 @@ namespace Inignoto.World.Chunks
 
         public void Dispose()
         {
-            sunlightBfsQueue.Clear();
-            sunlightRemovalBfsQueue.Clear();
-            redBfsQueue.Clear();
-            redRemovalBfsQueue.Clear();
-            greenBfsQueue.Clear();
-            greenRemovalBfsQueue.Clear();
-            blueBfsQueue.Clear();
-            blueRemovalBfsQueue.Clear();
+            lock(redBfsQueue)
+            {
+                lock(greenBfsQueue)
+                {
+                    lock(blueBfsQueue)
+                    {
+                        lock(sunlightBfsQueue)
+                        {
+                            lock(redRemovalBfsQueue)
+                            {
+                                lock(greenRemovalBfsQueue)
+                                {
+                                    lock(blueRemovalBfsQueue)
+                                    {
+                                        lock(sunlightRemovalBfsQueue)
+                                        {
+                                            sunlightBfsQueue.Clear();
+                                            sunlightRemovalBfsQueue.Clear();
+                                            redBfsQueue.Clear();
+                                            redRemovalBfsQueue.Clear();
+                                            greenBfsQueue.Clear();
+                                            greenRemovalBfsQueue.Clear();
+                                            blueBfsQueue.Clear();
+                                            blueRemovalBfsQueue.Clear();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+
+            Save();
         }
 
         public int GetRedLight(int x, int y, int z)
@@ -579,12 +685,14 @@ namespace Inignoto.World.Chunks
 
         public void Tick(float distance)
         {
-            if (distance <= Constants.CHUNK_LIGHT_DISTANCE)
-            UpdateLights();
-            if (lightRebuild)
+            for (int i = 0; i < 10; i++)
             {
-                lightRebuild = false;
-                BuildMesh();
+                int I = world.random.Next(voxels.Length);
+                int x = I % Constants.CHUNK_SIZE;
+                int y = ((I - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
+                int z = (I - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
+                voxels[I].voxel.Tick(x, y, z, this);
+                voxels[I].mining_time--;
             }
         }
 
@@ -598,6 +706,7 @@ namespace Inignoto.World.Chunks
             bool cu = false, cd = false, cl = false, cr = false, cb = false, cf = false;
             
             lock(sunlightRemovalBfsQueue)
+                lock(sunlightBfsQueue)
             while (sunlightRemovalBfsQueue.Count > 0)
             {
                 rerender = true;
@@ -688,7 +797,8 @@ namespace Inignoto.World.Chunks
                 }
             }
             lock(redRemovalBfsQueue)
-            while (redRemovalBfsQueue.Count > 0)
+                lock (redBfsQueue)
+                    while (redRemovalBfsQueue.Count > 0)
             {
                 rerender = true;
                 int node = redRemovalBfsQueue[0];
@@ -779,6 +889,7 @@ namespace Inignoto.World.Chunks
                 }
             }
             lock(greenRemovalBfsQueue)
+                lock(greenBfsQueue)
             while (greenRemovalBfsQueue.Count > 0)
             {
                 rerender = true;
@@ -870,6 +981,7 @@ namespace Inignoto.World.Chunks
                 }
             }
             lock(blueRemovalBfsQueue)
+                lock(blueBfsQueue)
             while (blueRemovalBfsQueue.Count > 0)
             {
                 rerender = true;
@@ -1284,6 +1396,8 @@ namespace Inignoto.World.Chunks
             if (IsInsideChunk(x, y, z))
             {
                 voxels[GetIndexFor(x, y, z)].overlay = voxel;
+                if (!NeedsToGenerate())
+                modified = true;
                 return true;
             }
 
@@ -1366,6 +1480,8 @@ namespace Inignoto.World.Chunks
                 {
                     SetOverlayVoxel(x, y, z, TileManager.AIR.DefaultData);
                 }
+                if (!NeedsToGenerate())
+                    modified = true;
                 return true;
             }
 

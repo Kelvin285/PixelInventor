@@ -23,10 +23,8 @@ namespace Inignoto.World.Structures
 
         private void Load(string structure)
         {
-            ResourcePath path = new ResourcePath("Inignoto", structure, "assets");
-
-            Console.WriteLine("STRING: " + FileUtils.LoadFileAsString(path));
-
+            ResourcePath path = new ResourcePath("Inignoto", "structures/"+structure, "assets");
+            
             Dictionary<string, string> voxels = FileUtils.LoadFileAsDataList(path);
 
             Dictionary<TilePos, int[]> clip = new Dictionary<TilePos, int[]>();

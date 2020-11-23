@@ -11,38 +11,14 @@ namespace Inignoto.Graphics.Mesh
     public class Mesh : IDisposable
     {
 
-        public static List<Mesh> unloadedMeshPool = new List<Mesh>();
-        public static List<Mesh> loadedMeshPool = new List<Mesh>();
-
         public static Mesh Get(GraphicsDevice device, VertexPositionLightTexture[] triangleVertices, bool lines = false, Texture2D texture = null)
         {
-            if (unloadedMeshPool.Count > 0)
-            {
-                Mesh mesh = unloadedMeshPool[0];
-                lock(unloadedMeshPool)
-                unloadedMeshPool.Remove(mesh);
-                loadedMeshPool.Add(mesh);
-                mesh.Reconstruct(device, triangleVertices, lines, texture);
-                return mesh;
-            } else
-            {
-                Mesh mesh = new Mesh(device, triangleVertices, lines, texture);
-                loadedMeshPool.Add(mesh);
-                return mesh;
-            }
+            Mesh mesh = new Mesh(device, triangleVertices, lines, texture);
+            return mesh;
         }
 
         public static void FinishUsing(Mesh mesh)
         {
-            if (loadedMeshPool.Contains(mesh))
-            {
-                unloadedMeshPool.Add(mesh);
-                lock(loadedMeshPool)
-                loadedMeshPool.Remove(mesh);
-            } else
-            {
-                if (!unloadedMeshPool.Contains(mesh)) unloadedMeshPool.Add(mesh);
-            }
             
         }
 
@@ -66,7 +42,7 @@ namespace Inignoto.Graphics.Mesh
         private void Reconstruct(GraphicsDevice device, VertexPositionLightTexture[] triangleVertices, bool lines = false, Texture2D texture = null)
         {
             empty = true;
-            this.triangleVertices = null;
+            this.triangleVertices = triangleVertices;
             vertexBuffer = null;
             this.lines = false;
             this.texture = null;
@@ -85,11 +61,10 @@ namespace Inignoto.Graphics.Mesh
                 return;
             }
 
-            this.triangleVertices = triangleVertices;
             vertexBuffer = new VertexBuffer(device, typeof(
                            VertexPositionLightTexture), triangleVertices.Length, BufferUsage.
                            WriteOnly);
-
+            if (vertexBuffer == null) return;
             vertexBuffer.SetData(this.triangleVertices);
 
             worldMatrix = Matrix.CreateWorld(new Vector3(0, 0, 0), Vector3.Forward, Vector3.Up);
@@ -187,6 +162,7 @@ namespace Inignoto.Graphics.Mesh
 
                 pass.Apply();
 
+                if (vertexBuffer != null)
                 device.DrawPrimitives(lines ? PrimitiveType.LineList : PrimitiveType.TriangleList, 0, Length);
 
             }
