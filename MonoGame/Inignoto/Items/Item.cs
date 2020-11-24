@@ -62,12 +62,17 @@ namespace Inignoto.Items
             canBreakBlocks = true;
             if (model)
             {
-                string[] split = name.Split(':');
-                model_path = new ResourcePath(split[0], "models/item/" + split[1] + ".model", "assets");
-                texture_path = new ResourcePath(split[0], "textures/items/" + split[1] + ".png", "assets");
-                anim_path = new ResourcePath(split[0], "models/item/" + split[1] + ".anim", "assets");
-
+                SetModel(name);
             }
+        }
+
+        public void SetModel(string model)
+        {
+            Mesh = null;
+            string[] split = model.Split(':');
+            model_path = new ResourcePath(split[0], "models/item/" + split[1] + ".model", "assets");
+            texture_path = new ResourcePath(split[0], "textures/items/" + split[1] + ".png", "assets");
+            anim_path = new ResourcePath(split[0], "models/item/" + split[1] + ".anim", "assets");
         }
 
         public Item breaksBlocks(bool b)

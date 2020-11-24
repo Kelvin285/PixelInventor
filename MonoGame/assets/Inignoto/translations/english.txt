@@ -9,6 +9,11 @@
 "Inignoto:tiles.sand" = "Sand"
 "Inignoto:tiles.malechite" = "Malechite"
 "Inignoto:tiles.smooth_stone_stairs" = "Smooth Stone Stairs"
+"Inignoto:tiles.copper_ore" = "Copper Ore"
+"Inignoto:tiles.ice" = "Ice"
+"Inignoto:tiles.glass" = "Glass"
+"Inignoto:tiles.red_glass" = "Red Glass"
+"Inignoto:tiles.glowing_crystal" = "Glowing Crystal"
 
 "Inignoto:foliage.tallgrass" = "Tall Grass"
 "Inignoto:foliage.purpleflower" = "Purple Flower"

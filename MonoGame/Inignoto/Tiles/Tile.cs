@@ -3,6 +3,7 @@ using Inignoto.Math;
 using static Inignoto.Math.Raytracing;
 using Microsoft.Xna.Framework.Audio;
 using System;
+using Inignoto.Items;
 
 namespace Inignoto.Tiles
 {
@@ -38,7 +39,11 @@ namespace Inignoto.Tiles
         private bool replaceable = false;
         private bool FullSpace;
 
+        private string item_model = string.Empty;
+
         private bool Opaque = true;
+
+        private bool DropsAsItem = true;
 
         public bool Overlay { get; private set; }
 
@@ -61,7 +66,7 @@ namespace Inignoto.Tiles
         public Tile(string name, SoundEffect[] sound, bool solid = true, int hits = 1)
         {
             SetLight(0, 0, 0);
-            this.step_sound = sound;
+            step_sound = sound;
             this.name = name;
             TileManager.REGISTRY.Add(this.name, this);
 
@@ -92,6 +97,28 @@ namespace Inignoto.Tiles
         {
             Overlay = true;
             return this;
+        }
+
+        public Tile SetItemModel(string model)
+        {
+            item_model = model;
+            return this;
+        }
+
+        public string GetItemModel()
+        {
+            return item_model;
+        }
+
+        public Tile SetCanDrop(bool drop)
+        {
+            DropsAsItem = drop;
+            return this;
+        }
+
+        public bool CanDropAsItem()
+        {
+            return DropsAsItem;
         }
 
         public RayBox[] GetCollisionBoxes(TileData state)

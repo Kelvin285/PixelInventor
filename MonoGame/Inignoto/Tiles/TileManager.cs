@@ -29,6 +29,7 @@ namespace Inignoto.Tiles
         public static Tile RED_GLASS;
         public static Tile SNOW;
         public static Tile ICE;
+        public static Tile COPPER_ORE;
 
         private static bool TEXTURES_LOADED = false;
 
@@ -50,7 +51,7 @@ namespace Inignoto.Tiles
             SAND = new Tile("Inignoto:sand", null, true, 3).SetFull();
             LEAVES = new Tile("Inignoto:leaves", null, true, 1);
             LOG = new Tile("Inignoto:log", null, true, 5).SetFull();
-            GRASS = new Tile("Inignoto:grass", SoundEffects.step_grass, true, 4).SetFull().SetOverlay();
+            GRASS = new Tile("Inignoto:grass", SoundEffects.step_grass, true, 4).SetFull().SetOverlay().SetCanDrop(false);
             PURPLE_GRASS = new Tile("Inignoto:purple_grass", SoundEffects.step_grass, true, 4).SetFull();
             WATER = new Tile("Inignoto:water", null, false).SetBlocksMovement(false).SetTransparent().SetRayTraceType(Tile.TileRayTraceType.FLUID).SetReplaceable(true);
             GLOWING_CRYSTAL = new Tile("Inignoto:glowing_crystal", null, true, 4).SetFull().SetLight(10, 14, 15);
@@ -59,6 +60,7 @@ namespace Inignoto.Tiles
             RED_GLASS = new Tile("Inignoto:red_glass", null, true, 2).SetFull().SetTransparent().SetTint(15, 0, 0, 10);
             SNOW = new Tile("Inignoto:snow", null, true, 3).SetFull();
             ICE = new Tile("Inignoto:ice", null, true, 3).SetFull();
+            COPPER_ORE = new Tile("Inignoto:copper_ore", null, true, 7).SetFull().SetItemModel("Inignoto:copper_ore_item").SetOverlay();
         }
 
         public static void TryLoadTileTextures()

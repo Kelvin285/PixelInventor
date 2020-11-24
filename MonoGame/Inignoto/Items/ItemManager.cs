@@ -23,11 +23,27 @@ namespace Inignoto.Items
         {
             foreach (Tile tile in TileManager.REGISTRY.Values)
             {
-                RegisterItem(new TileItem(tile));
+                Item item = new TileItem(tile);
+
+                if (tile == TileManager.COPPER_ORE)
+                {
+                    item = new Item("Inignoto:copper_ore", 64, 0.1f, true, new Vector3(-0.5f, -0.7f, 1.5f), new Vector3(0, 0, 0), new Vector3(5.0f, 5.0f, 5.0f));
+                } else
+                {
+                    if (tile.GetItemModel() != string.Empty)
+                    {
+                        item.SetModel(tile.GetItemModel());
+                    }
+                }
+
+                RegisterItem(item);
             }
+            
+
 
             IRON_PICKAXE = RegisterItem(new PickaxeItem("Inignoto:iron_pickaxe", 0.1f, true, new Vector3(0.35f, -1.2f, 1.5f), new Vector3(0, 0, 30 * 3.14f / 180.0f), new Vector3(2.0f, 2.0f, 2.0f)));
             STRUCTURE_WRENCH = RegisterItem(new StructureWrenchItem("Inignoto:structure_wrench", 1, true, new Vector3(0.35f, -1.2f, 1.5f), new Vector3(0, 0, 30 * 3.14f / 180.0f), new Vector3(2.0f, 2.0f, 2.0f)));
+            
         }
 
         public static void DrawItems(GameTime time)

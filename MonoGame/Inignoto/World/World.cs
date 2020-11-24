@@ -351,9 +351,24 @@ namespace Inignoto.World
             {
                 int index = chunk.GetIndexFor(x, y, z);
                 chunk.voxels[index].mining_time += strength;
-                if (chunk.voxels[index].mining_time >= TileManager.GetTile(chunk.voxels[index].voxel.tile_id).hits)
+
+                int hits = TileManager.GetTile(chunk.voxels[index].voxel.tile_id).hits;
+                if (chunk.voxels[index].overlay.tile_id != TileManager.AIR.DefaultData.tile_id)
                 {
+                    if (TileManager.GetTile(chunk.voxels[index].overlay.tile_id).hits > hits)
+                    {
+                        hits = TileManager.GetTile(chunk.voxels[index].overlay.tile_id).hits;
+                    }
+                }
+
+                if (chunk.voxels[index].mining_time >= hits)
+                {
+                    if (TileManager.GetTile(chunk.voxels[index].voxel.tile_id).CanDropAsItem())
                     entities.Add(new ItemEntity(this, new Vector3f(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f), new ItemStack(TileManager.GetTile(chunk.voxels[index].voxel.tile_id))));
+
+                    if (TileManager.GetTile(chunk.voxels[index].overlay.tile_id).CanDropAsItem())
+                        entities.Add(new ItemEntity(this, new Vector3f(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f), new ItemStack(TileManager.GetTile(chunk.voxels[index].overlay.tile_id))));
+
 
                     chunk.voxels[index].mining_time = 0;
                     chunk.SetVoxel(x, y, z, TileManager.AIR.DefaultData);

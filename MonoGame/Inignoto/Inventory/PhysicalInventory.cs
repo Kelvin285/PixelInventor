@@ -73,9 +73,13 @@ namespace Inignoto.Inventory
         //-1 = fail, 0 = stack completely filled with some items left over, 1 = added all items successfully
         public int TryAddToStack(ItemStack stack, ItemStack add, out ItemStack a, SlotType type, int amount = -1) 
         {
-
             if (add != null && stack != null)
             {
+                if (stack.count == stack.item.max_stack || add.count == add.item.max_stack)
+                {
+                    a = add;
+                    return -1;
+                }
                 if (amount == -1) amount = add.count;
                 if (stack.item == add.item)
                 {
