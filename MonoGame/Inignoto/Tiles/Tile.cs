@@ -4,6 +4,8 @@ using static Inignoto.Math.Raytracing;
 using Microsoft.Xna.Framework.Audio;
 using System;
 using Inignoto.Items;
+using Inignoto.World.Chunks;
+using static Inignoto.World.World;
 
 namespace Inignoto.Tiles
 {
@@ -37,7 +39,7 @@ namespace Inignoto.Tiles
         private bool blocksMovement = true;
         private bool visible = true;
         private bool replaceable = false;
-        private bool FullSpace;
+        public bool FullSpace { get; protected set; }
 
         private string item_model = string.Empty;
 
@@ -193,7 +195,7 @@ namespace Inignoto.Tiles
 
         public bool IsOpaqueOrNotBlock()
         {
-            return Opaque || rayTraceType != TileRayTraceType.BLOCK;
+            return (Opaque && FullSpace) || rayTraceType != TileRayTraceType.BLOCK;
         }
 
         public bool IsRaytraceTypeOrSolid(TileRayTraceType rayTraceType)
@@ -203,7 +205,22 @@ namespace Inignoto.Tiles
 
         public bool IsRaytraceTypeOrSolidAndOpaque(TileRayTraceType rayTraceType)
         {
-            return Opaque && (IsRaytraceTypeOrSolid(rayTraceType));
+            return (Opaque && FullSpace) && (IsRaytraceTypeOrSolid(rayTraceType));
+        }
+
+        public virtual bool CanPlace(int x, int y, int z, Chunk chunk)
+        {
+            if (Overlay)
+            {
+                if (chunk.GetOverlayVoxel(x, y, z) != TileManager.AIR.DefaultData || !TileManager.GetTile(chunk.GetVoxel(x, y, z).tile_id).FullSpace)
+                return false;
+            }
+            return true;
+        }
+
+        public virtual TileData GetStateForBlockPlacement(int x, int y, int z, Chunk chunk, TileFace face)
+        {
+            return DefaultData;
         }
 
         public bool BlocksMovement()

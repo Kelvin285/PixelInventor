@@ -30,6 +30,7 @@ namespace Inignoto.Tiles
         public static Tile SNOW;
         public static Tile ICE;
         public static Tile COPPER_ORE;
+        public static Tile CACTUS;
 
         private static bool TEXTURES_LOADED = false;
 
@@ -44,7 +45,7 @@ namespace Inignoto.Tiles
 
         public static void Loadtiles()
         {
-            AIR = new Tile("Inignoto:air", null, false).SetRayTraceType(Tile.TileRayTraceType.GAS).SetTransparent().SetVisible(false).SetBlocksMovement(false).SetReplaceable(true);
+            AIR = new Tile("Inignoto:air", null, false).SetRayTraceType(Tile.TileRayTraceType.GAS).SetTransparent().SetVisible(false).SetBlocksMovement(false).SetReplaceable(true).SetCanDrop(false);
             DIRT = new Tile("Inignoto:dirt", SoundEffects.step_soil, true, 3).SetFull();
             STONE = new Tile("Inignoto:stone", null, true, 7).SetFull();
             SMOOTH_STONE = new Tile("Inignoto:smooth_stone", null, true, 7).SetFull();
@@ -61,6 +62,7 @@ namespace Inignoto.Tiles
             SNOW = new Tile("Inignoto:snow", null, true, 3).SetFull();
             ICE = new Tile("Inignoto:ice", null, true, 3).SetFull();
             COPPER_ORE = new Tile("Inignoto:copper_ore", null, true, 7).SetFull().SetItemModel("Inignoto:copper_ore_item").SetOverlay();
+            CACTUS = new CactusTile("Inignoto:cactus", null, true, 3).BlockLight(false, false, false, false);
         }
 
         public static void TryLoadTileTextures()

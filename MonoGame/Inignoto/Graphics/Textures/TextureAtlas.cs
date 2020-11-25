@@ -24,7 +24,8 @@ namespace Inignoto.Graphics.Textures
             for (int i = 0; i < files.Length; i++)
             {
                 FileStream stream = new FileStream(files[i], FileMode.Open);
-                texture_list.Add(Texture2D.FromStream(Inignoto.game.GraphicsDevice, stream));
+                Texture2D texture = Texture2D.FromStream(Inignoto.game.GraphicsDevice, stream);
+                texture_list.Add(texture);
                 stream.Close();
                 width += texture_list[i].Width;
                 if (height < texture_list[i].Height) height = texture_list[i].Height;

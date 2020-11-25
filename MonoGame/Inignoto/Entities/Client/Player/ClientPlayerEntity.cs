@@ -1158,12 +1158,14 @@ namespace Inignoto.Entities.Client.Player
                         stack.item.Model.Render(device, effect, time);
                     } else
                     {
-                        if (stack.item is TileItem)
+                        if (stack.item is TileItem && stack.item.Mesh != null)
                         {
                             TileItem tile = (TileItem)stack.item;
                             Vector3f renderPos = GetEyePositionForRender() + ForwardLook * 0.5f * (((float)render_arm_swing / 90.0f) * 5.0f + 1.0f) - UpLook * (((float)render_arm_swing / 90.0f)) + (RightMotionVector * 0.5f) - UpLook * 0.5f;
 
+
                             stack.item.Mesh.SetScale(new Vector3(0.5f, 0.5f, 0.5f));
+
                             stack.item.Mesh.SetPosition(renderPos.Vector);
                             double val = 0;
                             if (stack.item.CurrentCooldown > 0)
@@ -1262,6 +1264,30 @@ namespace Inignoto.Entities.Client.Player
                         stack.item.Model.rotation = new Vector3f(0, 90f * 3.14f / 180.0f, 90f * 3.14f / 180.0f).Add(new Vector3f(model.rotation)).Add(e2);
 
                         stack.item.Model.Render(device, effect, time);
+                    } else
+                    {
+                        if (stack.item is TileItem && stack.item.Mesh != null)
+                        {
+                            TileItem tile = (TileItem)stack.item;
+
+                            Vector3f renderPos = null;
+                            Quaternionf renderRot = null;
+                            foreach (Part part in model.Parts)
+                            {
+                                if (part.name.Contains("Right_Hand"))
+                                {
+                                    renderPos = part.RenderPosition;
+                                    renderRot = part.RenderRotation;
+                                }
+                            }
+
+                            stack.item.Mesh.SetScale(new Vector3(0.5f, 0.5f, 0.5f));
+
+                            stack.item.Mesh.SetPosition(renderPos.Vector);
+
+                            stack.item.Mesh.SetRotation(renderRot.Rotation);
+                            stack.item.Mesh.Draw(effect, device);
+                        }
                     }
                 }
             }

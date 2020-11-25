@@ -223,11 +223,11 @@ namespace Inignoto.World
                 }
             }
 
-            device.RasterizerState = GameResources.CULL_CLOCKWISE_RASTERIZER_STATE;
+            //device.RasterizerState = GameResources.CULL_CLOCKWISE_RASTERIZER_STATE;
 
             chunkManager.Render(device, effect);
 
-            device.RasterizerState = GameResources.DEFAULT_RASTERIZER_STATE;
+            //device.RasterizerState = GameResources.DEFAULT_RASTERIZER_STATE;
 
             //DRAW TILE SELECTION
             RenderTileSelection(device, effect);

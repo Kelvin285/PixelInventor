@@ -13,6 +13,8 @@ namespace Inignoto.Graphics.World
 {
     public class ChunkBuilder
     {
+        public static Dictionary<TileData, Mesh.Mesh> meshes = new Dictionary<TileData, Mesh.Mesh>();
+
         public static Mesh.Mesh BuildMeshForChunk(GraphicsDevice device, Chunk chunk)
         {
 
@@ -133,8 +135,35 @@ namespace Inignoto.Graphics.World
                         {
                             if (tile.IsVisible())
                             {
+                                
                                 if (tile.IsOpaque())
                                 {
+                                    if (data.model != null)
+                                    {
+                                        Mesh.Mesh mesh = null;
+                                        if (!meshes.ContainsKey(data))
+                                        {
+                                            mesh = TileBuilder.BuildTile(0, 0, 0, data, TileManager.AIR.DefaultData, device, false);
+                                            meshes.TryAdd(data, mesh);
+                                        } else
+                                        {
+                                            mesh = meshes[data];
+                                        }
+                                        
+                                        for (int i = 0; i < mesh.triangleVertices.Length; i++)
+                                        {
+                                            indices.Add(index++);
+                                            vertices.Add(mesh.triangleVertices[i].Position + new Vector3(x, y, z));
+                                            pos.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
+                                            light.Add(chunk.GetLight(x, y, z));
+                                            sunlight.Add(chunk.GetSunlight(x, y, z));
+                                            colors.Add(mesh.triangleVertices[i].Color);
+                                            textures.Add(new Vector4(mesh.triangleVertices[i].TextureCoordinate, -1.0f, -1.0f));
+                                            normals.Add(0);
+                                        }
+                                        continue;
+                                    }
+
                                     if (!TileManager.GetTile(chunk.GetVoxel(x, y, z - 1).tile_id).IsRaytraceTypeOrSolidAndOpaque(rayTraceType))
                                     {
                                         index = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.FRONT, vertices, colors, textures, indices, normals, index);

@@ -41,6 +41,8 @@ namespace Inignoto.World.Generator
 
                     int voxel_height = (int)height;
 
+                    double n = (MathF.Abs(noise.GetWhiteNoise(x * 1000, z * 1000, 0, 0)) * 10 * 100);
+
                     for (int chunk_y = 0; chunk_y < Constants.CHUNK_SIZE; chunk_y++)
                     {
                         int y = chunk_y + chunk.GetY() * Constants.CHUNK_SIZE;
@@ -67,8 +69,8 @@ namespace Inignoto.World.Generator
                             chunk.SetVoxel(chunk_x, chunk_y, chunk_z, data);
                             chunk.SetOverlayVoxel(chunk_x, chunk_y, chunk_z, overlay);
                         }
-
-                        biome.TryPlaceStructure(x, y, z, chunk_x, chunk_y, chunk_z, data, overlay, chunk, noise);
+                        
+                        biome.TryPlaceStructure(x, y, z, chunk_x, chunk_y, chunk_z, data, overlay, chunk, noise, n);
                     }
                 }
             }

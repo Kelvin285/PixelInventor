@@ -34,6 +34,8 @@ namespace Inignoto.Graphics.Models
                 ChangeTexture(value);
             } }
 
+        public bool Combined = false;
+
         private bool playing = false;
 
         public bool IsPlaying()
@@ -130,6 +132,37 @@ namespace Inignoto.Graphics.Models
                 }
             }
             FileUtils.WriteStringToFile(directory, new ResourcePath(directory.modid, directory.path + "/" + file, directory.root), str);
+        }
+
+        private bool merged = false;
+
+        public GameModel Combine()
+        {
+
+            if (merged) return this;
+            if (Parts.Count > 1)
+            {
+                Parts[0].BuildPart();
+
+                Vector3f offset = new Vector3f(Parts[0].GetPosition()).Mul(-1);
+
+                
+                for (int i = 1; i < Parts.Count; i++)
+                {
+                    Parts[i].BuildPart();
+                    Part part = Parts[i];
+
+                    Parts[0].mesh.CombineWith(Parts[i].mesh, part.GetPosition(), part.GetScale(), part.GetRotation(), offset);
+                }
+                
+                //Part p = Parts[0];
+                //Parts.Clear();
+                //Parts.Add(p);
+                //p.locked = true;
+                //merged = true;
+            }
+            //Combined = true;
+            return this;
         }
 
         public static List<Keyframe> LoadAnimation(ResourcePath path)
@@ -289,6 +322,10 @@ namespace Inignoto.Graphics.Models
             Part part = null;
             foreach (string s in lines)
             {
+                if (s.Trim().Equals(string.Empty))
+                {
+                    continue;
+                }
                 if (s.StartsWith("Part"))
                 {
                     part = new Part(model);

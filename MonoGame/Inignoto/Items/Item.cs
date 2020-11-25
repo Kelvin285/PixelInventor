@@ -33,8 +33,8 @@ namespace Inignoto.Items
 
         public double CooldownTime { get; protected set; }
 
-        public Mesh Mesh { get; protected set; }
-        public GameModel Model { get; protected set; }
+        public Mesh Mesh;
+        public GameModel Model;
 
         public RenderTarget2D Target { get; protected set; }
 

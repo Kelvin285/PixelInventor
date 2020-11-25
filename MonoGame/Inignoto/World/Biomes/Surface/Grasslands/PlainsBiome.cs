@@ -20,11 +20,11 @@ namespace Inignoto.World.Biomes.Surface.Grasslands
         {
             return ChunkGenerator.noise.GetSimplex(x, z) * 5.0f + 10;
         }
-        public override void TryPlaceStructure(int x, int y, int z, int chunk_x, int chunk_y, int chunk_z, TileData voxel, TileData overlay, Chunk chunk, FastNoise noise)
+        public override void TryPlaceStructure(int x, int y, int z, int chunk_x, int chunk_y, int chunk_z, TileData voxel, TileData overlay, Chunk chunk, FastNoise noise, double n)
         {
             if (overlay == TileManager.GRASS.DefaultData)
             {
-                StructureManager.OAK_TREE1.TryPlace(x, y, z, chunk_x, chunk_y, chunk_z, chunk, noise);
+                StructureManager.OAK_TREE1.TryPlace(x, y, z, chunk_x, chunk_y, chunk_z, chunk, noise, n);
             }
         }
     }

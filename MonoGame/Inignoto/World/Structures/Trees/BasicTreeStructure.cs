@@ -18,9 +18,8 @@ namespace Inignoto.World.Structures.Trees
             this.ground = ground;
         }
 
-        public override void TryPlace(int x, int y, int z, int chunk_x, int chunk_y, int chunk_z, Chunk chunk, FastNoise noise)
+        public override void TryPlace(int x, int y, int z, int chunk_x, int chunk_y, int chunk_z, Chunk chunk, FastNoise noise, double n)
         {
-            int n = (int)(MathF.Abs(noise.GetWhiteNoise(x, 0, z, 0)) * 10 * 100);
             if (n <= 5)
             {
                 TilePos current = new TilePos(0, 0, 0);

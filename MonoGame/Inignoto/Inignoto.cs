@@ -56,6 +56,7 @@ namespace Inignoto
 
         public Thread world_generation_thread;
         public Thread world_tick_thread;
+        public Thread rebuild_chunk_thread;
 
         public bool running = true;
 
@@ -138,6 +139,22 @@ namespace Inignoto
             world_tick_thread = new Thread(world_tick_start);
             world_tick_thread.IsBackground = true;
             world_tick_thread.Start();
+
+            ThreadStart rebuild_chunk_start = new ThreadStart(RebuildChunks);
+            rebuild_chunk_thread = new Thread(rebuild_chunk_start);
+            rebuild_chunk_thread.IsBackground = true;
+            rebuild_chunk_thread.Start();
+        }
+        public static void RebuildChunks()
+        {
+            while (game.running)
+            {
+                if (game.game_state == GameState.GAME)
+                {
+                    game.world.chunkManager.RebuildChunks();
+                }
+                
+            }
         }
         public static void TickWorld()
         {

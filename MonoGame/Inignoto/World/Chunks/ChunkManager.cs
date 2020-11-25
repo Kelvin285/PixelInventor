@@ -31,6 +31,8 @@ namespace Inignoto.World.Chunks
         public readonly List<Chunk> rendering;
         public readonly List<Chunk> updating;
 
+        public readonly List<Chunk> chunksToRebuild;
+
         public List<Chunk> waterRender;
         public List<Chunk> transparentRender;
 
@@ -62,6 +64,7 @@ namespace Inignoto.World.Chunks
             updating = new List<Chunk>();
             waterRender = new List<Chunk>();
             transparentRender = new List<Chunk>();
+            chunksToRebuild = new List<Chunk>();
         }
 
         public void GenerateChunks(ChunkGenerator generator)
@@ -130,6 +133,19 @@ namespace Inignoto.World.Chunks
                     chunk.Dispose();
                 }
             }
+        }
+        private bool rebuilding = false;
+        public void RebuildChunks()
+        {
+            if (!rebuilding) return;
+            
+            if (chunksToRebuild.Count > 0)
+            {
+                chunksToRebuild.Sort();
+                chunksToRebuild[0].BuildMesh();
+                chunksToRebuild.Remove(chunksToRebuild[0]);
+            }
+            rebuilding = false;
         }
 
         public void StructureGeneration()
@@ -422,9 +438,16 @@ namespace Inignoto.World.Chunks
 
                 if (rendering[i].NeedsToRebuild())
                 {
-                    if (Vector3.Distance(current_xyz, rendering[i].cpos) <= Constants.CHUNK_LIGHT_DISTANCE)
+                    if (Vector3.Distance(current_xyz, rendering[i].cpos) <= Constants.CHUNK_LIGHT_DISTANCE / 2)
                     {
                         rendering[i].BuildMesh();
+                    } else
+                    {
+                        if (!rebuilding)
+                        {
+                            chunksToRebuild.Add(rendering[i]);
+                        }
+                        
                     }
                 }
 
@@ -452,6 +475,8 @@ namespace Inignoto.World.Chunks
             }
             waterRender.Clear();
             transparentRender.Clear();
+
+            rebuilding = true;
         }
     }
 }

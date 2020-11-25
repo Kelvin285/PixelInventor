@@ -23,8 +23,8 @@ namespace Inignoto.Graphics.Mesh
         }
 
         public Matrix worldMatrix;
-        VertexPositionLightTexture[] triangleVertices;
-        VertexBuffer vertexBuffer;
+        public VertexPositionLightTexture[] triangleVertices;
+        public VertexBuffer vertexBuffer;
 
         public bool lines;
 
@@ -96,6 +96,46 @@ namespace Inignoto.Graphics.Mesh
             this.texture = texture;
         }
 
+
+        public void CombineWith(Mesh mesh, Vector3f position, Vector3f scale, Quaternionf rotation, Vector3f offset)
+        {
+            if (this.triangleVertices == null) return;
+            int verts = this.triangleVertices.Length / 3;
+            List<VertexPositionLightTexture> VPLT = new List<VertexPositionLightTexture>();
+
+
+            for (int i = 0; i < mesh.triangleVertices.Length; i++)
+            {
+                Vector3f vec = new Vector3f(mesh.triangleVertices[i].Position);
+
+                Matrix mat = Matrix.CreateTranslation(vec.Vector);
+                mat *= Matrix.CreateFromQuaternion(rotation.Rotation);
+                mat *= Matrix.CreateScale(scale.Vector);
+                mat *= Matrix.CreateTranslation(position.Vector);
+                mat *= Matrix.CreateTranslation(offset.Vector);
+
+                mesh.triangleVertices[i].Position = mat.Translation;
+                //vec.Rotate(rotation);
+                //vec.Mul(scale);
+                //vec.Add(position);
+                // vec.Add(offset);
+                VPLT.Add(mesh.triangleVertices[i]);
+            }
+            for (int i = 0; i < this.triangleVertices.Length; i++)
+            {
+                VPLT.Add(this.triangleVertices[i]);
+            }
+
+            VertexPositionLightTexture[] triangleVertices = VPLT.ToArray();
+            this.triangleVertices = triangleVertices;
+            vertexBuffer = new VertexBuffer(Inignoto.game.GraphicsDevice, typeof(
+                           VertexPositionLightTexture), triangleVertices.Length, BufferUsage.
+                           WriteOnly);
+            if (vertexBuffer == null) return;
+            vertexBuffer.SetData(this.triangleVertices);
+        }
+
+
         public Vector3 GetPosition()
         {
             return worldMatrix.Translation;
@@ -162,7 +202,7 @@ namespace Inignoto.Graphics.Mesh
 
                 pass.Apply();
 
-                if (vertexBuffer != null)
+                if (vertexBuffer != null && triangleVertices != null)
                 device.DrawPrimitives(lines ? PrimitiveType.LineList : PrimitiveType.TriangleList, 0, Length);
 
             }

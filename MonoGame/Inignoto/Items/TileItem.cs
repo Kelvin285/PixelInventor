@@ -12,6 +12,7 @@ using Inignoto.Math;
 using Inignoto.Tiles;
 using Inignoto.Tiles.Data;
 using Inignoto.Utilities;
+using Inignoto.World.Chunks;
 using Inignoto.World.RaytraceResult;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
@@ -67,6 +68,18 @@ namespace Inignoto.Items
             {
                 pos = new World.World.TilePos(result.pos.x, result.pos.y, result.pos.z);
             }
+            Chunk chunk = world.TryGetChunk(pos);
+            if (chunk == null) return ActionResult.MISS;
+
+            int cx = pos.x % Constants.CHUNK_SIZE;
+            int cy = pos.y % Constants.CHUNK_SIZE;
+            int cz = pos.z % Constants.CHUNK_SIZE;
+
+            if (cx < 0) cx = Constants.CHUNK_SIZE - cx;
+            if (cy < 0) cy = Constants.CHUNK_SIZE - cy;
+            if (cz < 0) cz = Constants.CHUNK_SIZE - cz;
+
+            if (tile.CanPlace(cx, cy, cz, chunk))
             if (TileManager.GetTile(world.GetVoxel(pos).tile_id).IsReplaceable() || tile.Overlay)
             {
                 bool intersects = false;
@@ -88,7 +101,7 @@ namespace Inignoto.Items
                 {
                     if (!tile.Overlay)
                     {
-                        world.SetVoxel(pos, tile.DefaultData);
+                        world.SetVoxel(pos, tile.GetStateForBlockPlacement(cx, cy, cz, chunk, result.Face));
                     } else
                     {
                         world.SetVoxel(pos, world.GetVoxel(pos.x, pos.y, pos.z), tile.DefaultData);

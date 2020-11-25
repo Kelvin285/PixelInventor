@@ -61,6 +61,55 @@ namespace Inignoto.Graphics.World
                 };
         public static Mesh.Mesh BuildTile(float x, float y, float z, TileData data, TileData overlay, GraphicsDevice device, bool lines = false)
         {
+            if (data.model != null)
+            {
+                Mesh.Mesh mesh = null;
+                if (!data.model.Combined)
+                {
+                    data.model.Combine();
+
+                    mesh = data.model.Parts[0].mesh;
+                    for (int i = 0; i < mesh.triangleVertices.Length; i++)
+                    {
+                        Vector2 texCoord = mesh.triangleVertices[i].TextureCoordinate;
+
+                        Rectangle location = Textures.Textures.tiles.GetLocation(data.texture);
+
+
+                        texCoord.X = (texCoord.X * location.Width + location.X) / Textures.Textures.tiles.GetWidth();
+                        texCoord.Y = (texCoord.Y * location.Height + location.Y) / Textures.Textures.tiles.GetHeight();
+
+                        Quaternion quat = Quaternion.CreateFromYawPitchRoll(MathF.PI * data.model.rotation.Y / 180.0f,
+                            MathF.PI * data.model.rotation.X / 180.0f,
+                            MathF.PI * data.model.rotation.Z / 180.0f);
+
+                        Matrix matrix = Matrix.CreateTranslation(mesh.triangleVertices[i].Position) * Matrix.CreateFromQuaternion(quat);
+
+                        mesh.triangleVertices[i].Position = matrix.Translation;
+                        mesh.triangleVertices[i].TextureCoordinate = texCoord;
+                        mesh.triangleVertices[i].Position *= 1.0f / 32.0f;
+                        mesh.triangleVertices[i].Position += data.model.translation.Vector;
+                        mesh.triangleVertices[i].Position += new Vector3(x + 0.65f, y + 0.5f, z + 0.5f);
+                    }
+
+                    mesh.vertexBuffer = new VertexBuffer(device, typeof(
+                               VertexPositionLightTexture), mesh.triangleVertices.Length, BufferUsage.
+                               WriteOnly);
+                    if (mesh.vertexBuffer != null)
+                        mesh.vertexBuffer.SetData(mesh.triangleVertices);
+                    mesh.texture = Textures.Textures.tiles.GetTexture();
+                } else
+                {
+                    mesh = data.model.Parts[0].mesh;
+                }
+                 
+                if (mesh != null)
+                {
+                    return mesh;
+                }
+                
+            }
+
             List<VertexPositionLightTexture> vpct = new List<VertexPositionLightTexture>();
 
             List<Vector3> vertices = new List<Vector3>();

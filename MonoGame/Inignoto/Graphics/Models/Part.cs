@@ -76,7 +76,7 @@ namespace Inignoto.Graphics.Models
         }
 
         public void BuildPart()
-        {
+        { 
             this.mesh = BuildMesh(this, this.texture);
         }
 

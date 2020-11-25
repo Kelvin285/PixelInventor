@@ -155,6 +155,9 @@ namespace Inignoto.Graphics.Gui
                     color.A -= 255 / 4;
                 }
 
+                if (i < 0 || i >= recipes.Count) continue;
+                if (recipes[i] == null) continue;
+
                 ItemStack stack = recipes[i].output;
                 
                 if (MouseInSpace(mouse_x, mouse_y, new Rectangle(x * 3, y * 3 + drop, 90, 90)))
@@ -696,6 +699,8 @@ namespace Inignoto.Graphics.Gui
                 int x = 228 + (i - recipe_index) * 31 + 15;
                 int y = 105 - 31 * 2;
 
+                if (i >= recipes.Count || i < 0) continue;
+                if (recipes[i] == null) continue;
 
                 ItemStack stack = recipes[i].output;
                 if (stack != null)

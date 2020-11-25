@@ -1,5 +1,8 @@
-﻿using Inignoto.Utilities;
+﻿using Inignoto.Graphics.Models;
+using Inignoto.Graphics.Textures;
+using Inignoto.Utilities;
 using Inignoto.World.Chunks;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using static Inignoto.Tiles.Tile;
@@ -23,6 +26,8 @@ namespace Inignoto.Tiles.Data
         public string front_texture = "";
         public string back_texture = "";
 
+        public GameModel model;
+
         public TileData(int tile, int state, ResourcePath location, int index)
         {
             tile_id = tile;
@@ -34,6 +39,7 @@ namespace Inignoto.Tiles.Data
             {
                 if (data.TryGetValue(a, out string b))
                 {
+                    
                     if (a.Equals("num_x"))
                     {
                         int.TryParse(b, out num_x);
@@ -86,7 +92,44 @@ namespace Inignoto.Tiles.Data
                     {
                         side_texture = b;
                     }
+                    if (a.Equals("model"))
+                    {
+                        ResourcePath path = new ResourcePath(b + ".model", "assets");
+                        model = GameModel.LoadModel(path, Textures.white_square);
+                    }
+                    if (model != null)
+                    {
+                        if (a.Equals("model_rotation_x"))
+                        {
+                            model.rotation.X = int.Parse(b);
+                        }
+                        if (a.Equals("model_rotation_y"))
+                        {
+                            model.rotation.Y = int.Parse(b);
+                        }
+                        if (a.Equals("model_rotation_z"))
+                        {
+                            model.rotation.Z = int.Parse(b);
+                        }
+                        if (a.Equals("model_offset_x"))
+                        {
+                            model.translation.X = (float)double.Parse(b);
+                        }
+                        if (a.Equals("model_offset_y"))
+                        {
+                            model.translation.Y = (float)double.Parse(b);
+                        }
+                        if (a.Equals("model_offset_z"))
+                        {
+                            model.translation.Z = (float)double.Parse(b);
+                        }
+                    }
+                    
                 }
+            }
+            if (model != null)
+            {
+                model.Texture = Textures.LoadTexture(new Utilities.ResourcePath(texture.Split(':')[0], "textures/tiles/" + texture.Split(':')[1] + ".png", "assets"));
             }
         }
 
