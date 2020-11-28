@@ -12,7 +12,7 @@ namespace Inignoto.World.Biomes.Surface.Grasslands
 {
     public class SnowHillsBiome : SurfaceBiome
     {
-        public SnowHillsBiome() : base(TileManager.SNOW.DefaultData, TileManager.AIR.DefaultData, TileManager.ICE.DefaultData)
+        public SnowHillsBiome() : base(TileRegistry.SNOW.DefaultData, TileRegistry.AIR.DefaultData, TileRegistry.ICE.DefaultData)
         {
             
         }
@@ -25,7 +25,7 @@ namespace Inignoto.World.Biomes.Surface.Grasslands
 
         public override void TryPlaceStructure(int x, int y, int z, int chunk_x, int chunk_y, int chunk_z, TileData voxel, TileData overlay, Chunk chunk, FastNoise noise, double n)
         {
-            StructureManager.SNOW_PINE_TREE.TryPlace(x, y, z, chunk_x, chunk_y, chunk_z, chunk, noise, n);
+            //StructureRegistry.SNOW_PINE_TREE.TryPlace(x, y, z, chunk_x, chunk_y, chunk_z, chunk, noise, n);
         }
     }
 }

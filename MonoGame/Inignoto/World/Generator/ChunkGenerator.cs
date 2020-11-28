@@ -24,7 +24,6 @@ namespace Inignoto.World.Generator
         {
             if (chunk.Load())
             {
-                chunk.UpdateLights();
                 chunk.MarkForRebuild();
                 return;
             }
@@ -50,21 +49,21 @@ namespace Inignoto.World.Generator
                         TileData data = biome.GetVoxelAt(x, y, z, voxel_height);
                         TileData overlay = biome.GetOverlayAt(x, y, z, voxel_height);
                         
-                        if (chunk.GetVoxel(chunk_x, chunk_y, chunk_z) == TileManager.AIR.DefaultData)
+                        if (chunk.GetVoxel(chunk_x, chunk_y, chunk_z) == TileRegistry.AIR.DefaultData)
                         {
-                            if (data == TileManager.AIR.DefaultData)
+                            if (data == TileRegistry.AIR.DefaultData)
                             {
                                 chunk.SetLight(chunk_x, chunk_y, chunk_z, 0, 0, 0, 15);
                             }
                             else
                             {
-                                Tile tile = TileManager.GetTile(data.tile_id);
+                                Tile tile = TileRegistry.GetTile(data.tile_id);
                                 chunk.SetLight(chunk_x, chunk_y, chunk_z, tile.light_red, tile.light_green, tile.light_blue, tile.allows_sunlight ? -1 : 0);
                             }
 
                             if (y <= 0)
                             {
-                                chunk.SetVoxel(chunk_x, chunk_y, chunk_z, TileManager.WATER.DefaultData);
+                                chunk.SetVoxel(chunk_x, chunk_y, chunk_z, TileRegistry.WATER.DefaultData);
                             }
                             chunk.SetVoxel(chunk_x, chunk_y, chunk_z, data);
                             chunk.SetOverlayVoxel(chunk_x, chunk_y, chunk_z, overlay);
@@ -154,9 +153,9 @@ namespace Inignoto.World.Generator
 
             float cell = MathF.Abs(noise.GetCellular((x) / category_size, y / category_size));
             cell = MathF.Max(0, MathF.Min(1, cell));
-            int category = (int)(cell * (BiomeManager.SURFACE_CATEGORIES.Count));
-            category = (int)MathF.Max(0, MathF.Min(BiomeManager.SURFACE_CATEGORIES.Count - 1, category));
-            return BiomeManager.SURFACE_CATEGORIES[category];
+            int category = (int)(cell * (BiomeRegistry.SURFACE_CATEGORIES.Count));
+            category = (int)MathF.Max(0, MathF.Min(BiomeRegistry.SURFACE_CATEGORIES.Count - 1, category));
+            return BiomeRegistry.SURFACE_CATEGORIES[category];
         }
         public SurfaceBiome GetSurfaceBiome(float x, float y)
         {

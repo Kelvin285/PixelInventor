@@ -383,7 +383,7 @@ namespace Inignoto.Entities
                 TileRaytraceResult result = world.RayTraceTiles(collision_p1, collision_p2, Tiles.Tile.TileRayTraceType.BLOCK);
                 if (result != null)
                 {
-                    if (TileManager.GetTile(result.data.tile_id).BlocksMovement())
+                    if (TileRegistry.GetTile(result.data.tile_id).BlocksMovement())
                     {
                         if (!LastOnGround && velocity.Y < 0)
                         {
@@ -409,7 +409,7 @@ namespace Inignoto.Entities
                     TileRaytraceResult result = world.RayTraceTiles(collision_p1, collision_p2, Tiles.Tile.TileRayTraceType.BLOCK);
                     if (result != null)
                     {
-                        if (TileManager.GetTile(result.data.tile_id).BlocksMovement())
+                        if (TileRegistry.GetTile(result.data.tile_id).BlocksMovement())
                         {
                             if (velocity.Y > 0)
                             {
@@ -425,7 +425,7 @@ namespace Inignoto.Entities
                 }
             }
 
-            if (TileManager.GetTile(world.GetVoxel(new TilePos(position.X + 0.5f, position.Y + size.Y, position.Z + 0.5f)).tile_id).BlocksMovement())
+            if (TileRegistry.GetTile(world.GetVoxel(new TilePos(position.X + 0.5f, position.Y + size.Y, position.Z + 0.5f)).tile_id).BlocksMovement())
             {
                 BlockAboveHead = true;
             }
@@ -441,7 +441,7 @@ namespace Inignoto.Entities
                     TileRaytraceResult result = world.RayTraceTiles(collision_p1, collision_p2, Tiles.Tile.TileRayTraceType.BLOCK);
                     if (result != null)
                     {
-                        if (TileManager.GetTile(result.data.tile_id).BlocksMovement())
+                        if (TileRegistry.GetTile(result.data.tile_id).BlocksMovement())
                         {
                             velocity.X = 0;
                             break;
@@ -462,7 +462,7 @@ namespace Inignoto.Entities
                     TileRaytraceResult result = world.RayTraceTiles(collision_p1, collision_p2, Tiles.Tile.TileRayTraceType.BLOCK);
                     if (result != null)
                     {
-                        if (TileManager.GetTile(result.data.tile_id).BlocksMovement())
+                        if (TileRegistry.GetTile(result.data.tile_id).BlocksMovement())
                         {
                             velocity.Z = 0;
                             break;
@@ -481,7 +481,7 @@ namespace Inignoto.Entities
             {
                 pos = new TilePos(pos.x, (float)System.Math.Round(pos.y + y_offset), pos.z);
             }
-            SoundEffect[] sounds = TileManager.GetTile(world.GetVoxel(pos).tile_id).step_sound;
+            SoundEffect[] sounds = TileRegistry.GetTile(world.GetVoxel(pos).tile_id).step_sound;
             if (sounds != null)
             {
                 SoundEffect effect = sounds[world.random.Next(sounds.Length)];

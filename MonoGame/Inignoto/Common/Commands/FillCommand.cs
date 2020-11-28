@@ -52,11 +52,11 @@ namespace Inignoto.Common.Commands
 
                 Tile TILE = null;
 
-                foreach (string key in TileManager.REGISTRY.Keys)
+                foreach (string key in TileRegistry.REGISTRY.Keys)
                 {
                     if (key.Equals(tile))
                     {
-                        TILE = TileManager.REGISTRY[key];
+                        TILE = TileRegistry.REGISTRY[key];
                         break;
                     }
                 }

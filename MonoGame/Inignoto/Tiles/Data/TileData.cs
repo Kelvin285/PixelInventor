@@ -189,9 +189,9 @@ namespace Inignoto.Tiles.Data
 
         public void UpdateLightWhenPlaced(Chunk chunk, int x, int y, int z)
         {
-            Tile tile = TileManager.GetTile(tile_id);
+            Tile tile = TileRegistry.GetTile(tile_id);
 
-            if (tile == TileManager.AIR) return;
+            if (tile == TileRegistry.AIR) return;
 
             if (!chunk.NeedsToGenerate())
             {
@@ -219,9 +219,9 @@ namespace Inignoto.Tiles.Data
 
         public void UpdateLightWhenRemoved(Chunk chunk, int x, int y, int z)
         {
-            Tile tile = TileManager.GetTile(tile_id);
+            Tile tile = TileRegistry.GetTile(tile_id);
 
-            if (tile == TileManager.AIR) return;
+            if (tile == TileRegistry.AIR) return;
 
             if (!chunk.NeedsToGenerate())
             {

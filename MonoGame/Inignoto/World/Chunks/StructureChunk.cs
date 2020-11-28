@@ -19,7 +19,7 @@ namespace Inignoto.World.Chunks
             tiles = new Chunk.Voxel[Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE];
             for (int i = 0; i < tiles.Length; i++)
             {
-                tiles[i] = new Chunk.Voxel(TileManager.AIR.DefaultData);
+                tiles[i] = new Chunk.Voxel(TileRegistry.AIR.DefaultData);
             }
             this.x = x;
             this.y = y;
@@ -63,7 +63,7 @@ namespace Inignoto.World.Chunks
                 schunk.GetTile(X, Y, Z);
             }
             
-            return TileManager.AIR.DefaultData;
+            return TileRegistry.AIR.DefaultData;
         }
         public bool HasAdjacent(int x, int y, int z, out int x2, out int y2, out int z2, out int CX, out int CY, out int CZ)
         {

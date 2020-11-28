@@ -18,23 +18,23 @@ namespace Inignoto.Tiles
         public override bool CanPlace(int x, int y, int z, Chunk chunk)
         {
             TileData data = chunk.GetVoxel(x, y - 1, z);
-            if (data.tile_id == TileManager.SAND.DefaultData.tile_id || TileManager.GetTile(data.tile_id) is CactusTile)
+            if (data.tile_id == TileRegistry.SAND.DefaultData.tile_id || TileRegistry.GetTile(data.tile_id) is CactusTile)
             {
                 return true;
             }
-            if (TileManager.GetTile(chunk.GetVoxel(x - 1, y, z).tile_id) is CactusTile)
+            if (TileRegistry.GetTile(chunk.GetVoxel(x - 1, y, z).tile_id) is CactusTile)
             {
                 return true;
             }
-            if (TileManager.GetTile(chunk.GetVoxel(x + 1, y, z).tile_id) is CactusTile)
+            if (TileRegistry.GetTile(chunk.GetVoxel(x + 1, y, z).tile_id) is CactusTile)
             {
                 return true;
             }
-            if (TileManager.GetTile(chunk.GetVoxel(x, y, z - 1).tile_id) is CactusTile)
+            if (TileRegistry.GetTile(chunk.GetVoxel(x, y, z - 1).tile_id) is CactusTile)
             {
                 return true;
             }
-            if (TileManager.GetTile(chunk.GetVoxel(x, y, z + 1).tile_id) is CactusTile)
+            if (TileRegistry.GetTile(chunk.GetVoxel(x, y, z + 1).tile_id) is CactusTile)
             {
                 return true;
             }
@@ -45,58 +45,58 @@ namespace Inignoto.Tiles
         {
             
             
-            if (chunk.GetVoxel(x, y - 1, z) == TileManager.AIR.DefaultData)
+            if (chunk.GetVoxel(x, y - 1, z) == TileRegistry.AIR.DefaultData)
             {
                 switch (face)
                 {
                     case TileFace.RIGHT:
-                            if (chunk.GetVoxel(x - 1, y, z).tile_id == TileManager.CACTUS.DefaultData.tile_id)
+                            if (chunk.GetVoxel(x - 1, y, z).tile_id == TileRegistry.CACTUS.DefaultData.tile_id)
                             {
                                 return stateHolder.data[1]; //correct
                             }
                             break;
                     case TileFace.FRONT:
-                        if (chunk.GetVoxel(x, y, z - 1).tile_id == TileManager.CACTUS.DefaultData.tile_id)
+                        if (chunk.GetVoxel(x, y, z - 1).tile_id == TileRegistry.CACTUS.DefaultData.tile_id)
                         {
                             return stateHolder.data[4];
                         }
                         break;
                     case TileFace.LEFT:
-                        if (chunk.GetVoxel(x + 1, y, z).tile_id == TileManager.CACTUS.DefaultData.tile_id)
+                        if (chunk.GetVoxel(x + 1, y, z).tile_id == TileRegistry.CACTUS.DefaultData.tile_id)
                         {
                             return stateHolder.data[3]; //correct
                         }
                         break;
                     case TileFace.BACK:
-                        if (chunk.GetVoxel(x, y, z + 1).tile_id == TileManager.CACTUS.DefaultData.tile_id)
+                        if (chunk.GetVoxel(x, y, z + 1).tile_id == TileRegistry.CACTUS.DefaultData.tile_id)
                         {
                             return stateHolder.data[2];
                         }
                         break;
                 }
-                if (chunk.GetVoxel(x - 1, y, z).tile_id == TileManager.CACTUS.DefaultData.tile_id)
+                if (chunk.GetVoxel(x - 1, y, z).tile_id == TileRegistry.CACTUS.DefaultData.tile_id)
                 {
                     return stateHolder.data[1];
                 }
-                else if (chunk.GetVoxel(x, y, z - 1).tile_id == TileManager.CACTUS.DefaultData.tile_id)
+                else if (chunk.GetVoxel(x, y, z - 1).tile_id == TileRegistry.CACTUS.DefaultData.tile_id)
                 {
                     return stateHolder.data[4];
-                } else if (chunk.GetVoxel(x + 1, y, z).tile_id == TileManager.CACTUS.DefaultData.tile_id)
+                } else if (chunk.GetVoxel(x + 1, y, z).tile_id == TileRegistry.CACTUS.DefaultData.tile_id)
                 {
                     return stateHolder.data[3];
                 }
-                else if (chunk.GetVoxel(x, y, z + 1).tile_id == TileManager.CACTUS.DefaultData.tile_id)
+                else if (chunk.GetVoxel(x, y, z + 1).tile_id == TileRegistry.CACTUS.DefaultData.tile_id)
                 {
                     return stateHolder.data[2];
                 }
             }
-            if (chunk.GetVoxel(x, y - 1, z).tile_id == TileManager.CACTUS.DefaultData.tile_id)
+            if (chunk.GetVoxel(x, y - 1, z).tile_id == TileRegistry.CACTUS.DefaultData.tile_id)
             {
                 if (chunk.GetVoxel(x, y - 1, z) == stateHolder.data[5])
                 {
                     chunk.SetVoxel(x, y - 1, z, DefaultData);
                 }
-                if (chunk.GetVoxel(x, y + 1, z) == TileManager.AIR.DefaultData)
+                if (chunk.GetVoxel(x, y + 1, z) == TileRegistry.AIR.DefaultData)
                 {
                     return stateHolder.data[5];
                 }

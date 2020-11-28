@@ -26,12 +26,12 @@ namespace Inignoto.World.Biomes
 
         public virtual TileData GetOverlayAt(int x, int y, int z, int height)
         {
-            return y == height ? GRASS : TileManager.AIR.DefaultData;
+            return y == height ? GRASS : TileRegistry.AIR.DefaultData;
         }
 
         public virtual TileData GetVoxelAt(int x, int y, int z, int height)
         {
-            TileData tile = TileManager.AIR.DefaultData;
+            TileData tile = TileRegistry.AIR.DefaultData;
             if (y <= height)
             {
                 tile = EARTH;

@@ -254,7 +254,7 @@ namespace Inignoto.Graphics.Gui
 
         public void RenderSandboxInventory(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime gameTime)
         {
-            int pages = ItemManager.REGISTRY.Count / (10 * 4);
+            int pages = ItemRegistry.REGISTRY.Count / (10 * 4);
 
             if (search_items.Count > 0)
             {
@@ -283,9 +283,9 @@ namespace Inignoto.Graphics.Gui
                     Item item = null;
                     if (search_items.Count == 0)
                     {
-                        if (I < ItemManager.ITEM_LIST.Count)
+                        if (I < ItemRegistry.ITEM_LIST.Count)
                         {
-                            item = ItemManager.ITEM_LIST[I];
+                            item = ItemRegistry.ITEM_LIST[I];
 
                             if (MouseInSpace(mouse_x, mouse_y, new Rectangle(X + 18 + x * 93, Y + 29 * 3 + y * 93, 90, 90)))
                             {
@@ -327,7 +327,7 @@ namespace Inignoto.Graphics.Gui
             if (searchstring.Trim().Length > 0)
             {
                 has_none = true;
-                foreach (Item item in ItemManager.ITEM_LIST)
+                foreach (Item item in ItemRegistry.ITEM_LIST)
                 {
                     if (item.Name.ToLower().Replace("_", " ").Contains(searchstring.ToLower().Trim()))
                     {
@@ -618,7 +618,7 @@ namespace Inignoto.Graphics.Gui
         private int grabTick = 0;
         public void UpdateRecipes()
         {
-            foreach(CraftingRecipe recipe in CraftingManager.REGISTRY)
+            foreach(CraftingRecipe recipe in CraftingRegistry.REGISTRY)
             {
                 bool has = true;
                 foreach (ItemStack stack in recipe.input)

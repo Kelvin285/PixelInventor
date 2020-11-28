@@ -30,7 +30,7 @@ namespace Inignoto.Items
         public TileItem(Tile tile, int max_stack = 64) : base(tile.name, max_stack, 0.25f, false)
         {
             this.tile = tile;
-            overlay = TileManager.AIR.DefaultData;
+            overlay = TileRegistry.AIR.DefaultData;
             BuildMesh();
         }
 
@@ -80,7 +80,7 @@ namespace Inignoto.Items
             if (cz < 0) cz = Constants.CHUNK_SIZE - cz;
 
             if (tile.CanPlace(cx, cy, cz, chunk))
-            if (TileManager.GetTile(world.GetVoxel(pos).tile_id).IsReplaceable() || tile.Overlay)
+            if (TileRegistry.GetTile(world.GetVoxel(pos).tile_id).IsReplaceable() || tile.Overlay)
             {
                 bool intersects = false;
                 foreach (Entity e in world.entities)

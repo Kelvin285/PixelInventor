@@ -65,7 +65,7 @@ namespace Inignoto.World.Chunks
             public Voxel(TileData voxel)
             {
                 this.voxel = voxel;
-                overlay = TileManager.AIR.DefaultData;
+                overlay = TileRegistry.AIR.DefaultData;
                 light = 0x000000;
                 sunlight = 0xff;
                 mining_time = 0;
@@ -99,7 +99,7 @@ namespace Inignoto.World.Chunks
         public bool modified = false;
 
 
-        private bool lightRebuild = false;
+        public bool LightRebuild { get; private set; }
 
         public bool Full => solid_voxels >= Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE;
         public bool Empty => air_voxels >= Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE;
@@ -123,7 +123,7 @@ namespace Inignoto.World.Chunks
             voxels = new Voxel[Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE];
             for (int i = 0; i < voxels.Length; i++)
             {
-                voxels[i] = new Voxel(TileManager.AIR.DefaultData);
+                voxels[i] = new Voxel(TileRegistry.AIR.DefaultData);
             }
 
             chunkManager = world.GetChunkManager();
@@ -153,8 +153,8 @@ namespace Inignoto.World.Chunks
             {
                 voxels[i].light = 0;
                 voxels[i].sunlight = 0;
-                voxels[i].overlay = TileManager.AIR.DefaultData;
-                voxels[i].voxel = TileManager.AIR.DefaultData;
+                voxels[i].overlay = TileRegistry.AIR.DefaultData;
+                voxels[i].voxel = TileRegistry.AIR.DefaultData;
             }
 
             mesh = null;
@@ -165,7 +165,7 @@ namespace Inignoto.World.Chunks
             secondTransparencyMesh = null;
             rebuilding = false;
             generated = false;
-            lightRebuild = false;
+            LightRebuild = false;
 
             chunkManager = world.GetChunkManager();
 
@@ -198,16 +198,13 @@ namespace Inignoto.World.Chunks
                 File.Delete(FileUtils.GetResourcePath(file));
             }
 
-            string str = "";
+            List<string> str = new List<string>();
             for(int i = 0; i < voxels.Length; i++)
             {
-                str += voxels[i].voxel.index + "_" + voxels[i].overlay.index;
-                if (i < voxels.Length - 1)
-                {
-                    str += "\n";
-                }
+                str.Add(voxels[i].voxel.index + "_" + voxels[i].overlay.index+"_"+voxels[i].light+"_"+voxels[i].sunlight);
             }
-            File.WriteAllText(FileUtils.GetResourcePath(file), str);
+
+            File.WriteAllLinesAsync(FileUtils.GetResourcePath(file), str);
         }
 
         public bool Load()
@@ -223,8 +220,7 @@ namespace Inignoto.World.Chunks
             {
                 return false;
             }
-            string str = File.ReadAllText(FileUtils.GetResourcePath(file));
-            string[] data = str.Split("\n");
+            string[] data = File.ReadAllLinesAsync(FileUtils.GetResourcePath(file)).Result;
             for (int i = 0; i < voxels.Length; i++)
             {
                 voxels[i].light = 0;
@@ -244,6 +240,13 @@ namespace Inignoto.World.Chunks
 
                 SetVoxel(x, y, z, TileDataHolder.REGISTRY[tile]);
                 SetOverlayVoxel(x, y, z, TileDataHolder.REGISTRY[overlay]);
+                if (voxel.Length > 2)
+                {
+                    voxels[index].light = int.Parse(voxel[2]);
+                    voxels[index].sunlight = int.Parse(voxel[3]);
+                }
+                
+
                 index++;
             }
             return true;
@@ -391,17 +394,47 @@ namespace Inignoto.World.Chunks
 
         public void RemoveLight(int x, int y, int z, bool red, bool green, bool blue, bool sun)
         {
+            TileData data = GetVoxel(x, y, z);
+            Tile tile = TileRegistry.GetTile(data.tile_id);
             if (IsInsideChunk(x, y, z))
             {
+                lock (sunlightRemovalBfsQueue)
+                {
+                    lock (blueRemovalBfsQueue)
+                    {
+                        lock (greenRemovalBfsQueue)
+                        {
+                            lock (redRemovalBfsQueue)
+                            {
+                                if (tile.light_red > 0) {
+                                    SetRedLight(x, y, z, tile.light_red);
+                                    }
+                                else
+                                if (red)
+                                    redRemovalBfsQueue.Add(GetIndexFor(x, y, z));
 
-                lock(redRemovalBfsQueue)
-                if (red) redRemovalBfsQueue.Add(GetIndexFor(x, y, z));
-                lock(greenRemovalBfsQueue)
-                if (green) greenRemovalBfsQueue.Add(GetIndexFor(x, y, z));
-                lock(blueRemovalBfsQueue)
-                if (blue) blueRemovalBfsQueue.Add(GetIndexFor(x, y, z));
-                lock(sunlightRemovalBfsQueue)
-                if (sun) sunlightRemovalBfsQueue.Add(GetIndexFor(x, y, z));
+                                if (tile.light_green > 0)
+                                {
+                                    SetGreenLight(x, y, z, tile.light_green);
+                                }
+                                else
+                                if (green)
+                                    greenRemovalBfsQueue.Add(GetIndexFor(x, y, z));
+
+                                if (tile.light_blue > 0)
+                                {
+                                    SetBlueLight(x, y, z, tile.light_blue);
+                                }
+                                else
+                                if (blue)
+                                    blueRemovalBfsQueue.Add(GetIndexFor(x, y, z));
+
+                                if (sun)
+                                    sunlightRemovalBfsQueue.Add(GetIndexFor(x, y, z));
+                            }
+                        }
+                    }
+                }
 
                 return;
             }
@@ -411,6 +444,7 @@ namespace Inignoto.World.Chunks
             {
                 chunk.RemoveLight(X, Y, Z, red, green, blue, sun);
             }
+
         }
 
         public void SetRedLight(int x, int y, int z, int r, bool update = true)
@@ -456,7 +490,7 @@ namespace Inignoto.World.Chunks
             }
             if (IsInsideChunk(x, y, z))
             {
-                Tile tile = TileManager.GetTile(GetVoxel(x, y, z).tile_id);
+                Tile tile = TileRegistry.GetTile(GetVoxel(x, y, z).tile_id);
 
                 if (tile.tinted)
                 {
@@ -698,10 +732,11 @@ namespace Inignoto.World.Chunks
 
         private void MarkForLightBuild()
         {
-            lightRebuild = true;
+            LightRebuild = true;
         }
         public void UpdateLights()
         {
+            LightRebuild = false;
             bool rerender = false;
             bool cu = false, cd = false, cl = false, cr = false, cb = false, cf = false;
             
@@ -719,24 +754,24 @@ namespace Inignoto.World.Chunks
                 int lightLevel = GetSunlight(x, y, z);
                 SetLight(x, y, z, -1, -1, -1, 0, false);
 
-                    if (x - 1 <= 0 || x + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (x - 1 <= 0) cl = true;
+                        if (x - 1 < 0) cl = true;
                         else cr = true;
                     }
-                    if (y - 1 <= 0 || y + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (y - 1 <= 0) cd = true;
+                        if (y - 1 < 0) cd = true;
                         else
                             cu = true;
                     }
-                    if (z - 1 <= 0 || z + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (z - 1 <= 0) cb = true;
+                        if (z - 1 < 0) cb = true;
                         else cf = true;
                     }
 
-                    int neighborLevel = GetSunlight(x - 1, y, z);
+                        int neighborLevel = GetSunlight(x - 1, y, z);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
                 {
                     RemoveLight(x - 1, y, z, false, false, false, true);
@@ -810,24 +845,24 @@ namespace Inignoto.World.Chunks
                 int lightLevel = GetRedLight(x, y, z);
                 SetLight(x, y, z, 0, -1, -1, -1, false);
 
-                    if (x - 1 <= 0 || x + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (x - 1 <= 0) cl = true;
+                        if (x - 1 < 0) cl = true;
                         else cr = true;
                     }
-                    if (y - 1 <= 0 || y + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (y - 1 <= 0) cd = true;
+                        if (y - 1 < 0) cd = true;
                         else
                             cu = true;
                     }
-                    if (z - 1 <= 0 || z + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (z - 1 <= 0) cb = true;
+                        if (z - 1 < 0) cb = true;
                         else cf = true;
                     }
 
-                    int neighborLevel = GetRedLight(x - 1, y, z);
+                        int neighborLevel = GetRedLight(x - 1, y, z);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
                 {
                     RemoveLight(x - 1, y, z, true, false, false, false);
@@ -902,24 +937,24 @@ namespace Inignoto.World.Chunks
                 int lightLevel = GetGreenLight(x, y, z);
                 SetLight(x, y, z, -1, 0, -1, -1, false);
 
-                    if (x - 1 <= 0 || x + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (x - 1 <= 0) cl = true;
+                        if (x - 1 < 0) cl = true;
                         else cr = true;
                     }
-                    if (y - 1 <= 0 || y + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (y - 1 <= 0) cd = true;
+                        if (y - 1 < 0) cd = true;
                         else
                             cu = true;
                     }
-                    if (z - 1 <= 0 || z + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (z - 1 <= 0) cb = true;
+                        if (z - 1 < 0) cb = true;
                         else cf = true;
                     }
 
-                    int neighborLevel = GetGreenLight(x - 1, y, z);
+                        int neighborLevel = GetGreenLight(x - 1, y, z);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
                 {
                     RemoveLight(x - 1, y, z, false, true, false, false);
@@ -994,20 +1029,20 @@ namespace Inignoto.World.Chunks
                 int lightLevel = GetBlueLight(x, y, z);
                 SetLight(x, y, z, -1, -1, 0, -1, false);
 
-                    if (x - 1 <= 0 || x + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (x - 1 <= 0) cl = true;
+                        if (x - 1 < 0) cl = true;
                         else cr = true;
                     }
-                    if (y - 1 <= 0 || y + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (y - 1 <= 0) cd = true;
+                        if (y - 1 < 0) cd = true;
                         else
                             cu = true;
                     }
-                    if (z - 1 <= 0 || z + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (z - 1 <= 0) cb = true;
+                        if (z - 1 < 0) cb = true;
                         else cf = true;
                     }
 
@@ -1088,51 +1123,51 @@ namespace Inignoto.World.Chunks
                     int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
                     int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
 
-                    if (x - 1 <= 0 || x + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (x - 1 <= 0) cl = true;
+                        if (x - 1 < 0) cl = true;
                         else cr = true;
                     }
-                    if (y - 1 <= 0 || y + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (y - 1 <= 0) cd = true;
+                        if (y - 1 < 0) cd = true;
                         else
                             cu = true;
                     }
-                    if (z - 1 <= 0 || z + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (z - 1 <= 0) cb = true;
+                        if (z - 1 < 0) cb = true;
                         else cf = true;
                     }
 
                     int lightLevel = GetSunlight(x, y, z);
 
-                    if (!TileManager.GetTile(GetVoxel(x - 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x - 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
                         GetSunlight(x - 1, y, z) + 2 <= lightLevel)
                     {
                         SetLight(x - 1, y, z, -1, -1, -1, lightLevel - 1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x + 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x + 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
                         GetSunlight(x + 1, y, z) + 2 <= lightLevel)
                     {
                         SetLight(x + 1, y, z, -1, -1, -1, lightLevel - 1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x, y, z - 1).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x, y, z - 1).tile_id).IsOpaqueAndNotGlowing() &&
                         GetSunlight(x, y, z - 1) + 2 <= lightLevel)
                     {
                         SetLight(x, y, z - 1, -1, -1, -1, lightLevel - 1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x, y, z + 1).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x, y, z + 1).tile_id).IsOpaqueAndNotGlowing() &&
                         GetSunlight(x, y, z + 1) + 2 <= lightLevel)
                     {
                         SetLight(x, y, z + 1, -1, -1, -1, lightLevel - 1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x, y - 1, z).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x, y - 1, z).tile_id).IsOpaqueAndNotGlowing() &&
                         GetSunlight(x, y - 1, z) + 2 <= lightLevel)
                     {
                         SetLight(x, y - 1, z, -1, -1, -1, lightLevel == 15 ? lightLevel : lightLevel - 1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x, y + 1, z).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x, y + 1, z).tile_id).IsOpaqueAndNotGlowing() &&
                         GetSunlight(x, y + 1, z) + 2 <= lightLevel)
                     {
                         SetLight(x, y + 1, z, -1, -1, -1, lightLevel - 1);
@@ -1151,51 +1186,51 @@ namespace Inignoto.World.Chunks
                     int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
                     int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
 
-                    if (x - 1 <= 0 || x + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (x - 1 <= 0) cl = true;
+                        if (x - 1 < 0) cl = true;
                         else cr = true;
                     }
-                    if (y - 1 <= 0 || y + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (y - 1 <= 0) cd = true;
+                        if (y - 1 < 0) cd = true;
                         else
                             cu = true;
                     }
-                    if (z - 1 <= 0 || z + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (z - 1 <= 0) cb = true;
+                        if (z - 1 < 0) cb = true;
                         else cf = true;
                     }
 
                     int lightLevel = GetRedLight(x, y, z);
 
-                    if (!TileManager.GetTile(GetVoxel(x - 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x - 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
                         GetRedLight(x - 1, y, z) + 2 <= lightLevel)
                     {
                         SetLight(x - 1, y, z, lightLevel - 1, -1, -1, -1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x + 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x + 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
                         GetRedLight(x + 1, y, z) + 2 <= lightLevel)
                     {
                         SetLight(x + 1, y, z, lightLevel - 1, -1, -1, -1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x, y, z - 1).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x, y, z - 1).tile_id).IsOpaqueAndNotGlowing() &&
                         GetRedLight(x, y, z - 1) + 2 <= lightLevel)
                     {
                         SetLight(x, y, z - 1, lightLevel - 1, -1, -1, -1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x, y, z + 1).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x, y, z + 1).tile_id).IsOpaqueAndNotGlowing() &&
                         GetRedLight(x, y, z + 1) + 2 <= lightLevel)
                     {
                         SetLight(x, y, z + 1, lightLevel - 1, -1, -1, -1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x, y - 1, z).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x, y - 1, z).tile_id).IsOpaqueAndNotGlowing() &&
                         GetRedLight(x, y - 1, z) + 2 <= lightLevel)
                     {
                         SetLight(x, y - 1, z, lightLevel - 1, -1, -1, -1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x, y + 1, z).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x, y + 1, z).tile_id).IsOpaqueAndNotGlowing() &&
                         GetRedLight(x, y + 1, z) + 2 <= lightLevel)
                     {
                         SetLight(x, y + 1, z, lightLevel - 1, -1, -1, -1);
@@ -1214,51 +1249,51 @@ namespace Inignoto.World.Chunks
                     int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
                     int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
 
-                    if (x - 1 <= 0 || x + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (x - 1 <= 0) cl = true;
+                        if (x - 1 < 0) cl = true;
                         else cr = true;
                     }
-                    if (y - 1 <= 0 || y + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (y - 1 <= 0) cd = true;
+                        if (y - 1 < 0) cd = true;
                         else
                             cu = true;
                     }
-                    if (z - 1 <= 0 || z + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (z - 1 <= 0) cb = true;
+                        if (z - 1 < 0) cb = true;
                         else cf = true;
                     }
 
                     int lightLevel = GetGreenLight(x, y, z);
 
-                    if (!TileManager.GetTile(GetVoxel(x - 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x - 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
                         GetGreenLight(x - 1, y, z) + 2 <= lightLevel)
                     {
                         SetLight(x - 1, y, z, -1, lightLevel - 1, -1, -1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x + 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x + 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
                         GetGreenLight(x + 1, y, z) + 2 <= lightLevel)
                     {
                         SetLight(x + 1, y, z, -1, lightLevel - 1, -1, -1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x, y, z - 1).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x, y, z - 1).tile_id).IsOpaqueAndNotGlowing() &&
                         GetGreenLight(x, y, z - 1) + 2 <= lightLevel)
                     {
                         SetLight(x, y, z - 1, -1, lightLevel - 1, -1, -1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x, y, z + 1).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x, y, z + 1).tile_id).IsOpaqueAndNotGlowing() &&
                         GetGreenLight(x, y, z + 1) + 2 <= lightLevel)
                     {
                         SetLight(x, y, z + 1, -1, lightLevel - 1, -1, -1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x, y - 1, z).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x, y - 1, z).tile_id).IsOpaqueAndNotGlowing() &&
                         GetGreenLight(x, y - 1, z) + 2 <= lightLevel)
                     {
                         SetLight(x, y - 1, z, -1, lightLevel - 1, -1, -1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x, y + 1, z).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x, y + 1, z).tile_id).IsOpaqueAndNotGlowing() &&
                         GetGreenLight(x, y + 1, z) + 2 <= lightLevel)
                     {
                         SetLight(x, y + 1, z, -1, lightLevel - 1, -1, -1);
@@ -1277,98 +1312,98 @@ namespace Inignoto.World.Chunks
                     int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
                     int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
 
-                    if (x - 1 <= 0 || x + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (x - 1 <= 0) cl = true;
+                        if (x - 1 < 0) cl = true;
                         else cr = true;
                     }
-                    if (y - 1 <= 0 || y + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (y - 1 <= 0) cd = true;
+                        if (y - 1 < 0) cd = true;
                         else
                             cu = true;
                     }
-                    if (z - 1 <= 0 || z + 1 >= Constants.CHUNK_SIZE - 1)
+                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
                     {
-                        if (z - 1 <= 0) cb = true;
+                        if (z - 1 < 0) cb = true;
                         else cf = true;
                     }
 
                     int lightLevel = GetBlueLight(x, y, z);
 
-                    if (!TileManager.GetTile(GetVoxel(x - 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x - 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
                         GetBlueLight(x - 1, y, z) + 2 <= lightLevel)
                     {
                         SetLight(x - 1, y, z, -1, -1, lightLevel - 1, -1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x + 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x + 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
                         GetBlueLight(x + 1, y, z) + 2 <= lightLevel)
                     {
                         SetLight(x + 1, y, z, -1, -1, lightLevel - 1, -1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x, y, z - 1).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x, y, z - 1).tile_id).IsOpaqueAndNotGlowing() &&
                         GetBlueLight(x, y, z - 1) + 2 <= lightLevel)
                     {
                         SetLight(x, y, z - 1, -1, -1, lightLevel - 1, -1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x, y, z + 1).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x, y, z + 1).tile_id).IsOpaqueAndNotGlowing() &&
                         GetBlueLight(x, y, z + 1) + 2 <= lightLevel)
                     {
                         SetLight(x, y, z + 1, -1, -1, lightLevel - 1, -1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x, y - 1, z).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x, y - 1, z).tile_id).IsOpaqueAndNotGlowing() &&
                         GetBlueLight(x, y - 1, z) + 2 <= lightLevel)
                     {
                         SetLight(x, y - 1, z, -1, -1, lightLevel - 1, -1);
                     }
-                    if (!TileManager.GetTile(GetVoxel(x, y + 1, z).tile_id).IsOpaqueAndNotGlowing() &&
+                    if (!TileRegistry.GetTile(GetVoxel(x, y + 1, z).tile_id).IsOpaqueAndNotGlowing() &&
                         GetBlueLight(x, y + 1, z) + 2 <= lightLevel)
                     {
                         SetLight(x, y + 1, z, -1, -1, lightLevel - 1, -1);
                     }
                 }
 
-
-
             if (rerender)
             {
                 MarkForRebuild();
-            }
-            if (cu)
-            {
-                Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY() + 1, GetZ());
-                if (chunk != null)
-                chunk.MarkForRebuild();
-            }
-            if (cd)
-            {
-                Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY() - 1, GetZ());
-                if (chunk != null)
-                    chunk.MarkForRebuild();
-            }
-            if (cl)
-            {
-                Chunk chunk = world.chunkManager.TryGetChunk(GetX() - 1, GetY(), GetZ());
-                if (chunk != null)
-                    chunk.MarkForRebuild();
-            }
-            if (cr)
-            {
-                Chunk chunk = world.chunkManager.TryGetChunk(GetX() + 1, GetY(), GetZ());
-                if (chunk != null)
-                    chunk.MarkForRebuild();
-            }
-            if (cf)
-            {
-                Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY(), GetZ() + 1);
-                if (chunk != null)
-                    chunk.MarkForRebuild();
-            }
-            if (cb)
-            {
-                Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY(), GetZ() - 1);
-                if (chunk != null)
-                    chunk.MarkForRebuild();
+                MarkForLightBuild();
+            
+                if (cu)
+                {
+                    Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY() + 1, GetZ());
+                    if (chunk != null)
+                        chunk.MarkForLightBuild();
+                }
+                if (cd)
+                {
+                    Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY() - 1, GetZ());
+                    if (chunk != null)
+                        chunk.MarkForLightBuild();
+                }
+                if (cl)
+                {
+                    Chunk chunk = world.chunkManager.TryGetChunk(GetX() - 1, GetY(), GetZ());
+                    if (chunk != null)
+                        chunk.MarkForLightBuild();
+                }
+                if (cr)
+                {
+                    Chunk chunk = world.chunkManager.TryGetChunk(GetX() + 1, GetY(), GetZ());
+                    if (chunk != null)
+                        chunk.MarkForLightBuild();
+                }
+                if (cf)
+                {
+                    Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY(), GetZ() + 1);
+                    if (chunk != null)
+                        chunk.MarkForLightBuild();
+                }
+                if (cb)
+                {
+                    Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY(), GetZ() - 1);
+                    if (chunk != null)
+                       chunk.MarkForLightBuild();
+                }
             }
         }
 
@@ -1377,7 +1412,7 @@ namespace Inignoto.World.Chunks
             if (IsInsideChunk(x, y, z))
             {
                 TileData data = voxels[GetIndexFor(x, y, z)].overlay;
-                if (data == null) return TileManager.AIR.DefaultData;
+                if (data == null) return TileRegistry.AIR.DefaultData;
                 return data;
             }
 
@@ -1388,7 +1423,7 @@ namespace Inignoto.World.Chunks
                 return chunk.GetOverlayVoxel(X, Y, Z);
             }
 
-            return TileManager.AIR.DefaultData;
+            return TileRegistry.AIR.DefaultData;
         }
 
         public bool SetOverlayVoxel(int x, int y, int z, TileData voxel)
@@ -1415,7 +1450,7 @@ namespace Inignoto.World.Chunks
             if (IsInsideChunk(x, y, z))
             {
                 TileData data = voxels[GetIndexFor(x, y, z)].voxel;
-                if (data == null) return TileManager.AIR.DefaultData;
+                if (data == null) return TileRegistry.AIR.DefaultData;
                 return data;
             }
 
@@ -1426,30 +1461,30 @@ namespace Inignoto.World.Chunks
                 return chunk.GetVoxel(X, Y, Z);
             }
 
-            return TileManager.AIR.DefaultData;
+            return TileRegistry.AIR.DefaultData;
         }
 
         public bool SetVoxel(int x, int y, int z, TileData voxel)
         {
             if (IsInsideChunk(x, y, z))
             {
-                if (TileManager.GetTile(voxel.tile_id) == TileManager.WATER)
+                if (TileRegistry.GetTile(voxel.tile_id) == TileRegistry.WATER)
                 {
                     this.transparentRebuild = true;
                 }
                 if (voxels[GetIndexFor(x, y, z)].voxel == null)
                 {
-                    solid_voxels += TileManager.GetTile(voxel.tile_id).TakesUpEntireSpace() ? 1 : 0;
+                    solid_voxels += TileRegistry.GetTile(voxel.tile_id).TakesUpEntireSpace() ? 1 : 0;
                 } else
                 {
-                    if (!TileManager.GetTile(voxels[GetIndexFor(x, y, z)].voxel.tile_id).TakesUpEntireSpace() &&
-                                        TileManager.GetTile(voxel.tile_id).TakesUpEntireSpace())
+                    if (!TileRegistry.GetTile(voxels[GetIndexFor(x, y, z)].voxel.tile_id).TakesUpEntireSpace() &&
+                                        TileRegistry.GetTile(voxel.tile_id).TakesUpEntireSpace())
                     {
                         solid_voxels++;
                     }
                     else
                     {
-                        if (TileManager.GetTile(voxel.tile_id).TakesUpEntireSpace() != TileManager.GetTile(voxels[GetIndexFor(x, y, z)].voxel.tile_id).TakesUpEntireSpace())
+                        if (TileRegistry.GetTile(voxel.tile_id).TakesUpEntireSpace() != TileRegistry.GetTile(voxels[GetIndexFor(x, y, z)].voxel.tile_id).TakesUpEntireSpace())
                         {
                             solid_voxels--;
                         }
@@ -1458,7 +1493,7 @@ namespace Inignoto.World.Chunks
                 TileData last = voxels[GetIndexFor(x, y, z)].voxel;
                 if (last != voxel)
                 {
-                    if (last != TileManager.AIR.DefaultData && voxel == TileManager.AIR.DefaultData)
+                    if (last != TileRegistry.AIR.DefaultData && voxel == TileRegistry.AIR.DefaultData)
                     {
                         air_voxels++;
                     } else
@@ -1476,9 +1511,9 @@ namespace Inignoto.World.Chunks
                 if (voxel != null)
                     voxel.UpdateLightWhenPlaced(this, x, y, z);
 
-                if (voxel == TileManager.AIR.DefaultData)
+                if (voxel == TileRegistry.AIR.DefaultData)
                 {
-                    SetOverlayVoxel(x, y, z, TileManager.AIR.DefaultData);
+                    SetOverlayVoxel(x, y, z, TileRegistry.AIR.DefaultData);
                 }
                 if (!NeedsToGenerate())
                     modified = true;

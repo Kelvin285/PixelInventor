@@ -57,11 +57,11 @@ namespace Inignoto.Common.Commands
                     }
                 }
 
-                foreach (string key in ItemManager.REGISTRY.Keys)
+                foreach (string key in ItemRegistry.REGISTRY.Keys)
                 {
                     if (key.Equals(item))
                     {
-                        ITEM = ItemManager.REGISTRY[key];
+                        ITEM = ItemRegistry.REGISTRY[key];
                     }
                 }
 

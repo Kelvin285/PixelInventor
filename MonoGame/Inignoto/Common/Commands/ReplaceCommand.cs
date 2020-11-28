@@ -57,20 +57,20 @@ namespace Inignoto.Common.Commands
                 Tile TILE = null;
                 Tile REPLACE = null;
 
-                foreach (string key in TileManager.REGISTRY.Keys)
+                foreach (string key in TileRegistry.REGISTRY.Keys)
                 {
                     if (key.Equals(tile))
                     {
-                        TILE = TileManager.REGISTRY[key];
+                        TILE = TileRegistry.REGISTRY[key];
                         break;
                     }
                 }
 
-                foreach (string key in TileManager.REGISTRY.Keys)
+                foreach (string key in TileRegistry.REGISTRY.Keys)
                 {
                     if (key.Equals(replace))
                     {
-                        REPLACE = TileManager.REGISTRY[key];
+                        REPLACE = TileRegistry.REGISTRY[key];
                         break;
                     }
                 }

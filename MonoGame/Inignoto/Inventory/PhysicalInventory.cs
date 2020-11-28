@@ -35,10 +35,10 @@ namespace Inignoto.Inventory
         public PhysicalInventory(PlayerEntity player)
         {
             this.player = player;
-            inventory[0] = new ItemStack(TileManager.DIRT, 4);
-            inventory[1] = new ItemStack(TileManager.GRASS, 64);
-            hotbar[0] = new ItemStack(TileManager.GRASS, 64);
-            hotbar[1] = new ItemStack(ItemManager.IRON_PICKAXE, 1);
+            inventory[0] = new ItemStack(TileRegistry.DIRT, 4);
+            inventory[1] = new ItemStack(TileRegistry.GRASS, 64);
+            hotbar[0] = new ItemStack(TileRegistry.GRASS, 64);
+            hotbar[1] = new ItemStack(ItemRegistry.IRON_PICKAXE, 1);
         }
 
         public void SwapStacks(ItemStack A, ItemStack B, out ItemStack a, out ItemStack b, SlotType type)
@@ -177,7 +177,7 @@ namespace Inignoto.Inventory
                 if (!data[I].Equals("NULL"))
                 {
                     string[] item = data[I].Split(",");
-                    hotbar[i] = new ItemStack(ItemManager.REGISTRY[item[0]], int.Parse(item[1]));
+                    hotbar[i] = new ItemStack(ItemRegistry.REGISTRY[item[0]], int.Parse(item[1]));
                 } else
                 {
                     hotbar[i] = null;
@@ -189,7 +189,7 @@ namespace Inignoto.Inventory
                 if (!data[I].Equals("NULL"))
                 {
                     string[] item = data[I].Split(",");
-                    inventory[i] = new ItemStack(ItemManager.REGISTRY[item[0]], int.Parse(item[1]));
+                    inventory[i] = new ItemStack(ItemRegistry.REGISTRY[item[0]], int.Parse(item[1]));
                 }
                 I++;
             }
@@ -198,7 +198,7 @@ namespace Inignoto.Inventory
                 if (!data[I].Equals("NULL"))
                 {
                     string[] item = data[I].Split(",");
-                    accessory[i] = new ItemStack(ItemManager.REGISTRY[item[0]], int.Parse(item[1]));
+                    accessory[i] = new ItemStack(ItemRegistry.REGISTRY[item[0]], int.Parse(item[1]));
                 } else
                 {
                     accessory[i] = null;
@@ -211,7 +211,7 @@ namespace Inignoto.Inventory
                 if (!data[I].Equals("NULL"))
                 {
                     string[] item = data[I].Split(",");
-                    other[i] = new ItemStack(ItemManager.REGISTRY[item[0]], int.Parse(item[1]));
+                    other[i] = new ItemStack(ItemRegistry.REGISTRY[item[0]], int.Parse(item[1]));
                 } else
                 {
                     other[i] = null;

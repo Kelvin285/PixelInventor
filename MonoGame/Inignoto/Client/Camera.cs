@@ -72,7 +72,7 @@ namespace Inignoto.Client
 
             Vector3f eyePosition = player.GetEyePosition();
 
-            highlightedTile = world.RayTraceTiles(eyePosition, new Vector3f(eyePosition).Add(Forward.Mul(player.ReachDistance)), Tiles.Tile.TileRayTraceType.BLOCK);
+            highlightedTile = world.RayTraceTiles(eyePosition, new Vector3f(eyePosition).Add(Forward.Mul(player.ReachDistance)), Tiles.Tile.TileRayTraceType.BLOCK, false);
             
             frustum.Matrix = ViewMatrix * Matrix.CreatePerspectiveFieldOfView(
                                MathHelper.ToRadians(Settings.FIELD_OF_VIEW),

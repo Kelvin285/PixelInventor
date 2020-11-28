@@ -81,7 +81,7 @@ namespace Inignoto.Common.Commands
             if (current.EndsWith(' '))
             {
                 bool air = false;
-                foreach (var key in ItemManager.REGISTRY.Keys)
+                foreach (var key in ItemRegistry.REGISTRY.Keys)
                 {
                     if (!air)
                     {
@@ -95,7 +95,7 @@ namespace Inignoto.Common.Commands
             {
                 bool air = false;
                 bool equals = false;
-                foreach (var key in ItemManager.REGISTRY.Keys)
+                foreach (var key in ItemRegistry.REGISTRY.Keys)
                 {
                     if (!air)
                     {
@@ -123,7 +123,7 @@ namespace Inignoto.Common.Commands
 
             if (current.EndsWith(' '))
             {
-                foreach (var key in TileManager.REGISTRY.Keys)
+                foreach (var key in TileRegistry.REGISTRY.Keys)
                 {
                     return current + key;
                 }
@@ -131,7 +131,7 @@ namespace Inignoto.Common.Commands
             else
             {
                 bool equals = false;
-                foreach (var key in TileManager.REGISTRY.Keys)
+                foreach (var key in TileRegistry.REGISTRY.Keys)
                 {
                     if (key.ToLower().Contains(split[split.Length - 1].ToLower()) &&
                         !key.ToLower().Equals(split[split.Length - 1].ToLower()))

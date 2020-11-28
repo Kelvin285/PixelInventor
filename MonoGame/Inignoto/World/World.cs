@@ -103,7 +103,7 @@ namespace Inignoto.World
             random = new Random();
             radius = 4096;
 
-            skybox = TileBuilder.BuildTile(-0.5f, -0.5f, -0.5f, TileManager.DIRT.DefaultData, TileManager.AIR.DefaultData, Inignoto.game.GraphicsDevice);
+            skybox = TileBuilder.BuildTile(-0.5f, -0.5f, -0.5f, TileRegistry.DIRT.DefaultData, TileRegistry.AIR.DefaultData, Inignoto.game.GraphicsDevice);
             skybox.texture = Textures.white_square;
             skybox.scale = new Vector3(1000, 1000, 1000);
 
@@ -256,11 +256,11 @@ namespace Inignoto.World
 
         public void BuildMeshes()
         {
-            selectionBox = TileBuilder.BuildTile(-0.5f, -0.5f, -0.5f, TileManager.DIRT.DefaultData, TileManager.AIR.DefaultData, Inignoto.game.GraphicsDevice, true);
+            selectionBox = TileBuilder.BuildTile(-0.5f, -0.5f, -0.5f, TileRegistry.DIRT.DefaultData, TileRegistry.AIR.DefaultData, Inignoto.game.GraphicsDevice, true);
 
             selectionBox.SetScale(new Vector3(1.01f));
 
-            selectionFace = TileBuilder.BuildTile(-0.5f, -0.5f, -0.5f, TileManager.DIRT.DefaultData, TileManager.AIR.DefaultData, Inignoto.game.GraphicsDevice, false);
+            selectionFace = TileBuilder.BuildTile(-0.5f, -0.5f, -0.5f, TileRegistry.DIRT.DefaultData, TileRegistry.AIR.DefaultData, Inignoto.game.GraphicsDevice, false);
 
             selectionFace.SetScale(new Vector3(0.99f));
         }
@@ -307,7 +307,7 @@ namespace Inignoto.World
             {
                 return chunk.GetOverlayVoxel(x, y, z);
             }
-            return TileManager.AIR.DefaultData;
+            return TileRegistry.AIR.DefaultData;
         }
         public TileData GetVoxel(TilePos pos)
         {
@@ -331,7 +331,7 @@ namespace Inignoto.World
             {
                 return chunk.GetVoxel(x, y, z);
             }
-            return TileManager.AIR.DefaultData;
+            return TileRegistry.AIR.DefaultData;
         }
 
         public void MineVoxel(TilePos pos, int strength)
@@ -352,26 +352,26 @@ namespace Inignoto.World
                 int index = chunk.GetIndexFor(x, y, z);
                 chunk.voxels[index].mining_time += strength;
 
-                int hits = TileManager.GetTile(chunk.voxels[index].voxel.tile_id).hits;
-                if (chunk.voxels[index].overlay.tile_id != TileManager.AIR.DefaultData.tile_id)
+                int hits = TileRegistry.GetTile(chunk.voxels[index].voxel.tile_id).hits;
+                if (chunk.voxels[index].overlay.tile_id != TileRegistry.AIR.DefaultData.tile_id)
                 {
-                    if (TileManager.GetTile(chunk.voxels[index].overlay.tile_id).hits > hits)
+                    if (TileRegistry.GetTile(chunk.voxels[index].overlay.tile_id).hits > hits)
                     {
-                        hits = TileManager.GetTile(chunk.voxels[index].overlay.tile_id).hits;
+                        hits = TileRegistry.GetTile(chunk.voxels[index].overlay.tile_id).hits;
                     }
                 }
 
                 if (chunk.voxels[index].mining_time >= hits)
                 {
-                    if (TileManager.GetTile(chunk.voxels[index].voxel.tile_id).CanDropAsItem())
-                    entities.Add(new ItemEntity(this, new Vector3f(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f), new ItemStack(TileManager.GetTile(chunk.voxels[index].voxel.tile_id))));
+                    if (TileRegistry.GetTile(chunk.voxels[index].voxel.tile_id).CanDropAsItem())
+                    entities.Add(new ItemEntity(this, new Vector3f(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f), new ItemStack(TileRegistry.GetTile(chunk.voxels[index].voxel.tile_id))));
 
-                    if (TileManager.GetTile(chunk.voxels[index].overlay.tile_id).CanDropAsItem())
-                        entities.Add(new ItemEntity(this, new Vector3f(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f), new ItemStack(TileManager.GetTile(chunk.voxels[index].overlay.tile_id))));
+                    if (TileRegistry.GetTile(chunk.voxels[index].overlay.tile_id).CanDropAsItem())
+                        entities.Add(new ItemEntity(this, new Vector3f(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f), new ItemStack(TileRegistry.GetTile(chunk.voxels[index].overlay.tile_id))));
 
 
                     chunk.voxels[index].mining_time = 0;
-                    chunk.SetVoxel(x, y, z, TileManager.AIR.DefaultData);
+                    chunk.SetVoxel(x, y, z, TileRegistry.AIR.DefaultData);
                     chunk.MarkForRebuild();
                 }
             }
@@ -379,7 +379,7 @@ namespace Inignoto.World
 
         public void SetVoxel(TilePos pos, TileData voxel)
         {
-            SetVoxel(pos, voxel, TileManager.AIR.DefaultData);
+            SetVoxel(pos, voxel, TileRegistry.AIR.DefaultData);
         }
 
         public void SetVoxel(TilePos pos, TileData voxel, TileData overlay)
@@ -394,7 +394,7 @@ namespace Inignoto.World
             int y = pos.y - cy * Constants.CHUNK_SIZE;
             int z = pos.z - cz * Constants.CHUNK_SIZE;
 
-            TileRayTraceType raytraceType = TileManager.GetTile(voxel.tile_id).GetRayTraceType();
+            TileRayTraceType raytraceType = TileRegistry.GetTile(voxel.tile_id).GetRayTraceType();
 
             Chunk chunk = chunkManager.TryGetChunk(cx, cy, cz);
             if (chunk != null)
@@ -403,7 +403,7 @@ namespace Inignoto.World
                 chunk.SetOverlayVoxel(x, y, z, overlay);
                 chunk.MarkForRebuild();
                 
-                if (TileManager.GetTile(voxel.tile_id).IsVisible() == false)
+                if (TileRegistry.GetTile(voxel.tile_id).IsVisible() == false)
                 {
                     if (x % Constants.CHUNK_SIZE == 0)
                     {
@@ -443,7 +443,7 @@ namespace Inignoto.World
             }
         }
 
-        public TileRaytraceResult RayTraceTiles(Vector3f start, Vector3f end, TileRayTraceType type)
+        public TileRaytraceResult RayTraceTiles(Vector3f start, Vector3f end, TileRayTraceType type, bool needsSolid = true)
         {
             if (end.X > (int)(radius * 4))
             {
@@ -486,11 +486,12 @@ namespace Inignoto.World
 
                 TileData data = GetVoxel(pos);
 
-                Tile tile = TileManager.GetTile(data.tile_id);
+                Tile tile = TileRegistry.GetTile(data.tile_id);
                 if (tile != null)
                 {
                     if (tile.IsVisible())
                     {
+                        if (!needsSolid || needsSolid && tile.solid)
                         if (tile.GetRayTraceType() == type)
                         {
                             Vector3f dir = new Vector3f(end).Sub(start);

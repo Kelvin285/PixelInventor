@@ -422,10 +422,10 @@ namespace Inignoto.Entities.Client.Player
 
             if (Settings.ATTACK.IsPressed())
             {
-                Tile tile = TileManager.AIR;
+                Tile tile = TileRegistry.AIR;
                 if (result != null)
                 {
-                    tile = TileManager.GetTile(world.GetVoxel(result.pos).tile_id);
+                    tile = TileRegistry.GetTile(world.GetVoxel(result.pos).tile_id);
                 }
 
                 bool notnull = false;
@@ -451,7 +451,7 @@ namespace Inignoto.Entities.Client.Player
                                         Inignoto.game.SoundsToDispose.Add(sound);
                                     }
 
-                                    world.SetVoxel(result.pos, TileManager.AIR.DefaultData);
+                                    world.SetVoxel(result.pos, TileRegistry.AIR.DefaultData);
                                 }
 
                             }
@@ -473,7 +473,7 @@ namespace Inignoto.Entities.Client.Player
                                 Inignoto.game.SoundsToDispose.Add(sound);
                             }
 
-                            world.SetVoxel(result.pos, TileManager.AIR.DefaultData);
+                            world.SetVoxel(result.pos, TileRegistry.AIR.DefaultData);
 
                         }
                         UseTimer = 10;
@@ -1408,7 +1408,7 @@ namespace Inignoto.Entities.Client.Player
             {
                 pos.y -= 1;
             }
-            SoundEffect[] sounds = TileManager.GetTile(world.GetVoxel(pos).tile_id).step_sound;
+            SoundEffect[] sounds = TileRegistry.GetTile(world.GetVoxel(pos).tile_id).step_sound;
             if (sounds != null)
             {
                 SoundEffect effect = sounds[world.random.Next(sounds.Length)];

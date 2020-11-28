@@ -70,7 +70,7 @@ namespace Inignoto.Tiles
             SetLight(0, 0, 0);
             step_sound = sound;
             this.name = name;
-            TileManager.REGISTRY.Add(this.name, this);
+            TileRegistry.REGISTRY.Add(this.name, this);
 
 
             ID = CURRENT_ID++;
@@ -212,7 +212,7 @@ namespace Inignoto.Tiles
         {
             if (Overlay)
             {
-                if (chunk.GetOverlayVoxel(x, y, z) != TileManager.AIR.DefaultData || !TileManager.GetTile(chunk.GetVoxel(x, y, z).tile_id).FullSpace)
+                if (chunk.GetOverlayVoxel(x, y, z) != TileRegistry.AIR.DefaultData || !TileRegistry.GetTile(chunk.GetVoxel(x, y, z).tile_id).FullSpace)
                 return false;
             }
             return true;

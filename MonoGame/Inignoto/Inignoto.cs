@@ -335,7 +335,7 @@ namespace Inignoto
 
             GraphicsDevice.BlendState = BlendState.NonPremultiplied;
 
-            ItemManager.DrawItems(gameTime);
+            ItemRegistry.DrawItems(gameTime);
 
             if (Hud.openGui != null)
             {
@@ -353,7 +353,7 @@ namespace Inignoto
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             GraphicsDevice.SamplerStates[0] = SamplerState.PointClamp;
 
-            TileManager.TryLoadTileTextures();
+            TileRegistry.TryLoadTileTextures();
 
             if (game.game_state == GameState.GAME)
                 if (Settings.SHADOWS)
@@ -368,6 +368,8 @@ namespace Inignoto
                     GameResources.shadowMap.End();
                     
                 }
+            Viewport port = GraphicsDevice.Viewport;
+            GraphicsDevice.Viewport = new Viewport(new Rectangle(0, 0, 1920, 1080));
 
             GraphicsDevice.SetRenderTarget(GameResources.gameImage);
 
@@ -375,7 +377,7 @@ namespace Inignoto
                 world.Render(GraphicsDevice, GameResources.effect, gameTime);
 
             GraphicsDevice.SetRenderTarget(null);
-            
+            GraphicsDevice.Viewport = port; 
 
             spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.NonPremultiplied, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullCounterClockwise, GameResources.postProcessing);
 

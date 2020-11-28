@@ -78,7 +78,7 @@ namespace Inignoto.World.Chunks
                     generator.GenerateChunk(chunk);
 
                     chunk.SetGenerated();
-                    chunk.BuildMesh();
+                    //chunk.BuildMesh();
                 }
                 chunksToBuild.Remove(chunk);
             }
@@ -176,7 +176,7 @@ namespace Inignoto.World.Chunks
                                             {
                                                 for (int z = 0; z < Constants.CHUNK_SIZE; z++)
                                                 {
-                                                    if (schunk.GetTile(x, y, z) != TileManager.AIR.DefaultData)
+                                                    if (schunk.GetTile(x, y, z) != TileRegistry.AIR.DefaultData)
                                                     chunk.SetVoxel(x, y, z, schunk.GetTile(x, y, z));
                                                 }
                                             }
@@ -339,14 +339,12 @@ namespace Inignoto.World.Chunks
                 }
                 updating.Sort();
             }
-            Parallel.ForEach(updating.Cast<Chunk>(), chunk =>
+            for (int i = 0; i < updating.Count; i++)
             {
-                if (chunk != null)
-                {
-                    float distance = (float)IMathHelper.Distance3(chunk.GetX(), chunk.GetY(), chunk.GetZ(), current_x, current_y, current_z);
-                    chunk.Tick(distance);
-                }
-            });
+                Chunk chunk = updating[i];
+                float distance = (float)IMathHelper.Distance3(chunk.GetX(), chunk.GetY(), chunk.GetZ(), current_x, current_y, current_z);
+                chunk.Tick(distance);
+            }
             
         }
 
@@ -435,19 +433,24 @@ namespace Inignoto.World.Chunks
                     continue;
                 }
 
+                if (rendering[i].LightRebuild)
+                {
+                    rendering[i].UpdateLights();
+                }
 
                 if (rendering[i].NeedsToRebuild())
                 {
                     if (Vector3.Distance(current_xyz, rendering[i].cpos) <= Constants.CHUNK_LIGHT_DISTANCE / 2)
                     {
                         rendering[i].BuildMesh();
-                    } else
+                    }
+                    else
                     {
                         if (!rebuilding)
                         {
-                            chunksToRebuild.Add(rendering[i]);
+                            if (!chunksToRebuild.Contains(rendering[i]))
+                                chunksToRebuild.Add(rendering[i]);
                         }
-                        
                     }
                 }
 

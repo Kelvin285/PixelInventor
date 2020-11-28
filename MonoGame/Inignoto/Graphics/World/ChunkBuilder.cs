@@ -66,7 +66,7 @@ namespace Inignoto.Graphics.World
                     {
                         TileData data = chunk.GetVoxel(x, y, z);
                         TileData overlay = chunk.GetOverlayVoxel(x, y, z);
-                        Tile tile = TileManager.GetTile(data.tile_id);
+                        Tile tile = TileRegistry.GetTile(data.tile_id);
 
                         Tile.TileRayTraceType rayTraceType = Tile.TileRayTraceType.BLOCK;
 
@@ -75,7 +75,7 @@ namespace Inignoto.Graphics.World
                             rayTraceType = Tile.TileRayTraceType.FLUID;
                             if (tile.IsVisible())
                             {
-                                if (!TileManager.GetTile(chunk.GetVoxel(x, y, z - 1).tile_id).IsRaytraceTypeOrSolid(rayTraceType))
+                                if (!TileRegistry.GetTile(chunk.GetVoxel(x, y, z - 1).tile_id).IsRaytraceTypeOrSolid(rayTraceType))
                                 {
                                     index2 = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.FRONT, vertices2, colors2, textures2, indices2, normals2, index2);
                                     AddLight(light2, sunlight2, chunk.GetLight(x, y, z), chunk.GetSunlight(x, y, z));
@@ -84,7 +84,7 @@ namespace Inignoto.Graphics.World
                                     pos2.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                     pos2.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                 }
-                                if (!TileManager.GetTile(chunk.GetVoxel(x, y, z + 1).tile_id).IsRaytraceTypeOrSolid(rayTraceType))
+                                if (!TileRegistry.GetTile(chunk.GetVoxel(x, y, z + 1).tile_id).IsRaytraceTypeOrSolid(rayTraceType))
                                 {
                                     index2 = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.BACK, vertices2, colors2, textures2, indices2, normals2, index2);
                                     AddLight(light2, sunlight2, chunk.GetLight(x, y, z), chunk.GetSunlight(x, y, z));
@@ -93,7 +93,7 @@ namespace Inignoto.Graphics.World
                                     pos2.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                     pos2.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                 }
-                                if (!TileManager.GetTile(chunk.GetVoxel(x - 1, y, z).tile_id).IsRaytraceTypeOrSolid(rayTraceType))
+                                if (!TileRegistry.GetTile(chunk.GetVoxel(x - 1, y, z).tile_id).IsRaytraceTypeOrSolid(rayTraceType))
                                 {
                                     index2 = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.LEFT, vertices2, colors2, textures2, indices2, normals2, index2);
                                     AddLight(light2, sunlight2, chunk.GetLight(x, y, z), chunk.GetSunlight(x, y, z));
@@ -102,7 +102,7 @@ namespace Inignoto.Graphics.World
                                     pos2.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                     pos2.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                 }
-                                if (!TileManager.GetTile(chunk.GetVoxel(x + 1, y, z).tile_id).IsRaytraceTypeOrSolid(rayTraceType))
+                                if (!TileRegistry.GetTile(chunk.GetVoxel(x + 1, y, z).tile_id).IsRaytraceTypeOrSolid(rayTraceType))
                                 {
                                     index2 = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.RIGHT, vertices2, colors2, textures2, indices2, normals2, index2);
                                     AddLight(light2, sunlight2, chunk.GetLight(x, y, z), chunk.GetSunlight(x, y, z));
@@ -111,7 +111,7 @@ namespace Inignoto.Graphics.World
                                     pos2.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                     pos2.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                 }
-                                if (!TileManager.GetTile(chunk.GetVoxel(x, y + 1, z).tile_id).IsRaytraceTypeOrSolid(rayTraceType))
+                                if (!TileRegistry.GetTile(chunk.GetVoxel(x, y + 1, z).tile_id).IsRaytraceTypeOrSolid(rayTraceType))
                                 {
                                     index2 = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.TOP, vertices2, colors2, textures2, indices2, normals2, index2);
                                     AddLight(light2, sunlight2, chunk.GetLight(x, y, z), chunk.GetSunlight(x, y, z));
@@ -120,7 +120,7 @@ namespace Inignoto.Graphics.World
                                     pos2.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                     pos2.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                 }
-                                if (!TileManager.GetTile(chunk.GetVoxel(x, y - 1, z).tile_id).IsRaytraceTypeOrSolid(rayTraceType))
+                                if (!TileRegistry.GetTile(chunk.GetVoxel(x, y - 1, z).tile_id).IsRaytraceTypeOrSolid(rayTraceType))
                                 {
                                     index2 = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.BOTTOM, vertices2, colors2, textures2, indices2, normals2, index2);
                                     AddLight(light2, sunlight2, chunk.GetLight(x, y, z), chunk.GetSunlight(x, y, z));
@@ -143,7 +143,7 @@ namespace Inignoto.Graphics.World
                                         Mesh.Mesh mesh = null;
                                         if (!meshes.ContainsKey(data))
                                         {
-                                            mesh = TileBuilder.BuildTile(0, 0, 0, data, TileManager.AIR.DefaultData, device, false);
+                                            mesh = TileBuilder.BuildTile(0, 0, 0, data, TileRegistry.AIR.DefaultData, device, false);
                                             meshes.TryAdd(data, mesh);
                                         } else
                                         {
@@ -164,7 +164,7 @@ namespace Inignoto.Graphics.World
                                         continue;
                                     }
 
-                                    if (!TileManager.GetTile(chunk.GetVoxel(x, y, z - 1).tile_id).IsRaytraceTypeOrSolidAndOpaque(rayTraceType))
+                                    if (!TileRegistry.GetTile(chunk.GetVoxel(x, y, z - 1).tile_id).IsRaytraceTypeOrSolidAndOpaque(rayTraceType))
                                     {
                                         index = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.FRONT, vertices, colors, textures, indices, normals, index);
                                         AddLight(light, sunlight, chunk.GetLight(x, y, z - 1), chunk.GetSunlight(x, y, z - 1));
@@ -173,7 +173,7 @@ namespace Inignoto.Graphics.World
                                         pos.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                         pos.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                     }
-                                    if (!TileManager.GetTile(chunk.GetVoxel(x, y, z + 1).tile_id).IsRaytraceTypeOrSolidAndOpaque(rayTraceType))
+                                    if (!TileRegistry.GetTile(chunk.GetVoxel(x, y, z + 1).tile_id).IsRaytraceTypeOrSolidAndOpaque(rayTraceType))
                                     {
                                         index = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.BACK, vertices, colors, textures, indices, normals, index);
                                         AddLight(light, sunlight, chunk.GetLight(x, y, z + 1), chunk.GetSunlight(x, y, z + 1));
@@ -182,7 +182,7 @@ namespace Inignoto.Graphics.World
                                         pos.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                         pos.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                     }
-                                    if (!TileManager.GetTile(chunk.GetVoxel(x - 1, y, z).tile_id).IsRaytraceTypeOrSolidAndOpaque(rayTraceType))
+                                    if (!TileRegistry.GetTile(chunk.GetVoxel(x - 1, y, z).tile_id).IsRaytraceTypeOrSolidAndOpaque(rayTraceType))
                                     {
                                         index = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.LEFT, vertices, colors, textures, indices, normals, index);
                                         AddLight(light, sunlight, chunk.GetLight(x - 1, y, z), chunk.GetSunlight(x - 1, y, z));
@@ -191,7 +191,7 @@ namespace Inignoto.Graphics.World
                                         pos.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                         pos.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                     }
-                                    if (!TileManager.GetTile(chunk.GetVoxel(x + 1, y, z).tile_id).IsRaytraceTypeOrSolidAndOpaque(rayTraceType))
+                                    if (!TileRegistry.GetTile(chunk.GetVoxel(x + 1, y, z).tile_id).IsRaytraceTypeOrSolidAndOpaque(rayTraceType))
                                     {
                                         index = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.RIGHT, vertices, colors, textures, indices, normals, index);
                                         AddLight(light, sunlight, chunk.GetLight(x + 1, y, z), chunk.GetSunlight(x + 1, y, z));
@@ -200,7 +200,7 @@ namespace Inignoto.Graphics.World
                                         pos.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                         pos.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                     }
-                                    if (!TileManager.GetTile(chunk.GetVoxel(x, y + 1, z).tile_id).IsRaytraceTypeOrSolidAndOpaque(rayTraceType))
+                                    if (!TileRegistry.GetTile(chunk.GetVoxel(x, y + 1, z).tile_id).IsRaytraceTypeOrSolidAndOpaque(rayTraceType))
                                     {
                                         index = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.TOP, vertices, colors, textures, indices, normals, index);
                                         AddLight(light, sunlight, chunk.GetLight(x, y + 1, z), chunk.GetSunlight(x, y + 1, z));
@@ -209,7 +209,7 @@ namespace Inignoto.Graphics.World
                                         pos.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                         pos.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                     }
-                                    if (!TileManager.GetTile(chunk.GetVoxel(x, y - 1, z).tile_id).IsRaytraceTypeOrSolidAndOpaque(rayTraceType))
+                                    if (!TileRegistry.GetTile(chunk.GetVoxel(x, y - 1, z).tile_id).IsRaytraceTypeOrSolidAndOpaque(rayTraceType))
                                     {
                                         index = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.BOTTOM, vertices, colors, textures, indices, normals, index);
                                         AddLight(light, sunlight, chunk.GetLight(x, y - 1, z), chunk.GetSunlight(x, y - 1, z));
@@ -220,7 +220,34 @@ namespace Inignoto.Graphics.World
                                     }
                                 } else
                                 {
-                                    if (TileManager.GetTile(chunk.GetVoxel(x, y, z - 1).tile_id).IsOpaqueOrNotBlock())
+                                    if (data.model != null)
+                                    {
+                                        Mesh.Mesh mesh = null;
+                                        if (!meshes.ContainsKey(data))
+                                        {
+                                            mesh = TileBuilder.BuildTile(0, 0, 0, data, TileRegistry.AIR.DefaultData, device, false);
+                                            meshes.TryAdd(data, mesh);
+                                        }
+                                        else
+                                        {
+                                            mesh = meshes[data];
+                                        }
+
+                                        for (int i = 0; i < mesh.triangleVertices.Length; i++)
+                                        {
+                                            indices3.Add(index3++);
+                                            vertices3.Add(mesh.triangleVertices[i].Position + new Vector3(x, y, z));
+                                            pos3.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
+                                            light3.Add(chunk.GetLight(x, y, z));
+                                            sunlight3.Add(chunk.GetSunlight(x, y, z));
+                                            colors3.Add(mesh.triangleVertices[i].Color);
+                                            textures3.Add(new Vector4(mesh.triangleVertices[i].TextureCoordinate, -1.0f, -1.0f));
+                                            normals3.Add(0);
+                                        }
+                                        continue;
+                                    }
+
+                                    if (TileRegistry.GetTile(chunk.GetVoxel(x, y, z - 1).tile_id).IsOpaqueOrNotBlock())
                                     {
                                         index3 = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.FRONT, vertices3, colors3, textures3, indices3, normals3, index3);
                                         AddLight(light3, sunlight3, chunk.GetLight(x, y, z - 1), chunk.GetSunlight(x, y, z - 1));
@@ -229,7 +256,7 @@ namespace Inignoto.Graphics.World
                                         pos3.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                         pos3.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                     }
-                                    if (TileManager.GetTile(chunk.GetVoxel(x, y, z + 1).tile_id).IsOpaqueOrNotBlock())
+                                    if (TileRegistry.GetTile(chunk.GetVoxel(x, y, z + 1).tile_id).IsOpaqueOrNotBlock())
                                     {
                                         index3 = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.BACK, vertices3, colors3, textures3, indices3, normals3, index3);
                                         AddLight(light3, sunlight3, chunk.GetLight(x, y, z + 1), chunk.GetSunlight(x, y, z + 1));
@@ -238,7 +265,7 @@ namespace Inignoto.Graphics.World
                                         pos3.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                         pos3.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                     }
-                                    if (TileManager.GetTile(chunk.GetVoxel(x - 1, y, z).tile_id).IsOpaqueOrNotBlock())
+                                    if (TileRegistry.GetTile(chunk.GetVoxel(x - 1, y, z).tile_id).IsOpaqueOrNotBlock())
                                     {
                                         index3 = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.LEFT, vertices3, colors3, textures3, indices3, normals3, index3);
                                         AddLight(light3, sunlight3, chunk.GetLight(x - 1, y, z), chunk.GetSunlight(x - 1, y, z));
@@ -247,7 +274,7 @@ namespace Inignoto.Graphics.World
                                         pos3.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                         pos3.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                     }
-                                    if (TileManager.GetTile(chunk.GetVoxel(x + 1, y, z).tile_id).IsOpaqueOrNotBlock())
+                                    if (TileRegistry.GetTile(chunk.GetVoxel(x + 1, y, z).tile_id).IsOpaqueOrNotBlock())
                                     {
                                         index3 = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.RIGHT, vertices3, colors3, textures3, indices3, normals3, index3);
                                         AddLight(light3, sunlight3, chunk.GetLight(x + 1, y, z), chunk.GetSunlight(x + 1, y, z));
@@ -256,7 +283,7 @@ namespace Inignoto.Graphics.World
                                         pos3.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                         pos3.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                     }
-                                    if (TileManager.GetTile(chunk.GetVoxel(x, y + 1, z).tile_id).IsOpaqueOrNotBlock())
+                                    if (TileRegistry.GetTile(chunk.GetVoxel(x, y + 1, z).tile_id).IsOpaqueOrNotBlock())
                                     {
                                         index3 = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.TOP, vertices3, colors3, textures3, indices3, normals3, index3);
                                         AddLight(light3, sunlight3, chunk.GetLight(x, y + 1, z), chunk.GetSunlight(x, y + 1, z));
@@ -265,7 +292,7 @@ namespace Inignoto.Graphics.World
                                         pos3.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                         pos3.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
                                     }
-                                    if (TileManager.GetTile(chunk.GetVoxel(x, y - 1, z).tile_id).IsOpaqueOrNotBlock())
+                                    if (TileRegistry.GetTile(chunk.GetVoxel(x, y - 1, z).tile_id).IsOpaqueOrNotBlock())
                                     {
                                         index3 = TileBuilder.BuildFace(x, y, z, data, overlay, Tiles.Tile.TileFace.BOTTOM, vertices3, colors3, textures3, indices3, normals3, index3);
                                         AddLight(light3, sunlight3, chunk.GetLight(x, y - 1, z), chunk.GetSunlight(x, y - 1, z));

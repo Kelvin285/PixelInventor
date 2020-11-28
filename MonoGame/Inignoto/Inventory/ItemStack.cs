@@ -23,13 +23,13 @@ namespace Inignoto.Inventory
 
         public ItemStack(Tile tile, int count = 1)
         {
-            item = ItemManager.GetItemForTile(tile);
+            item = ItemRegistry.GetItemForTile(tile);
             this.count = count;
         }
 
         internal void SetToAir()
         {
-            item = ItemManager.GetItemForTile(TileManager.AIR);
+            item = ItemRegistry.GetItemForTile(TileRegistry.AIR);
             count = 0;
             damage = 0;
         }

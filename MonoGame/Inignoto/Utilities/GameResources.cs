@@ -35,14 +35,14 @@ namespace Inignoto.Utilities
         {
             Settings.LoadSettings();
             Textures.LoadTextures();
-            TileManager.Loadtiles();
+            TileRegistry.Loadtiles();
             TileDataHolder.Initialize();
-            ItemManager.LoadItems();
+            ItemRegistry.LoadItems();
             SoundEffects.LoadSoundEffects();
-            BiomeManager.RegisterBiomes();
-            StructureManager.RegisterStructures();
+            BiomeRegistry.RegisterBiomes();
+            StructureRegistry.RegisterStructures();
             CommandManager.RegisterCommands();
-            CraftingManager.RegisterRecipes();
+            CraftingRegistry.RegisterRecipes();
 
             Inignoto.game.world = new World.World();
             Inignoto.game.player = new Entities.Client.Player.ClientPlayerEntity(Inignoto.game.world, new Vector3f(Inignoto.game.world.radius * 2, 10, Inignoto.game.world.radius));

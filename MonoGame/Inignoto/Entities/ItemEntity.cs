@@ -40,7 +40,7 @@ namespace Inignoto.Entities
 
                 if (result != null)
                 {
-                    if (TileManager.GetTile(result.data.tile_id).BlocksMovement())
+                    if (TileRegistry.GetTile(result.data.tile_id).BlocksMovement())
                     {
                         velocity.Y = 0;
                         position.Y = result.hit.Y + 0.5f;

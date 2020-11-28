@@ -12,7 +12,7 @@ namespace Inignoto.World.Biomes.Surface.Grasslands
 {
     public class DesertHillsBiome : SurfaceBiome
     {
-        public DesertHillsBiome() : base(TileManager.SAND.DefaultData, TileManager.AIR.DefaultData, TileManager.STONE.DefaultData)
+        public DesertHillsBiome() : base(TileRegistry.SAND.DefaultData, TileRegistry.AIR.DefaultData, TileRegistry.STONE.DefaultData)
         {
             
         }
@@ -27,7 +27,7 @@ namespace Inignoto.World.Biomes.Surface.Grasslands
         }
         public override void TryPlaceStructure(int x, int y, int z, int chunk_x, int chunk_y, int chunk_z, TileData voxel, TileData overlay, Chunk chunk, FastNoise noise, double n)
         {
-            StructureManager.CACTUS.TryPlace(x, y, z, chunk_x, chunk_y, chunk_z, chunk, noise, n);
+            StructureRegistry.CACTUS.TryPlace(x, y, z, chunk_x, chunk_y, chunk_z, chunk, noise, n);
         }
     }
 }

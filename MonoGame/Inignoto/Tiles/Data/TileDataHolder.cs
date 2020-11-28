@@ -14,7 +14,7 @@ namespace Inignoto.Tiles.Data
         private static int INDEX;
         public static void Initialize()
         {
-            TileDataHolder.NO_DATA = new TileData(TileManager.AIR.ID, 0, new Utilities.ResourcePath("Inignoto:tiledata/data/air.tile", "assets"), INDEX++);
+            TileDataHolder.NO_DATA = new TileData(TileRegistry.AIR.ID, 0, new Utilities.ResourcePath("Inignoto:tiledata/data/air.tile", "assets"), INDEX++);
 
         }
 

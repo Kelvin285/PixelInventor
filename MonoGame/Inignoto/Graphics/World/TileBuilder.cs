@@ -95,8 +95,9 @@ namespace Inignoto.Graphics.World
                     mesh.vertexBuffer = new VertexBuffer(device, typeof(
                                VertexPositionLightTexture), mesh.triangleVertices.Length, BufferUsage.
                                WriteOnly);
-                    if (mesh.vertexBuffer != null)
+                    if (mesh.vertexBuffer != null && mesh.triangleVertices != null)
                         mesh.vertexBuffer.SetData(mesh.triangleVertices);
+                    if (Textures.Textures.tiles.GetTexture() != null)
                     mesh.texture = Textures.Textures.tiles.GetTexture();
                 } else
                 {
@@ -144,7 +145,7 @@ namespace Inignoto.Graphics.World
                 string texture = data.GetTexture(face);
 
                 Rectangle location = atlas.GetLocation(texture);
-                if (data == TileManager.AIR.DefaultData || !TileManager.GetTile(data.tile_id).IsVisible())
+                if (data == TileRegistry.AIR.DefaultData || !TileRegistry.GetTile(data.tile_id).IsVisible())
                 {
                     return new Vector2[]
                     {

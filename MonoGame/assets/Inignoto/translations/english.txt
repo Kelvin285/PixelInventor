@@ -14,6 +14,10 @@
 "Inignoto:tiles.glass" = "Glass"
 "Inignoto:tiles.red_glass" = "Red Glass"
 "Inignoto:tiles.glowing_crystal" = "Glowing Crystal"
+"Inignoto:tiles.cactus" = "Cactus"
+"Inignoto:tiles.iron_scrap" = "Iron Scrap"
+"Inignoto:tiles.candentis" = "Candentis"
+"Inignoto:tiles.tall_grass" = "Tall Grass"
 
 "Inignoto:foliage.tallgrass" = "Tall Grass"
 "Inignoto:foliage.purpleflower" = "Purple Flower"

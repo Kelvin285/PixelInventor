@@ -96,7 +96,7 @@ namespace Inignoto.Common.Commands
                         pos.SetPosition(x, y, z);
                         TileData voxel = world.GetVoxel(pos);
                         TileData overlay = world.GetOverlayVoxel(pos);
-                        TileManager.GetTile(0);
+                        TileRegistry.GetTile(0);
                         
                         int X = x - min_x;
                         int Y = y - min_y;
@@ -205,7 +205,7 @@ namespace Inignoto.Common.Commands
                         pos.SetPosition(x, y, z);
                         TileData voxel = world.GetVoxel(pos);
                         TileData overlay = world.GetOverlayVoxel(pos);
-                        TileManager.GetTile(0);
+                        TileRegistry.GetTile(0);
 
                         int X = x - min_x;
                         int Y = y - min_y;

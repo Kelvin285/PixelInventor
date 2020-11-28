@@ -177,13 +177,13 @@ namespace Inignoto.Graphics.Mesh
 
         public void Draw(Texture texture, GameEffect effect, GraphicsDevice device, Matrix worldMatrix)
         {
-            
+            if (vertexBuffer != null && vertexBuffer.IsDisposed) return;
             if (empty) return;
             Matrix matrix = Matrix.CreateScale(scale) * Matrix.CreateFromQuaternion(rotation) * worldMatrix;
             
             effect.World = matrix;
+            
             device.SetVertexBuffer(vertexBuffer);
-
 
             foreach (EffectPass pass in effect.CurrentTechnique.
                     Passes)
