@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace Inignoto.Graphics.Mesh
@@ -15,19 +16,35 @@ namespace Inignoto.Graphics.Mesh
         public Color Hue;
         public Vector2 OverlayTextureCoordinate;
         public static readonly VertexDeclaration VertexDeclaration;
-        
+        private struct LightSunPair
+        {
+            public int light;
+            public int sunlight;
+            public LightSunPair(int light, int sunlight)
+            {
+                this.light = light;
+                this.sunlight = sunlight;
+            }
+        }
+
+        private static Dictionary<LightSunPair, Color> lights = new Dictionary<LightSunPair, Color>();
+        private static Dictionary<Vector4, Vector2[]> textures = new Dictionary<Vector4, Vector2[]>();
+
         public VertexPositionLightTexture(Vector3 position, Color hue, Vector4 textureCoordinate, int normal, int light = 0, int sunlight = 15)
         {
             Position = position;
+
             int light_r = light & 0b1111;
             int light_g = (light >> 4) & 0b1111;
             int light_b = (light >> 8) & 0b1111;
 
             Color = new Color(light_r / 15.0f, light_g / 15.0f, light_b / 15.0f, sunlight / 15.0f);
+
             Hue = hue;
 
             TextureCoordinate = new Vector2(textureCoordinate.X, textureCoordinate.Y);
             OverlayTextureCoordinate = new Vector2(textureCoordinate.Z, textureCoordinate.W);
+
 
             Normal = normal;
         }

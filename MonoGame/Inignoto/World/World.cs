@@ -31,7 +31,8 @@ namespace Inignoto.World
             MAIN = 0, TOP = 1, BOTTOM = 2
         }
 
-        public struct TilePos {
+        public struct TilePos
+        {
             public int x, y, z;
             public TilePos(int x = 0, int y = 0, int z = 0)
             {
@@ -46,6 +47,28 @@ namespace Inignoto.World
                 this.z = (int)System.Math.Floor(z);
             }
 
+            public override bool Equals(object o)
+            {
+                if (o is TilePos)
+                {
+                    TilePos obj = (TilePos)o;
+                    return x == obj.x && y == obj.y && z == obj.z;
+                }
+                return false;
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    var hashCode = x.GetHashCode();
+                    hashCode = (hashCode * 397) ^ y.GetHashCode();
+                    hashCode = (hashCode * 397) ^ z.GetHashCode();
+
+                    return hashCode;
+                }
+            }
+
             public void SetPosition(int x, int y, int z)
             {
                 this.x = x;
@@ -58,6 +81,11 @@ namespace Inignoto.World
                 this.x = (int)System.Math.Floor(x);
                 this.y = (int)System.Math.Floor(y);
                 this.z = (int)System.Math.Floor(z);
+            }
+
+            public override string ToString()
+            {
+                return "TilePos: [" + x + "," + y + "," + z + "]";
             }
 
             public static bool operator ==(TilePos a, TilePos b)
@@ -76,7 +104,6 @@ namespace Inignoto.World
         public List<Entity> entities;
 
         private Mesh skybox;
-        private Mesh sun;
         public Vector4 SkyColor = new Vector4(0, 0, 0, 0);
 
         public GameTime gameTime { get; private set; }
@@ -139,7 +166,7 @@ namespace Inignoto.World
 
         public void UpdateChunkGeneration()
         {
-            chunkManager.GenerateChunks(properties.generator);
+            chunkManager.BeginUpdate(Inignoto.game.camera.position);
         }
 
         public void TickChunks()
@@ -149,6 +176,8 @@ namespace Inignoto.World
 
         public void Update(Vector3 camera_position, GameTime time)
         {
+            //chunkManager.BeginUpdate(camera_position);
+
             gameTime = time;
 
             float delta = (float)time.ElapsedGameTime.TotalSeconds * 60;
@@ -159,9 +188,7 @@ namespace Inignoto.World
 
             sunLook.X = -MathF.Cos(angle);
             sunLook.Y = -MathF.Sin(angle);
-
-            chunkManager.BeginUpdate(camera_position);
-
+            
             for (int i = 0; i < entities.Count; i++)
             {
                 Chunk chunk = TryGetChunk(entities[i].position.X, entities[i].position.Y, entities[i].position.Z);
@@ -179,13 +206,14 @@ namespace Inignoto.World
                 } else
                 {
 
-                    entities[i].velocity.Mul(0);
+                    entities[i].velocity *= 0;
                 }
             }
         }
 
         public void Render(GraphicsDevice device, GameEffect effect, GameTime time)
         {
+            chunkManager.UpdatePosition();
             //float delta = (float)time.ElapsedGameTime.TotalSeconds * 60;
             
             effect.Radius = radius;
@@ -200,6 +228,7 @@ namespace Inignoto.World
                 effect.FogColor = GetSkyColor();
 
                 effect.SunLook = sunLook;
+                GameResources.shadowMap._ShadowMapGenerate.SunLook = sunLook;
 
                 //DRAW SKYBOX
                 GameResources.effect.ObjectColor = GameResources.effect.FogColor;
@@ -207,9 +236,11 @@ namespace Inignoto.World
                 skybox.Draw(effect, device);
                 GameResources.effect.ObjectColor = Constants.COLOR_WHITE;
 
+
+
             }
 
-            effect.CameraPos = Inignoto.game.camera.position.Vector;
+            effect.CameraPos = Inignoto.game.camera.position;
             effect.WorldRender = true;
 
             for (int i = 0; i < entities.Count; i++)
@@ -229,7 +260,9 @@ namespace Inignoto.World
 
             //device.RasterizerState = GameResources.DEFAULT_RASTERIZER_STATE;
 
+
             //DRAW TILE SELECTION
+            if (!GameResources.drawing_shadows)
             RenderTileSelection(device, effect);
 
             effect.WorldRender = false;
@@ -248,7 +281,7 @@ namespace Inignoto.World
                 selectionBox.Draw(Textures.white_square, effect, device);
 
                 effect.ObjectColor = new Vector4(2, 2, 2, 0.1f);
-                selectionFace.SetPosition(new Vector3(hitPos.x + 0.5f, hitPos.y + 0.5f, hitPos.z + 0.5f) + result.intersection.normal.Vector * 0.01f);
+                selectionFace.SetPosition(new Vector3(hitPos.x + 0.5f, hitPos.y + 0.5f, hitPos.z + 0.5f) + result.intersection.normal * 0.01f);
                 selectionFace.Draw(Textures.white_square, effect, device);
                 effect.ObjectColor = new Vector4(1, 1, 1, 1);
             }
@@ -350,7 +383,8 @@ namespace Inignoto.World
             if (chunk != null)
             {
                 int index = chunk.GetIndexFor(x, y, z);
-                chunk.voxels[index].mining_time += strength;
+                if (chunk.voxels[index].mining_time < 0) chunk.voxels[index].mining_time = 0;
+                chunk.voxels[index].mining_time += (uint)strength;
 
                 int hits = TileRegistry.GetTile(chunk.voxels[index].voxel.tile_id).hits;
                 if (chunk.voxels[index].overlay.tile_id != TileRegistry.AIR.DefaultData.tile_id)
@@ -364,10 +398,10 @@ namespace Inignoto.World
                 if (chunk.voxels[index].mining_time >= hits)
                 {
                     if (TileRegistry.GetTile(chunk.voxels[index].voxel.tile_id).CanDropAsItem())
-                    entities.Add(new ItemEntity(this, new Vector3f(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f), new ItemStack(TileRegistry.GetTile(chunk.voxels[index].voxel.tile_id))));
+                    entities.Add(new ItemEntity(this, new Vector3(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f), new ItemStack(TileRegistry.GetTile(chunk.voxels[index].voxel.tile_id))));
 
                     if (TileRegistry.GetTile(chunk.voxels[index].overlay.tile_id).CanDropAsItem())
-                        entities.Add(new ItemEntity(this, new Vector3f(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f), new ItemStack(TileRegistry.GetTile(chunk.voxels[index].overlay.tile_id))));
+                        entities.Add(new ItemEntity(this, new Vector3(pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f), new ItemStack(TileRegistry.GetTile(chunk.voxels[index].overlay.tile_id))));
 
 
                     chunk.voxels[index].mining_time = 0;
@@ -443,7 +477,7 @@ namespace Inignoto.World
             }
         }
 
-        public TileRaytraceResult RayTraceTiles(Vector3f start, Vector3f end, TileRayTraceType type, bool needsSolid = true)
+        public TileRaytraceResult RayTraceTiles(Vector3 start, Vector3 end, TileRayTraceType type, bool needsSolid = true)
         {
             if (end.X > (int)(radius * 4))
             {
@@ -457,31 +491,37 @@ namespace Inignoto.World
             }
             TilePos pos = new TilePos(start.X, start.Y, start.Z);
 
-            float length = end.DistanceTo(start.Vector);
+            float length = Vector3.Distance(end, start);
 
-            Vector3f raypos = new Vector3f(start);
-            Vector3f raydir = new Vector3f(end).Sub(start).Div(length);
+            Vector3 raypos = new Vector3(start.X, start.Y, start.Z);
+            Vector3 raydir = (end - start) / length;
             
             RayBox raybox = new RayBox
             {
-                Min = new Vector3f(),
-                Max = new Vector3f()
+                Min = new Vector3(),
+                Max = new Vector3()
             };
             for (int ii = 0; ii < 10; ii++)
             {
                 
-                if (raypos.DistanceTo(start.Vector) > length)
+                if (Vector3.Distance(raypos, start) > length)
                 {
                     break;
                 }
                 pos.SetPosition(raypos.X, raypos.Y, raypos.Z);
 
-                raybox.Min.Set(pos.x, pos.y, pos.z);
-                raybox.Max.Set(pos.x + 1, pos.y + 1, pos.z + 1);
+                raybox.Min.X = pos.x;
+                raybox.Min.Y = pos.y;
+                raybox.Min.Z = pos.z;
+                raybox.Max.X = pos.x + 1;
+                raybox.Max.Y = pos.y + 1;
+                raybox.Max.Z = pos.z + 1;
                
                 RayIntersection intersection = Raytracing.IntersectBox(start, raydir, raybox);
-                raypos.Set(start);
-                raypos.Add(new Vector3f(raydir).Mul(intersection.lambda.Y + 0.01f));
+                raypos.X = start.X;
+                raypos.Y = start.Y;
+                raypos.Z = start.Z;
+                raypos += (raydir * (intersection.lambda.Y + 0.01f));
 
 
                 TileData data = GetVoxel(pos);
@@ -494,19 +534,19 @@ namespace Inignoto.World
                         if (!needsSolid || needsSolid && tile.solid)
                         if (tile.GetRayTraceType() == type)
                         {
-                            Vector3f dir = new Vector3f(end).Sub(start);
-                            dir.Div(dir.Vector.Length());
+                            Vector3 dir = end - start;
+                            dir = dir / length;
                             float min = float.MaxValue;
                             bool hit = false;
                             RayIntersection r = new RayIntersection();
                             foreach (RayBox box in tile.GetCollisionBoxes(data)) {
                                 RayBox b2 = new RayBox
                                 {
-                                    Min = new Vector3f(box.Min).Add(pos.x, pos.y, pos.z),
-                                    Max = new Vector3f(box.Max).Add(pos.x, pos.y, pos.z)
+                                    Min = box.Min + new Vector3(pos.x, pos.y, pos.z),
+                                    Max = box.Max + new Vector3(pos.x, pos.y, pos.z)
                                 };
 
-                                if (Raytracing.DoesCollisionOccur(start, dir, b2, new Quaternionf()))
+                                if (Raytracing.DoesCollisionOccur(start, dir, b2, new Quaternion()))
                                 {
                                     RayIntersection it = Raytracing.IntersectBox(start, dir, b2);
                                     if (it.lambda.X < min)
@@ -519,7 +559,7 @@ namespace Inignoto.World
                             }
                             if (hit && min <= length)
                             {
-                                return new TileRaytraceResult(r, pos, data, new Vector3f(start).Add(new Vector3f(dir).Mul(r.lambda.X)));
+                                return new TileRaytraceResult(r, pos, data, start + (dir * r.lambda.X));
                             }
                         }
                         

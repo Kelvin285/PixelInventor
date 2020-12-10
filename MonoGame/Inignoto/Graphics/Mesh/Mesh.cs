@@ -11,20 +11,10 @@ namespace Inignoto.Graphics.Mesh
     public class Mesh : IDisposable
     {
 
-        public static Mesh Get(GraphicsDevice device, VertexPositionLightTexture[] triangleVertices, bool lines = false, Texture2D texture = null)
-        {
-            Mesh mesh = new Mesh(device, triangleVertices, lines, texture);
-            return mesh;
-        }
-
-        public static void FinishUsing(Mesh mesh)
-        {
-            
-        }
-
         public Matrix worldMatrix;
         public VertexPositionLightTexture[] triangleVertices;
         public VertexBuffer vertexBuffer;
+        public IndexBuffer indexBuffer;
 
         public bool lines;
 
@@ -38,41 +28,10 @@ namespace Inignoto.Graphics.Mesh
         public bool IsDisposed => vertexBuffer != null ? vertexBuffer.IsDisposed : true;
         public int Length => triangleVertices.Length;
 
-
-        private void Reconstruct(GraphicsDevice device, VertexPositionLightTexture[] triangleVertices, bool lines = false, Texture2D texture = null)
-        {
-            empty = true;
-            this.triangleVertices = triangleVertices;
-            vertexBuffer = null;
-            this.lines = false;
-            this.texture = null;
-            SetScale(new Vector3(1.0f));
-            SetPosition(new Vector3());
-            SetRotation(new Quaternion());
-
-            if (device == null)
-            {
-                return;
-            }
-            if (triangleVertices == null) return;
-            if (triangleVertices.Length == 0)
-            {
-                empty = true;
-                return;
-            }
-
-            vertexBuffer = new VertexBuffer(device, typeof(
-                           VertexPositionLightTexture), triangleVertices.Length, BufferUsage.
-                           WriteOnly);
-            if (vertexBuffer == null) return;
-            vertexBuffer.SetData(this.triangleVertices);
-
-            worldMatrix = Matrix.CreateWorld(new Vector3(0, 0, 0), Vector3.Forward, Vector3.Up);
-            this.lines = lines;
-            this.texture = texture;
-        }
+        private static int meshes = 0;
         public Mesh(GraphicsDevice device, VertexPositionLightTexture[] triangleVertices, bool lines = false, Texture2D texture = null)
         {
+            //Console.WriteLine("Meshes: " + (meshes++));
             if (device == null)
             {
                 return;
@@ -96,8 +55,14 @@ namespace Inignoto.Graphics.Mesh
             this.texture = texture;
         }
 
+        public void SetIndexBuffer(GraphicsDevice device, int[] indices)
+        {
+            indexBuffer = new IndexBuffer(device, IndexElementSize.ThirtyTwoBits, indices.Length, BufferUsage.WriteOnly);
+            indexBuffer.SetData(indices);
+        }
 
-        public void CombineWith(Mesh mesh, Vector3f position, Vector3f scale, Quaternionf rotation, Vector3f offset)
+
+        public void CombineWith(Mesh mesh, Vector3 position, Vector3 scale, Quaternion rotation, Vector3 offset)
         {
             if (this.triangleVertices == null) return;
             int verts = this.triangleVertices.Length / 3;
@@ -106,13 +71,13 @@ namespace Inignoto.Graphics.Mesh
 
             for (int i = 0; i < mesh.triangleVertices.Length; i++)
             {
-                Vector3f vec = new Vector3f(mesh.triangleVertices[i].Position);
+                Vector3 vec = new Vector3(mesh.triangleVertices[i].Position.X, mesh.triangleVertices[i].Position.Y, mesh.triangleVertices[i].Position.Z);
 
-                Matrix mat = Matrix.CreateTranslation(vec.Vector);
-                mat *= Matrix.CreateFromQuaternion(rotation.Rotation);
-                mat *= Matrix.CreateScale(scale.Vector);
-                mat *= Matrix.CreateTranslation(position.Vector);
-                mat *= Matrix.CreateTranslation(offset.Vector);
+                Matrix mat = Matrix.CreateTranslation(vec);
+                mat *= Matrix.CreateFromQuaternion(rotation);
+                mat *= Matrix.CreateScale(scale);
+                mat *= Matrix.CreateTranslation(position);
+                mat *= Matrix.CreateTranslation(offset);
 
                 mesh.triangleVertices[i].Position = mat.Translation;
                 //vec.Rotate(rotation);
@@ -177,13 +142,26 @@ namespace Inignoto.Graphics.Mesh
 
         public void Draw(Texture texture, GameEffect effect, GraphicsDevice device, Matrix worldMatrix)
         {
-            if (vertexBuffer != null && vertexBuffer.IsDisposed) return;
+            GC.SuppressFinalize(this);
+            GC.KeepAlive(this);
+            GC.KeepAlive(indexBuffer);
+            GC.KeepAlive(vertexBuffer);
+            GC.KeepAlive(triangleVertices);
+            if (this == null) return;
+            if (vertexBuffer != null)
+            {
+                if (vertexBuffer.IsDisposed) return;
+            }
             if (empty) return;
             Matrix matrix = Matrix.CreateScale(scale) * Matrix.CreateFromQuaternion(rotation) * worldMatrix;
             
             effect.World = matrix;
             
             device.SetVertexBuffer(vertexBuffer);
+            if (indexBuffer != null)
+            {
+                device.Indices = indexBuffer;
+            }
 
             foreach (EffectPass pass in effect.CurrentTechnique.
                     Passes)
@@ -196,25 +174,28 @@ namespace Inignoto.Graphics.Mesh
                     if (GameResources.shadowMap.shadowMapRenderTarget == null) continue;
                     effect.Parameters["ShadowTexture"].SetValue(GameResources.shadowMap.shadowMapRenderTarget[0]);
                     effect.Parameters["ShadowTexture2"].SetValue(GameResources.shadowMap.shadowMapRenderTarget[1]);
-                    effect.Parameters["ShadowTexture3"].SetValue(GameResources.shadowMap.shadowMapRenderTarget[2]);
                 }
                 
 
                 pass.Apply();
 
                 if (vertexBuffer != null && triangleVertices != null)
-                device.DrawPrimitives(lines ? PrimitiveType.LineList : PrimitiveType.TriangleList, 0, Length);
+                    if (indexBuffer != null)
+                    {
+                        device.DrawIndexedPrimitives(lines ? PrimitiveType.LineList : PrimitiveType.TriangleList, 0, 0, indexBuffer.IndexCount / (lines ? 2 : 3));
+                    } else
+                    device.DrawPrimitives(lines ? PrimitiveType.LineList : PrimitiveType.TriangleList, 0, Length);
 
             }
         }
 
         public Texture2D CreateTexture(Texture texture, GameEffect effect, GraphicsDevice device, Vector3 position, Quaternion rotation, int width, int height)
         {
-            Vector3f pos = new Vector3f(Inignoto.game.camera.position);
-            Vector3f rot = new Vector3f(Inignoto.game.camera.rotation);
+            Vector3 pos = new Vector3(Inignoto.game.camera.position.X, Inignoto.game.camera.position.Y, Inignoto.game.camera.position.Z);
+            Vector3 rot = new Vector3(Inignoto.game.camera.rotation.X, Inignoto.game.camera.rotation.Y, Inignoto.game.camera.rotation.Z);
 
-            Inignoto.game.camera.position = new Vector3f(0, 0, 0);
-            Inignoto.game.camera.rotation = new Vector3f(0, 0, 0);
+            Inignoto.game.camera.position = new Vector3(0, 0, 0);
+            Inignoto.game.camera.rotation = new Vector3(0, 0, 0);
 
             effect.View = Inignoto.game.camera.ViewMatrix;
 
@@ -239,14 +220,13 @@ namespace Inignoto.Graphics.Mesh
 
             effect.View = Inignoto.game.camera.ViewMatrix;
 
-            return (Texture2D)target;
+            return target;
         }
         
         public void Dispose()
         {
             if (vertexBuffer != null)
             vertexBuffer.Dispose();
-            FinishUsing(this);
         }
     }
 }

@@ -65,7 +65,7 @@ namespace Inignoto.Graphics.Gui
                     if (System.Math.Abs(Fade) >= 1 - 0.01f)
                     {
                         Fade = 1;
-                        Inignoto.game.player.position = new Vector3f(Inignoto.game.player.SpawnPosition);
+                        Inignoto.game.player.position = new Vector3(Inignoto.game.player.SpawnPosition.X, Inignoto.game.player.SpawnPosition.Y, Inignoto.game.player.SpawnPosition.Z);
                         Inignoto.game.player.health = 50;
                     }
                 }
@@ -166,7 +166,7 @@ namespace Inignoto.Graphics.Gui
             else
             {
                 if (Inignoto.game.player.Perspective == 1)
-                    Draw(spriteBatch, width, height, Textures.Textures.fp_cursor, new Rectangle(1920 / 2 - 8 * 3, 1080 / 2 - 8 * 3, 16 * 3, 16 * 3), Inignoto.game.camera.highlightedTile == null ? Color.Gray : Color.White);
+                    Draw(spriteBatch, width, height, Textures.Textures.fp_cursor, new Rectangle(1920 / 2 - 4 * 3, 1080 / 2 - 4 * 3, 8 * 3, 8 * 3), Inignoto.game.camera.highlightedTile == null ? Color.Gray : Color.White);
 
                 RenderHealthbar(device, spriteBatch, width, height, time);
             }

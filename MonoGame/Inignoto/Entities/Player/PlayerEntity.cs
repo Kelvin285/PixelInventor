@@ -23,7 +23,7 @@ namespace Inignoto.Entities.Player
 
         public Gamemode gamemode = Gamemode.SANDBOX;
 
-        public Vector3f SpawnPosition { get; protected set; }
+        public Vector3 SpawnPosition { get; protected set; }
 
         public bool Flying { get; protected set; }
         public bool Walking { get; protected set; }
@@ -36,12 +36,12 @@ namespace Inignoto.Entities.Player
 
         public PhysicalInventory Inventory { get; protected set; }
 
-        public PlayerEntity(World.World world, Vector3f position, long UID) : base(world, position)
+        public PlayerEntity(World.World world, Vector3 position, long UID) : base(world, position)
         {
             gamemode = world.properties.default_gamemode;
             position.Y = world.properties.generator.GetHeight(position.X, position.Z, world.radius, world.properties.infinite) + 1;
             ReachDistance = 4.0f;
-            SpawnPosition = new Vector3f(position);
+            SpawnPosition = new Vector3(position.X, position.Y, position.Z);
 
             this.UID = UID;
 

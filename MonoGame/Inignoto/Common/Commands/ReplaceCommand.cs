@@ -139,7 +139,7 @@ namespace Inignoto.Common.Commands
                     }
                 }
 
-                Inignoto.game.client_system.SendChatMessage(-1, "Replaced all instances of " + tile + " between " + StructureWrenchItem.pos1.Vector + " and " + StructureWrenchItem.pos2.Vector + " with " + replace + " (state " + state + ")");
+                Inignoto.game.client_system.SendChatMessage(-1, "Replaced all instances of " + tile + " between " + StructureWrenchItem.pos1 + " and " + StructureWrenchItem.pos2 + " with " + replace + " (state " + state + ")");
             } else
             {
                 Inignoto.game.client_system.SendChatMessage(-1, "INVALID COMMAND USAGE!");

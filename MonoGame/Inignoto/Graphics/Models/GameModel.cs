@@ -22,10 +22,10 @@ namespace Inignoto.Graphics.Models
         public float currentTime = 0.0f;
         public float animationSpeed = 1.0f / 30.0f;
 
-        public Vector3f rotation = new Vector3f(0, 0, 0);
-        public Vector3f translation = new Vector3f(0, 0, 0);
-        public Vector3f scale = new Vector3f(1, 1, 1);
-        public Vector3f origin = new Vector3f(0, 0, 0);
+        public Vector3 rotation = new Vector3(0, 0, 0);
+        public Vector3 translation = new Vector3(0, 0, 0);
+        public Vector3 scale = new Vector3(1, 1, 1);
+        public Vector3 origin = new Vector3(0, 0, 0);
 
         private Texture2D texture;
 
@@ -144,7 +144,7 @@ namespace Inignoto.Graphics.Models
             {
                 Parts[0].BuildPart();
 
-                Vector3f offset = new Vector3f(Parts[0].GetPosition()).Mul(-1);
+                Vector3 offset = Parts[0].GetPosition() * -1;
 
                 
                 for (int i = 1; i < Parts.Count; i++)
@@ -213,7 +213,7 @@ namespace Inignoto.Graphics.Models
                             currentTransform.rotation.Y == 0 &&
                             currentTransform.rotation.Z == 0 &&
                             currentTransform.rotation.W == 0)
-                        currentTransform.rotation = new Quaternionf(x, y, z, w);
+                        currentTransform.rotation = new Quaternion(x, y, z, w);
                     }
                     if (a.Contains("look"))
                     {
@@ -224,7 +224,7 @@ namespace Inignoto.Graphics.Models
                         if (currentTransform.look.X == 0 &&
                             currentTransform.look.Y == 0 &&
                             currentTransform.look.Z == 1)
-                            currentTransform.look = new Vector3f(x, y, z);
+                            currentTransform.look = new Vector3(x, y, z);
                     }
                     if (a.Contains("origin"))
                     {
@@ -235,7 +235,7 @@ namespace Inignoto.Graphics.Models
                         if (currentTransform.origin.X == 0 &&
                             currentTransform.origin.Y == 0 &&
                             currentTransform.origin.Z == 0)
-                            currentTransform.origin = new Vector3f(x, y, z);
+                            currentTransform.origin = new Vector3(x, y, z);
                     }
                     if (a.Contains("position"))
                     {
@@ -247,7 +247,7 @@ namespace Inignoto.Graphics.Models
                         if (currentTransform.position.X == 0 &&
                             currentTransform.position.Y == 0 &&
                             currentTransform.position.Z == 0)
-                            currentTransform.position = new Vector3f(x, y, z);
+                            currentTransform.position = new Vector3(x, y, z);
 
                     }
                     if (a.Contains("axisAngles"))
@@ -259,7 +259,7 @@ namespace Inignoto.Graphics.Models
                         if (currentTransform.axisAngles.X == 0 &&
                             currentTransform.axisAngles.Y == 0 &&
                             currentTransform.axisAngles.Z == 0)
-                            currentTransform.axisAngles = new Vector3f(x, y, z);
+                            currentTransform.axisAngles = new Vector3(x, y, z);
                     }
                     if (a.Contains("scale"))
                     {
@@ -270,7 +270,7 @@ namespace Inignoto.Graphics.Models
                         if (currentTransform.scale.X == 1 &&
                             currentTransform.scale.Y == 1 &&
                             currentTransform.scale.Z == 1)
-                            currentTransform.scale = new Vector3f(x, y, z);
+                            currentTransform.scale = new Vector3(x, y, z);
                     }
                     if (a.Contains("size"))
                     {
@@ -281,7 +281,7 @@ namespace Inignoto.Graphics.Models
                         if (currentTransform.size.X == 0 &&
                             currentTransform.size.Y == 0 &&
                             currentTransform.size.Z == 0)
-                            currentTransform.size = new Vector3f(x, y, z);
+                            currentTransform.size = new Vector3(x, y, z);
                     }
                     if (a.Contains("uv"))
                     {
@@ -339,7 +339,7 @@ namespace Inignoto.Graphics.Models
                         float x = (float)double.Parse(data[1]);
                         float y = (float)double.Parse(data[2]);
                         float z = (float)double.Parse(data[3]);
-                        part.SetPosition(new Vector3f((float)x, (float)y, (float)z));
+                        part.SetPosition(new Vector3((float)x, (float)y, (float)z));
                     }
                     else
                     if (data[0].Contains("Rotation"))
@@ -348,7 +348,7 @@ namespace Inignoto.Graphics.Models
                         float y = (float)double.Parse(data[2]);
                         float z = (float)double.Parse(data[3]);
                         float w = (float)double.Parse(data[4]);
-                        part.SetRotation(new Quaternionf(x, y, z, w));
+                        part.SetRotation(new Quaternion(x, y, z, w));
                     }
                     else
                     if (data[0].Contains("Size"))
@@ -356,7 +356,7 @@ namespace Inignoto.Graphics.Models
                         int x = (int)int.Parse(data[1]);
                         int y = (int)int.Parse(data[2]);
                         int z = (int)int.Parse(data[3]);
-                        part.size = new Vector3f(x, y, z);
+                        part.size = new Vector3(x, y, z);
                     }
                     else
                     if (data[0].Contains("Scale"))
@@ -364,7 +364,7 @@ namespace Inignoto.Graphics.Models
                         float x = (float)double.Parse(data[1]);
                         float y = (float)double.Parse(data[2]);
                         float z = (float)double.Parse(data[3]);
-                        part.SetScale(new Vector3f(x, y, z));
+                        part.SetScale(new Vector3(x, y, z));
                     }
                     else
                     if (data[0].Contains("Angles"))
@@ -372,7 +372,7 @@ namespace Inignoto.Graphics.Models
                         float x = (float)double.Parse(data[1]);
                         float y = (float)double.Parse(data[2]);
                         float z = (float)double.Parse(data[3]);
-                        part.axisAngles = new Vector3f(x, y, z);
+                        part.axisAngles = new Vector3(x, y, z);
                     }
                     else
                     if (data[0].Contains("Locked"))
@@ -390,7 +390,7 @@ namespace Inignoto.Graphics.Models
                         float x = (float)double.Parse(data[1]);
                         float y = (float)double.Parse(data[2]);
                         float z = (float)double.Parse(data[3]);
-                        part.origin = new Vector3f(x, y, z);
+                        part.origin = new Vector3(x, y, z);
                     }
                     else
                     if (data[0].Contains("UV"))
@@ -434,6 +434,7 @@ namespace Inignoto.Graphics.Models
         public void Render(GraphicsDevice device, GameEffect effect, GameTime time, bool updateAnimation = true)
         {
             float delta = (float)time.ElapsedGameTime.TotalSeconds * 60;
+            if (GameSettings.Settings.SHADOWS) delta *= 0.25f;
 
             if (updateAnimation)
             {
@@ -467,7 +468,7 @@ namespace Inignoto.Graphics.Models
                 {
                     part.RenderRotation = part.GetRotation();
                 }
-                part.RenderRotation.Rotation = Quaternion.Lerp(part.RenderRotation.Rotation, part.GetRotation().Rotation, 0.05f);
+                part.RenderRotation = Quaternion.Lerp(part.RenderRotation, part.GetRotation(), 0.05f * delta);
             }
 
             editMode = EditMode.MODEL;
@@ -480,9 +481,9 @@ namespace Inignoto.Graphics.Models
                     if (part.name.Equals(str))
                     {
                         
-                        part.Rotate(new Vector3f(val.X, 0, 0));
-                        part.Rotate(new Vector3f(0, val.Y, 0));
-                        part.Rotate(new Vector3f(0, 0, val.Z));
+                        part.Rotate(new Vector3(val.X, 0, 0));
+                        part.Rotate(new Vector3(0, val.Y, 0));
+                        part.Rotate(new Vector3(0, 0, val.Z));
                     }
                 }
             }
@@ -501,9 +502,9 @@ namespace Inignoto.Graphics.Models
                 {
                     if (part.name.Equals(str))
                     {
-                        part.Rotate(new Vector3f(0, 0, -val.Z));
-                        part.Rotate(new Vector3f(0, -val.Y, 0));
-                        part.Rotate(new Vector3f(-val.X, 0, 0));
+                        part.Rotate(new Vector3(0, 0, -val.Z));
+                        part.Rotate(new Vector3(0, -val.Y, 0));
+                        part.Rotate(new Vector3(-val.X, 0, 0));
 
                     }
                 }

@@ -21,7 +21,6 @@ using Inignoto.Audio;
 using Inignoto.Items;
 using System.Runtime.CompilerServices;
 using System.Runtime;
-
 namespace Inignoto
 {
     
@@ -76,9 +75,8 @@ namespace Inignoto
         
         public Inignoto()
         {
-
             graphics = new GraphicsDeviceManager(this);
-            graphics.GraphicsProfile = GraphicsProfile.HiDef;
+            graphics.GraphicsProfile = GraphicsProfile.Reach;
             graphics.PreferMultiSampling = false;
             TargetElapsedTime = TimeSpan.FromSeconds(1.0f / 60.0f);
             
@@ -123,10 +121,10 @@ namespace Inignoto
 
             //GameResources.effect.LightingEnabled = false;
             
-            Vector3f a = new Vector3f(0, 20, 0);
-            Vector3f b = new Vector3f(0, -20, 0);
-            Vector3f c = new Vector3f(20, -20, 0);
-            Vector3f d = new Vector3f(20, 20, 0);
+            Vector3 a = new Vector3(0, 20, 0);
+            Vector3 b = new Vector3(0, -20, 0);
+            Vector3 c = new Vector3(20, -20, 0);
+            Vector3 d = new Vector3(20, 20, 0);
 
             GameResources.LoadResources();
 
@@ -145,6 +143,7 @@ namespace Inignoto
             rebuild_chunk_thread.IsBackground = true;
             rebuild_chunk_thread.Start();
         }
+        public GameTime gametime = new GameTime();
         public static void RebuildChunks()
         {
             while (game.running)
@@ -153,7 +152,6 @@ namespace Inignoto
                 {
                     game.world.chunkManager.RebuildChunks();
                 }
-                
             }
         }
         public static void TickWorld()
@@ -204,10 +202,6 @@ namespace Inignoto
             base.OnExiting(sender, args);
         }
 
-        /// <summary>
-        /// Allows the game to run logic such as updating the world,
-        /// checking for collisions, gathering input, and playing audio.
-        /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
@@ -241,12 +235,16 @@ namespace Inignoto
 
             camera.Update(gameTime);
 
+
             if (game.game_state == GameState.GAME)
-                world.Update(camera.position.Vector, gameTime);
+            {
+                world.Update(camera.position, gameTime);
+            }
 
             base.Update(gameTime);
 
-            lastMousePos = new Point(mousePos.X, mousePos.Y);
+            lastMousePos.X = mousePos.X;
+            lastMousePos.Y = mousePos.Y;
 
 
             if (!IsActive || paused || !(game_state == GameState.GAME)) mouse_captured = false;
@@ -256,8 +254,10 @@ namespace Inignoto
             if (mouse_captured)
             {
                 Mouse.SetPosition(width / 2, -height / 2);
-                mousePos = new Point(width / 2, -height / 2);
-                lastMousePos = new Point(width / 2, -height / 2);
+                mousePos.X = width / 2;
+                mousePos.Y = -height / 2;
+                lastMousePos.X = width / 2;
+                lastMousePos.Y = -height / 2;
 
                 IsMouseVisible = false;
             } else
@@ -319,7 +319,7 @@ namespace Inignoto
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            
+            gametime = gameTime;
             GameResources.effect.Time = (float)gameTime.TotalGameTime.TotalSeconds;
 
             int width = Window.ClientBounds.Right - Window.ClientBounds.Left;
@@ -327,10 +327,10 @@ namespace Inignoto
 
             GameResources.effect.Projection = projectionMatrix;
 
-            Vector3f lastPos = camera.position;
-            camera.position = new Vector3f(0, 0, 0);
-            Vector3f lastRot = camera.rotation;
-            camera.rotation = new Vector3f(0, 0, 0);
+            Vector3 lastPos = camera.position;
+            camera.position = new Vector3(0, 0, 0);
+            Vector3 lastRot = camera.rotation;
+            camera.rotation = new Vector3(0, 0, 0);
             GameResources.effect.View = camera.ViewMatrix;
 
             GraphicsDevice.BlendState = BlendState.NonPremultiplied;
@@ -355,18 +355,22 @@ namespace Inignoto
 
             TileRegistry.TryLoadTileTextures();
 
+            GameResources.effect.HasShadows = Settings.SHADOWS;
             if (game.game_state == GameState.GAME)
                 if (Settings.SHADOWS)
                 {
-                    GameResources.shadowMap.Begin(camera.position.Vector, world.sunLook, 0);
+
+                    Vector3 vec = new Vector3(camera.position.X, camera.position.Y, camera.position.Z);
+                    vec.Ceiling();
+
+                    GameResources.shadowMap.Begin(vec, world.sunLook, 0);
                     world.Render(GraphicsDevice, GameResources.shadowMap._ShadowMapGenerate, gameTime);
 
-                    GameResources.shadowMap.Begin(camera.position.Vector, world.sunLook, 1);
+                    GameResources.shadowMap.Begin(vec, world.sunLook, 1);
                     world.Render(GraphicsDevice, GameResources.shadowMap._ShadowMapGenerate, gameTime);
-                    GameResources.shadowMap.Begin(camera.position.Vector, world.sunLook, 2);
-                    world.Render(GraphicsDevice, GameResources.shadowMap._ShadowMapGenerate, gameTime);
+
                     GameResources.shadowMap.End();
-                    
+
                 }
             Viewport port = GraphicsDevice.Viewport;
             GraphicsDevice.Viewport = new Viewport(new Rectangle(0, 0, 1920, 1080));
@@ -374,7 +378,10 @@ namespace Inignoto
             GraphicsDevice.SetRenderTarget(GameResources.gameImage);
 
             if (game.game_state == GameState.GAME)
+            {
                 world.Render(GraphicsDevice, GameResources.effect, gameTime);
+            }
+
 
             GraphicsDevice.SetRenderTarget(null);
             GraphicsDevice.Viewport = port; 
@@ -383,6 +390,7 @@ namespace Inignoto
 
             screen_rect.Width = width;
             screen_rect.Height = height;
+
             spriteBatch.Draw(GameResources.gameImage, screen_rect, Color.White);
 
             spriteBatch.End();

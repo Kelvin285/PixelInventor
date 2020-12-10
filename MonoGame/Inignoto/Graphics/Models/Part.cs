@@ -17,15 +17,15 @@ namespace Inignoto.Graphics.Models
     {
         public static readonly float SCALING = 1.0f / 32.0f;
 
-        private Vector3f position = new Vector3f();
-        private Quaternionf rotation = new Quaternionf();
-        private Vector3f scale = new Vector3f(1, 1, 1);
-        public Vector3f size = new Vector3f();
+        private Vector3 position = new Vector3();
+        private Quaternion rotation = new Quaternion();
+        private Vector3 scale = new Vector3(1, 1, 1);
+        public Vector3 size = new Vector3();
         public Vector2 uv = new Vector2(0, 0);
-        public Vector3f origin = new Vector3f();
+        public Vector3 origin = new Vector3();
 
-        public Vector3f renderPosition = new Vector3f();
-        public Quaternionf renderRotation = new Quaternionf();
+        public Vector3 renderPosition = new Vector3();
+        public Quaternion renderRotation = new Quaternion();
 
         public Part parent;
         public List<Part> children = new List<Part>();
@@ -39,12 +39,12 @@ namespace Inignoto.Graphics.Models
 
         private Texture2D texture;
 
-        public Vector3f look = new Vector3f(0, 0, 1);
+        public Vector3 look = new Vector3(0, 0, 1);
 
-        public Vector3f axisAngles = new Vector3f(0, 0, 0);
+        public Vector3 axisAngles = new Vector3(0, 0, 0);
 
-        public Vector3f RenderPosition;
-        public Quaternionf RenderRotation;
+        public Vector3 RenderPosition;
+        public Quaternion RenderRotation;
 
         private GameModel model;
         public Part(GameModel model)
@@ -56,12 +56,12 @@ namespace Inignoto.Graphics.Models
         {
             Part p = new Part(model);
             p.name = "" + part.name;
-            p.SetPosition(new Vector3f(part.position));
-            p.SetRotation(new Quaternionf(part.rotation.Rotation));
-            p.SetScale(new Vector3f(part.scale));
-            p.size = new Vector3f(part.size);
+            p.SetPosition(new Vector3(part.position.X, part.position.Y, part.position.Z));
+            p.SetRotation(new Quaternion(part.rotation.X, part.rotation.Y, part.rotation.Z, part.rotation.W));
+            p.SetScale(new Vector3(part.scale.X, part.scale.Y, part.scale.Z));
+            p.size = new Vector3(part.size.X, part.size.Y, part.size.Z);
             p.uv = new Vector2(part.uv.X, part.uv.Y);
-            p.origin = new Vector3f(part.origin);
+            p.origin = new Vector3(part.origin.X, part.origin.Y, part.origin.Z);
             p.parent = parent;
             if (parent != null)
             {
@@ -144,49 +144,49 @@ namespace Inignoto.Graphics.Models
             float size_y = part.size.Y;
             float size_z = part.size.Z;
 
-            List<Vector3f> vertexCoords = new List<Vector3f>();
+            List<Vector3> vertexCoords = new List<Vector3>();
 
-            vertexCoords.Add(new Vector3f(0, size_y, 0));
-            vertexCoords.Add(new Vector3f(size_x, size_y, 0));
-            vertexCoords.Add(new Vector3f(size_x, 0, 0));
-            vertexCoords.Add(new Vector3f(0, 0, 0));
+            vertexCoords.Add(new Vector3(0, size_y, 0));
+            vertexCoords.Add(new Vector3(size_x, size_y, 0));
+            vertexCoords.Add(new Vector3(size_x, 0, 0));
+            vertexCoords.Add(new Vector3(0, 0, 0));
 
-            vertexCoords.Add(new Vector3f(0, size_y, size_z));
-            vertexCoords.Add(new Vector3f(size_x, size_y, size_z));
-            vertexCoords.Add(new Vector3f(size_x, 0, size_z));
-            vertexCoords.Add(new Vector3f(0, 0, size_z));
+            vertexCoords.Add(new Vector3(0, size_y, size_z));
+            vertexCoords.Add(new Vector3(size_x, size_y, size_z));
+            vertexCoords.Add(new Vector3(size_x, 0, size_z));
+            vertexCoords.Add(new Vector3(0, 0, size_z));
 
-            List<Vector3f> verts = new List<Vector3f>();
+            List<Vector3> verts = new List<Vector3>();
 
-            verts.Add(new Vector3f(0, 0, 0));
-            verts.Add(new Vector3f(0, 1, 0));
-            verts.Add(new Vector3f(1, 1, 0));
-            verts.Add(new Vector3f(1, 0, 0));
+            verts.Add(new Vector3(0, 0, 0));
+            verts.Add(new Vector3(0, 1, 0));
+            verts.Add(new Vector3(1, 1, 0));
+            verts.Add(new Vector3(1, 0, 0));
 
-            verts.Add(new Vector3f(0, 0, 1));
-            verts.Add(new Vector3f(0, 1, 1));
-            verts.Add(new Vector3f(1, 1, 1));
-            verts.Add(new Vector3f(1, 0, 1));
+            verts.Add(new Vector3(0, 0, 1));
+            verts.Add(new Vector3(0, 1, 1));
+            verts.Add(new Vector3(1, 1, 1));
+            verts.Add(new Vector3(1, 0, 1));
 
-            verts.Add(new Vector3f(0, 0, 1));
-            verts.Add(new Vector3f(0, 1, 1));
-            verts.Add(new Vector3f(0, 1, 0));
-            verts.Add(new Vector3f(0, 0, 0));
+            verts.Add(new Vector3(0, 0, 1));
+            verts.Add(new Vector3(0, 1, 1));
+            verts.Add(new Vector3(0, 1, 0));
+            verts.Add(new Vector3(0, 0, 0));
 
-            verts.Add(new Vector3f(1, 0, 0));
-            verts.Add(new Vector3f(1, 1, 0));
-            verts.Add(new Vector3f(1, 1, 1));
-            verts.Add(new Vector3f(1, 0, 1));
+            verts.Add(new Vector3(1, 0, 0));
+            verts.Add(new Vector3(1, 1, 0));
+            verts.Add(new Vector3(1, 1, 1));
+            verts.Add(new Vector3(1, 0, 1));
 
-            verts.Add(new Vector3f(0, 1, 0));
-            verts.Add(new Vector3f(0, 1, 1));
-            verts.Add(new Vector3f(1, 1, 1));
-            verts.Add(new Vector3f(1, 1, 0));
+            verts.Add(new Vector3(0, 1, 0));
+            verts.Add(new Vector3(0, 1, 1));
+            verts.Add(new Vector3(1, 1, 1));
+            verts.Add(new Vector3(1, 1, 0));
 
-            verts.Add(new Vector3f(0, 0, 1));
-            verts.Add(new Vector3f(0, 0, 0));
-            verts.Add(new Vector3f(1, 0, 0));
-            verts.Add(new Vector3f(1, 0, 1));
+            verts.Add(new Vector3(0, 0, 1));
+            verts.Add(new Vector3(0, 0, 0));
+            verts.Add(new Vector3(1, 0, 0));
+            verts.Add(new Vector3(1, 0, 1));
 
             int[] indices = {
             0, 1, 2, 2, 3, 0,
@@ -205,11 +205,11 @@ namespace Inignoto.Graphics.Models
                 int J = i * 3;
 
 
-                Vector3f p5 = new Vector3f(vertexCoords[5]).Mul(0.5f);
+                Vector3 p5 = vertexCoords[5] * 0.5f;
 
 
 
-                Vector3f v = new Vector3f(verts[i].X, verts[i].Y, verts[i].Z).Sub(0.5f, 0.5f, 0.5f).Mul(p5.X * 2, p5.Y * 2, p5.Z * 2).Mul(part.GetScale());
+                Vector3 v = (verts[i] - new Vector3(0.5f, 0.5f, 0.5f)) * new Vector3(p5.X * 2, p5.Y * 2, p5.Z * 2) * part.GetScale();
                 vertices[J] = v.X;
                 vertices[J + 1] = v.Y;
                 vertices[J + 2] = v.Z;
@@ -249,7 +249,7 @@ namespace Inignoto.Graphics.Models
             {
                 vpct[i] = new VertexPositionLightTexture(new Vector3(vertices[indices[i] * 3], vertices[indices[i] * 3 + 1], vertices[indices[i] * 3 + 2]), Color.White, new Vector4(texCoords[indices[i] * 2], texCoords[indices[i] * 2 + 1], -1, -1), normals[indices[i]]);
             }
-            Mesh.Mesh mesh = Mesh.Mesh.Get(Inignoto.game.GraphicsDevice, vpct, false, texture);
+            Mesh.Mesh mesh = new Mesh.Mesh(Inignoto.game.GraphicsDevice, vpct, false, texture);
             return mesh;
         }
 
@@ -279,17 +279,17 @@ namespace Inignoto.Graphics.Models
 
                 if (transformation != null)
                 {
-                    transformation.scale.Add(x, y, z);
+                    transformation.scale += new Vector3(x, y, z);
                 }
             } else
             {
-                this.scale.Add(x, y, z);
+                scale += new Vector3(x, y, z);
             }
         }
 
-        public void Translate(Vector3f translation)
+        public void Translate(Vector3 translation)
         {
-            if (model.editMode == GameModel.EditMode.ANIMATION)
+            if (model.editMode == EditMode.ANIMATION)
             {
                 KeyTransformation transformation = GetOrCreateKeyTransformation((int)model.currentTime, this);
 
@@ -298,34 +298,34 @@ namespace Inignoto.Graphics.Models
                     transformation.Translate(translation);
                 }
 
-                foreach (Part part in this.children)
+                foreach (Part part in children)
                 {
-                    part.Translate(new Vector3f(translation));
+                    part.Translate(translation);
                 }
             } else
             {
-                this.position.Add(translation);
-                foreach (Part part in this.children)
+                position += (translation);
+                foreach (Part part in children)
                 {
-                    part.Translate(new Vector3f(translation));
+                    part.Translate(translation);
                 }
             }
         }
 
-        public void RotateEuler(Vector3f rotation)
+        public void RotateEuler(Vector3 rotation)
         {
-            Vector3f origin = new Vector3f(this.origin).Rotate(this.rotation.Rotation);
+            Vector3 origin = (Matrix.CreateTranslation(this.origin) * Matrix.CreateFromQuaternion(this.rotation)).Translation;
 
             Quaternion rot = Quaternion.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z);
 
 
-            if (this.model.editMode == GameModel.EditMode.ANIMATION)
+            if (model.editMode == EditMode.ANIMATION)
             {
                 KeyTransformation transformation = GetOrCreateKeyTransformation((int)model.currentTime, this);
 
                 if (transformation != null)
                 {
-                    transformation.Rotate(rot, new Vector3f(origin).Sub(position));
+                    transformation.Rotate(rot, origin - position);
                 }
 
                 foreach (Part part in children)
@@ -334,9 +334,9 @@ namespace Inignoto.Graphics.Models
                 }
             }
 
-            this.rotation.Rotation = Quaternion.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z);
+            this.rotation = Quaternion.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z);
 
-            position = Raytracing.RotateAround(position, origin, new Quaternionf(rot));
+            position = Raytracing.RotateAround(position, origin, rot);
 
 
             foreach (Part part in this.children)
@@ -345,17 +345,17 @@ namespace Inignoto.Graphics.Models
             }
         }
 
-        public void Rotate(Vector3f rotation)
+        public void Rotate(Vector3 rotation)
         {
-            Rotate(rotation, new Vector3f(position).Add(new Vector3f(origin).Rotate(this.rotation.Rotation)));
+            Rotate(rotation, position + (Matrix.CreateTranslation(origin) * Matrix.CreateFromQuaternion(this.rotation)).Translation);
         }
 
         public void Rotate(Quaternion rotation)
         {
-            Rotate(rotation, new Vector3f(position).Add(new Vector3f(origin).Rotate(this.rotation.Rotation)));
+            Rotate(rotation, position + (Matrix.CreateTranslation(origin) * Matrix.CreateFromQuaternion(this.rotation)).Translation);
         }
 
-        public void Rotate(Quaternion rot, Vector3f origin)
+        public void Rotate(Quaternion rot, Vector3 origin)
         {
             if (this.model.editMode == GameModel.EditMode.ANIMATION)
             {
@@ -363,18 +363,18 @@ namespace Inignoto.Graphics.Models
 
                 if (transformation != null)
                 {
-                    transformation.Rotate(rot, new Vector3f(origin).Sub(position));
+                    transformation.Rotate(rot, origin - position);
                 }
 
                 foreach (Part part in children)
                 {
-                    part.Rotate(rot, new Vector3f(origin));
+                    part.Rotate(rot, origin);
                 }
             } else
             {
-                this.rotation.Rotation = Quaternion.Concatenate(this.rotation.Rotation, rot);
+                rotation = Quaternion.Concatenate(rotation, rot);
 
-                position = Raytracing.RotateAround(position, origin, new Quaternionf(rot));
+                position = Raytracing.RotateAround(position, origin, rot);
 
 
                 foreach (Part part in this.children)
@@ -385,20 +385,20 @@ namespace Inignoto.Graphics.Models
             
         }
 
-        public void Rotate(Vector3f rotation, Vector3f origin)
+        public void Rotate(Vector3 rotation, Vector3 origin)
         {
-            if (this.model.editMode == GameModel.EditMode.ANIMATION)
+            if (model.editMode == EditMode.ANIMATION)
             {
                 KeyTransformation transformation = GetOrCreateKeyTransformation((int)model.currentTime, this);
 
                 if (transformation != null)
                 {
-                    transformation.Rotate(rotation, new Vector3f(origin).Sub(position));
+                    transformation.Rotate(rotation, origin - position);
                 }
 
                 foreach (Part part in children)
                 {
-                    part.Rotate(new Vector3f(rotation), new Vector3f(origin));
+                    part.Rotate(rotation, origin);
                 }
             } else
             {
@@ -408,10 +408,10 @@ namespace Inignoto.Graphics.Models
 
                 Quaternion rot = Quaternion.Concatenate(Quaternion.Concatenate(xRot, yRot), zRot);
 
-                this.rotation.Rotation = Quaternion.Concatenate(this.rotation.Rotation, rot);
-                axisAngles.Add(rotation);
+                this.rotation = Quaternion.Concatenate(this.rotation, rot);
+                axisAngles += rotation;
 
-                position = Raytracing.RotateAround(position, origin, new Quaternionf(rot));
+                position = Raytracing.RotateAround(position, origin, rot);
 
 
                 foreach (Part part in this.children)
@@ -422,11 +422,11 @@ namespace Inignoto.Graphics.Models
             
         }
 
-        public void SetRotation(Vector3f rotation)
+        public void SetRotation(Vector3 rotation)
         {
-            Rotate(new Vector3f(rotation).Mul(-1));
-            axisAngles.Set(0, 0, 0);
-            this.rotation.Identity();
+            Rotate(rotation * -1);
+            axisAngles = new Vector3(0, 0, 0);
+            this.rotation = Quaternion.Identity;
             Rotate(rotation);
         }
 
@@ -435,7 +435,7 @@ namespace Inignoto.Graphics.Models
             this.BuildPart(texture);
         }
 
-        public Vector3f GetScale()
+        public Vector3 GetScale()
         {
             if (model != null)
             {
@@ -445,23 +445,23 @@ namespace Inignoto.Graphics.Models
                     KeyTransformation next = GetOrCreateKeyTransformation(model.GetNextFrame(), this);
                     if (next != null)
                     {
-                        return new Vector3f(scale).Mul(new Vector3f(transformation.scale).Lerp(next.scale, 1.0f - model.TimeUntilNextFrame()));
+                        return scale * (Vector3.Lerp(transformation.scale, next.scale, 1.0f - model.TimeUntilNextFrame()));
                     }
                     else
                     {
-                        return new Vector3f(scale).Mul(transformation.scale);
+                        return scale * transformation.scale;
                     }
                 }
             }
             return scale;
         }
 
-        public void SetScale(Vector3f scale)
+        public void SetScale(Vector3 scale)
         {
             this.scale = scale;
         }
 
-        public Vector3f GetPosition()
+        public Vector3 GetPosition()
         {
             if (model != null)
             {
@@ -471,11 +471,11 @@ namespace Inignoto.Graphics.Models
                     KeyTransformation next = GetOrCreateKeyTransformation(model.GetNextFrame(), this);
                     if (next != null)
                     {
-                        return new Vector3f(position).Add(new Vector3f(transformation.position).Lerp(next.position, 1.0f - model.TimeUntilNextFrame()));
+                        return position + Vector3.Lerp(transformation.position, next.position, 1.0f - model.TimeUntilNextFrame());
                     }
                     else
                     {
-                        return new Vector3f(position).Add(transformation.position);
+                        return position + transformation.position;
                     }
 
                 }
@@ -483,12 +483,12 @@ namespace Inignoto.Graphics.Models
             return position;
         }
 
-        public void SetPosition(Vector3f position)
+        public void SetPosition(Vector3 position)
         {
             this.position = position;
         }
 
-        public Quaternionf GetRotation()
+        public Quaternion GetRotation()
         {
             if (model != null)
             {
@@ -498,27 +498,27 @@ namespace Inignoto.Graphics.Models
                     KeyTransformation next = GetOrCreateKeyTransformation(model.GetNextFrame(), this);
                     if (next != null)
                     {
-                        return new Quaternionf(new Quaternionf(transformation.rotation.Rotation).Nlerp(next.rotation, 1.0f - model.TimeUntilNextFrame()).Rotation * rotation.Rotation);
+                        return Quaternion.Lerp(transformation.rotation, next.rotation, 1.0f - model.TimeUntilNextFrame()) * rotation;
                     }
                     else
                     {
-                        return new Quaternionf(transformation.rotation.Rotation * rotation.Rotation);
+                        return transformation.rotation * rotation;
                     }
                 }
             }
             return rotation;
         }
 
-        public void SetRotation(Quaternionf rotation)
+        public void SetRotation(Quaternion rotation)
         {
             this.rotation = rotation;
         }
 
-        public Vector3f GetActualPosition()
+        public Vector3 GetActualPosition()
         {
             return this.position;
         }
-        public Quaternionf GetActualRotation()
+        public Quaternion GetActualRotation()
         {
             return this.rotation;
         }
@@ -526,41 +526,40 @@ namespace Inignoto.Graphics.Models
         public void Dispose()
         {
             mesh.Dispose();
-            Mesh.Mesh.FinishUsing(mesh);
         }
 
         public void Render(GraphicsDevice device, GameEffect effect)
         {
 
-            Quaternionf rotation = new Quaternionf(GetRotation().Rotation);
+            Quaternion rotation = GetRotation();
 
-            Quaternion current = rotation.Rotation;
+            Quaternion current = rotation;
 
-            Vector3f position = new Vector3f(GetPosition()).Mul(SCALING);
+            Vector3 position = GetPosition() * SCALING;
 
-            Vector3f scale = new Vector3f(GetScale()).Mul(SCALING).Mul(1, 1, -1);
+            Vector3 scale = GetScale() * SCALING * new Vector3(1, 1, -1);
 
-            renderPosition.Set(Vector3.Lerp(renderPosition.Vector, position.Vector, 0.25f));
-            renderRotation.Rotation = Quaternion.Lerp(renderRotation.Rotation, rotation.Rotation, 0.25f);
+            renderPosition = Vector3.Lerp(renderPosition, position, 0.25f);
+            renderRotation = Quaternion.Lerp(renderRotation, rotation, 0.25f);
 
-            position = new Vector3f(renderPosition);
-            rotation = new Quaternionf(renderRotation.Rotation);
+            position = new Vector3(renderPosition.X, renderPosition.Y, renderPosition.Z);
+            rotation = new Quaternion(renderRotation.X, renderRotation.Y, renderRotation.Z, renderRotation.W);
 
             Quaternion euler = Quaternion.CreateFromYawPitchRoll(model.rotation.Y, model.rotation.X, model.rotation.Z);
-            position.Rotate(euler);
+            position = (Matrix.CreateTranslation(position) * Matrix.CreateFromQuaternion(euler)).Translation;
 
-            rotation.Rotation = Quaternion.Concatenate(rotation.Rotation, euler);
+            rotation = Quaternion.Concatenate(rotation, euler);
 
 
-            position.Mul(model.scale);
+            position = position * model.scale;
 
-            position.Add(model.translation);
+            position += model.translation;
 
-            scale.Mul(model.scale);
+            scale = scale * model.scale;
 
-            mesh.SetPosition(position.Vector);
-            mesh.SetRotation(rotation.Rotation);
-            mesh.SetScale(scale.Vector);
+            mesh.SetPosition(position);
+            mesh.SetRotation(rotation);
+            mesh.SetScale(scale);
 
             RenderPosition = position;
 

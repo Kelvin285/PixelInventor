@@ -6,6 +6,7 @@ using System;
 using Inignoto.Items;
 using Inignoto.World.Chunks;
 using static Inignoto.World.World;
+using Microsoft.Xna.Framework;
 
 namespace Inignoto.Tiles
 {
@@ -125,7 +126,7 @@ namespace Inignoto.Tiles
 
         public RayBox[] GetCollisionBoxes(TileData state)
         {
-            RayBox box = new Raytracing.RayBox(new Vector3f(0, 0, 0), new Vector3f(1, 1, 1));
+            RayBox box = new RayBox(new Vector3(0, 0, 0), new Vector3(1, 1, 1));
             return new RayBox[] { box };
         }
 
@@ -174,7 +175,7 @@ namespace Inignoto.Tiles
 
         public bool TakesUpEntireSpace()
         {
-            return this.FullSpace;
+            return FullSpace;
         }
 
         public bool IsVisible()

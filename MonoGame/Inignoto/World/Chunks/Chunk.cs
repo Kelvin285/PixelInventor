@@ -10,72 +10,78 @@ using System.Collections.Generic;
 using Inignoto.Graphics.Gui;
 using System.Transactions;
 using System.IO;
+using static Inignoto.World.World;
 
 namespace Inignoto.World.Chunks
 {
     public class Chunk : IComparable<Chunk>
     {
-        public static List<Chunk> loadedChunkPool = new List<Chunk>();
-        public static List<Chunk> unloadedChunkPool = new List<Chunk>();
-
-        public static void DisposeChunk(Chunk chunk)
-        {
-            /*
-            lock(loadedChunkPool)
-                loadedChunkPool.Remove(chunk);
-            //lock(unloadedChunkPool)
-                unloadedChunkPool.Add(chunk);
-            */
-        }
-
-        public static Chunk GetChunk(int x, int y, int z, World world)
-        {
-            /*
-            if (unloadedChunkPool.Count > 0)
-            {
-                Chunk chunk = null;
-                //lock (unloadedChunkPool)
-                {
-                    chunk = unloadedChunkPool[0];
-                    chunk.Construct(x, y, z, world);
-                    lock(unloadedChunkPool)
-                    unloadedChunkPool.Remove(chunk);
-                }
-                //lock (loadedChunkPool)
-                    loadedChunkPool.Add(chunk);
-                return chunk;
-            } else
-            {
-                Chunk chunk = new Chunk(x, y, z, world);
-                //lock (loadedChunkPool)
-                    loadedChunkPool.Add(chunk);
-                return chunk;
-            }
-            */
-            return new Chunk(x, y, z, world);
-            
-        }
         public struct Voxel
         {
-            public TileData voxel;
-            public TileData overlay;
-            public int light;
-            public int sunlight;
-            public int mining_time;
+            public TileData voxel { get => GetVoxel(); set => SetVoxel(value); }
+            public TileData overlay { get => GetOverlayVoxel(); set => SetOverlayVoxel(value); }
+
+            private int true_voxel;
+            private int true_overlay;
+            private uint true_light;
+
+            public uint light { get => GetLight(); set => SetLight(value); }
+            public byte sunlight { get => GetSunlight(); set => SetSunlight(value); }
+            public uint mining_time;
             public Voxel(TileData voxel)
             {
-                this.voxel = voxel;
-                overlay = TileRegistry.AIR.DefaultData;
-                light = 0x000000;
-                sunlight = 0xff;
+                true_voxel = voxel.index;
+                true_overlay = TileRegistry.AIR.DefaultData.index;
+                true_light = 0x000f;
                 mining_time = 0;
+            }
+
+            public uint GetLight()
+            {
+                return true_light >> 4;
+            }
+
+            public byte GetSunlight()
+            {
+                return (byte)(true_light & 0xf);
+            }
+
+            public void SetLight(uint light)
+            {
+                uint sunlight = GetSunlight();
+                true_light = (light << 4) | sunlight;
+            }
+
+            public void SetSunlight(byte sunlight)
+            {
+                true_light = true_light & 0xfff0;
+                true_light |= sunlight;
+            }
+
+            public TileData GetVoxel()
+            {
+                return TileDataHolder.REGISTRY[true_voxel];
+            }
+
+            public void SetVoxel(TileData voxel)
+            {
+                true_voxel = voxel.index;
+            }
+
+            public TileData GetOverlayVoxel()
+            {
+                return TileDataHolder.REGISTRY[true_overlay];
+            }
+
+            public void SetOverlayVoxel(TileData voxel)
+            {
+                true_overlay = voxel.index;
             }
         }
 
         public readonly Voxel[] voxels;
 
-        private int x, y, z;
-        public Vector3 cpos;
+        public readonly Vector3 cpos;
         private World world;
         private ChunkManager chunkManager;
 
@@ -83,28 +89,15 @@ namespace Inignoto.World.Chunks
         private bool generated;
 
         public Mesh mesh;
-        public Mesh secondMesh;
 
         public Mesh waterMesh;
-        public Mesh secondWaterMesh;
 
         public Mesh transparencyMesh;
-        public Mesh secondTransparencyMesh;
-
-        public bool transparentRebuild = false;
-
-        private int solid_voxels = 0;
-        private int air_voxels = 0;
-
+        
         public bool modified = false;
-
-
         public bool LightRebuild { get; private set; }
 
-        public bool Full => solid_voxels >= Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE;
-        public bool Empty => air_voxels >= Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE;
-
-        public bool Occluded => TestOcclusion();
+        public bool LastEmpty;
 
         public List<int> sunlightBfsQueue;
         public List<int> sunlightRemovalBfsQueue;
@@ -114,11 +107,10 @@ namespace Inignoto.World.Chunks
         public List<int> redBfsQueue;
         public List<int> greenBfsQueue;
         public List<int> blueBfsQueue;
+
+
         public Chunk(int x, int y, int z, World world)
         {
-            this.x = x;
-            this.y = y;
-            this.z = z;
             this.world = world;
             voxels = new Voxel[Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE];
             for (int i = 0; i < voxels.Length; i++)
@@ -139,50 +131,6 @@ namespace Inignoto.World.Chunks
             blueBfsQueue = new List<int>(voxels.Length);
             cpos = new Vector3(x, y, z);
         }
-
-        private void Construct(int x, int y, int z, World world)
-        {
-            modified = false;
-            this.x = x;
-            this.y = y;
-            this.z = z;
-            this.world = world;
-            solid_voxels = 0;
-            air_voxels = voxels.Length;
-            for (int i = 0; i < voxels.Length; i++)
-            {
-                voxels[i].light = 0;
-                voxels[i].sunlight = 0;
-                voxels[i].overlay = TileRegistry.AIR.DefaultData;
-                voxels[i].voxel = TileRegistry.AIR.DefaultData;
-            }
-
-            mesh = null;
-            waterMesh = null;
-            secondWaterMesh = null;
-            secondMesh = null;
-            transparencyMesh = null;
-            secondTransparencyMesh = null;
-            rebuilding = false;
-            generated = false;
-            LightRebuild = false;
-
-            chunkManager = world.GetChunkManager();
-
-
-            sunlightBfsQueue.Clear();
-            sunlightRemovalBfsQueue.Clear();
-            redRemovalBfsQueue.Clear();
-            greenRemovalBfsQueue.Clear();
-            blueRemovalBfsQueue.Clear();
-            redBfsQueue.Clear();
-            greenBfsQueue.Clear();
-            blueBfsQueue.Clear();
-            cpos.X = x;
-            cpos.Y = y;
-            cpos.Z = z;
-        }
-
 
         public void Save()
         {
@@ -242,8 +190,8 @@ namespace Inignoto.World.Chunks
                 SetOverlayVoxel(x, y, z, TileDataHolder.REGISTRY[overlay]);
                 if (voxel.Length > 2)
                 {
-                    voxels[index].light = int.Parse(voxel[2]);
-                    voxels[index].sunlight = int.Parse(voxel[3]);
+                    voxels[index].light = uint.Parse(voxel[2]);
+                    voxels[index].sunlight = byte.Parse(voxel[3]);
                 }
                 
 
@@ -254,72 +202,55 @@ namespace Inignoto.World.Chunks
 
         public void BuildMesh()
         {
-            UpdateLights();
-            secondMesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, this);
-            if (secondMesh != null)
-                secondMesh.SetPosition(new Vector3(GetX() * Constants.CHUNK_SIZE, GetY() * Constants.CHUNK_SIZE, GetZ() * Constants.CHUNK_SIZE));
+            UpdateLights(false);
 
-            FinishRebuilding();
             if (mesh != null)
             {
                 mesh.Dispose();
+                mesh = null;
             }
 
             if (waterMesh != null)
             {
                 waterMesh.Dispose();
+                waterMesh = null;
             }
-            
+
             if (transparencyMesh != null)
             {
                 transparencyMesh.Dispose();
+                transparencyMesh = null;
             }
+
+            mesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, this);
+            if (mesh != null)
+                mesh.SetPosition(new Vector3(GetX() * Constants.CHUNK_SIZE, GetY() * Constants.CHUNK_SIZE, GetZ() * Constants.CHUNK_SIZE));
+
+            FinishRebuilding();
+            
         }
 
-        private bool TestOcclusion()
-        {
-            if (Full)
-            {
-                Chunk c = chunkManager.TryGetChunk(GetX() - 1, GetY(), GetZ());
-                if (c != null)
-                    if (!c.Full) return false;
-                c = chunkManager.TryGetChunk(GetX() + 1, GetY(), GetZ());
-                if (c != null)
-                    if (!c.Full) return false;
-                c = chunkManager.TryGetChunk(GetX(), GetY() - 1, GetZ());
-                if (c != null)
-                    if (!c.Full) return false;
-                c = chunkManager.TryGetChunk(GetX(), GetY() + 1, GetZ());
-                if (c != null)
-                    if (!c.Full) return false;
-                c = chunkManager.TryGetChunk(GetX(), GetY(), GetZ() - 1);
-                if (c != null)
-                    if (!c.Full) return false;
-                c = chunkManager.TryGetChunk(GetX(), GetY(), GetZ() + 1);
-                if (c != null)
-                    if (!c.Full) return false;
 
-            }
-            return false;
-        }
+        public bool Disposed = false;
 
         public void Dispose()
         {
-            lock(redBfsQueue)
+            Disposed = true;
+            //lock(redBfsQueue)
             {
-                lock(greenBfsQueue)
+                //lock(greenBfsQueue)
                 {
-                    lock(blueBfsQueue)
+                    //lock(blueBfsQueue)
                     {
-                        lock(sunlightBfsQueue)
+                        //lock(sunlightBfsQueue)
                         {
-                            lock(redRemovalBfsQueue)
+                            //lock(redRemovalBfsQueue)
                             {
-                                lock(greenRemovalBfsQueue)
+                                //lock(greenRemovalBfsQueue)
                                 {
-                                    lock(blueRemovalBfsQueue)
+                                    //lock(blueRemovalBfsQueue)
                                     {
-                                        lock(sunlightRemovalBfsQueue)
+                                        //lock(sunlightRemovalBfsQueue)
                                         {
                                             sunlightBfsQueue.Clear();
                                             sunlightRemovalBfsQueue.Clear();
@@ -336,6 +267,23 @@ namespace Inignoto.World.Chunks
                         }
                     }
                 }
+            }
+            if (mesh != null)
+            {
+                mesh.Dispose();
+                mesh = null;
+            }
+            
+            if (transparencyMesh != null)
+            {
+                transparencyMesh.Dispose();
+                transparencyMesh = null;
+            }
+            
+            if (waterMesh != null)
+            {
+                waterMesh.Dispose();
+                waterMesh = null;
             }
             
 
@@ -361,7 +309,7 @@ namespace Inignoto.World.Chunks
         {
             if (IsInsideChunk(x, y, z))
             {
-                return voxels[GetIndexFor(x, y, z)].light;
+                return (int)voxels[GetIndexFor(x, y, z)].light;
             }
 
             Chunk chunk = GetAdjacentChunkForLocation(x, y, z, out int X, out int Y, out int Z);
@@ -411,7 +359,8 @@ namespace Inignoto.World.Chunks
                                     }
                                 else
                                 if (red)
-                                    redRemovalBfsQueue.Add(GetIndexFor(x, y, z));
+                                    if (!redRemovalBfsQueue.Contains(GetIndexFor(x, y, z)))
+                                        redRemovalBfsQueue.Add(GetIndexFor(x, y, z));
 
                                 if (tile.light_green > 0)
                                 {
@@ -419,7 +368,8 @@ namespace Inignoto.World.Chunks
                                 }
                                 else
                                 if (green)
-                                    greenRemovalBfsQueue.Add(GetIndexFor(x, y, z));
+                                    if (!greenRemovalBfsQueue.Contains(GetIndexFor(x, y, z)))
+                                        greenRemovalBfsQueue.Add(GetIndexFor(x, y, z));
 
                                 if (tile.light_blue > 0)
                                 {
@@ -427,10 +377,12 @@ namespace Inignoto.World.Chunks
                                 }
                                 else
                                 if (blue)
-                                    blueRemovalBfsQueue.Add(GetIndexFor(x, y, z));
+                                    if (!blueRemovalBfsQueue.Contains(GetIndexFor(x, y, z)))
+                                        blueRemovalBfsQueue.Add(GetIndexFor(x, y, z));
 
                                 if (sun)
-                                    sunlightRemovalBfsQueue.Add(GetIndexFor(x, y, z));
+                                    if (!sunlightRemovalBfsQueue.Contains(GetIndexFor(x, y, z)))
+                                        sunlightRemovalBfsQueue.Add(GetIndexFor(x, y, z));
                             }
                         }
                     }
@@ -484,6 +436,7 @@ namespace Inignoto.World.Chunks
 
         public void SetLight(int x, int y, int z, int r, int g, int b, int sun, bool update = true)
         {
+            if (NeedsToGenerate()) update = false;
             if (update)
             {
                 //RemoveLight(x, y, z, r == 0, g == 0, b == 0, sun == 0);
@@ -508,36 +461,48 @@ namespace Inignoto.World.Chunks
                 if (r > -1)
                 {
                     voxels[GetIndexFor(x, y, z)].light &= 0b111111110000;
-                    voxels[GetIndexFor(x, y, z)].light |= R;
+                    voxels[GetIndexFor(x, y, z)].light |= (uint)R;
                     if (update)
-                        lock(redBfsQueue)
-                        redBfsQueue.Add(GetIndexFor(x, y, z));
+                        lock (redBfsQueue)
+                        {
+                            if (!redBfsQueue.Contains(GetIndexFor(x, y, z)))
+                            redBfsQueue.Add(GetIndexFor(x, y, z));
+                        }
                 }
                 if (g > -1)
                 {
                     voxels[GetIndexFor(x, y, z)].light &= 0b111100001111;
-                    voxels[GetIndexFor(x, y, z)].light |= G;
+                    voxels[GetIndexFor(x, y, z)].light |= (uint)G;
                     if (update)
-                        lock(greenBfsQueue)
-                        greenBfsQueue.Add(GetIndexFor(x, y, z));
+                        lock (greenBfsQueue) {
+                            if (!greenBfsQueue.Contains(GetIndexFor(x, y, z)))
+                                greenBfsQueue.Add(GetIndexFor(x, y, z));
+                        }
                 }
                 
                 if (b > -1)
                 {
                     voxels[GetIndexFor(x, y, z)].light &= 0b000011111111;
-                    voxels[GetIndexFor(x, y, z)].light |= B;
+                    voxels[GetIndexFor(x, y, z)].light |= (uint)B;
                     if (update)
-                        lock(blueBfsQueue)
-                        blueBfsQueue.Add(GetIndexFor(x, y, z));
+                        lock (blueBfsQueue)
+                        {
+                            if (!blueBfsQueue.Contains(GetIndexFor(x, y, z)))
+                                blueBfsQueue.Add(GetIndexFor(x, y, z));
+                        }
                 }
 
                 if (sun > -1)
                 {
-                    voxels[GetIndexFor(x, y, z)].sunlight = SUN;
+                    voxels[GetIndexFor(x, y, z)].sunlight = (byte)SUN;
 
                     if (update)
-                        lock(sunlightBfsQueue)
-                        sunlightBfsQueue.Add(GetIndexFor(x, y, z));
+                        //lock(sunlightBfsQueue) 
+                    {
+
+                            if (!sunlightBfsQueue.Contains(GetIndexFor(x, y, z)))
+                                sunlightBfsQueue.Add(GetIndexFor(x, y, z));
+                        }
                 }
                 return;
             }
@@ -725,8 +690,13 @@ namespace Inignoto.World.Chunks
                 int x = I % Constants.CHUNK_SIZE;
                 int y = ((I - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
                 int z = (I - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
-                voxels[I].voxel.Tick(x, y, z, this);
-                voxels[I].mining_time--;
+
+                if (world.random.Next(100) <= 2)
+                {
+                    voxels[I].voxel.Tick(x, y, z, this);
+                    voxels[I].mining_time--;
+                }
+                
             }
         }
 
@@ -734,14 +704,15 @@ namespace Inignoto.World.Chunks
         {
             LightRebuild = true;
         }
-        public void UpdateLights()
+
+        public void UpdateLights(bool canRerender = true)
         {
             LightRebuild = false;
             bool rerender = false;
             bool cu = false, cd = false, cl = false, cr = false, cb = false, cf = false;
             
-            lock(sunlightRemovalBfsQueue)
-                lock(sunlightBfsQueue)
+            //lock(sunlightRemovalBfsQueue)
+                //lock(sunlightBfsQueue)
             while (sunlightRemovalBfsQueue.Count > 0)
             {
                 rerender = true;
@@ -778,7 +749,8 @@ namespace Inignoto.World.Chunks
                 } else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x - 1, y, z);
-                    sunlightBfsQueue.Add(index);
+                    if (!sunlightBfsQueue.Contains(index))
+                        sunlightBfsQueue.Add(index);
                 }
                 neighborLevel = GetSunlight(x + 1, y, z);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -788,7 +760,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x + 1, y, z);
-                    sunlightBfsQueue.Add(index);
+                            if (!sunlightBfsQueue.Contains(index))
+                                sunlightBfsQueue.Add(index);
                 }
                 neighborLevel = GetSunlight(x, y + 1, z);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -798,7 +771,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x, y + 1, z);
-                    sunlightBfsQueue.Add(index);
+                            if (!sunlightBfsQueue.Contains(index))
+                                sunlightBfsQueue.Add(index);
                 }
                 neighborLevel = GetSunlight(x, y - 1, z);
                 if (neighborLevel != 0 && (neighborLevel < lightLevel || lightLevel == 15))
@@ -808,7 +782,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x, y - 1, z);
-                    sunlightBfsQueue.Add(index);
+                            if (!sunlightBfsQueue.Contains(index))
+                                sunlightBfsQueue.Add(index);
                 }
                 neighborLevel = GetSunlight(x, y, z + 1);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -818,7 +793,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x, y, z + 1);
-                    sunlightBfsQueue.Add(index);
+                            if (!sunlightBfsQueue.Contains(index))
+                                sunlightBfsQueue.Add(index);
                 }
                 neighborLevel = GetSunlight(x, y, z - 1);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -828,10 +804,11 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x, y, z - 1);
-                    sunlightBfsQueue.Add(index);
+                            if (!sunlightBfsQueue.Contains(index))
+                                sunlightBfsQueue.Add(index);
                 }
             }
-            lock(redRemovalBfsQueue)
+            //lock(redRemovalBfsQueue)
                 lock (redBfsQueue)
                     while (redRemovalBfsQueue.Count > 0)
             {
@@ -870,7 +847,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x - 1, y, z);
-                    redBfsQueue.Add(index);
+                            if (!redBfsQueue.Contains(index))
+                                redBfsQueue.Add(index);
                 }
                 neighborLevel = GetRedLight(x + 1, y, z);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -880,7 +858,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x + 1, y, z);
-                    redBfsQueue.Add(index);
+                            if (!redBfsQueue.Contains(index))
+                                redBfsQueue.Add(index);
                 }
                 neighborLevel = GetRedLight(x, y + 1, z);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -890,7 +869,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x, y + 1, z);
-                    redBfsQueue.Add(index);
+                            if (!redBfsQueue.Contains(index))
+                                redBfsQueue.Add(index);
                 }
                 neighborLevel = GetRedLight(x, y - 1, z);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -900,7 +880,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x, y - 1, z);
-                    redBfsQueue.Add(index);
+                            if (!redBfsQueue.Contains(index))
+                                redBfsQueue.Add(index);
                 }
                 neighborLevel = GetRedLight(x, y, z + 1);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -910,7 +891,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x, y, z + 1);
-                    redBfsQueue.Add(index);
+                            if (!redBfsQueue.Contains(index))
+                                redBfsQueue.Add(index);
                 }
                 neighborLevel = GetRedLight(x, y, z - 1);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -920,11 +902,12 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x, y, z - 1);
-                    redBfsQueue.Add(index);
+                            if (!redBfsQueue.Contains(index))
+                                redBfsQueue.Add(index);
                 }
             }
-            lock(greenRemovalBfsQueue)
-                lock(greenBfsQueue)
+            //lock(greenRemovalBfsQueue)
+                //lock(greenBfsQueue)
             while (greenRemovalBfsQueue.Count > 0)
             {
                 rerender = true;
@@ -962,7 +945,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x - 1, y, z);
-                    greenBfsQueue.Add(index);
+                            if (!greenBfsQueue.Contains(index))
+                                greenBfsQueue.Add(index);
                 }
                 neighborLevel = GetGreenLight(x + 1, y, z);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -972,7 +956,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x + 1, y, z);
-                    greenBfsQueue.Add(index);
+                            if (!greenBfsQueue.Contains(index))
+                                greenBfsQueue.Add(index);
                 }
                 neighborLevel = GetGreenLight(x, y + 1, z);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -982,7 +967,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x, y + 1, z);
-                    greenBfsQueue.Add(index);
+                            if (!greenBfsQueue.Contains(index))
+                                greenBfsQueue.Add(index);
                 }
                 neighborLevel = GetGreenLight(x, y - 1, z);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -992,7 +978,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x, y - 1, z);
-                    greenBfsQueue.Add(index);
+                            if (!greenBfsQueue.Contains(index))
+                                greenBfsQueue.Add(index);
                 }
                 neighborLevel = GetGreenLight(x, y, z + 1);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -1002,7 +989,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x, y, z + 1);
-                    greenBfsQueue.Add(index);
+                            if (!greenBfsQueue.Contains(index))
+                                greenBfsQueue.Add(index);
                 }
                 neighborLevel = GetGreenLight(x, y, z - 1);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -1012,11 +1000,12 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x, y, z - 1);
-                    greenBfsQueue.Add(index);
+                            if (!greenBfsQueue.Contains(index))
+                                greenBfsQueue.Add(index);
                 }
             }
-            lock(blueRemovalBfsQueue)
-                lock(blueBfsQueue)
+            //lock(blueRemovalBfsQueue)
+                //lock(blueBfsQueue)
             while (blueRemovalBfsQueue.Count > 0)
             {
                 rerender = true;
@@ -1054,7 +1043,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x - 1, y, z);
-                    blueBfsQueue.Add(index);
+                            if (!blueBfsQueue.Contains(index))
+                                blueBfsQueue.Add(index);
                 }
                 neighborLevel = GetBlueLight(x + 1, y, z);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -1064,7 +1054,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x + 1, y, z);
-                    blueBfsQueue.Add(index);
+                            if (!blueBfsQueue.Contains(index))
+                                blueBfsQueue.Add(index);
                 }
                 neighborLevel = GetBlueLight(x, y + 1, z);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -1074,7 +1065,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x, y + 1, z);
-                    blueBfsQueue.Add(index);
+                            if (!blueBfsQueue.Contains(index))
+                                blueBfsQueue.Add(index);
                 }
                 neighborLevel = GetBlueLight(x, y - 1, z);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -1084,7 +1076,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x, y - 1, z);
-                    blueBfsQueue.Add(index);
+                            if (!blueBfsQueue.Contains(index))
+                                blueBfsQueue.Add(index);
                 }
                 neighborLevel = GetBlueLight(x, y, z + 1);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -1094,7 +1087,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x, y, z + 1);
-                    blueBfsQueue.Add(index);
+                            if (!blueBfsQueue.Contains(index))
+                                blueBfsQueue.Add(index);
                 }
                 neighborLevel = GetBlueLight(x, y, z - 1);
                 if (neighborLevel != 0 && neighborLevel < lightLevel)
@@ -1104,7 +1098,8 @@ namespace Inignoto.World.Chunks
                 else if (neighborLevel >= lightLevel)
                 {
                     int index = GetIndexFor(x, y, z - 1);
-                    blueBfsQueue.Add(index);
+                            if (!blueBfsQueue.Contains(index))
+                                blueBfsQueue.Add(index);
                 }
             }
 
@@ -1363,11 +1358,11 @@ namespace Inignoto.World.Chunks
                     }
                 }
 
-            if (rerender)
+            if (rerender && canRerender)
             {
+                //MarkForLightBuild();
                 MarkForRebuild();
-                MarkForLightBuild();
-            
+
                 if (cu)
                 {
                     Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY() + 1, GetZ());
@@ -1468,41 +1463,8 @@ namespace Inignoto.World.Chunks
         {
             if (IsInsideChunk(x, y, z))
             {
-                if (TileRegistry.GetTile(voxel.tile_id) == TileRegistry.WATER)
-                {
-                    this.transparentRebuild = true;
-                }
-                if (voxels[GetIndexFor(x, y, z)].voxel == null)
-                {
-                    solid_voxels += TileRegistry.GetTile(voxel.tile_id).TakesUpEntireSpace() ? 1 : 0;
-                } else
-                {
-                    if (!TileRegistry.GetTile(voxels[GetIndexFor(x, y, z)].voxel.tile_id).TakesUpEntireSpace() &&
-                                        TileRegistry.GetTile(voxel.tile_id).TakesUpEntireSpace())
-                    {
-                        solid_voxels++;
-                    }
-                    else
-                    {
-                        if (TileRegistry.GetTile(voxel.tile_id).TakesUpEntireSpace() != TileRegistry.GetTile(voxels[GetIndexFor(x, y, z)].voxel.tile_id).TakesUpEntireSpace())
-                        {
-                            solid_voxels--;
-                        }
-                    }
-                }
                 TileData last = voxels[GetIndexFor(x, y, z)].voxel;
-                if (last != voxel)
-                {
-                    if (last != TileRegistry.AIR.DefaultData && voxel == TileRegistry.AIR.DefaultData)
-                    {
-                        air_voxels++;
-                    } else
-                    {
-                        air_voxels--;
-                    }
-                }
-                
-                
+
                 voxels[GetIndexFor(x, y, z)].voxel = voxel;
 
                 if (last != null)
@@ -1591,17 +1553,17 @@ namespace Inignoto.World.Chunks
 
         public int GetX()
         {
-            return x;
+            return (int)cpos.X;
         }
 
         public int GetY()
         {
-            return y;
+            return (int)cpos.Y;
         }
 
         public int GetZ()
         {
-            return z;
+            return (int)cpos.Z;
         }
 
         bool extendedRebuild = false;
@@ -1631,7 +1593,6 @@ namespace Inignoto.World.Chunks
         {
             generated = true;
         }
-
         public int CompareTo(Chunk obj)
         {
             if (obj == null) return 1;

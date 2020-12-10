@@ -226,7 +226,7 @@ namespace Inignoto.Common.Commands
                 clipboard[sender] = clip;
             }
 
-            Inignoto.game.client_system.SendChatMessage(-1, "Copied the area of " + StructureWrenchItem.pos1.Vector + " and " + StructureWrenchItem.pos2.Vector + " into the clipboard");
+            Inignoto.game.client_system.SendChatMessage(-1, "Copied the area of " + StructureWrenchItem.pos1 + " and " + StructureWrenchItem.pos2 + " into the clipboard");
         }
 
         private void Paste(long sender)
@@ -254,7 +254,7 @@ namespace Inignoto.Common.Commands
 
                 Inignoto.game.world.SetVoxel(pos2, TileDataHolder.REGISTRY[voxel[0]], TileDataHolder.REGISTRY[voxel[1]]);
             }
-            Inignoto.game.client_system.SendChatMessage(-1, "Pasted the contents of the clipboard at position: " + StructureWrenchItem.pos1.Vector);
+            Inignoto.game.client_system.SendChatMessage(-1, "Pasted the contents of the clipboard at position: " + StructureWrenchItem.pos1);
         }
 
         public override void Execute(long sender, string[] data)

@@ -72,14 +72,6 @@ VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
     
     output.Light = input.Color;
 
-    int CAM_CX = (int)(camera_pos.x) / 16 - 4;
-    int CAM_CY = (int)(camera_pos.y) / 16 - 2;
-    int CAM_CZ = (int)(camera_pos.z) / 16 - 4;
-
-    int CX = (int)(worldPosition.x) / 16 - CAM_CX;
-    int CY = (int)(worldPosition.y) / 16 - CAM_CY;
-    int CZ = (int)(worldPosition.z) / 16 - CAM_CZ;
-    
     if (world_render == true) {
         float r = radius;
         if (radius <= 0) r = 900000;
@@ -104,17 +96,6 @@ VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
 
     float4 viewPosition = mul(worldPosition, View);
 
-    if (water) {
-
-        float val = abs(sin(rand(float2(worldPosition.x, worldPosition.z)) + worldPosition.x + time));
-
-        worldPosition.y -= 0.1f * val;
-
-        float val2 = (1.0f - val) * 0.5f;
-        float water_fog = (viewPosition.y - viewPosition.z) / 35.0f;
-
-    }
-
     output.Position = mul(viewPosition, Projection);
 
     output.TextureCoordinate = input.TextureCoordinate;
@@ -131,49 +112,18 @@ VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
 
 float4 OpaquePixelShaderFunction(VertexShaderOutput input) : COLOR0
 {
-    if (input.Normal.y != 0) clip(-1);
-    if (input.Dot < 0) return float4(0, 0, 0, 0);
 	float4 textureColor = tex2D(textureSampler, input.TextureCoordinate);
 	if (textureColor.a != 1) clip(-1);
 
-    float c = (input.Color.x + input.Light.w * 0.001);
-
+    float c = (input.Color.x);
+    
     float4 final_color = float4(c, c, c, 1);
 
     return final_color;
 }
 
-float4 TransparentPixelShaderFunction(VertexShaderOutput input) : COLOR0
-{
-    if (input.Normal.y != 0) clip(-1);
-    if (input.Dot < 0) return float4(0, 0, 0, 0);
-    float4 textureColor = tex2D(textureSampler, input.TextureCoordinate);
-	if (textureColor.a < 1) clip(-1);
-
-    float c = (input.Color.x + input.Light.w * 0.001);
-
-	float4 final_color = float4(c, c, c, 1);
-    
-	return final_color;
-}
-
 technique Specular
 {
-    pass Pass2
-    {
-        AlphaBlendEnable = true;
-        ZEnable = true;
-        ZWriteEnable = false;
-
-        // Final Colour = srcColour * srcAlpha + destColour * (1 - srcAlpha)
-        SrcBlend = SrcAlpha; // Normal Alpha Blending
-        DestBlend = InvSrcAlpha; // Normal Alpha Blending
-        BlendOp = Add; // Normal Alpha Blending
-
-        VertexShader = compile VS_SHADERMODEL VertexShaderFunction();
-        PixelShader = compile PS_SHADERMODEL TransparentPixelShaderFunction();
-    }
-
     pass Pass1
     {
         AlphaBlendEnable = true;

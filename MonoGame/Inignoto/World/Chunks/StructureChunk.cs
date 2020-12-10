@@ -14,6 +14,9 @@ namespace Inignoto.World.Chunks
         public readonly int x, y, z;
         public Vector3 cpos;
         public ChunkManager manager;
+
+        public bool done = false;
+
         public StructureChunk(int x, int y, int z, ChunkManager manager)
         {
             tiles = new Chunk.Voxel[Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE];

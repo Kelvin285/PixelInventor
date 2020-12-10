@@ -17,6 +17,7 @@ namespace Inignoto.Effects
         public Matrix Projection3 { get => GetMatrix("Projection3"); set => SetMatrix("Projection3", value); }
 
         public Matrix ShadowView { get => GetMatrix("ShadowView"); set => SetMatrix("ShadowView", value); }
+
         public Matrix ShadowProjection { get => GetMatrix("ShadowProjection"); set => SetMatrix("ShadowProjection", value); }
         public Matrix ShadowProjection2 { get => GetMatrix("ShadowProjection2"); set => SetMatrix("ShadowProjection2", value); }
         public Matrix ShadowProjection3 { get => GetMatrix("ShadowProjection3"); set => SetMatrix("ShadowProjection3", value); }
@@ -26,6 +27,8 @@ namespace Inignoto.Effects
         public Vector4 FogColor { get => GetFloat4("fog_color"); set => SetFloat4("fog_color", value); }
         public float Time { get => GetFloat("time"); set => SetFloat("time", value); }
         public bool Water { get => GetBool("water"); set => SetBool("water", value); }
+        public bool HasShadows { get => GetBool("has_shadows"); set => SetBool("has_shadows", value); }
+
         public Vector4 ObjectColor { get => GetFloat4("color"); set => SetFloat4("color", value); }
         public Vector4 ObjectLight { get => GetFloat4("ObjectLight"); set => SetFloat4("ObjectLight", value); }
 

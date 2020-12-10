@@ -21,7 +21,7 @@ namespace Inignoto.Entities
 
         private int timeUntilPickup = 0;
 
-        public ItemEntity(World.World world, Vector3f position, ItemStack stack, int timeUntilPickup = 0) : base(world, position)
+        public ItemEntity(World.World world, Vector3 position, ItemStack stack, int timeUntilPickup = 0) : base(world, position)
         {
             StepHeight = 0;
             Stack = stack;
@@ -36,7 +36,7 @@ namespace Inignoto.Entities
             OnGround = false;
             if (velocity.Y <= 0)
             {
-                TileRaytraceResult result = world.RayTraceTiles(position, new Vector3f(position).Add(0, velocity.Y - 0.5f, 0), Tiles.Tile.TileRayTraceType.BLOCK);
+                TileRaytraceResult result = world.RayTraceTiles(position, position + new Vector3(0, velocity.Y - 0.5f, 0), Tile.TileRayTraceType.BLOCK);
 
                 if (result != null)
                 {
@@ -58,7 +58,7 @@ namespace Inignoto.Entities
                 {
                     if (world.entities[i] is PlayerEntity) {
                         PlayerEntity player = (PlayerEntity)world.entities[i];
-                        float dist = player.GetEyePosition().DistanceTo(position.Vector + new Vector3(0, 1, 0));
+                        float dist = Vector3.Distance(player.GetEyePosition(), position + new Vector3(0, 1, 0));
                         if (dist <= 2.5f)
                         {
                             if (dist < distance)
@@ -81,15 +81,15 @@ namespace Inignoto.Entities
             }
 
 
-            position.Add(velocity);
+            position += velocity;
         }
 
         private void MoveToPlayer(PlayerEntity player, GameTime time)
         {
             float delta = (float)time.ElapsedGameTime.TotalSeconds * 60;
 
-            position.Set(Vector3.Lerp(position.Vector, player.GetEyePosition().Vector, 0.075f * delta));
-            if (player.GetEyePosition().DistanceTo(position.Vector) <= 1)
+            position = Vector3.Lerp(position, player.GetEyePosition(), 0.075f * delta);
+            if (Vector3.Distance(player.GetEyePosition(), position) <= 1)
             {
                 bool add = false;
 
@@ -164,7 +164,7 @@ namespace Inignoto.Entities
             if (stack != null)
                 if (stack.item.Mesh != null)
                 {
-                    stack.item.Mesh.SetPosition(position.Vector + new Vector3(0, (float)System.Math.Sin(TicksExisted * 0.01f) * 0.25f, 0));
+                    stack.item.Mesh.SetPosition(position + new Vector3(0, (float)System.Math.Sin(TicksExisted * 0.01f) * 0.25f, 0));
                     stack.item.Mesh.SetScale(new Vector3(0.5f, 0.5f, 0.5f));
                     stack.item.Mesh.SetRotation(Quaternion.CreateFromYawPitchRoll(TicksExisted * 0.01f, 0, 0));
                     stack.item.Mesh.Draw(effect, device);

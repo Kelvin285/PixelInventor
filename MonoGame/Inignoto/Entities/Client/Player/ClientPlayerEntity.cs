@@ -88,7 +88,7 @@ namespace Inignoto.Entities.Client.Player
         public GameModel pick_model;
         public Texture2D pick_texture;
 
-        public ClientPlayerEntity(World.World world, Vector3f position, long UID = 0) : base(world, position, UID)
+        public ClientPlayerEntity(World.World world, Vector3 position, long UID = 0) : base(world, position, UID)
         {
             Inignoto.game.client_system.PLAYERS.Clear();
             Inignoto.game.client_system.PLAYERS.Add(UID, this);
@@ -196,7 +196,7 @@ namespace Inignoto.Entities.Client.Player
 
         private float OffGroundTimer = 0.0f;
 
-        private Vector3f trueMotion = new Vector3f();
+        private Vector3 trueMotion = new Vector3();
 
         public void DoInputControls(GameTime time)
         {
@@ -239,8 +239,8 @@ namespace Inignoto.Entities.Client.Player
             trueMotion.Y = velocity.Y;
             trueMotion.Z = 0;
 
-            Vector3 ForwardMotion = ForwardMotionVector.Vector;
-            Vector3 RightMotion = RightMotionVector.Vector;
+            Vector3 ForwardMotion = ForwardMotionVector;
+            Vector3 RightMotion = RightMotionVector;
 
             if (Settings.FORWARD.IsPressed() && !Settings.BACKWARD.IsPressed())
             {
@@ -394,18 +394,18 @@ namespace Inignoto.Entities.Client.Player
                     velocity.X = MathHelper.Lerp(velocity.X, 0, 0.25f * friction * delta);
                     velocity.Z = MathHelper.Lerp(velocity.Z, 0, 0.25f * friction * delta);
                 }
-            } else if (trueMotion.Vector.Length() > 0)
+            } else if (trueMotion.Length() > 0)
             {
                 if (OnGround)
                 {
-                    trueMotion.Div(trueMotion.Vector.Length());
-                    trueMotion.Mul(GetMovementSpeed(time));
+                    trueMotion = trueMotion / trueMotion.Length();
+                    trueMotion *= GetMovementSpeed(time);
                     velocity.X = MathHelper.Lerp(velocity.X, trueMotion.X, moveLerp * delta);
                     velocity.Z = MathHelper.Lerp(velocity.Z, trueMotion.Z, moveLerp * delta);
                 } else
                 {
-                    trueMotion.Div(trueMotion.Vector.Length());
-                    trueMotion.Mul(GetMovementSpeed(time));
+                    trueMotion = trueMotion / trueMotion.Length();
+                    trueMotion *= GetMovementSpeed(time);
                     velocity.X = MathHelper.Lerp(velocity.X, trueMotion.X * 1.1f, moveLerp * delta * 0.15f);
                     velocity.Z = MathHelper.Lerp(velocity.Z, trueMotion.Z * 1.1f, moveLerp * delta * 0.15f);
                 }
@@ -586,12 +586,12 @@ namespace Inignoto.Entities.Client.Player
                 bool flagX = false;
                 bool flagZ = false;
                 {
-                    Vector3f p1 = new Vector3f(position).Add(0, StepHeight, 0);
-                    Vector3f p2 = new Vector3f(position).Add(size.X, StepHeight, size.Z);
-                    TileRaytraceResult result = world.RayTraceTiles(new Vector3f(p1), new Vector3f(p1).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                    Vector3 p1 = position + new Vector3(0, StepHeight, 0);
+                    Vector3 p2 = position + new Vector3(size.X, StepHeight, size.Z);
+                    TileRaytraceResult result = world.RayTraceTiles(p1, p1 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                     if (result == null)
                     {
-                        result = world.RayTraceTiles(new Vector3f(p2), new Vector3f(p2).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                        result = world.RayTraceTiles(p2, p2 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                         if (result != null)
                         {
                             if (velocity.X > 0)
@@ -607,12 +607,12 @@ namespace Inignoto.Entities.Client.Player
                 }
 
                 {
-                    Vector3f p1 = new Vector3f(position).Add(0, StepHeight, 0);
-                    Vector3f p2 = new Vector3f(position).Add(size.X, StepHeight, size.Z);
-                    TileRaytraceResult result = world.RayTraceTiles(new Vector3f(p1), new Vector3f(p1).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                    Vector3 p1 = position + new Vector3(0, StepHeight, 0);
+                    Vector3 p2 = position + new Vector3(size.X, StepHeight, size.Z);
+                    TileRaytraceResult result = world.RayTraceTiles(p1, p1 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                     if (result != null)
                     {
-                        result = world.RayTraceTiles(new Vector3f(p2), new Vector3f(p2).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                        result = world.RayTraceTiles(p2, p2 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                         if (result == null)
                         {
                             if (velocity.X < 0)
@@ -628,12 +628,12 @@ namespace Inignoto.Entities.Client.Player
                 }
 
                 {
-                    Vector3f p1 = new Vector3f(position).Add(size.X, StepHeight, 0);
-                    Vector3f p2 = new Vector3f(position).Add(0, StepHeight, size.Z);
-                    TileRaytraceResult result = world.RayTraceTiles(new Vector3f(p1), new Vector3f(p1).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                    Vector3 p1 = position + new Vector3(size.X, StepHeight, 0);
+                    Vector3 p2 = position + new Vector3(0, StepHeight, size.Z);
+                    TileRaytraceResult result = world.RayTraceTiles(p1, p1 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                     if (result != null)
                     {
-                        result = world.RayTraceTiles(new Vector3f(p2), new Vector3f(p2).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                        result = world.RayTraceTiles(p1, p2 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                         if (result == null)
                         {
                             if (velocity.X > 0)
@@ -649,12 +649,12 @@ namespace Inignoto.Entities.Client.Player
                 }
 
                 {
-                    Vector3f p1 = new Vector3f(position).Add(0, StepHeight, size.Z);
-                    Vector3f p2 = new Vector3f(position).Add(size.X, StepHeight, 0);
-                    TileRaytraceResult result = world.RayTraceTiles(new Vector3f(p1), new Vector3f(p1).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                    Vector3 p1 = position + new Vector3(0, StepHeight, size.Z);
+                    Vector3 p2 = position + new Vector3(size.X, StepHeight, 0);
+                    TileRaytraceResult result = world.RayTraceTiles(p1, p1 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                     if (result != null)
                     {
-                        result = world.RayTraceTiles(new Vector3f(p2), new Vector3f(p2).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                        result = world.RayTraceTiles(p1, p2 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                         if (result == null)
                         {
                             if (velocity.X < 0)
@@ -672,20 +672,20 @@ namespace Inignoto.Entities.Client.Player
                 if (!flagZ)
                     if (velocity.Z > 0)
                     {
-                        Vector3f p1 = new Vector3f(position).Add(0, StepHeight, size.Z * 0.1f);
-                        Vector3f p2 = new Vector3f(position).Add(size.X / 2.0f, StepHeight, size.Z * 0.1f);
-                        Vector3f p3 = new Vector3f(position).Add(size.X, StepHeight, size.Z * 0.1f);
-                        Vector3f p4 = new Vector3f(position).Add(size.X / 2.0f, StepHeight, size.Z);
-                        TileRaytraceResult result = world.RayTraceTiles(new Vector3f(p1), new Vector3f(p1).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                        Vector3 p1 = position + new Vector3(0, StepHeight, size.Z * 0.1f);
+                        Vector3 p2 = position + new Vector3(size.X / 2.0f, StepHeight, size.Z * 0.1f);
+                        Vector3 p3 = position + new Vector3(size.X, StepHeight, size.Z * 0.1f);
+                        Vector3 p4 = position + new Vector3(size.X / 2.0f, StepHeight, size.Z);
+                        TileRaytraceResult result = world.RayTraceTiles(p1, p1 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                         if (result == null)
                         {
-                            result = world.RayTraceTiles(new Vector3f(p2), new Vector3f(p2).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                            result = world.RayTraceTiles(p1, p2 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                             if (result == null)
                             {
-                                result = world.RayTraceTiles(new Vector3f(p3), new Vector3f(p3).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                                result = world.RayTraceTiles(p3, p3 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                                 if (result == null)
                                 {
-                                    result = world.RayTraceTiles(new Vector3f(p4), new Vector3f(p4).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                                    result = world.RayTraceTiles(p4, p4 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                                     if (result == null)
                                     {
                                         //								position.Z -= velocity.Z;
@@ -698,20 +698,20 @@ namespace Inignoto.Entities.Client.Player
                 if (!flagZ)
                     if (velocity.Z < 0)
                     {
-                        Vector3f p1 = new Vector3f(position).Add(0, StepHeight, size.Z * 0.9f);
-                        Vector3f p2 = new Vector3f(position).Add(size.X / 2.0f, StepHeight, size.Z * 0.9f);
-                        Vector3f p3 = new Vector3f(position).Add(size.X, StepHeight, size.Z * 0.9f);
-                        Vector3f p4 = new Vector3f(position).Add(size.X / 2.0f, StepHeight, 0);
-                        TileRaytraceResult result = world.RayTraceTiles(new Vector3f(p1), new Vector3f(p1).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                        Vector3 p1 = position + new Vector3(0, StepHeight, size.Z * 0.9f);
+                        Vector3 p2 = position + new Vector3(size.X / 2.0f, StepHeight, size.Z * 0.9f);
+                        Vector3 p3 = position + new Vector3(size.X, StepHeight, size.Z * 0.9f);
+                        Vector3 p4 = position + new Vector3(size.X / 2.0f, StepHeight, 0);
+                        TileRaytraceResult result = world.RayTraceTiles(p1, p1 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                         if (result == null)
                         {
-                            result = world.RayTraceTiles(new Vector3f(p2), new Vector3f(p2).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                            result = world.RayTraceTiles(p1, p2 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                             if (result == null)
                             {
-                                result = world.RayTraceTiles(new Vector3f(p3), new Vector3f(p3).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                                result = world.RayTraceTiles(p3, p3 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                                 if (result == null)
                                 {
-                                    result = world.RayTraceTiles(new Vector3f(p4), new Vector3f(p4).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                                    result = world.RayTraceTiles(p4, p4 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                                     if (result == null)
                                     {
                                         //								position.Z -= velocity.Z;
@@ -724,20 +724,20 @@ namespace Inignoto.Entities.Client.Player
                 if (!flagX)
                     if (velocity.X > 0)
                     {
-                        Vector3f p1 = new Vector3f(position).Add(size.X * 0.1f, StepHeight, 0);
-                        Vector3f p2 = new Vector3f(position).Add(size.X * 0.1f, StepHeight, size.Z / 2.0f);
-                        Vector3f p3 = new Vector3f(position).Add(size.X * 0.1f, StepHeight, size.Z);
-                        Vector3f p4 = new Vector3f(position).Add(size.X, StepHeight, size.Z / 2.0f);
-                        TileRaytraceResult result = world.RayTraceTiles(new Vector3f(p1), new Vector3f(p1).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                        Vector3 p1 = position + new Vector3(size.X * 0.1f, StepHeight, 0);
+                        Vector3 p2 = position + new Vector3(size.X * 0.1f, StepHeight, size.Z / 2.0f);
+                        Vector3 p3 = position + new Vector3(size.X * 0.1f, StepHeight, size.Z);
+                        Vector3 p4 = position + new Vector3(size.X, StepHeight, size.Z / 2.0f);
+                        TileRaytraceResult result = world.RayTraceTiles(p1, p1 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                         if (result == null)
                         {
-                            result = world.RayTraceTiles(new Vector3f(p2), new Vector3f(p2).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                            result = world.RayTraceTiles(p1, p2 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                             if (result == null)
                             {
-                                result = world.RayTraceTiles(new Vector3f(p3), new Vector3f(p3).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                                result = world.RayTraceTiles(p3, p3 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                                 if (result == null)
                                 {
-                                    result = world.RayTraceTiles(new Vector3f(p4), new Vector3f(p4).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                                    result = world.RayTraceTiles(p4, p4 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                                     if (result == null)
                                     {
                                         //								position.X -= velocity.X;
@@ -750,20 +750,20 @@ namespace Inignoto.Entities.Client.Player
                 if (!flagX)
                     if (velocity.X < 0)
                     {
-                        Vector3f p1 = new Vector3f(position).Add(size.X * 0.9f, StepHeight, 0);
-                        Vector3f p2 = new Vector3f(position).Add(size.X * 0.9f, StepHeight, size.Z / 2.0f);
-                        Vector3f p3 = new Vector3f(position).Add(size.X * 0.9f, StepHeight, size.Z);
-                        Vector3f p4 = new Vector3f(position).Add(0, StepHeight, size.Z / 2.0f);
-                        TileRaytraceResult result = world.RayTraceTiles(new Vector3f(p1), new Vector3f(p1).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                        Vector3 p1 = position + new Vector3(size.X * 0.9f, StepHeight, 0);
+                        Vector3 p2 = position + new Vector3(size.X * 0.9f, StepHeight, size.Z / 2.0f);
+                        Vector3 p3 = position + new Vector3(size.X * 0.9f, StepHeight, size.Z);
+                        Vector3 p4 = position + new Vector3(0, StepHeight, size.Z / 2.0f);
+                        TileRaytraceResult result = world.RayTraceTiles(p1, p1 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                         if (result == null)
                         {
-                            result = world.RayTraceTiles(new Vector3f(p2), new Vector3f(p2).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                            result = world.RayTraceTiles(p1, p2 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                             if (result == null)
                             {
-                                result = world.RayTraceTiles(new Vector3f(p3), new Vector3f(p3).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                                result = world.RayTraceTiles(p3, p3 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                                 if (result == null)
                                 {
-                                    result = world.RayTraceTiles(new Vector3f(p4), new Vector3f(p4).Add(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
+                                    result = world.RayTraceTiles(p4, p4 + new Vector3(0, -StepHeight * 2, 0), TileRayTraceType.BLOCK);
                                     if (result == null)
                                     {
                                         //								position.X -= velocity.X;
@@ -775,8 +775,8 @@ namespace Inignoto.Entities.Client.Player
                     }
             }
 
-            
-            position.Add(velocity);
+
+            position += velocity;
         }
 
         public void FreecamMotion(GameTime time)
@@ -793,22 +793,22 @@ namespace Inignoto.Entities.Client.Player
 
             if (Keyboard.GetState().IsKeyDown(Keys.W))
             {
-                position.Add(camera.ForwardMotionVector.Vector * new Vector3(0.1f, 0.0f, 0.1f));
+                position += camera.ForwardMotionVector * new Vector3(0.1f, 0.0f, 0.1f);
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.S))
             {
-                position.Add(camera.ForwardMotionVector.Vector * new Vector3(0.1f, 0.0f, 0.1f) * -0.75f);
+                position += camera.ForwardMotionVector * new Vector3(0.1f, 0.0f, 0.1f) * -0.75f;
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.A))
             {
-                position.Add(camera.RightMotionVector.Vector * new Vector3(0.1f, 0.0f, 0.1f) * -0.75f);
+                position += camera.RightMotionVector * new Vector3(0.1f, 0.0f, 0.1f) * -0.75f;
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.D))
             {
-                position.Add(camera.RightMotionVector.Vector * new Vector3(0.1f, 0.0f, 0.1f) * 0.75f);
+                position += camera.RightMotionVector * new Vector3(0.1f, 0.0f, 0.1f) * 0.75f;
             }
         }
 
@@ -838,8 +838,7 @@ namespace Inignoto.Entities.Client.Player
                 if (look.X <= -89) look.X = -89;
             }
             
-            Vector3f cpos = new Vector3f();
-            cpos.Set(position.X + size.X * 0.5f, position.Y + RenderEyeHeight, position.Z + size.Z * 0.5f);
+            Vector3 cpos = new Vector3(position.X + size.X * 0.5f, position.Y + RenderEyeHeight, position.Z + size.Z * 0.5f);
             if (Inignoto.game.world.gameTime.TotalGameTime.TotalMilliseconds < CameraShakeTime)
             {
                 Random random = new Random();
@@ -849,21 +848,21 @@ namespace Inignoto.Entities.Client.Player
                 x *= 2;
                 y *= 2;
                 z *= 2;
-                cpos.Add(new Vector3((float)x * CameraShakeIntensity, (float)y * CameraShakeIntensity, (float)z * CameraShakeIntensity));
+                cpos += new Vector3((float)x * CameraShakeIntensity, (float)y * CameraShakeIntensity, (float)z * CameraShakeIntensity);
             }
 
-            cpos.Add(ForwardLook.Mul(-(Perspective - 1) * 4.0f));
+            cpos += ForwardLook * (-(Perspective - 1) * 4.0f);
 
             TileRaytraceResult result = world.RayTraceTiles(GetEyePositionForRender(), cpos, TileRayTraceType.BLOCK);
 
-            cpos.Sub(ForwardLook.Mul(-(Perspective - 1) * 0.5f));
+            cpos -=ForwardLook * (-(Perspective - 1) * 0.5f);
 
             if (result != null)
             {
-                Vector3f dir = new Vector3f(cpos).Sub(GetEyePositionForRender());
-                if (dir.Vector.Length() != 0)
-                    dir.Div(dir.Vector.Length());
-                cpos = GetEyePosition().Add(dir.Mul(result.intersection.lambda.X - 0.5f));
+                Vector3 dir = cpos - GetEyePositionForRender();
+                if (dir.Length() != 0)
+                    dir /= dir.Length();
+                cpos = GetEyePosition() + (dir * (result.intersection.lambda.X - 0.5f));
             }
 
             float speed = 1.0f;
@@ -876,53 +875,51 @@ namespace Inignoto.Entities.Client.Player
                 WalkCycleTime = 0;
             }
 
-            camera.position.Set(Vector3.Lerp(camera.position.Vector, cpos.Vector, 1f));
-            camera.rotation.Set(look.X, look.Y, look.Z);
+            camera.position = (Vector3.Lerp(camera.position, cpos, 1f));
+            camera.rotation = new Vector3(look.X, look.Y, look.Z);
 
-            camera.position.Y = MathHelper.Lerp(camera.position.Y, cpos.Vector.Y - (float)MathF.Abs(MathF.Sin(WalkCycleTime + MathF.PI / 2.0f)), 0.1f);
-            camera.position.Set(Vector3.Lerp(camera.position.Vector, (cpos + RightMotionVector * (float)MathF.Cos(WalkCycleTime + MathF.PI / 2.0f)).Vector, 0.1f));
+            camera.position.Y = MathHelper.Lerp(camera.position.Y, cpos.Y - (float)MathF.Abs(MathF.Sin(WalkCycleTime + MathF.PI / 2.0f)), 0.1f);
+            camera.position = Vector3.Lerp(camera.position, (cpos + RightMotionVector * (float)MathF.Cos(WalkCycleTime + MathF.PI / 2.0f)), 0.1f);
 
             if (Perspective == 0)
             {   
-                camera.rotation.Set(-look.X, look.Y + 180, -look.Z + lean + rLean * 30);
+                camera.rotation = new Vector3(-look.X, look.Y + 180, -look.Z + lean + rLean * 30);
             }
 
-            SetModelTransform(position);
+            SetModelTransform(position, this.look);
             RenderEyeHeight = MathHelper.Lerp(RenderEyeHeight, GetEyeHeight(), 0.1f);
             
             
         }
 
-        public virtual Vector3f GetEyePositionForRender()
+        public virtual Vector3 GetEyePositionForRender()
         {
-            return new Vector3f(position).Add(size.X * 0.5f, RenderEyeHeight, size.Z * 0.5f);
+            return position + new Vector3(size.X * 0.5f, RenderEyeHeight, size.Z * 0.5f);
         }
 
-        public void SetModelTransform(Vector3f position = null, Vector3f look = null)
+        public void SetModelTransform(Vector3 position, Vector3 look)
         {
-            if (position == null) position = this.position;
-            if (look == null) look = this.look;
             if (model != null)
             {
                 float sine = (float)System.Math.Sin(look.Y * (3.14 / 180.0));
                 float cos = (float)System.Math.Cos(look.Y * (3.14 / 180.0));
-                model.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
+                model.translation = position + new Vector3(size.X * 0.5f, 0, size.Z * 0.5f);
 
                 model.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
 
-                shirt_model.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
+                shirt_model.translation = position + new Vector3(size.X * 0.5f, 0, size.Z * 0.5f);
                 shirt_model.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
 
-                pants_model.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
+                pants_model.translation = position + new Vector3(size.X * 0.5f, 0, size.Z * 0.5f);
                 pants_model.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
 
-                shoes_model.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
+                shoes_model.translation = position + new Vector3(size.X * 0.5f, 0, size.Z * 0.5f);
                 shoes_model.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
 
-                eyes_model.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
+                eyes_model.translation = position + new Vector3(size.X * 0.5f, 0, size.Z * 0.5f);
                 eyes_model.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
 
-                hair_model.translation = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * 0.5f);
+                hair_model.translation = position + new Vector3(size.X * 0.5f, 0, size.Z * 0.5f);
                 hair_model.rotation.Y = (180 + look.Y) * ((float)System.Math.PI / 180.0f);
             }
         }
@@ -1128,9 +1125,9 @@ namespace Inignoto.Entities.Client.Player
                 {
                     if (stack.item.Model != null)
                     {
-                        Vector3f renderPos = GetEyePositionForRender() + (RightMotionVector * 0.5f) - UpLook * 0.5f;
+                        Vector3 renderPos = GetEyePositionForRender() + (RightMotionVector * 0.5f) - UpLook * 0.5f;
 
-                        stack.item.Model.scale = new Vector3f(1.0f, 1.0f, 1.0f);
+                        stack.item.Model.scale = new Vector3(1.0f, 1.0f, 1.0f);
                         stack.item.Model.translation = renderPos;
                         double val = 0;
                         if (stack.item.CurrentCooldown > 0)
@@ -1149,11 +1146,11 @@ namespace Inignoto.Entities.Client.Player
                         {
                             arm_swing = 0;
                         }
-                        Vector3f euler = new Vector3f(0, -look.X - 45 + (float)render_arm_swing, (float)render_arm_swing).Mul(MathF.PI / 180.0f);
+                        Vector3 euler = new Vector3(0, -look.X - 45 + (float)render_arm_swing, (float)render_arm_swing) * (MathF.PI / 180.0f);
 
-                        Vector3f e2 = new Vector3f(euler.Z, euler.X, euler.Y);
+                        Vector3 e2 = new Vector3(euler.Z, euler.X, euler.Y);
 
-                        stack.item.Model.rotation = new Vector3f(0, 90f * 3.14f / 180.0f, 90f * 3.14f / 180.0f).Add(new Vector3f(model.rotation)).Add(e2);
+                        stack.item.Model.rotation = new Vector3(0, 90f * 3.14f / 180.0f, 90f * 3.14f / 180.0f) + model.rotation + e2;
 
                         stack.item.Model.Render(device, effect, time);
                     } else
@@ -1161,12 +1158,12 @@ namespace Inignoto.Entities.Client.Player
                         if (stack.item is TileItem && stack.item.Mesh != null)
                         {
                             TileItem tile = (TileItem)stack.item;
-                            Vector3f renderPos = GetEyePositionForRender() + ForwardLook * 0.5f * (((float)render_arm_swing / 90.0f) * 5.0f + 1.0f) - UpLook * (((float)render_arm_swing / 90.0f)) + (RightMotionVector * 0.5f) - UpLook * 0.5f;
+                            Vector3 renderPos = GetEyePositionForRender() + ForwardLook * 0.5f * (((float)render_arm_swing / 90.0f) * 5.0f + 1.0f) - UpLook * (((float)render_arm_swing / 90.0f)) + (RightMotionVector * 0.5f) - UpLook * 0.5f;
 
 
                             stack.item.Mesh.SetScale(new Vector3(0.5f, 0.5f, 0.5f));
 
-                            stack.item.Mesh.SetPosition(renderPos.Vector);
+                            stack.item.Mesh.SetPosition(renderPos);
                             double val = 0;
                             if (stack.item.CurrentCooldown > 0)
                             {
@@ -1186,11 +1183,11 @@ namespace Inignoto.Entities.Client.Player
                                 arm_swing = 0;
                             }
                             
-                            Vector3f euler = new Vector3f(0, -look.X - 90 + (float)render_arm_swing, (float)render_arm_swing).Mul(MathF.PI / 180.0f);
+                            Vector3 euler = new Vector3(0, -look.X - 90 + (float)render_arm_swing, (float)render_arm_swing) * (MathF.PI / 180.0f);
 
-                            Vector3f e2 = new Vector3f(euler.Z, euler.X, euler.Y);
+                            Vector3 e2 = new Vector3(euler.Z, euler.X, euler.Y);
 
-                            Vector3f rotation = new Vector3f(0, 90f * 3.14f / 180.0f, 90f * 3.14f / 180.0f).Add(new Vector3f(model.rotation)).Add(e2);
+                            Vector3 rotation = new Vector3(0, 90f * 3.14f / 180.0f, 90f * 3.14f / 180.0f) + model.rotation + e2;
 
                             stack.item.Mesh.SetRotation(Quaternion.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z));
                             stack.item.Mesh.Draw(effect, device);
@@ -1204,37 +1201,37 @@ namespace Inignoto.Entities.Client.Player
                 if (shirt_model != null)
                 {
                     shirt_model.currentTime = model.currentTime;
-                    shirt_model.scale.Set(2.0f, 2.0f, 2.0f);
+                    shirt_model.scale = new Vector3(2.0f, 2.0f, 2.0f);
                     shirt_model.Render(device, effect, time);
                 }
                 if (pants_model != null)
                 {
                     pants_model.currentTime = model.currentTime;
-                    pants_model.scale.Set(2.0f, 2.0f, 2.0f);
+                    pants_model.scale = new Vector3(2.0f, 2.0f, 2.0f);
                     pants_model.Render(device, effect, time);
                 }
                 if (shoes_model != null)
                 {
                     shoes_model.currentTime = model.currentTime;
-                    shoes_model.scale.Set(2.0f, 2.0f, 2.0f);
+                    shoes_model.scale = new Vector3(2.0f, 2.0f, 2.0f);
                     shoes_model.Render(device, effect, time);
                 }
 
                 eyes_model.currentTime = model.currentTime;
                 hair_model.currentTime = model.currentTime;
 
-                model.scale.Set(2.0f, 2.0f, 2.0f);
+                model.scale = new Vector3(2.0f, 2.0f, 2.0f);
                 model.Render(device, effect, time);
 
                 if (eyes_model != null)
                 {
-                    eyes_model.scale.Set(2.0f, 2.0f, 2.0f);
+                    eyes_model.scale = new Vector3(2.0f, 2.0f, 2.0f);
                     eyes_model.Render(device, effect, time);
                 }
 
                 if (hair_model != null)
                 {
-                    hair_model.scale.Set(2.0f, 2.0f, 2.0f);
+                    hair_model.scale = new Vector3(2.0f, 2.0f, 2.0f);
                     hair_model.Render(device, effect, time);
                 }
 
@@ -1243,8 +1240,8 @@ namespace Inignoto.Entities.Client.Player
                 {
                     if (stack.item.Model != null)
                     {
-                        Vector3f renderPos = null;
-                        Quaternionf renderRot = null;
+                        Vector3 renderPos = new Vector3(0, 0, 0);
+                        Quaternion renderRot = Quaternion.Identity;
                         foreach (Part part in model.Parts)
                         {
                             if (part.name.Contains("Right_Hand"))
@@ -1254,14 +1251,14 @@ namespace Inignoto.Entities.Client.Player
                             }
                         }
 
-                        stack.item.Model.scale = new Vector3f(1.0f, 1.0f, 1.0f);
+                        stack.item.Model.scale = new Vector3(1.0f, 1.0f, 1.0f);
                         stack.item.Model.translation = renderPos;
 
-                        Vector3f euler = renderRot.ToEulerAngles();
+                        Vector3 euler = Matrix.CreateFromQuaternion(renderRot).Translation;
 
-                        Vector3f e2 = new Vector3f(euler.Z, euler.X, euler.Y);
+                        Vector3 e2 = new Vector3(euler.Z, euler.X, euler.Y);
 
-                        stack.item.Model.rotation = new Vector3f(0, 90f * 3.14f / 180.0f, 90f * 3.14f / 180.0f).Add(new Vector3f(model.rotation)).Add(e2);
+                        stack.item.Model.rotation = new Vector3(0, 90f * 3.14f / 180.0f, 90f * 3.14f / 180.0f) + model.rotation + e2;
 
                         stack.item.Model.Render(device, effect, time);
                     } else
@@ -1270,8 +1267,8 @@ namespace Inignoto.Entities.Client.Player
                         {
                             TileItem tile = (TileItem)stack.item;
 
-                            Vector3f renderPos = null;
-                            Quaternionf renderRot = null;
+                            Vector3 renderPos = new Vector3(0, 0, 0);
+                            Quaternion renderRot = Quaternion.Identity;
                             foreach (Part part in model.Parts)
                             {
                                 if (part.name.Contains("Right_Hand"))
@@ -1283,9 +1280,9 @@ namespace Inignoto.Entities.Client.Player
 
                             stack.item.Mesh.SetScale(new Vector3(0.5f, 0.5f, 0.5f));
 
-                            stack.item.Mesh.SetPosition(renderPos.Vector);
+                            stack.item.Mesh.SetPosition(renderPos);
 
-                            stack.item.Mesh.SetRotation(renderRot.Rotation);
+                            stack.item.Mesh.SetRotation(renderRot);
                             stack.item.Mesh.Draw(effect, device);
                         }
                     }

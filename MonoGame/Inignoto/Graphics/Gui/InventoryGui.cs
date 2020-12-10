@@ -593,14 +593,14 @@ namespace Inignoto.Graphics.Gui
 
             Inignoto.game.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-            Inignoto.game.player.SetModelTransform(new Vector3f(-0.7f, -1f, 1.25f), new Vector3f(0, 0, 0));
+            Inignoto.game.player.SetModelTransform(new Vector3(-0.7f, -1f, 1.25f), new Vector3(0, 0, 0));
 
             if (Inignoto.game.player.model != null)
             {
                 if (Inignoto.game.player.Perspective != 1)
                     Inignoto.game.player.model.Stop();
                 Inignoto.game.player.Render(device, effect, time, true);
-                Inignoto.game.player.SetModelTransform();
+                Inignoto.game.player.SetModelTransform(Inignoto.game.player.position, Inignoto.game.player.look);
                 if (Inignoto.game.player.Perspective != 1)
                     Inignoto.game.player.model.Play(Inignoto.game.player.model.currentTime);
             }

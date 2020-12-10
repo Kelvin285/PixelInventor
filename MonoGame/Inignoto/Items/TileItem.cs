@@ -55,18 +55,18 @@ namespace Inignoto.Items
         {
             World.World world = user.world;
 
-            Vector3f eyePosition = user.GetEyePosition();
+            Vector3 eyePosition = user.GetEyePosition();
 
-            TileRaytraceResult result = world.RayTraceTiles(eyePosition, new Vector3f(eyePosition).Add(user.ForwardLook.Mul(user.ReachDistance)), Tiles.Tile.TileRayTraceType.BLOCK);
+            TileRaytraceResult result = world.RayTraceTiles(eyePosition, eyePosition + (user.ForwardLook * user.ReachDistance), Tile.TileRayTraceType.BLOCK);
 
             if (result == null) return ActionResult.MISS;
 
-            Vector3f normal = result.intersection.normal;
-
-            TilePos pos = new World.World.TilePos(result.pos.x + normal.X, result.pos.y + normal.Y, result.pos.z + normal.Z);
+            Vector3 normal = result.intersection.normal;
+            
+            TilePos pos = new TilePos(result.pos.x + normal.X, result.pos.y + normal.Y, result.pos.z + normal.Z);
             if (tile.Overlay)
             {
-                pos = new World.World.TilePos(result.pos.x, result.pos.y, result.pos.z);
+                pos = new TilePos(result.pos.x, result.pos.y, result.pos.z);
             }
             Chunk chunk = world.TryGetChunk(pos);
             if (chunk == null) return ActionResult.MISS;

@@ -25,6 +25,7 @@ namespace Inignoto.World.Generator
             if (chunk.Load())
             {
                 chunk.MarkForRebuild();
+                chunk.SetGenerated();
                 return;
             }
             for (int chunk_x = 0; chunk_x < Constants.CHUNK_SIZE; chunk_x++)

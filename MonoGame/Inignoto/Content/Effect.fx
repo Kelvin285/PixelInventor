@@ -12,10 +12,10 @@ float4x4 View;
 float4x4 Projection;
 
 float4x4 ShadowView;
+
 float4x4 ShadowProjection;
 
 float4x4 ShadowProjection2;
-float4x4 ShadowProjection3;
 
 float fog_distance;
 float4 fog_color;
@@ -33,9 +33,10 @@ float area;
 
 bool world_render;
 
+bool has_shadows;
+
 texture ShadowTexture;
 texture ShadowTexture2;
-texture ShadowTexture3;
 
 texture ModelTexture;
 
@@ -55,8 +56,6 @@ sampler2D shadowSampler = sampler_state {
     MagFilter = Point;
     MinFilter = Point;
     MipFilter = Point;
-    AddressU = Clamp;
-    AddressV = Clamp;
 };
 
 sampler2D shadowSampler2 = sampler_state {
@@ -65,18 +64,6 @@ sampler2D shadowSampler2 = sampler_state {
     MagFilter = Point;
     MinFilter = Point;
     MipFilter = Point;
-    AddressU = Clamp;
-    AddressV = Clamp;
-};
-
-sampler2D shadowSampler3 = sampler_state {
-
-    Texture = (ShadowTexture3);
-    MagFilter = Point;
-    MinFilter = Point;
-    MipFilter = Point;
-    AddressU = Clamp;
-    AddressV = Clamp;
 };
 
 
@@ -119,14 +106,6 @@ VertexShaderOutput VertexShaderFunction(VertexPositionColorTexture input)
     
     output.Light = input.Color;
 
-    int CAM_CX = (int)(camera_pos.x) / 16 - 4;
-    int CAM_CY = (int)(camera_pos.y) / 16 - 2;
-    int CAM_CZ = (int)(camera_pos.z) / 16 - 4;
-
-    int CX = (int)(worldPosition.x) / 16 - CAM_CX;
-    int CY = (int)(worldPosition.y) / 16 - CAM_CY;
-    int CZ = (int)(worldPosition.z) / 16 - CAM_CZ;
-    
     if (world_render == true) {
         float r = radius;
         if (radius <= 0) r = 900000;
@@ -246,57 +225,83 @@ float4 OpaquePixelShaderFunction(VertexShaderOutput input, float2 vPos : VPOS) :
     float4x4 LightViewProj2 = mul(ShadowView, ShadowProjection2);
     float4 lightingPosition2 = mul(input.WorldPos, LightViewProj2);
 
-    float4x4 LightViewProj3 = mul(ShadowView, ShadowProjection3);
-    float4 lightingPosition3 = mul(input.WorldPos, LightViewProj3);
-
     float2 ShadowTexCoord = 0.5 * lightingPosition.xy / lightingPosition.w + float2(0.5, 0.5);
     ShadowTexCoord.y = 1.0f - ShadowTexCoord.y;
 
     float2 ShadowTexCoord2 = 0.5 * lightingPosition2.xy / lightingPosition2.w + float2(0.5, 0.5);
     ShadowTexCoord2.y = 1.0f - ShadowTexCoord2.y;
 
-    float2 ShadowTexCoord3 = 0.5 * lightingPosition3.xy / lightingPosition3.w + float2(0.5, 0.5);
-    ShadowTexCoord3.y = 1.0f - ShadowTexCoord3.y;
-    
-    float shadow = 1.0f;
-    float shadow2 = 1.0f;
-    float shadow3 = 1.0f;
-    float ShadowBias = 0.005f;
+    float shadow = 0.0f;
+    float shadow2 = 0.0f;
+    float ShadowBias = 0.015f;
 
-    float depth1 = tex2D(shadowSampler, ShadowTexCoord).r;
-    float depth2 = tex2D(shadowSampler2, ShadowTexCoord2).r;
-    float depth3 = tex2D(shadowSampler3, ShadowTexCoord3).r;
-
-
-    
 
     //float ndotl = cross(normal, float3(0, -1, 0));
     float ndotl = input.Dot;
 
     float ourdepth1 = (lightingPosition.z / lightingPosition.w);
     float ourdepth2 = (lightingPosition2.z / lightingPosition2.w);
-    float ourdepth3 = (lightingPosition3.z / lightingPosition3.w);
 
+    float mul = 0.0001f;
+    float I = 0;
+    int size = 3;
 
-    if (depth1 > 0 && input.Normal.x == 0)
-        if (depth1 < ourdepth1 - ShadowBias)
-            shadow = 0.5f;
+    int II = 0;
+    int II2 = 0;
 
-    if (depth2 > 0 && input.Normal.x == 0)
-        if (depth2 < ourdepth2 - ShadowBias * 2)
-            shadow2 = 0.5f;
+    for (int xx = -size; xx < size+1; xx++) {
+        if (!has_shadows) continue;
+        for (int yy = -size; yy < size+1; yy++) {
+            float depth1 = tex2D(shadowSampler, ShadowTexCoord + float2(xx, yy) * mul).r;
+            float depth2 = tex2D(shadowSampler2, ShadowTexCoord2 + float2(xx, yy) * mul).r;
 
-    if (depth3 > 0 && input.Normal.x == 0)
-        if (depth3 < ourdepth3 - ShadowBias * 4)
-            shadow3 = 0.5f;
+            if (depth1 > 0 && input.Normal.x == 0) {
+                if (depth1 < ourdepth1 - ShadowBias * ourdepth1)
+                    shadow += 0.5f;
+                else {
+                    shadow += 1.0f;
+                }
+            }
+            else {
+                shadow += 1.0f;
+                II++;
+            }
+
+            if (depth2 > 0 && input.Normal.x == 0) {
+                if (depth2 < ourdepth2 - ShadowBias)
+                    shadow2 += 0.5f;
+                else {
+                    shadow2 += 1.0f;
+                }
+            }
+            else {
+                shadow2 += 1.0f;
+                II2++;
+            }
+            I++;
+        }
+    }
+
+    shadow /= I;
+    shadow2 /= I;
+
+    if (shadow > 0.8) shadow = 1.0f;
+    if (shadow2 > 0.8) shadow2 = 1.0f;
+
+    if (!has_shadows) {
+        shadow = 1.0f;
+        shadow2 = 1.0f;
+    }
+
              //shadow = CalcShadowTermPCF(lightingPosition.z, ndotl, ShadowTexCoord);
-    if (ShadowTexCoord.x < 0 || ShadowTexCoord.x > 1 || ShadowTexCoord.y < 0 || ShadowTexCoord.y > 1) {
+    if (ShadowTexCoord2.x < 0 || ShadowTexCoord2.x > 1 || ShadowTexCoord2.y < 0 || ShadowTexCoord2.y > 1) {
         shadow = shadow2;
     }
-
-    if (ShadowTexCoord2.x < 0 || ShadowTexCoord2.x > 1 || ShadowTexCoord2.y < 0 || ShadowTexCoord2.y > 1) {
-        shadow = shadow3;
+    else {
+        if (shadow2 < shadow) shadow = shadow2;
     }
+
+
 
     ndotl = max(0, ndotl);
     ndotl = (ndotl + 1) / 2;

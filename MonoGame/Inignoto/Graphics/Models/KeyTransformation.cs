@@ -10,38 +10,38 @@ namespace Inignoto.Graphics.Models
 {
     public class KeyTransformation
     {
-        public Vector3f position = new Vector3f();
-        public Quaternionf rotation = new Quaternionf();
-        public Vector3f scale = new Vector3f(1, 1, 1);
-        public Vector3f size = new Vector3f();
+        public Vector3 position = new Vector3();
+        public Quaternion rotation = new Quaternion();
+        public Vector3 scale = new Vector3(1, 1, 1);
+        public Vector3 size = new Vector3();
         public Vector2 uv = new Vector2(0, 0);
-        public Vector3f origin = new Vector3f();
+        public Vector3 origin = new Vector3();
 
         public bool visible = true;
         public bool locked = true;
 
-        public Vector3f look = new Vector3f(0, 0, 1);
-        public Vector3f axisAngles = new Vector3f(0, 0, 0);
+        public Vector3 look = new Vector3(0, 0, 1);
+        public Vector3 axisAngles = new Vector3(0, 0, 0);
 
-        public void Translate(Vector3f translation)
+        public void Translate(Vector3 translation)
         {
-            position.Add(translation);
+            position += translation;
         }
 
-        public void Rotate(Vector3f rotation)
+        public void Rotate(Vector3 rotation)
         {
-            Rotate(rotation, new Vector3f(position).Add(new Vector3f(origin).Rotate(this.rotation.Rotation)));
+            Rotate(Quaternion.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z), position + (Matrix.CreateTranslation(origin) * Matrix.CreateFromQuaternion(this.rotation)).Translation);
         }
 
-        public void Rotate(Quaternion rot, Vector3f origin)
+        public void Rotate(Quaternion rot, Vector3 origin)
         {
-            this.rotation.Rotation = Quaternion.Concatenate(this.rotation.Rotation, rot);
+            rotation = Quaternion.Concatenate(rotation, rot);
             
-            position = Raytracing.RotateAround(position, origin, new Quaternionf(rot));
+            position = Raytracing.RotateAround(position, origin, new Quaternion(rot.X, rot.Y, rot.Z, rot.W));
 
         }
 
-        public void Rotate(Vector3f rotation, Vector3f origin)
+        public void Rotate(Vector3 rotation, Vector3 origin)
         {
             Quaternion xRot = Quaternion.CreateFromAxisAngle(new Vector3(1, 0, 0), rotation.X);
             Quaternion yRot = Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), rotation.Y);
@@ -49,28 +49,28 @@ namespace Inignoto.Graphics.Models
 
             Quaternion rot = Quaternion.Concatenate(Quaternion.Concatenate(xRot, yRot), zRot);
 
-            this.rotation.Rotation = Quaternion.Concatenate(this.rotation.Rotation, rot);
-            axisAngles.Add(rotation);
+            this.rotation = Quaternion.Concatenate(this.rotation, rot);
+            axisAngles += rotation;
 
-            position = Raytracing.RotateAround(position, origin, new Quaternionf(rot));
+            position = Raytracing.RotateAround(position, origin, new Quaternion(rot.X, rot.Y, rot.Z, rot.W));
 
         }
 
-        public void RotateEuler(Vector3f rotation, Vector3f origin)
+        public void RotateEuler(Vector3 rotation, Vector3 origin)
         {
             Quaternion rot = Quaternion.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z);
 
-            this.rotation.Rotation = Quaternion.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z);
+            this.rotation = Quaternion.CreateFromYawPitchRoll(rotation.Y, rotation.X, rotation.Z);
 
-            position = Raytracing.RotateAround(position, origin, new Quaternionf(rot));
+            position = Raytracing.RotateAround(position, origin, new Quaternion(rot.X, rot.Y, rot.Z, rot.W));
 
         }
 
-        public void SetRotation(Vector3f rotation)
+        public void SetRotation(Vector3 rotation)
         {
-            Rotate(new Vector3f(rotation).Mul(-1));
-            axisAngles.Set(0, 0, 0);
-            this.rotation.Identity();
+            Rotate(new Vector3(rotation.X, rotation.Y, rotation.Z) * -1);
+            axisAngles *= 0;
+            this.rotation = Quaternion.Identity;
             Rotate(rotation);
         }
 
@@ -78,12 +78,12 @@ namespace Inignoto.Graphics.Models
         {
             KeyTransformation p = new KeyTransformation
             {
-                position = new Vector3f(position),
-                rotation = new Quaternionf(rotation.Rotation),
-                scale = new Vector3f(scale),
-                size = new Vector3f(size),
+                position = new Vector3(position.X, position.Y, position.Z),
+                rotation = new Quaternion(rotation.X, rotation.Y, rotation.Z, rotation.W),
+                scale = new Vector3(scale.X, scale.Y, scale.Z),
+                size = new Vector3(size.X, size.Y, size.Z),
                 uv = new Vector2(uv.X, uv.Y),
-                origin = new Vector3f(origin)
+                origin = new Vector3(origin.X, origin.Y, origin.Z)
             };
             return p;
         }

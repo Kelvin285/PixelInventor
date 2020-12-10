@@ -11,8 +11,8 @@ namespace Inignoto.World.Structures
     {
         public static List<Structure> REGISTRY = new List<Structure>();
 
-        public static BasicTreeStructure OAK_TREE1;
-        public static BasicTreeStructure OAK_TREE3;
+        public static BasicTreeStructure REDWOOD_TREE;
+        public static BasicTreeStructure OAK_TREE;
 
         public static BasicTreeStructure SNOW_PINE_TREE;
 
@@ -20,7 +20,8 @@ namespace Inignoto.World.Structures
 
         public static void RegisterStructures()
         {
-            RegisterStructure(OAK_TREE1 = new ForestOakStructure());
+            RegisterStructure(REDWOOD_TREE = new RedwoodStructure());
+            RegisterStructure(OAK_TREE = new ForestOakStructure());
 
             //RegisterStructure(SNOW_PINE_TREE = new BasicTreeStructure("trees/pine_tree1.structure", new World.TilePos(-5, 3, -4), TileRegistry.SNOW.DefaultData));
             RegisterStructure(CACTUS = new CactusStructure());

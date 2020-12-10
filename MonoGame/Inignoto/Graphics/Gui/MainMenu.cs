@@ -131,7 +131,9 @@ namespace Inignoto.Graphics.Gui
             int mouse_x = (int)(Inignoto.game.mousePos.X * (1920.0 / width));
             int mouse_y = (int)(Inignoto.game.mousePos.Y * (1080.0 / height));
 
+#pragma warning disable CS8321 // Local function is declared but never used
             void DrawCenteredString(int x, int y, string str, Color color)
+#pragma warning restore CS8321 // Local function is declared but never used
             {
                 int strwidth = (int)(FontManager.mandrill_regular.width + FontManager.mandrill_regular.spacing) * str.Length;
                 DrawString(spriteBatch, width, height, 1920 / 2 - w - 40 + (w - strwidth) / 2 + w / 2, 1080 / 2 - 50 + y, 1.0f, FontManager.mandrill_regular, str, color);
@@ -205,7 +207,7 @@ namespace Inignoto.Graphics.Gui
                                 openGui = null;
                                 //Inignoto.game.player = new Entities.Client.Player.ClientPlayerEntity(Inignoto.game.world, new Vector3f(Inignoto.game.world.radius * 2, 10, Inignoto.game.world.radius));
                                 Inignoto.game.world.entities.Add(Inignoto.game.player);
-                                Inignoto.game.player.position = new Vector3f(Inignoto.game.world.radius * 2, 10, Inignoto.game.world.radius);
+                                Inignoto.game.player.position = new Vector3(Inignoto.game.world.radius * 2, 10, Inignoto.game.world.radius);
                                 Inignoto.game.player.position.Y = Inignoto.game.world.properties.generator.GetHeight(Inignoto.game.player.position.X, Inignoto.game.player.position.Z, Inignoto.game.world.radius, Inignoto.game.world.properties.infinite) + 1;
                                 Inignoto.game.game_state = Inignoto.GameState.GAME;
                                 Inignoto.game.player.OnGround = true;
@@ -794,24 +796,11 @@ namespace Inignoto.Graphics.Gui
                     }
 
 
-                    if (DrawButton(325, 100, "Shadows: " + (Settings.SHADOWS ? Settings.FANCY_SHADOWS ? "Fancy" : "Normal" : "Off")))
+                    if (DrawButton(325, 100, "Shadows: " + (Settings.SHADOWS ? "On" : "Off")))
                     {
                         if (clicked)
                         {
-                            if (Settings.SHADOWS == false)
-                            {
-                                Settings.SHADOWS = true;
-                            } else
-                            {
-                                if (Settings.FANCY_SHADOWS == false)
-                                {
-                                    Settings.FANCY_SHADOWS = true;
-                                } else
-                                {
-                                    Settings.FANCY_SHADOWS = false;
-                                    Settings.SHADOWS = false;
-                                }
-                            }
+                            Settings.SHADOWS = !Settings.SHADOWS;
                         }
                     }
 
@@ -993,14 +982,14 @@ namespace Inignoto.Graphics.Gui
 
             Inignoto.game.GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-            Inignoto.game.player.SetModelTransform(new Vector3f(-0.7f, -1f, 1.25f), new Vector3f(0, 0, 0));
+            Inignoto.game.player.SetModelTransform(new Vector3(-0.7f, -1f, 1.25f), new Vector3(0, 0, 0));
 
             if (Inignoto.game.player.model != null)
             {
                 if (Inignoto.game.player.Perspective != 1)
                     Inignoto.game.player.model.Stop();
                 Inignoto.game.player.Render(device, effect, time, true);
-                Inignoto.game.player.SetModelTransform();
+                Inignoto.game.player.SetModelTransform(Inignoto.game.player.position, Inignoto.game.player.look);
                 if (Inignoto.game.player.Perspective != 1)
                     Inignoto.game.player.model.Play(Inignoto.game.player.model.currentTime);
             }

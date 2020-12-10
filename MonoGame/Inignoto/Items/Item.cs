@@ -203,9 +203,9 @@ namespace Inignoto.Items
 
             device.DepthStencilState = DepthStencilState.Default;
 
-            Model.translation = new Vector3f(position);
-            Model.rotation = new Vector3f(rotation);
-            Model.scale = new Vector3f(scale);
+            Model.translation = new Vector3(position.X, position.Y, position.Z);
+            Model.rotation = new Vector3(rotation.X, rotation.Y, rotation.Z);
+            Model.scale = new Vector3(scale.X, scale.Y, scale.Z);
             Model.Render(device, effect, time, true);
 
             device.SetRenderTarget(null);

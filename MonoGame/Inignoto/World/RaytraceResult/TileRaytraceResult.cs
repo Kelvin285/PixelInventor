@@ -17,18 +17,19 @@ namespace Inignoto.World.RaytraceResult
         public readonly RayIntersection intersection;
         public readonly TilePos pos;
         public readonly TileData data;
-        public readonly Vector3f hit;
+        public readonly Vector3 hit;
 
         public TileFace Face => GetFace();
-        public TileRaytraceResult(RayIntersection intersection, TilePos pos, TileData data, Vector3f hit)
+        public TileRaytraceResult(RayIntersection intersection, TilePos pos, TileData data, Vector3 hit)
         {
             this.intersection = intersection;
             this.pos = pos;
             this.data = data;
             this.hit = hit;
-            if(intersection.normal.Vector == new Vector3(0, 0, 0))
+
+            if (intersection.normal.X == 0 && intersection.normal.Y == 0 && intersection.normal.Z == 0)
             {
-                intersection.normal.Set(0, 1, 0);
+                intersection.normal.Y = 1;
             }
         }
 

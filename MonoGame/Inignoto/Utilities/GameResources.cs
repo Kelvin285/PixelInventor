@@ -14,6 +14,7 @@ using Inignoto.Math;
 using Inignoto.World.Structures;
 using Inignoto.Common.Commands;
 using Inignoto.Crafting;
+using Inignoto.Graphics.World;
 
 namespace Inignoto.Utilities
 {
@@ -43,9 +44,10 @@ namespace Inignoto.Utilities
             StructureRegistry.RegisterStructures();
             CommandManager.RegisterCommands();
             CraftingRegistry.RegisterRecipes();
+            TileBuilder.BuildFirst();
 
             Inignoto.game.world = new World.World();
-            Inignoto.game.player = new Entities.Client.Player.ClientPlayerEntity(Inignoto.game.world, new Vector3f(Inignoto.game.world.radius * 2, 10, Inignoto.game.world.radius));
+            Inignoto.game.player = new Entities.Client.Player.ClientPlayerEntity(Inignoto.game.world, new Vector3(Inignoto.game.world.radius * 2, 10, Inignoto.game.world.radius));
             Inignoto.game.hud = new Graphics.Gui.Hud();
 
             effect = new GameEffect(Inignoto.game.Content.Load<Effect>("Effect"));

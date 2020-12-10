@@ -27,7 +27,7 @@ namespace Inignoto.World.Biomes.Surface.Grasslands
         {
             if (overlay == TileRegistry.GRASS.DefaultData)
             {
-                StructureRegistry.OAK_TREE1.TryPlace(x, y, z, chunk_x, chunk_y, chunk_z, chunk, noise, n);
+                StructureRegistry.REDWOOD_TREE.TryPlace(x, y, z, chunk_x, chunk_y, chunk_z, chunk, noise, n);
             }
         }
     }

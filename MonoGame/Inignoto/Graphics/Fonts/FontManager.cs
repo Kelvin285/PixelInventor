@@ -18,8 +18,8 @@ namespace Inignoto.Graphics.Fonts
 
         public static void LoadFonts()
         {
-            mandrill_regular = LoadFont(Textures.Textures.font_mandrill_regular, 24, 48, new ResourcePath("inignoto", "fonts/mandrill/mandrill_regular_48.font", "assets"));
-            mandrill_bold = LoadFont(Textures.Textures.font_mandrill_bold, 24, 48, new ResourcePath("inignoto", "fonts/mandrill/mandrill_bold_48.font", "assets"));
+            mandrill_regular = LoadFont(Textures.Textures.font_mandrill_regular, 24, 48, new ResourcePath("Inignoto", "fonts/mandrill/mandrill_regular_48.font", "assets"));
+            mandrill_bold = LoadFont(Textures.Textures.font_mandrill_bold, 24, 48, new ResourcePath("Inignoto", "fonts/mandrill/mandrill_bold_48.font", "assets"));
 
         }
 

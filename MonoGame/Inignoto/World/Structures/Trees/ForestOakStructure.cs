@@ -1,9 +1,11 @@
 ﻿using Inignoto.Imported;
 using Inignoto.Tiles;
 using Inignoto.World.Chunks;
+using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using static Inignoto.World.World;
 
 namespace Inignoto.World.Structures.Trees
 {
@@ -47,149 +49,90 @@ namespace Inignoto.World.Structures.Trees
 
         public override void Grow(int x, int y, int z, int chunk_x, int chunk_y, int chunk_z, Chunk chunk, FastNoise noise, double n, int orientation = 0)
         {
+            Random random = new Random((int)chunk.GetWorld().chunkManager.GetIndexFor(x, y, z) + chunk.GetWorld().properties.seed);
 
-            void Leaves(int ox, int oy, int oz, int spread, double rad)
+            Vector3 Branch(Vector3 start, Vector3 end, float length = -1)
             {
+                Vector3 dir = end - start;
+                float len = dir.Length();
+                if (length > 0) len = length;
+                dir.Normalize();
 
-                int dirX = 0;
-                int dirY = 0;
-                int dirZ = 0;
-
-                for (int xx = (int)-rad; xx < rad + 1; xx++)
+                Vector3 tree_pos = new Vector3(start.X, start.Y, start.Z);
+                if (len > 0)
                 {
-                    for (int yy = (int)-rad; yy < rad + 1; yy++)
+                    for (float i = 0; i < len; i += 1.0f / len)
                     {
-                        for (int zz = (int)-rad; zz < rad + 1; zz++)
+                        tree_pos = start + dir * i;
+
+                        chunk.SetVoxel((int)tree_pos.X, (int)tree_pos.Y, (int)tree_pos.Z, TileRegistry.LOG.DefaultData);
+                    }
+                }
+                return tree_pos;
+                
+            }
+
+            void Leaves(Vector3 pos, float rad)
+            {
+                for (float X = -rad; X < rad + 1; X++)
+                {
+                    for (float Y = -rad; Y < rad + 1; Y++)
+                    {
+                        for (float Z = -rad; Z < rad + 1; Z++)
                         {
-                            if (chunk.GetVoxel(chunk_x + ox + xx + dirX, chunk_y + oy + yy + dirY, chunk_z + oz + zz + dirZ) == TileRegistry.AIR.DefaultData)
+                            if (MathF.Sqrt(X * X + Y * Y + Z * Z) <= rad)
                             {
-                                if (MathF.Sqrt(xx * xx + yy * yy + zz * zz) <= rad / 2)
-                                {
-                                    if (chunk.GetVoxel(chunk_x + ox + xx + dirX, chunk_y + oy + yy + dirY, chunk_z + oz + zz + dirZ) == TileRegistry.AIR.DefaultData)
-                                    {
-                                        chunk.SetVoxel(chunk_x + ox + xx + dirX, chunk_y + oy + yy + dirY, chunk_z + oz + zz + dirZ, TileRegistry.LEAVES.DefaultData);
-                                    }
-                                } else
-                                {
-                                    if (MathF.Sqrt(xx * xx + yy * yy + zz * zz) <= rad)
-                                    {
-                                        if (noise.GetSimplex((x + xx) * 15, (y + yy) * 15, (z + zz) * 15) * 10 >= 0.5f)
-                                        if (chunk.GetVoxel(chunk_x + ox + xx + dirX, chunk_y + oy + yy + dirY, chunk_z + oz + zz + dirZ) == TileRegistry.AIR.DefaultData)
-                                        {
-                                            chunk.SetVoxel(chunk_x + ox + xx + dirX, chunk_y + oy + yy + dirY, chunk_z + oz + zz + dirZ, TileRegistry.LEAVES.DefaultData);
-                                        }
-                                    }
-                                }
+                                if (chunk.GetVoxel((int)(pos.X + X), (int)(pos.Y + Y), (int)(pos.Z + Z)) == TileRegistry.AIR.DefaultData)
+                                    chunk.SetVoxel((int)(pos.X + X), (int)(pos.Y + Y), (int)(pos.Z + Z), TileRegistry.LEAVES.DefaultData);
                             }
                         }
                     }
                 }
             }
 
-            void Branch(double n, int ox, int oy, int oz)
+            int height = random.Next(8, 12);
+            Vector3 tree_pos = new Vector3(chunk_x, chunk_y, chunk_z);
+            Vector3 tree_pos2 = new Vector3(chunk_x + 1, chunk_y, chunk_z);
+            Vector3 tree_pos3 = new Vector3(chunk_x - 1, chunk_y, chunk_z);
+            Vector3 tree_pos4 = new Vector3(chunk_x, chunk_y, chunk_z + 1);
+            Vector3 tree_pos5 = new Vector3(chunk_x, chunk_y, chunk_z - 1);
+
+            Vector3 trunk_pos = new Vector3(chunk_x + random.Next(-3, 4), chunk_y + height, chunk_z + random.Next(-3, 4));
+            Vector3 dir = trunk_pos - tree_pos;
+
+            Branch(tree_pos, trunk_pos);
+            Branch(tree_pos2, trunk_pos, random.Next((int)dir.Length() - 1));
+            Branch(tree_pos3, trunk_pos, random.Next((int)dir.Length() - 1));
+            Branch(tree_pos4, trunk_pos, random.Next((int)dir.Length() - 1));
+            Branch(tree_pos5, trunk_pos, random.Next((int)dir.Length() - 1));
+
+            float l = random.Next(2, 3);
+            Leaves(trunk_pos + new Vector3(0, l * 0.75f, 0), l);
+
+            for (int i = 0; i < random.Next(3, 5); i++)
             {
-                int dir = (int)(n * 100) % 4;
-                int dirX = dir == 0 ? 1 : dir == 2 ? -1 : 0;
-                int dirZ = dir == 1 ? 1 : dir == 3 ? -1 : 0;
-
-                if (chunk.GetVoxel(chunk_x + ox + dirX, chunk_y + oy, chunk_z + oz + dirZ) == TileRegistry.AIR.DefaultData)
+                Vector3 branch_pos = trunk_pos + new Vector3(random.Next(-5, 6), random.Next(2, 7), random.Next(-5, 6));
+                Vector3 end = Branch(trunk_pos, branch_pos);
+                int rad = random.Next(2, 3);
+                Leaves(end, rad);
+                for (int j = 0; j < random.Next(1, 3); j++)
                 {
-                    chunk.SetVoxel(chunk_x + ox + dirX, chunk_y + oy, chunk_z + oz + dirZ, TileRegistry.LOG.DefaultData);
-                    chunk.SetVoxel(chunk_x + ox + dirX * 2, chunk_y + oy, chunk_z + oz + dirZ * 2, TileRegistry.LOG.DefaultData);
-                }
-
-
-                if (n % 5 == 0) return;
-
-                double N = noise.GetWhiteNoise(x * 1000, (y + oy) * 1000, z * 1000) * 10 * 100;
-
-                N = MathF.Min(5, MathF.Max(2, (float)N));
-
-                double rad = 1.5;
-                for (int i = 0; i < (int)N; i++)
-                {
-                    for (int xx = (int)-rad; xx < rad + 1; xx++)
-                    {
-                        for (int yy = 0; yy < rad + 1; yy++)
-                        {
-                            for (int zz = (int)-rad; zz < rad + 1; zz++)
-                            {
-                                if (chunk.GetVoxel(chunk_x + ox + xx + i * dirX + dirX * 2, chunk_y + oy + yy, chunk_z + oz + zz + i * dirZ + dirZ * 2) == TileRegistry.AIR.DefaultData)
-                                {
-                                    if (MathF.Sqrt(xx * xx + yy * yy + zz * zz) <= rad / 2)
-                                    {
-                                        if (chunk.GetVoxel(chunk_x + ox + xx + i * dirX + dirX * 2, chunk_y + oy + yy, chunk_z + oz + zz + i * dirZ + dirZ * 2) == TileRegistry.AIR.DefaultData)
-                                        {
-                                            chunk.SetVoxel(chunk_x + ox + xx + i * dirX + dirX * 2, chunk_y + oy + yy, chunk_z + oz + zz + i * dirZ + dirZ * 2, TileRegistry.LEAVES.DefaultData);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (MathF.Sqrt(xx * xx + yy * yy + zz * zz) <= rad)
-                                        {
-                                            if (noise.GetSimplex((xx + xx) * 15, (yy + yy) * 15, (zz + zz) * 15) * 10 >= 0.5f)
-                                                if (chunk.GetVoxel(chunk_x + ox + xx + i * dirX + dirX * 2, chunk_y + oy + yy, chunk_z + oz + zz + i * dirZ + dirZ * 2) == TileRegistry.AIR.DefaultData)
-                                                {
-                                                    chunk.SetVoxel(chunk_x + ox + xx + i * dirX + dirX * 2, chunk_y + oy + yy, chunk_z + oz + zz + i * dirZ + dirZ * 2, TileRegistry.LEAVES.DefaultData);
-                                                }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    rad -= 0.25f;
+                    Vector3 leaf_pos = new Vector3(random.Next(-rad, rad) * (rad / 2), random.Next(-rad, rad) * (rad / 2), random.Next(-rad, rad) * (rad / 2));
+                    Leaves(end + leaf_pos, (j + 1) * 0.75f);
                 }
             }
 
-            int Wood(double n, int ox, int oy, int oz, int min = 8, int max = 20, float multiply = 1)
             {
-                int height = (int)(MathF.Abs(MathF.Min(max, MathF.Max(0, (float)n * multiply)) + min));
+                Vector3 top = trunk_pos + new Vector3(random.Next(-1, 2), random.Next(4, 6), random.Next(-1, 2));
+                Branch(trunk_pos, top);
 
-                for (int i = 0; i < height; i++)
+                int rad = random.Next(2, 3);
+                Leaves(top, rad);
+                for (int j = 0; j < random.Next(1, 3); j++)
                 {
-                    if (chunk.GetVoxel(chunk_x + ox, chunk_y + oy + i, chunk_z + oz) == TileRegistry.AIR.DefaultData)
-                    {
-                        chunk.SetVoxel(chunk_x + ox, chunk_y + oy + i, chunk_z + oz, TileRegistry.LOG.DefaultData);
-                    }
+                    Vector3 leaf_pos = new Vector3(random.Next(-rad, rad) * (rad / 2), random.Next(-rad, rad) * (rad / 2), random.Next(-rad, rad) * (rad / 2));
+                    Leaves(top + leaf_pos, (j + 1) * 0.75f);
                 }
-                if (height > 0)
-                {
-                    for (int i = -1; i > -5; i--)
-                    {
-                        if (chunk.GetVoxel(chunk_x + ox, chunk_y + oy + i, chunk_z + oz) != TileRegistry.AIR.DefaultData)
-                        {
-                            continue;
-                        }
-                        chunk.SetVoxel(chunk_x + ox, chunk_y + oy + i, chunk_z + oz, TileRegistry.LOG.DefaultData);
-                    }
-                }
-                return height;
-            }
-
-            int h = Wood(n, 0, 0, 0, 8, 20, 2);
-            for (int i = 5; i < h; i++)
-            {
-                double N = noise.GetWhiteNoise(x * 1000, (y + i) * 1000, z * 1000) * 10 * 100;
-
-                if (N <= 5)
-                {
-                    Branch(MathF.Abs((float)N), 0, i, 0);
-                }
-            }
-            Wood(noise.GetWhiteNoise((x - 1) * 1000, z * 1000) * 10 * 100, -1, 0, 0, 1, 3);
-            Wood(noise.GetWhiteNoise((x + 1) * 1000, z * 1000) * 10 * 100, 1, 0, 0, 1, 3);
-            Wood(noise.GetWhiteNoise(x * 1000, (z - 1) * 1000) * 10 * 100, 0, 0, -1, 1, 3);
-            Wood(noise.GetWhiteNoise(x * 1000, (z + 1) * 1000) * 10 * 100, 0, 0, 1, 1, 3);
-
-            double rad = 4;
-            for (int i = 0; i < rad * 2; i++)
-            {
-                for (int j = 0; j < 5; j++)
-                {
-                    Leaves(0, h + (int)(i * rad) - 5, 0, 0, rad);
-                }
-                rad -= 0.5;
             }
         }
     }

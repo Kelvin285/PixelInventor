@@ -16,11 +16,6 @@ namespace Inignoto.Tiles
             SetReplaceable(true);
         }
 
-        public override TileData GetStateForBlockPlacement(int x, int y, int z, Chunk chunk, TileFace face)
-        {
-            return stateHolder.data[(int)(chunk.GetWorld().DayTime) % stateHolder.data.Count];
-        }
-
         public override bool CanPlace(int x, int y, int z, Chunk chunk)
         {
             for (int i = 0; i < placeOn.Length; i++)

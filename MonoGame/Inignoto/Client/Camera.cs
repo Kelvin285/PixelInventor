@@ -12,8 +12,8 @@ namespace Inignoto.Client
 {
     public class Camera
     {
-        public Vector3f position;
-        public Vector3f rotation;
+        public Vector3 position;
+        public Vector3 rotation;
 
         public TileRaytraceResult highlightedTile;
 
@@ -21,8 +21,8 @@ namespace Inignoto.Client
 
         public Camera()
         {
-            position = new Vector3f(0, 0, 0);
-            rotation = new Vector3f(0, 0, 0);
+            position = new Vector3(0, 0, 0);
+            rotation = new Vector3(0, 0, 0);
 
             frustum = new BoundingFrustum(ViewMatrix * Matrix.CreatePerspectiveFieldOfView(
                                MathHelper.ToRadians(Settings.FIELD_OF_VIEW),
@@ -31,37 +31,37 @@ namespace Inignoto.Client
             
         }
 
-        public Vector3f Forward
+        public Vector3 Forward
         {
-            get => new Vector3f(Vector3.Forward).Rotate(Quaternion.CreateFromYawPitchRoll(rotation.Y * (float)System.Math.PI / 180, rotation.X * (float)System.Math.PI / 180, rotation.Z * (float)System.Math.PI / 180));
+            get => (Matrix.CreateTranslation(Vector3.Forward) * Matrix.CreateFromQuaternion(Quaternion.CreateFromYawPitchRoll(rotation.Y * (float)System.Math.PI / 180, rotation.X * (float)System.Math.PI / 180, rotation.Z * (float)System.Math.PI / 180))).Translation;
         }
 
-        public Vector3f ForwardMotionVector
+        public Vector3 ForwardMotionVector
         {
-            get => new Vector3f(Vector3.Forward).Rotate(Quaternion.CreateFromYawPitchRoll(rotation.Y * (float)System.Math.PI / 180, 0, 0));
+            get => (Matrix.CreateTranslation(Vector3.Forward) * Matrix.CreateFromQuaternion(Quaternion.CreateFromYawPitchRoll(rotation.Y * (float)System.Math.PI / 180, 0, 0))).Translation;
         }
 
-        public Vector3f RightMotionVector
+        public Vector3 RightMotionVector
         {
-            get => new Vector3f(Vector3.Forward).Rotate(Quaternion.CreateFromYawPitchRoll((rotation.Y - 90) * (float)System.Math.PI / 180, 0, 0));
+            get => (Matrix.CreateTranslation(Vector3.Forward) * Matrix.CreateFromQuaternion(Quaternion.CreateFromYawPitchRoll((rotation.Y - 90) * (float)System.Math.PI / 180, 0, 0))).Translation;
         }
 
-        public Vector3f UpMotionVector
+        public Vector3 UpMotionVector
         {
-            get => new Vector3f(0, 1, 0);
+            get => Vector3.Up;
         }
 
-        public Vector3f Right
+        public Vector3 Right
         {
-            get => new Vector3f(Vector3.Forward).Rotate(Quaternion.CreateFromYawPitchRoll((rotation.Y - 90) * (float)System.Math.PI / 180, rotation.X * (float)System.Math.PI / 180, rotation.Z * (float)System.Math.PI / 180));
+            get => (Matrix.CreateTranslation(Vector3.Forward) * Matrix.CreateFromQuaternion(Quaternion.CreateFromYawPitchRoll((rotation.Y - 90) * (float)System.Math.PI / 180, rotation.X * (float)System.Math.PI / 180, rotation.Z * (float)System.Math.PI / 180))).Translation;
         }
 
-        public Vector3f Up
+        public Vector3 Up
         {
-            get => new Vector3f(Vector3.Forward).Rotate(Quaternion.CreateFromYawPitchRoll((rotation.Y) * (float)System.Math.PI / 180, (rotation.X + 90) * (float)System.Math.PI / 180, rotation.Z * (float)System.Math.PI / 180));
+            get => (Matrix.CreateTranslation(Vector3.Forward) * Matrix.CreateFromQuaternion(Quaternion.CreateFromYawPitchRoll((rotation.Y) * (float)System.Math.PI / 180, (rotation.X + 90) * (float)System.Math.PI / 180, rotation.Z * (float)System.Math.PI / 180))).Translation;
         }
 
-        public Matrix ViewMatrix { get => Matrix.CreateLookAt(position.Vector, Forward.Vector + position.Vector,
+        public Matrix ViewMatrix { get => Matrix.CreateLookAt(position, Forward + position,
                          new Vector3(0f, 1f, 0f));
         }// Y up}
 
@@ -70,9 +70,9 @@ namespace Inignoto.Client
             World.World world = Inignoto.game.world;
             ClientPlayerEntity player = Inignoto.game.player;
 
-            Vector3f eyePosition = player.GetEyePosition();
+            Vector3 eyePosition = player.GetEyePosition();
 
-            highlightedTile = world.RayTraceTiles(eyePosition, new Vector3f(eyePosition).Add(Forward.Mul(player.ReachDistance)), Tiles.Tile.TileRayTraceType.BLOCK, false);
+            highlightedTile = world.RayTraceTiles(eyePosition, eyePosition + (Forward * player.ReachDistance), Tiles.Tile.TileRayTraceType.BLOCK, false);
             
             frustum.Matrix = ViewMatrix * Matrix.CreatePerspectiveFieldOfView(
                                MathHelper.ToRadians(Settings.FIELD_OF_VIEW),

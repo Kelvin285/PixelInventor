@@ -18,11 +18,11 @@ namespace Inignoto.Entities
 {
     public class Entity
     {
-        public Vector3f position;
+        public Vector3 position;
         public readonly World.World world;
 
-        public Vector3f velocity;
-        public Vector3f size;
+        public Vector3 velocity;
+        public Vector3 size;
 
         public bool OnGround;
         public bool LastOnGround { get; protected set; }
@@ -61,44 +61,44 @@ namespace Inignoto.Entities
 
         protected double WalkCycle;
 
-        public Vector3f look = new Vector3f(0, 0, 0);
+        public Vector3 look = new Vector3(0, 0, 0);
 
         public SoundType soundType = SoundType.CREATURES;
 
         public WorldArea area = 0;
 
-        public Vector3f ForwardLook
+        public Vector3 ForwardLook
         {
-            get => new Vector3f(Vector3.Forward).Rotate(Quaternion.CreateFromYawPitchRoll((look.Y - 1) * ((float)System.Math.PI / 180.0f), look.X * ((float)System.Math.PI / 180.0f), look.Z * ((float)System.Math.PI / 180.0f)));
+            get => (Matrix.CreateTranslation(Vector3.Forward) * Matrix.CreateFromQuaternion(Quaternion.CreateFromYawPitchRoll((look.Y - 1) * ((float)System.Math.PI / 180.0f), look.X * ((float)System.Math.PI / 180.0f), look.Z * ((float)System.Math.PI / 180.0f)))).Translation;
         }
 
-        public Vector3f UpLook
+        public Vector3 UpLook
         {
-            get => new Vector3f(Vector3.Forward).Rotate(Quaternion.CreateFromYawPitchRoll((look.Y - 1) * ((float)System.Math.PI / 180.0f), (look.X + 90) * ((float)System.Math.PI / 180.0f), look.Z * ((float)System.Math.PI / 180.0f)));
+            get => (Matrix.CreateTranslation(Vector3.Forward) * Matrix.CreateFromQuaternion(Quaternion.CreateFromYawPitchRoll((look.Y - 1) * ((float)System.Math.PI / 180.0f), (look.X + 90) * ((float)System.Math.PI / 180.0f), look.Z * ((float)System.Math.PI / 180.0f)))).Translation;
         }
 
-        public Vector3f ForwardMotionVector
+        public Vector3 ForwardMotionVector
         {
-            get => new Vector3f(Vector3.Forward).Rotate(Quaternion.CreateFromYawPitchRoll(look.Y * (float)System.Math.PI / 180, 0, 0));
+            get => (Matrix.CreateTranslation(Vector3.Forward) * Matrix.CreateFromQuaternion(Quaternion.CreateFromYawPitchRoll(look.Y * (float)System.Math.PI / 180, 0, 0))).Translation;
         }
 
-        public Vector3f RightMotionVector
+        public Vector3 RightMotionVector
         {
-            get => new Vector3f(Vector3.Forward).Rotate(Quaternion.CreateFromYawPitchRoll((look.Y - 90) * (float)System.Math.PI / 180, 0, 0));
+            get => (Matrix.CreateTranslation(Vector3.Forward) * Matrix.CreateFromQuaternion(Quaternion.CreateFromYawPitchRoll((look.Y - 90) * (float)System.Math.PI / 180, 0, 0))).Translation;
         }
 
-        public Vector3f UpMotionVector
+        public Vector3 UpMotionVector
         {
-            get => new Vector3f(0, 1, 0);
+            get => Vector3.Up;
         }
 
 
-        public Entity(World.World world, Vector3f position)
+        public Entity(World.World world, Vector3 position)
         {
             this.world = world;
             this.position = position;
-            size = new Vector3f(0.5f, 1.8f, 0.5f);
-            velocity = new Vector3f(0, 0, 0);
+            size = new Vector3(0.5f, 1.8f, 0.5f);
+            velocity = new Vector3(0, 0, 0);
             
             world.entities.Add(this);
 
@@ -149,13 +149,13 @@ namespace Inignoto.Entities
                         position.X = (float)System.Math.Cos(lat) * (world.radius - 1) + diameter + world.radius;
                         position.Z = (float)System.Math.Sin(lat) * (world.radius - 1) + diameter + world.radius;
 
-                        Matrix look = Matrix.CreateLookAt(position.Vector, new Vector3(radius + diameter, position.Vector.Y, radius + diameter), Vector3.Up);
+                        Matrix look = Matrix.CreateLookAt(position, new Vector3(radius + diameter, position.Y, radius + diameter), Vector3.Up);
 
                         this.look.Y += MathHelper.ToDegrees(2 * (float)System.Math.Acos(Quaternion.CreateFromRotationMatrix(look).X));
                         this.look.Y += 90;
                         this.look.Y -= MathHelper.ToDegrees(lat);
 
-                        this.velocity = new Vector3f(0, 0, 0);
+                        velocity *= 0;
 
                         area = WorldArea.TOP;
                     }
@@ -167,13 +167,13 @@ namespace Inignoto.Entities
                         position.X = (float)System.Math.Cos(lat) * (world.radius - 1) + radius;
                         position.Z = (float)System.Math.Sin(lat) * (world.radius - 1) + diameter + world.radius;
 
-                        Matrix look = Matrix.CreateLookAt(position.Vector, new Vector3(radius, position.Vector.Y, radius + diameter), Vector3.Up);
+                        Matrix look = Matrix.CreateLookAt(position, new Vector3(radius, position.Y, radius + diameter), Vector3.Up);
 
                         this.look.Y += MathHelper.ToDegrees(2 * (float)System.Math.Acos(Quaternion.CreateFromRotationMatrix(look).X));
                         this.look.Y -= 90;
                         this.look.Y -= MathHelper.ToDegrees(lat);
 
-                        this.velocity = new Vector3f(0, 0, 0);
+                        velocity *= 0;
 
                         area = WorldArea.BOTTOM;
                     }
@@ -197,7 +197,7 @@ namespace Inignoto.Entities
                             if (atan < 0) atan += MathHelper.TwoPi;
 
 
-                            Matrix look = Matrix.CreateLookAt(position.Vector, new Vector3(radius + diameter, position.Vector.Y, radius + diameter), Vector3.Up);
+                            Matrix look = Matrix.CreateLookAt(position, new Vector3(radius + diameter, position.Y, radius + diameter), Vector3.Up);
 
                             this.look.Y -= 90;
                             this.look.Y -= MathHelper.ToDegrees(2 * (float)System.Math.Acos(Quaternion.CreateFromRotationMatrix(look).X));
@@ -207,8 +207,8 @@ namespace Inignoto.Entities
                             lat *= length;
                             position.X = lat;
                             position.Z = diameter - 1;
-                            
-                            this.velocity = new Vector3f(0, 0, 0);
+
+                            velocity *= 0;
 
                             
                             area = WorldArea.MAIN;
@@ -225,7 +225,7 @@ namespace Inignoto.Entities
                             float atan = (float)System.Math.Atan2(position.Z - (diameter + radius), position.X - radius);
                             if (atan < 0) atan += MathHelper.TwoPi;
 
-                            Matrix look = Matrix.CreateLookAt(position.Vector, new Vector3(radius, position.Vector.Y, radius + diameter), Vector3.Up);
+                            Matrix look = Matrix.CreateLookAt(position, new Vector3(radius, position.Y, radius + diameter), Vector3.Up);
 
                             this.look.Y += 90;
                             this.look.Y -= MathHelper.ToDegrees(2 * (float)System.Math.Acos(Quaternion.CreateFromRotationMatrix(look).X));
@@ -236,7 +236,7 @@ namespace Inignoto.Entities
                             lat *= length;
                             position.X = lat;
                             position.Z = 1;
-                            this.velocity = new Vector3f(0, 0, 0);
+                            velocity *= 0;
 
 
                             area = WorldArea.MAIN;
@@ -308,9 +308,9 @@ namespace Inignoto.Entities
             return 0.075f * (float)time.ElapsedGameTime.TotalSeconds * 60;
         }
 
-        public virtual Vector3f GetEyePosition()
+        public virtual Vector3 GetEyePosition()
         {
-            return new Vector3f(position).Add(size.X * 0.5f, GetEyeHeight(), size.Z * 0.5f);
+            return position + new Vector3(size.X * 0.5f, GetEyeHeight(), size.Z * 0.5f);
         }
 
         public TilePos GetTilePos()
@@ -351,12 +351,12 @@ namespace Inignoto.Entities
             {
                 for (float sz = 0; sz < 2; sz++)
                 {
-                    TileRaytraceResult near_ground = world.RayTraceTiles(new Vector3f(position).Set(position).Add(size.X * sx, size.Y, size.Z * sz), new Vector3f(position).Set(position).Add(size.X * sx, -1.1f, size.Z * sz), Tiles.Tile.TileRayTraceType.BLOCK);
+                    TileRaytraceResult near_ground = world.RayTraceTiles(position + new Vector3(size.X * sx, size.Y, size.Z * sz), position + new Vector3(size.X * sx, -1.1f, size.Z * sz), Tiles.Tile.TileRayTraceType.BLOCK);
                     if (near_ground != null)
                     {
                         NearGround = true;
                     }
-                    TileRaytraceResult ground_result = world.RayTraceTiles(new Vector3f(position).Set(position).Add(size.X * sx, size.Y, size.Z * sz), new Vector3f(position).Set(position).Add(size.X * sx, 0, size.Z * sz), Tiles.Tile.TileRayTraceType.BLOCK);
+                    TileRaytraceResult ground_result = world.RayTraceTiles(position + new Vector3(size.X * sx, size.Y, size.Z * sz), position + new Vector3(size.X * sx, 0, size.Z * sz), Tiles.Tile.TileRayTraceType.BLOCK);
                     if (ground_result != null)
                     {
                         OnGround = true;
@@ -366,7 +366,7 @@ namespace Inignoto.Entities
                         }
                     }
 
-                    TileRaytraceResult step_result = world.RayTraceTiles(new Vector3f(position).Set(position).Add(size.X * sx, 0, size.Z * sz), new Vector3f(position).Set(position).Add(size.X * sx, StepHeight, size.Z * sz), Tiles.Tile.TileRayTraceType.BLOCK);
+                    TileRaytraceResult step_result = world.RayTraceTiles(position + new Vector3(size.X * sx, 0, size.Z * sz), position + new Vector3(size.X * sx, StepHeight, size.Z * sz), Tiles.Tile.TileRayTraceType.BLOCK);
                     if (step_result != null && NearGround)
                     {
                         position.Y += StepHeight;
@@ -377,8 +377,8 @@ namespace Inignoto.Entities
 
             if (velocity.Y <= 0)
             {
-                Vector3f collision_p1 = new Vector3f(position).Add(size.X * 0.5f, 0.01f, size.Z * 0.5f);
-                Vector3f collision_p2 = new Vector3f(position).Add(size.X * 0.5f, velocity.Y - 0.01f, size.Z * 0.5f);
+                Vector3 collision_p1 = position + new Vector3(size.X * 0.5f, 0.01f, size.Z * 0.5f);
+                Vector3 collision_p2 = position + new Vector3(size.X * 0.5f, velocity.Y - 0.01f, size.Z * 0.5f);
 
                 TileRaytraceResult result = world.RayTraceTiles(collision_p1, collision_p2, Tiles.Tile.TileRayTraceType.BLOCK);
                 if (result != null)
@@ -403,8 +403,8 @@ namespace Inignoto.Entities
             {
                 for (float sz = 0; sz < 2; sz++)
                 {
-                    Vector3f collision_p1 = new Vector3f(position).Add(size.X * sx, size.Y - 0.1f, size.Z * sz);
-                    Vector3f collision_p2 = new Vector3f(position).Add(size.X * sx, size.Y + velocity.Y + 0.1f, size.Z * sz);
+                    Vector3 collision_p1 = position + new Vector3(size.X * sx, size.Y - 0.1f, size.Z * sz);
+                    Vector3 collision_p2 = position + new Vector3(size.X * sx, size.Y + velocity.Y + 0.1f, size.Z * sz);
 
                     TileRaytraceResult result = world.RayTraceTiles(collision_p1, collision_p2, Tiles.Tile.TileRayTraceType.BLOCK);
                     if (result != null)
@@ -432,8 +432,8 @@ namespace Inignoto.Entities
 
             for (float sz = 0; sz < 2; sz++)
             {
-                Vector3f collision_p1 = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * sz);
-                Vector3f collision_p2 = new Vector3f(position).Add(size.X * 0.5f, 0, size.Z * sz).Add(velocity.X, 0, 0).Add(size.X * 0.52f * velocity.X / System.Math.Abs(velocity.X), 0, 0);
+                Vector3 collision_p1 = position + new Vector3(size.X * 0.5f, 0, size.Z * sz);
+                Vector3 collision_p2 = position + new Vector3(size.X * 0.5f + velocity.X + size.X * 0.52f * velocity.X / System.Math.Abs(velocity.X), 0, size.Z * sz);
                 for (float h = OnGround ? StepHeight : 0.1f; h < size.Y - 0.2f; h += 0.1f)
                 {
                     collision_p1.Y = position.Y + h;
@@ -453,8 +453,8 @@ namespace Inignoto.Entities
 
             for (float sx = 0; sx < 2; sx++)
             {
-                Vector3f collision_p1 = new Vector3f(position).Add(size.X * sx, 0, size.Z * 0.5f);
-                Vector3f collision_p2 = new Vector3f(position).Add(size.X * sx, 0, size.Z * 0.5f).Add(0, 0, velocity.Z).Add(0, 0, size.Z * 0.52f * velocity.Z / System.Math.Abs(velocity.Z));
+                Vector3 collision_p1 = position + new Vector3(size.X * sx, 0, size.Z * 0.5f);
+                Vector3 collision_p2 = position + new Vector3(size.X * sx, 0, size.Z * 0.5f + velocity.Z + size.Z * 0.52f * velocity.Z / System.Math.Abs(velocity.Z));
                 for (float h = OnGround ? StepHeight : 0.1f; h < size.Y - 0.2f; h += 0.1f)
                 {
                     collision_p1.Y = position.Y + h;

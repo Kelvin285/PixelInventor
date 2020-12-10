@@ -15,7 +15,7 @@ namespace Inignoto.Tiles.Data
         public readonly int state;
         public readonly ResourcePath location;
         public readonly int index;
-        public readonly int num_x, num_y;
+        public readonly int num_x = 1, num_y = 1;
 
         public string texture = "";
         public string side_texture = "";
@@ -27,6 +27,8 @@ namespace Inignoto.Tiles.Data
         public string back_texture = "";
 
         public GameModel model;
+
+        public static Dictionary<string, GameModel> models = new Dictionary<string, GameModel>();
 
         public TileData(int tile, int state, ResourcePath location, int index)
         {
@@ -95,7 +97,15 @@ namespace Inignoto.Tiles.Data
                     if (a.Equals("model"))
                     {
                         ResourcePath path = new ResourcePath(b + ".model", "assets");
-                        model = GameModel.LoadModel(path, Textures.white_square);
+                        string file = FileUtils.GetResourcePath(path);
+                        if (models.ContainsKey(file))
+                        {
+                            model = GameModel.LoadModel(path, Textures.white_square);
+                        } else
+                        {
+                            model = GameModel.LoadModel(path, Textures.white_square);
+                            //models.Add(file, model);
+                        }
                     }
                     if (model != null)
                     {
@@ -230,6 +240,7 @@ namespace Inignoto.Tiles.Data
                     chunk.RemoveLight(x, y, z, true, true, true, true);
                 } else
                 {
+                    if (tile.IsOpaque() || tile.tinted)
                     chunk.PropogateLights(x, y, z, true, true, true, true);
                 }
                 
