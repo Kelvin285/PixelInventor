@@ -11,11 +11,13 @@ namespace Inignoto.World.Biomes
         public static List<SurfaceBiome> SURFACE_REGISTRY = new List<SurfaceBiome>();
 
         public static List<List<SurfaceBiome>> SURFACE_CATEGORIES = new List<List<SurfaceBiome>>();
-        public static List<SurfaceBiome> GRASSLAND = new List<SurfaceBiome>();
+        public static List<SurfaceBiome> FOREST = new List<SurfaceBiome>();
         public static List<SurfaceBiome> DESERT = new List<SurfaceBiome>();
         public static List<SurfaceBiome> SNOW = new List<SurfaceBiome>();
 
         public static ForestFlatsBiome FOREST_FLATS;
+        public static DarkForestFlatsBiome DARK_FOREST_FLATS;
+
         public static HillsBiome HILLS;
         public static DesertPlainsBiome DESERT_PLAINS;
         public static DesertHillsBiome DESERT_HILLS;
@@ -25,6 +27,7 @@ namespace Inignoto.World.Biomes
         public static void RegisterBiomes()
         {
             RegisterSurfaceBiome(FOREST_FLATS = new ForestFlatsBiome());
+            RegisterSurfaceBiome(DARK_FOREST_FLATS = new DarkForestFlatsBiome());
             RegisterSurfaceBiome(HILLS = new HillsBiome());
 
             RegisterSurfaceBiome(DESERT_PLAINS = new DesertPlainsBiome());
@@ -33,9 +36,10 @@ namespace Inignoto.World.Biomes
             RegisterSurfaceBiome(SNOW_PLAINS = new SnowPlainsBiome());
             RegisterSurfaceBiome(SNOW_HILLS = new SnowHillsBiome());
 
-            GRASSLAND.Add(FOREST_FLATS);
+            FOREST.Add(FOREST_FLATS);
+            FOREST.Add(DARK_FOREST_FLATS);
             //GRASSLAND.Add(HILLS);
-            SURFACE_CATEGORIES.Add(GRASSLAND);
+            SURFACE_CATEGORIES.Add(FOREST);
 
             DESERT.Add(DESERT_PLAINS);
             DESERT.Add(DESERT_HILLS);

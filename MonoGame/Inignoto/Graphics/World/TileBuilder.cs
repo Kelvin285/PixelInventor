@@ -120,7 +120,6 @@ namespace Inignoto.Graphics.World
                 if (!data.model.Combined)
                 {
                     data.model.Combine();
-
                     mesh = data.model.Parts[0].mesh;
                     for (int i = 0; i < mesh.triangleVertices.Length; i++)
                     {
@@ -136,13 +135,13 @@ namespace Inignoto.Graphics.World
                             MathF.PI * data.model.rotation.X / 180.0f,
                             MathF.PI * data.model.rotation.Z / 180.0f);
 
-                        Matrix matrix = Matrix.CreateTranslation(mesh.triangleVertices[i].Position) * Matrix.CreateFromQuaternion(quat);
+                        Matrix matrix = Matrix.CreateTranslation(mesh.triangleVertices[i].Position + data.model.origin) * Matrix.CreateFromQuaternion(quat);
 
                         mesh.triangleVertices[i].Position = matrix.Translation;
                         mesh.triangleVertices[i].TextureCoordinate = texCoord;
                         mesh.triangleVertices[i].Position *= 1.0f / 32.0f;
                         mesh.triangleVertices[i].Position += data.model.translation;
-                        mesh.triangleVertices[i].Position += new Vector3(x + 0.65f, y + 0.5f, z + 0.5f);
+                        mesh.triangleVertices[i].Position += new Vector3(x + 0.5f, y + 0.5f, z + 0.5f);
                     }
 
                     if (Textures.Textures.tiles.GetTexture() != null)

@@ -263,7 +263,7 @@ namespace Inignoto.Graphics.Gui
                     if (clicked)
                     {
                         singleplayer_state = SingleplayerState.CREATE;
-                        creating = new WorldProperties("New World");
+                        creating = new WorldProperties("New World", null);
                         name_reader = null;
                         delete_world = false;
                         deleting = null;
@@ -920,7 +920,7 @@ namespace Inignoto.Graphics.Gui
                         foreach(string file in files)
                         {
                             string[] s = file.Split(Path.DirectorySeparatorChar);
-                            WorldProperties properties = new WorldProperties(s[s.Length - 1]);
+                            WorldProperties properties = new WorldProperties(s[s.Length - 1], null);
                             worlds.Add(properties);
                         }
                     }

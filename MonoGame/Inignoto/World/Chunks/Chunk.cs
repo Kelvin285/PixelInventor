@@ -27,7 +27,7 @@ namespace Inignoto.World.Chunks
 
             public uint light { get => GetLight(); set => SetLight(value); }
             public byte sunlight { get => GetSunlight(); set => SetSunlight(value); }
-            public uint mining_time;
+            public int mining_time;
             public Voxel(TileData voxel)
             {
                 true_voxel = voxel.index;
@@ -228,7 +228,7 @@ namespace Inignoto.World.Chunks
                 transparencyMesh[meshIndex].Dispose();
             }
 
-            mesh[meshIndex] = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, this);
+            lock (mesh) mesh[meshIndex] = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, this);
             if (mesh[meshIndex] != null)
                 mesh[meshIndex].SetPosition(new Vector3(GetX() * Constants.CHUNK_SIZE, GetY() * Constants.CHUNK_SIZE, GetZ() * Constants.CHUNK_SIZE));
 
@@ -238,7 +238,6 @@ namespace Inignoto.World.Chunks
             FinishRebuilding();
             
         }
-
 
         public bool Disposed = false;
 
@@ -447,10 +446,6 @@ namespace Inignoto.World.Chunks
         public void SetLight(int x, int y, int z, int r, int g, int b, int sun, bool update = true)
         {
             if (NeedsToGenerate()) update = false;
-            if (update)
-            {
-                //RemoveLight(x, y, z, r == 0, g == 0, b == 0, sun == 0);
-            }
             if (IsInsideChunk(x, y, z))
             {
                 Tile tile = TileRegistry.GetTile(GetVoxel(x, y, z).tile_id);

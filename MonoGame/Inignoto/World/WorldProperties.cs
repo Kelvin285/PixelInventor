@@ -18,13 +18,15 @@ namespace Inignoto.World
         public string name;
         public int seed = 0;
         public Gamemode default_gamemode = Gamemode.SURVIVAL;
+        public World world;
 
-        public WorldProperties(string name)
+        public WorldProperties(string name, World world)
         {
             Load();
             generator = new ChunkGenerator();
             gravity = 9.81f;
             this.name = name;
+            this.world = world;
         }
 
         public void Load()
@@ -45,6 +47,11 @@ namespace Inignoto.World
             infinite = bool.Parse(data[1]);
             name = data[2];
             seed = int.Parse(data[3]);
+            if (data.Length >= 5)
+            {
+                world.DayTime = float.Parse(data[4]);
+            }
+                
         }
 
         public void Save()
@@ -63,7 +70,8 @@ namespace Inignoto.World
             str += gravity + "\n";
             str += infinite + "\n";
             str += name + "\n";
-            str += seed;
+            str += seed + "\n";
+            str += world.DayTime;
             File.WriteAllText(FileUtils.GetResourcePath(file), str);
         }
     }

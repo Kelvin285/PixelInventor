@@ -100,7 +100,7 @@ namespace Inignoto.World.Chunks
 
             for (int i = 0; i < ar.Length; i++)
             {
-
+                lock (ar)
                 if (ar[i].NeedsToGenerate())
                 {
                     Chunk chunk = ar[i];
@@ -279,12 +279,12 @@ namespace Inignoto.World.Chunks
                 Chunk chunk = ar[i];
                 if (chunk != null)
                 {
-
+                    
                     if (Vector3.Distance(chunk.cpos, current_xyz) <= Constants.CHUNK_LIGHT_DISTANCE / 2)
                     {
                         if (chunk.NeedsToRebuild() && chunk.NotEmpty || chunk.LightRebuild)
                         {
-                            lock (chunk) chunk.BuildMesh();
+                            chunk.BuildMesh();
                         }
                     }
 

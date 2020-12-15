@@ -122,7 +122,7 @@ namespace Inignoto.World
         {
             this.name = name;
             chunkManager = new ChunkManager(this);
-            properties = new WorldProperties(name);
+            properties = new WorldProperties(name, this);
             properties.seed = seed;
             properties.Load();
             ChunkGenerator.noise.SetSeed(properties.seed);
@@ -139,7 +139,7 @@ namespace Inignoto.World
 
         public void Construct(string name, WorldProperties properties)
         {
-            
+            properties.world = this;
             this.name = name;
             chunkManager = new ChunkManager(this);
             this.properties = properties;
@@ -182,7 +182,7 @@ namespace Inignoto.World
 
             float delta = (float)time.ElapsedGameTime.TotalSeconds * 60;
 
-            DayTime += delta;
+            DayTime += delta * 0.5f;
 
             float angle = MathHelper.ToRadians(360 * (DayTime / 24000.0f) - 45);
 
@@ -192,17 +192,18 @@ namespace Inignoto.World
             for (int i = 0; i < entities.Count; i++)
             {
                 Chunk chunk = TryGetChunk(entities[i].position.X, entities[i].position.Y, entities[i].position.Z);
-                if (entities[i].TicksExisted > 0 || entities[i] is PlayerEntity && ((PlayerEntity)entities[i]).gamemode == Gamemode.FREECAM)
+                if (entities[i].TicksExisted == 0)
+                {
+                    entities[i].Update(time);
+                }
+                if (entities[i].TicksExisted > 1 || entities[i] is PlayerEntity && ((PlayerEntity)entities[i]).gamemode == Gamemode.FREECAM)
                 {
                     entities[i].Update(time);
                     continue;
                 }
                 if (chunk != null)
                 {
-                    if (chunk.NeedsToGenerate() == false)
-                    {
-                        entities[i].Update(time);
-                    }
+                    entities[i].Update(time);
                 } else
                 {
 
@@ -384,8 +385,8 @@ namespace Inignoto.World
             {
                 int index = chunk.GetIndexFor(x, y, z);
                 if (chunk.voxels[index].mining_time < 0) chunk.voxels[index].mining_time = 0;
-                chunk.voxels[index].mining_time += (uint)strength;
-                Console.WriteLine(chunk.voxels[index].mining_time);
+                chunk.voxels[index].mining_time += strength;
+                
                 int hits = TileRegistry.GetTile(chunk.voxels[index].voxel.tile_id).hits;
                 if (chunk.voxels[index].overlay.tile_id != TileRegistry.AIR.DefaultData.tile_id)
                 {
@@ -531,7 +532,7 @@ namespace Inignoto.World
                 {
                     if (tile.IsVisible())
                     {
-                        if (!needsSolid || needsSolid && tile.solid)
+                        if (!needsSolid || (needsSolid && tile.solid && tile.BlocksMovement()))
                         if (tile.GetRayTraceType() == type)
                         {
                             Vector3 dir = end - start;

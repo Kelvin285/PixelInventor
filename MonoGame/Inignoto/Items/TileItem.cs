@@ -57,7 +57,7 @@ namespace Inignoto.Items
 
             Vector3 eyePosition = user.GetEyePosition();
 
-            TileRaytraceResult result = world.RayTraceTiles(eyePosition, eyePosition + (user.ForwardLook * user.ReachDistance), Tile.TileRayTraceType.BLOCK);
+            TileRaytraceResult result = world.RayTraceTiles(eyePosition, eyePosition + (user.ForwardLook * user.ReachDistance), Tile.TileRayTraceType.BLOCK, false);
 
             if (result == null) return ActionResult.MISS;
 

@@ -172,10 +172,8 @@ namespace Inignoto.World.Generator
         }
         public SurfaceBiome GetSurfaceBiome(float x, float y)
         {
-            x += noise.GetWhiteNoise(0, y * 2) * 10 * 5;
-            y += noise.GetWhiteNoise(x, 0) * 10 * 5;
             List<SurfaceBiome> BIOMES = GetSurfaceCategory(x, y);
-            float biome_size = 2.0f;
+            float biome_size = 3.0f;
 
             float cell = MathF.Abs(noise.GetCellular((x) / biome_size, y / biome_size));
             cell = MathF.Max(0, MathF.Min(1, cell));

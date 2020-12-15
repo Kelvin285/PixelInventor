@@ -278,7 +278,7 @@ namespace Inignoto.Graphics.Gui
             {
                 for (int y = 0; y < 4; y++)
                 {
-                    int I = x + y * 10;
+                    int I = x + y * 10 + page * (10 * 4);
 
                     Item item = null;
                     if (search_items.Count == 0)

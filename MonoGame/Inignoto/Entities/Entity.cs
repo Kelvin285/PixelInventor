@@ -329,7 +329,7 @@ namespace Inignoto.Entities
         public virtual void LandOnGround()
         {
             //minimum damage = 10
-            float damage = (position.Y - FallStart) / 5;
+            float damage = (FallStart - position.Y) / 5;
 
             damage *= world.properties.gravity / 9.81f;
             if (world.properties.gravity < 4)

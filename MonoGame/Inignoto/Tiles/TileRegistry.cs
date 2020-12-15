@@ -54,6 +54,7 @@ namespace Inignoto.Tiles
         public static Tile WEEPING_REED;
         public static Tile AMBER_ORE;
         public static Tile GOLD_ORE;
+        public static Tile GLOW_BERRY;
 
 
         private static bool TEXTURES_LOADED = false;
@@ -104,9 +105,10 @@ namespace Inignoto.Tiles
             IRON_PLATING_LARGE = new Tile("Inignoto:iron_plating_large", null, true, 10).SetFull();
             STORAGE_CONTAINER = new StorageContainerTile("Inignoto:storage_container", null, true, 10).SetFull();
             ALCYONEUM = new PlantTile("Inignoto:alcyoneum", new Tile[] { DIRT });
-            WEEPING_REED = new Tile("Inignoto:weeping_reed", null, true, 1).SetTransparent();
-            AMBER_ORE = new Tile("Inignoto:amber_ore", null, true, 7);
-            GOLD_ORE = new Tile("Inignoto:gold_ore", null, true, 7);
+            WEEPING_REED = new Tile("Inignoto:weeping_reed", null, true, 1).SetTransparent().SetBlocksMovement(false);
+            AMBER_ORE = new Tile("Inignoto:amber_ore", null, true, 7).SetOverlay();
+            GOLD_ORE = new Tile("Inignoto:gold_ore", null, true, 7).SetOverlay();
+            GLOW_BERRY = new Tile("Inignoto:glow_berry", null, true, 1).SetTransparent().SetBlocksMovement(false).SetLight(0xf, 0xc, 0x0);
         }
 
         public static void TryLoadTileTextures()

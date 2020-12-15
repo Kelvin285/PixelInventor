@@ -21,11 +21,7 @@ namespace Inignoto.World.Biomes.Surface.Grasslands
         {
             if (y == height)
             {
-                if (ChunkGenerator.noise.GetSimplex(x, z) * 10 >= 0.25f)
-                {
-                    return GRASS;
-                }
-                return TileRegistry.PURPLE_GRASS.DefaultData;
+                return GRASS;
             }
             return TileRegistry.AIR.DefaultData;
         }
