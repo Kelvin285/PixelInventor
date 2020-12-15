@@ -10,6 +10,7 @@ using System;
 using System.Buffers;
 using static Inignoto.Tiles.Tile;
 using System.Threading.Tasks;
+using static Inignoto.World.World;
 
 namespace Inignoto.Graphics.World
 {
@@ -19,6 +20,7 @@ namespace Inignoto.Graphics.World
 
         public static Mesh.Mesh BuildMeshForChunk(GraphicsDevice device, Chunk chunk)
         {
+            if (chunk == null) return null;
             int invisible = 0;
             List<VertexPositionLightTexture> vpct = new List<VertexPositionLightTexture>();
 
@@ -59,10 +61,13 @@ namespace Inignoto.Graphics.World
             List<int> normals3 = new List<int>();
             int index3 = 0;
 
-            for (int x = 0; x < Constants.CHUNK_SIZE; x++)
-                for (int y = 0; y < Constants.CHUNK_SIZE; y++)
-                    for (int z = 0; z < Constants.CHUNK_SIZE; z++)
+            lock (chunk)
+            lock (chunk.solidVoxels)
+            foreach (Vector3 vec in chunk.solidVoxels)
                     {
+                int x = (int)vec.X;
+                int y = (int)vec.Y;
+                int z = (int)vec.Z;
                 TileData data = chunk.GetVoxel(x, y, z);
                 TileData overlay = chunk.GetOverlayVoxel(x, y, z);
                 Tile tile = TileRegistry.GetTile(data.tile_id);
@@ -139,27 +144,23 @@ namespace Inignoto.Graphics.World
                         {
                             if (data.model != null)
                             {
-                                Mesh.Mesh mesh = null;
-                                if (!meshes.ContainsKey(data))
-                                {
-                                    mesh = TileBuilder.BuildTile(0, 0, 0, data, TileRegistry.AIR.DefaultData, device, false);
-                                    meshes.TryAdd(data, mesh);
-                                } else
-                                {
-                                    mesh = meshes[data];
-                                }
+                                Mesh.Mesh mesh = TileBuilder.BuildTile(0, 0, 0, data, TileRegistry.AIR.DefaultData, device, false);
                                         
-                                for (int i = 0; i < mesh.triangleVertices.Length; i++)
+                                if (mesh != null)
                                 {
-                                    indices.Add(index++);
-                                    vertices.Add(mesh.triangleVertices[i].Position + new Vector3(x, y, z));
-                                    pos.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
-                                    light.Add(chunk.GetLight(x, y, z));
-                                    sunlight.Add(chunk.GetSunlight(x, y, z));
-                                    colors.Add(mesh.triangleVertices[i].Color);
-                                    textures.Add(new Vector4(mesh.triangleVertices[i].TextureCoordinate, -1.0f, -1.0f));
-                                    normals.Add(0);
+                                    for (int i = 0; i < mesh.triangleVertices.Length; i++)
+                                    {
+                                        indices.Add(index++);
+                                        vertices.Add(mesh.triangleVertices[i].Position + new Vector3(x, y, z));
+                                        pos.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
+                                        light.Add(chunk.GetLight(x, y, z));
+                                        sunlight.Add(chunk.GetSunlight(x, y, z));
+                                        colors.Add(mesh.triangleVertices[i].Color);
+                                        textures.Add(new Vector4(mesh.triangleVertices[i].TextureCoordinate, -1.0f, -1.0f));
+                                        normals.Add(0);
+                                    }
                                 }
+                                
                                 continue;
                             }
 
@@ -412,23 +413,23 @@ namespace Inignoto.Graphics.World
 
                 }
             }
-            if (chunk.waterMesh != null)
+            if (chunk.waterMesh[chunk.meshIndex] != null)
             {
-                chunk.waterMesh.Dispose();
+                chunk.waterMesh[chunk.meshIndex].Dispose();
             }
-            chunk.waterMesh = new Mesh.Mesh(device, vpct2.ToArray());
-            chunk.waterMesh.SetIndexBuffer(device, indices2.ToArray());
+            chunk.waterMesh[chunk.meshIndex] = new Mesh.Mesh(device, vpct2.ToArray());
+            chunk.waterMesh[chunk.meshIndex].SetIndexBuffer(device, indices2.ToArray());
 
-            if (chunk.transparencyMesh != null)
+            if (chunk.transparencyMesh[chunk.meshIndex] != null)
             {
-                chunk.transparencyMesh.Dispose();
+                chunk.transparencyMesh[chunk.meshIndex].Dispose();
             }
-            chunk.transparencyMesh = new Mesh.Mesh(device, vpct3.ToArray());
-            chunk.transparencyMesh.SetIndexBuffer(device, indices3.ToArray());
+            chunk.transparencyMesh[chunk.meshIndex] = new Mesh.Mesh(device, vpct3.ToArray());
+            chunk.transparencyMesh[chunk.meshIndex].SetIndexBuffer(device, indices3.ToArray());
 
-            if (chunk.mesh != null)
+            if (chunk.mesh[chunk.meshIndex] != null)
             {
-                chunk.mesh.Dispose();
+                chunk.mesh[chunk.meshIndex].Dispose();
             }
             Mesh.Mesh m = new Mesh.Mesh(device, vpct.ToArray());
             m.SetIndexBuffer(device, indices.ToArray());

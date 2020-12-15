@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace Inignoto.World.Chunks
 {
-    public class StructureChunk
+    public class StructureChunk : IComparable<StructureChunk>
     {
         public Chunk.Voxel[] tiles;
 
@@ -112,6 +112,25 @@ namespace Inignoto.World.Chunks
             y2 = y;
             z2 = z;
             return manager.GetOrCreateStructureChunk(X, Y, Z);
+        }
+
+        public int CompareTo(StructureChunk obj)
+        {
+            if (obj == null) return 1;
+            try
+            {
+                Vector3 pos = obj.manager.current_xyz + new Vector3(0, 4, 0);
+                float dist1 = Vector3.Distance(cpos, pos);
+                float dist2 = Vector3.Distance(obj.cpos, pos);
+                if (dist1 == dist2) return 0;
+                if (dist1 < dist2) return -1;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return 0;
+            }
+            return 1;
         }
     }
 }

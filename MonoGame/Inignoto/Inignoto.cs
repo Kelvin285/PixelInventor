@@ -131,16 +131,19 @@ namespace Inignoto
             ThreadStart world_thread_start = new ThreadStart(UpdateWorldGeneration);
             world_generation_thread = new Thread(world_thread_start);
             world_generation_thread.IsBackground = true;
+            world_generation_thread.Priority = ThreadPriority.AboveNormal;
             world_generation_thread.Start();
 
             ThreadStart world_tick_start = new ThreadStart(TickWorld);
             world_tick_thread = new Thread(world_tick_start);
             world_tick_thread.IsBackground = true;
+            world_generation_thread.Priority = ThreadPriority.BelowNormal;
             world_tick_thread.Start();
 
             ThreadStart rebuild_chunk_start = new ThreadStart(RebuildChunks);
             rebuild_chunk_thread = new Thread(rebuild_chunk_start);
             rebuild_chunk_thread.IsBackground = true;
+            world_generation_thread.Priority = ThreadPriority.Normal;
             rebuild_chunk_thread.Start();
         }
         public GameTime gametime = new GameTime();

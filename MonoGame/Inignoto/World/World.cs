@@ -385,7 +385,7 @@ namespace Inignoto.World
                 int index = chunk.GetIndexFor(x, y, z);
                 if (chunk.voxels[index].mining_time < 0) chunk.voxels[index].mining_time = 0;
                 chunk.voxels[index].mining_time += (uint)strength;
-
+                Console.WriteLine(chunk.voxels[index].mining_time);
                 int hits = TileRegistry.GetTile(chunk.voxels[index].voxel.tile_id).hits;
                 if (chunk.voxels[index].overlay.tile_id != TileRegistry.AIR.DefaultData.tile_id)
                 {
@@ -394,7 +394,7 @@ namespace Inignoto.World
                         hits = TileRegistry.GetTile(chunk.voxels[index].overlay.tile_id).hits;
                     }
                 }
-
+                
                 if (chunk.voxels[index].mining_time >= hits)
                 {
                     if (TileRegistry.GetTile(chunk.voxels[index].voxel.tile_id).CanDropAsItem())

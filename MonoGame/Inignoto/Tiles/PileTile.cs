@@ -1,4 +1,5 @@
-﻿using Inignoto.Tiles.Data;
+﻿using Inignoto.Entities;
+using Inignoto.Tiles.Data;
 using Inignoto.World.Chunks;
 using System;
 using System.Collections.Generic;
@@ -20,7 +21,7 @@ namespace Inignoto.Tiles
             return TileRegistry.GetTile(chunk.GetVoxel(x, y - 1, z).tile_id).solid && TileRegistry.GetTile(chunk.GetVoxel(x, y - 1, z).tile_id).FullSpace;
         }
 
-        public override TileData GetStateForBlockPlacement(int x, int y, int z, Chunk chunk, TileFace face)
+        public override TileData GetStateForBlockPlacement(int x, int y, int z, Chunk chunk, TileFace face, Entity placer = null)
         {
             return stateHolder.data[(int)(chunk.GetWorld().DayTime) % stateHolder.data.Count];
         }

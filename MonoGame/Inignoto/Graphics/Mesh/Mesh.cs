@@ -13,6 +13,7 @@ namespace Inignoto.Graphics.Mesh
 
         public Matrix worldMatrix;
         public VertexPositionLightTexture[] triangleVertices;
+        public int[] indices;
         public VertexBuffer vertexBuffer;
         public IndexBuffer indexBuffer;
 
@@ -28,7 +29,8 @@ namespace Inignoto.Graphics.Mesh
         public bool IsDisposed => vertexBuffer != null ? vertexBuffer.IsDisposed : true;
         public int Length => triangleVertices.Length;
 
-        private static int meshes = 0;
+        public bool built = false;
+
         public Mesh(GraphicsDevice device, VertexPositionLightTexture[] triangleVertices, bool lines = false, Texture2D texture = null)
         {
             //Console.WriteLine("Meshes: " + (meshes++));
@@ -44,11 +46,7 @@ namespace Inignoto.Graphics.Mesh
             }
             
             this.triangleVertices = triangleVertices;
-            vertexBuffer = new VertexBuffer(device, typeof(
-                           VertexPositionLightTexture), triangleVertices.Length, BufferUsage.
-                           WriteOnly);
 
-            vertexBuffer.SetData(this.triangleVertices);
 
             worldMatrix = Matrix.CreateWorld(new Vector3(0, 0, 0), Vector3.Forward, Vector3.Up);
             this.lines = lines;
@@ -57,47 +55,66 @@ namespace Inignoto.Graphics.Mesh
 
         public void SetIndexBuffer(GraphicsDevice device, int[] indices)
         {
-            indexBuffer = new IndexBuffer(device, IndexElementSize.ThirtyTwoBits, indices.Length, BufferUsage.WriteOnly);
-            indexBuffer.SetData(indices);
+            this.indices = indices;
+        }
+
+        public void BuildMesh(GraphicsDevice device)
+        {
+            vertexBuffer = new VertexBuffer(device, typeof(
+                           VertexPositionLightTexture), triangleVertices.Length, BufferUsage.
+                           WriteOnly);
+
+            vertexBuffer.SetData(this.triangleVertices);
+
+            if (indices != null)
+            {
+                indexBuffer = new IndexBuffer(device, IndexElementSize.ThirtyTwoBits, indices.Length, BufferUsage.WriteOnly);
+                indexBuffer.SetData(indices);
+            }
+
+            built = true;
         }
 
 
         public void CombineWith(Mesh mesh, Vector3 position, Vector3 scale, Quaternion rotation, Vector3 offset)
         {
-            if (this.triangleVertices == null) return;
-            int verts = this.triangleVertices.Length / 3;
-            List<VertexPositionLightTexture> VPLT = new List<VertexPositionLightTexture>();
-
-
-            for (int i = 0; i < mesh.triangleVertices.Length; i++)
+            lock (this.triangleVertices)
             {
-                Vector3 vec = new Vector3(mesh.triangleVertices[i].Position.X, mesh.triangleVertices[i].Position.Y, mesh.triangleVertices[i].Position.Z);
+                lock (mesh.triangleVertices)
+                {
+                    if (this.triangleVertices == null) return;
+                    int verts = this.triangleVertices.Length / 3;
+                    List<VertexPositionLightTexture> VPLT = new List<VertexPositionLightTexture>();
 
-                Matrix mat = Matrix.CreateTranslation(vec);
-                mat *= Matrix.CreateFromQuaternion(rotation);
-                mat *= Matrix.CreateScale(scale);
-                mat *= Matrix.CreateTranslation(position);
-                mat *= Matrix.CreateTranslation(offset);
 
-                mesh.triangleVertices[i].Position = mat.Translation;
-                //vec.Rotate(rotation);
-                //vec.Mul(scale);
-                //vec.Add(position);
-                // vec.Add(offset);
-                VPLT.Add(mesh.triangleVertices[i]);
+                    for (int i = 0; i < mesh.triangleVertices.Length; i++)
+                    {
+                        Vector3 vec = new Vector3(mesh.triangleVertices[i].Position.X, mesh.triangleVertices[i].Position.Y, mesh.triangleVertices[i].Position.Z);
+
+                        Matrix mat = Matrix.CreateTranslation(vec);
+                        mat *= Matrix.CreateFromQuaternion(rotation);
+                        mat *= Matrix.CreateScale(scale);
+                        mat *= Matrix.CreateTranslation(position);
+                        mat *= Matrix.CreateTranslation(offset);
+
+                        mesh.triangleVertices[i].Position = mat.Translation;
+                        //vec.Rotate(rotation);
+                        //vec.Mul(scale);
+                        //vec.Add(position);
+                        // vec.Add(offset);
+                        VPLT.Add(mesh.triangleVertices[i]);
+                    }
+                    for (int i = 0; i < this.triangleVertices.Length; i++)
+                    {
+                        VPLT.Add(this.triangleVertices[i]);
+                    }
+
+                    VertexPositionLightTexture[] triangleVertices = VPLT.ToArray();
+                    this.triangleVertices = triangleVertices;
+                    this.built = false;
+                }
             }
-            for (int i = 0; i < this.triangleVertices.Length; i++)
-            {
-                VPLT.Add(this.triangleVertices[i]);
-            }
-
-            VertexPositionLightTexture[] triangleVertices = VPLT.ToArray();
-            this.triangleVertices = triangleVertices;
-            vertexBuffer = new VertexBuffer(Inignoto.game.GraphicsDevice, typeof(
-                           VertexPositionLightTexture), triangleVertices.Length, BufferUsage.
-                           WriteOnly);
-            if (vertexBuffer == null) return;
-            vertexBuffer.SetData(this.triangleVertices);
+            
         }
 
 
@@ -142,11 +159,11 @@ namespace Inignoto.Graphics.Mesh
 
         public void Draw(Texture texture, GameEffect effect, GraphicsDevice device, Matrix worldMatrix)
         {
-            GC.SuppressFinalize(this);
-            GC.KeepAlive(this);
-            GC.KeepAlive(indexBuffer);
-            GC.KeepAlive(vertexBuffer);
-            GC.KeepAlive(triangleVertices);
+            if (built == false)
+            {
+                BuildMesh(device);
+                built = true;
+            }
             if (this == null) return;
             if (vertexBuffer != null)
             {

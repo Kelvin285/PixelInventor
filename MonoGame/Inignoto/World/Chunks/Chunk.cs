@@ -77,9 +77,12 @@ namespace Inignoto.World.Chunks
             {
                 true_overlay = voxel.index;
             }
+            
         }
 
         public readonly Voxel[] voxels;
+
+        public List<Vector3> solidVoxels = new List<Vector3>();
 
         public readonly Vector3 cpos;
         private World world;
@@ -88,16 +91,18 @@ namespace Inignoto.World.Chunks
         private bool rebuilding;
         private bool generated;
 
-        public Mesh mesh;
+        public Mesh[] mesh = new Mesh[2];
 
-        public Mesh waterMesh;
+        public Mesh[] waterMesh = new Mesh[2];
 
-        public Mesh transparencyMesh;
+        public Mesh[] transparencyMesh = new Mesh[2];
+
+        public int meshIndex = 0;
         
         public bool modified = false;
         public bool LightRebuild { get; private set; }
 
-        public bool LastEmpty;
+        public bool NotEmpty;
 
         public List<int> sunlightBfsQueue;
         public List<int> sunlightRemovalBfsQueue;
@@ -190,8 +195,10 @@ namespace Inignoto.World.Chunks
                 SetOverlayVoxel(x, y, z, TileDataHolder.REGISTRY[overlay]);
                 if (voxel.Length > 2)
                 {
-                    voxels[index].light = uint.Parse(voxel[2]);
-                    voxels[index].sunlight = byte.Parse(voxel[3]);
+                    if (uint.TryParse(voxel[2], out uint r1))
+                        voxels[index].light = uint.Parse(voxel[2]);
+                    if (uint.TryParse(voxel[2], out uint r2))
+                        voxels[index].sunlight = byte.Parse(voxel[3]);
                 }
                 
 
@@ -202,29 +209,31 @@ namespace Inignoto.World.Chunks
 
         public void BuildMesh()
         {
-            UpdateLights(false);
+            UpdateLights(LightRebuild);
 
-            if (mesh != null)
+            if (NotEmpty == false) return;
+
+            if (mesh[meshIndex] != null)
             {
-                mesh.Dispose();
-                mesh = null;
+                mesh[meshIndex].Dispose();
             }
 
-            if (waterMesh != null)
+            if (waterMesh[meshIndex] != null)
             {
-                waterMesh.Dispose();
-                waterMesh = null;
+                waterMesh[meshIndex].Dispose();
             }
 
-            if (transparencyMesh != null)
+            if (transparencyMesh[meshIndex] != null)
             {
-                transparencyMesh.Dispose();
-                transparencyMesh = null;
+                transparencyMesh[meshIndex].Dispose();
             }
 
-            mesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, this);
-            if (mesh != null)
-                mesh.SetPosition(new Vector3(GetX() * Constants.CHUNK_SIZE, GetY() * Constants.CHUNK_SIZE, GetZ() * Constants.CHUNK_SIZE));
+            mesh[meshIndex] = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, this);
+            if (mesh[meshIndex] != null)
+                mesh[meshIndex].SetPosition(new Vector3(GetX() * Constants.CHUNK_SIZE, GetY() * Constants.CHUNK_SIZE, GetZ() * Constants.CHUNK_SIZE));
+
+            if (meshIndex == 1) meshIndex = 0;
+            else meshIndex = 1;
 
             FinishRebuilding();
             
@@ -268,23 +277,24 @@ namespace Inignoto.World.Chunks
                     }
                 }
             }
-            if (mesh != null)
+            for (int i = 0; i < 2; i++)
             {
-                mesh.Dispose();
-                mesh = null;
+                if (mesh[i] != null)
+                {
+                    mesh[i].Dispose();
+                }
+
+                if (transparencyMesh[i] != null)
+                {
+                    transparencyMesh[i].Dispose();
+                }
+
+                if (waterMesh[i] != null)
+                {
+                    waterMesh[i].Dispose();
+                }
             }
             
-            if (transparencyMesh != null)
-            {
-                transparencyMesh.Dispose();
-                transparencyMesh = null;
-            }
-            
-            if (waterMesh != null)
-            {
-                waterMesh.Dispose();
-                waterMesh = null;
-            }
             
 
             Save();
@@ -711,13 +721,12 @@ namespace Inignoto.World.Chunks
             bool rerender = false;
             bool cu = false, cd = false, cl = false, cr = false, cb = false, cf = false;
             
-            //lock(sunlightRemovalBfsQueue)
-                //lock(sunlightBfsQueue)
+            lock(sunlightRemovalBfsQueue)
             while (sunlightRemovalBfsQueue.Count > 0)
             {
                 rerender = true;
                 int node = sunlightRemovalBfsQueue[0];
-                sunlightRemovalBfsQueue.Remove(node);
+                sunlightRemovalBfsQueue.RemoveAt(0);
 
                 int x = node % Constants.CHUNK_SIZE;
                 int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
@@ -808,13 +817,12 @@ namespace Inignoto.World.Chunks
                                 sunlightBfsQueue.Add(index);
                 }
             }
-            //lock(redRemovalBfsQueue)
-                lock (redBfsQueue)
-                    while (redRemovalBfsQueue.Count > 0)
+            lock(redRemovalBfsQueue)
+            while (redRemovalBfsQueue.Count > 0)
             {
                 rerender = true;
                 int node = redRemovalBfsQueue[0];
-                redRemovalBfsQueue.Remove(node);
+                redRemovalBfsQueue.RemoveAt(0);
 
                 int x = node % Constants.CHUNK_SIZE;
                 int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
@@ -906,13 +914,12 @@ namespace Inignoto.World.Chunks
                                 redBfsQueue.Add(index);
                 }
             }
-            //lock(greenRemovalBfsQueue)
-                //lock(greenBfsQueue)
+            lock(greenRemovalBfsQueue)
             while (greenRemovalBfsQueue.Count > 0)
             {
                 rerender = true;
                 int node = greenRemovalBfsQueue[0];
-                greenRemovalBfsQueue.Remove(node);
+                greenRemovalBfsQueue.RemoveAt(0);
 
                 int x = node % Constants.CHUNK_SIZE;
                 int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
@@ -1004,13 +1011,12 @@ namespace Inignoto.World.Chunks
                                 greenBfsQueue.Add(index);
                 }
             }
-            //lock(blueRemovalBfsQueue)
-                //lock(blueBfsQueue)
+            lock(blueRemovalBfsQueue)
             while (blueRemovalBfsQueue.Count > 0)
             {
                 rerender = true;
                 int node = blueRemovalBfsQueue[0];
-                blueRemovalBfsQueue.Remove(node);
+                blueRemovalBfsQueue.RemoveAt(0);
 
                 int x = node % Constants.CHUNK_SIZE;
                 int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
@@ -1110,7 +1116,7 @@ namespace Inignoto.World.Chunks
                 {
                     rerender = true;
                     int node = sunlightBfsQueue[0];
-                    sunlightBfsQueue.Remove(node);
+                    sunlightBfsQueue.RemoveAt(0);
 
                     // x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE
 
@@ -1173,7 +1179,7 @@ namespace Inignoto.World.Chunks
                 {
                     rerender = true;
                     int node = redBfsQueue[0];
-                    redBfsQueue.Remove(node);
+                    redBfsQueue.RemoveAt(0);
 
                     // x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE
 
@@ -1236,7 +1242,7 @@ namespace Inignoto.World.Chunks
                 {
                     rerender = true;
                     int node = greenBfsQueue[0];
-                    greenBfsQueue.Remove(node);
+                    greenBfsQueue.RemoveAt(0);
 
                     // x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE
 
@@ -1299,7 +1305,7 @@ namespace Inignoto.World.Chunks
                 {
                     rerender = true;
                     int node = blueBfsQueue[0];
-                    blueBfsQueue.Remove(node);
+                    blueBfsQueue.RemoveAt(0);
 
                     // x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE
 
@@ -1358,9 +1364,8 @@ namespace Inignoto.World.Chunks
                     }
                 }
 
-            if (rerender && canRerender)
+            if (rerender)
             {
-                //MarkForLightBuild();
                 MarkForRebuild();
 
                 if (cu)
@@ -1461,6 +1466,7 @@ namespace Inignoto.World.Chunks
 
         public bool SetVoxel(int x, int y, int z, TileData voxel)
         {
+
             if (IsInsideChunk(x, y, z))
             {
                 TileData last = voxels[GetIndexFor(x, y, z)].voxel;
@@ -1476,6 +1482,11 @@ namespace Inignoto.World.Chunks
                 if (voxel == TileRegistry.AIR.DefaultData)
                 {
                     SetOverlayVoxel(x, y, z, TileRegistry.AIR.DefaultData);
+                    if (last != voxel) solidVoxels.Remove(new Vector3(x, y, z));
+                } else
+                {
+                    NotEmpty = true;
+                    if (last != voxel) solidVoxels.Add(new Vector3(x, y, z));
                 }
                 if (!NeedsToGenerate())
                     modified = true;
@@ -1589,16 +1600,16 @@ namespace Inignoto.World.Chunks
             return !generated;
         }
 
-        public void SetGenerated()
+        public void SetGenerated(bool gen = true)
         {
-            generated = true;
+            generated = gen;
         }
         public int CompareTo(Chunk obj)
         {
             if (obj == null) return 1;
             try
             {
-                Vector3 pos = obj.chunkManager.current_xyz;
+                Vector3 pos = obj.chunkManager.current_xyz + new Vector3(0, 4, 0);
                 float dist1 = Vector3.Distance(cpos, pos);
                 float dist2 = Vector3.Distance(obj.cpos, pos);
                 if (dist1 == dist2) return 0;

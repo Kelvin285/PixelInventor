@@ -27,8 +27,6 @@ namespace Inignoto.World.Chunks
         private readonly Dictionary<long, Chunk> chunks;
         private readonly Dictionary<long, StructureChunk> structureChunks;
 
-        public readonly List<Chunk> chunksToRebuild;
-
         public List<WeakReference<Chunk>> waterRender;
         public List<WeakReference<Chunk>> transparentRender;
 
@@ -54,101 +52,152 @@ namespace Inignoto.World.Chunks
             current_xyz = new Vector3(0, 0, 0);
             waterRender = new List<WeakReference<Chunk>>();
             transparentRender = new List<WeakReference<Chunk>>();
-            chunksToRebuild = new List<Chunk>();
         }
-        internal void Dispose()
+
+
+        public bool HasStructureChunk(int x, int y, int z)
         {
-            lock (chunks)
+            long index = GetIndexFor(x, y, z);
+            lock (structureChunks)
+                return structureChunks.ContainsKey(index);
+        }
+        public StructureChunk GetOrCreateStructureChunk(int x, int y, int z)
+        {
+            long index = GetIndexFor(x, y, z);
+            lock (structureChunks)
             {
-                foreach (Chunk chunk in chunks.Values)
+                if (structureChunks.TryGetValue(index, out StructureChunk schunk))
                 {
-                    chunk.Dispose();
+                    return schunk;
                 }
+                StructureChunk chunk = new StructureChunk(x, y, z, this);
+                structureChunks.Add(index, chunk);
+
+                return chunk;
             }
         }
+
+        public Chunk TryGetChunk(int x, int y, int z)
+        {
+            long index = GetIndexFor(x, y, z);
+
+            if (chunks.ContainsKey(index))
+                if (chunks.TryGetValue(index, out Chunk chunk))
+                {
+                    return chunk;
+                }
+            return null;
+        }
+
         public void RebuildChunks()
         {
-            while (chunksToRebuild.Count > 0)
+            Chunk[] ar = null;
+            lock (chunks)
             {
-                Chunk chunk = chunksToRebuild[0];
+                ar = chunks.Values.ToArray();
+            }
+            Array.Sort(ar);
+
+            for (int i = 0; i < ar.Length; i++)
+            {
+
+                if (ar[i].NeedsToGenerate())
+                {
+                    Chunk chunk = ar[i];
+
+                    chunk.SetGenerated();
+
+                    chunk.BuildMesh();
+                }
+
+                BuildChunk(ar, i);
+            }
+
+        }
+
+        private void BuildChunk(Chunk[] ar, int i)
+        {
+            Chunk chunk = ar[i];
+
+            if (chunk.LightRebuild)
+            {
+                chunk.UpdateLights();
+            }
+
+            if (chunk.NeedsToRebuild() && chunk.NotEmpty)
+            {
                 chunk.BuildMesh();
-                chunksToRebuild.RemoveAt(0);
-                chunksToRebuild.Sort();
+            }
+        }
+
+        public void RemoveStructureChunk(int x, int y, int z)
+        {
+            lock (structureChunks)
+            {
+                structureChunks.Remove(GetIndexFor(x, y, z));
             }
         }
 
         public void StructureGeneration()
         {
-            //GC.KeepAlive(structureChunks);
-            //GC.KeepAlive(chunks);
-            try
+            lock (structureChunks)
             {
-                lock (structureChunks)
+                foreach (var key in structureChunks.Keys)
                 {
-                    foreach (var key in structureChunks.Keys)
-                    {
-                        if (!structureChunks.TryGetValue(key, out StructureChunk schunk)) continue;
-                        if (schunk == null) continue;
-                        try
-                        {
-                            Chunk chunk = TryGetChunk(schunk.x, schunk.y, schunk.z);
+                    if (!structureChunks.TryGetValue(key, out StructureChunk schunk)) continue;
+                    if (schunk == null) continue;
 
-                            if (MathF.Abs(schunk.x - current_x) >= Settings.HORIZONTAL_VIEW * 1.5f || MathF.Abs(schunk.z - current_z) >= Settings.HORIZONTAL_VIEW * 1.5f
-                                || MathF.Abs(schunk.cpos.Y - current_y) >= Settings.VERTICAL_VIEW * 1.5f)
-                            {
-                                structureChunks.Remove(key);
-                                continue;
-                            }
-
-                            if (chunk != null)
-                            {
-                                bool rebuild = false;
-                                if (!chunk.NeedsToGenerate())
-                                {
-                                    bool modified = chunk.modified;
-                                    if (schunk != null)
-                                    {
-                                        if (schunk.done == false)
-                                        {
-                                            for (int x = 0; x < Constants.CHUNK_SIZE; x++)
-                                            {
-                                                for (int y = 0; y < Constants.CHUNK_SIZE; y++)
-                                                {
-                                                    for (int z = 0; z < Constants.CHUNK_SIZE; z++)
-                                                    {
-                                                        if (schunk.GetTile(x, y, z) != TileRegistry.AIR.DefaultData)
-                                                            chunk.SetVoxel(x, y, z, schunk.GetTile(x, y, z));
-                                                    }
-                                                }
-                                            }
-                                            rebuild = true;
-                                        }
-
-                                        schunk.done = true;
-                                    }
-                                    chunk.modified = modified;
-                                    if (rebuild)
-                                        chunk.MarkForRebuild();
-                                    structureChunks.Remove(key);
-                                    continue;
-                                }
-                            }
-
-                        }
-                        catch (NullReferenceException e)
-                        {
-                            Console.WriteLine(e);
-                            break;
-                        }
-
-                    }
+                    BuildStructureChunk(key, schunk);
                 }
             }
-            catch (NullReferenceException e)
+            
+
+        }
+
+        private bool BuildStructureChunk(long key, StructureChunk schunk)
+        {
+            Chunk chunk = TryGetChunk(schunk.x, schunk.y, schunk.z);
+            if (MathF.Abs(schunk.x - current_x) >= Settings.HORIZONTAL_VIEW * 1.5f || MathF.Abs(schunk.z - current_z) >= Settings.HORIZONTAL_VIEW * 1.5f
+                || MathF.Abs(schunk.cpos.Y - current_y) >= Settings.VERTICAL_VIEW * 1.5f)
             {
-                Console.WriteLine(e.Message);
+                structureChunks.Remove(key);
+                return false;
             }
 
+            if (chunk != null)
+            {
+                bool rebuild = false;
+                if (!chunk.NeedsToGenerate())
+                {
+                    bool modified = chunk.modified;
+                    if (schunk != null)
+                    {
+                        if (schunk.done == false)
+                        {
+                            for (int x = 0; x < Constants.CHUNK_SIZE; x++)
+                            {
+                                for (int y = 0; y < Constants.CHUNK_SIZE; y++)
+                                {
+                                    for (int z = 0; z < Constants.CHUNK_SIZE; z++)
+                                    {
+                                        if (schunk.GetTile(x, y, z) != TileRegistry.AIR.DefaultData)
+                                            chunk.SetVoxel(x, y, z, schunk.GetTile(x, y, z));
+                                    }
+                                }
+                            }
+                            rebuild = true;
+                        }
+
+                        schunk.done = true;
+                    }
+                    chunk.modified = modified;
+                    if (rebuild)
+                        chunk.MarkForRebuild();
+                    structureChunks.Remove(key);
+                    return true;
+                }
+            }
+            return false;
         }
 
         public void UpdatePosition()
@@ -192,12 +241,13 @@ namespace Inignoto.World.Chunks
             if (!chunks.ContainsKey(index))
             {
                 Chunk chunk = new Chunk(x, y, z, world);
+
                 world.properties.generator.GenerateChunk(chunk);
-                chunk.SetGenerated();
 
                 lock (chunks) chunks.Add(index, chunk);
             }
         }
+
 
         public bool TryUnloadChunk(Chunk chunk)
         {
@@ -215,41 +265,6 @@ namespace Inignoto.World.Chunks
             return false;
         }
 
-
-        public bool HasStructureChunk(int x, int y, int z)
-        {
-            long index = GetIndexFor(x, y, z);
-            lock (structureChunks)
-                return structureChunks.ContainsKey(index);
-        }
-        public StructureChunk GetOrCreateStructureChunk(int x, int y, int z)
-        {
-            long index = GetIndexFor(x, y, z);
-            lock (structureChunks)
-            {
-                if (structureChunks.TryGetValue(index, out StructureChunk schunk))
-                {
-                    return schunk;
-                }
-                StructureChunk chunk = new StructureChunk(x, y, z, this);
-                structureChunks.Add(index, chunk);
-
-                return chunk;
-            }
-        }
-
-        public Chunk TryGetChunk(int x, int y, int z)
-        {
-            long index = GetIndexFor(x, y, z);
-
-            if (chunks.ContainsKey(index))
-                if (chunks.TryGetValue(index, out Chunk chunk))
-                {
-                    return chunk;
-                }
-            return null;
-        }
-
         public void UpdateChunks()
         {
 
@@ -258,10 +273,21 @@ namespace Inignoto.World.Chunks
 
             lock (chunks)
                 ar = chunks.Values.ToArray();
-            foreach (Chunk chunk in ar)
+
+            for (int i = 0; i < ar.Length; i++)
             {
+                Chunk chunk = ar[i];
                 if (chunk != null)
                 {
+
+                    if (Vector3.Distance(chunk.cpos, current_xyz) <= Constants.CHUNK_LIGHT_DISTANCE / 2)
+                    {
+                        if (chunk.NeedsToRebuild() && chunk.NotEmpty || chunk.LightRebuild)
+                        {
+                            lock (chunk) chunk.BuildMesh();
+                        }
+                    }
+
                     if (Vector3.Distance(chunk.cpos, current_xyz) <= Constants.ACTIVE_CHUNK_DISTANCE)
                     {
                         float distance = (float)IMathHelper.Distance3(chunk.GetX(), chunk.GetY(), chunk.GetZ(), current_x, current_y, current_z);
@@ -338,7 +364,10 @@ namespace Inignoto.World.Chunks
 
             Chunk[] ar = null;
             lock (chunks)
+            {
                 ar = chunks.Values.ToArray();
+            }
+               
 
             for (int i = 0; i < ar.Length; i++)
             {
@@ -346,23 +375,6 @@ namespace Inignoto.World.Chunks
                 if (!IsChunkWithinFrustum(chunk))
                 {
                     continue;
-                }
-
-                if (chunk.NeedsToRebuild())
-                {
-                    
-                    if (Vector3.Distance(chunk.cpos, current_xyz) <= Constants.CHUNK_LIGHT_DISTANCE)
-                    {
-                        chunk.BuildMesh();
-                    }
-                    else
-                    {
-                            if (!chunksToRebuild.Contains(chunk))
-                            {
-                                chunksToRebuild.Add(chunk);
-                                chunksToRebuild.Sort();
-                            }
-                        }
                 }
 
                 chunkRenderer.RenderChunk(device, effect, chunk);
@@ -391,6 +403,17 @@ namespace Inignoto.World.Chunks
                 {
                     transparentRender[i].TryGetTarget(out Chunk chunk);
                     chunkRenderer.RenderChunk(device, effect, chunk, false, true);
+                }
+            }
+        }
+
+        internal void Dispose()
+        {
+            lock (chunks)
+            {
+                foreach (Chunk chunk in chunks.Values)
+                {
+                    chunk.Dispose();
                 }
             }
         }

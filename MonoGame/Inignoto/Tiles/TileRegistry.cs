@@ -50,6 +50,11 @@ namespace Inignoto.Tiles
         public static Tile REDWOOD_LEAVES;
         public static Tile FLOURESCENT_LAMP;
         public static Tile CONEWOOD_LOG;
+        public static Tile ALCYONEUM;
+        public static Tile WEEPING_REED;
+        public static Tile AMBER_ORE;
+        public static Tile GOLD_ORE;
+
 
         private static bool TEXTURES_LOADED = false;
 
@@ -97,7 +102,11 @@ namespace Inignoto.Tiles
             CONEWOOD_LOG = new Tile("Inignoto:conewood_log", null, true, 5).SetFull();
             IRON_PLATING_SIMPLE = new Tile("Inignoto:iron_plating_simple", null, true, 10).SetFull();
             IRON_PLATING_LARGE = new Tile("Inignoto:iron_plating_large", null, true, 10).SetFull();
-            STORAGE_CONTAINER = new Tile("Inignoto:storage_container", null, true, 10).SetFull();
+            STORAGE_CONTAINER = new StorageContainerTile("Inignoto:storage_container", null, true, 10).SetFull();
+            ALCYONEUM = new PlantTile("Inignoto:alcyoneum", new Tile[] { DIRT });
+            WEEPING_REED = new Tile("Inignoto:weeping_reed", null, true, 1).SetTransparent();
+            AMBER_ORE = new Tile("Inignoto:amber_ore", null, true, 7);
+            GOLD_ORE = new Tile("Inignoto:gold_ore", null, true, 7);
         }
 
         public static void TryLoadTileTextures()

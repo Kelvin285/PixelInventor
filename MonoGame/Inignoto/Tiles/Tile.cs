@@ -7,6 +7,7 @@ using Inignoto.Items;
 using Inignoto.World.Chunks;
 using static Inignoto.World.World;
 using Microsoft.Xna.Framework;
+using Inignoto.Entities;
 
 namespace Inignoto.Tiles
 {
@@ -219,7 +220,7 @@ namespace Inignoto.Tiles
             return true;
         }
 
-        public virtual TileData GetStateForBlockPlacement(int x, int y, int z, Chunk chunk, TileFace face)
+        public virtual TileData GetStateForBlockPlacement(int x, int y, int z, Chunk chunk, TileFace face, Entity placer = null)
         {
             return DefaultData;
         }

@@ -1,4 +1,5 @@
-﻿using Inignoto.Tiles.Data;
+﻿using Inignoto.Entities;
+using Inignoto.Tiles.Data;
 using Inignoto.World.Chunks;
 using Microsoft.Xna.Framework.Audio;
 using System;
@@ -15,7 +16,7 @@ namespace Inignoto.Tiles
 
         }
 
-        public override TileData GetStateForBlockPlacement(int x, int y, int z, Chunk chunk, TileFace face)
+        public override TileData GetStateForBlockPlacement(int x, int y, int z, Chunk chunk, TileFace face, Entity placer = null)
         {
             switch (face)
             {

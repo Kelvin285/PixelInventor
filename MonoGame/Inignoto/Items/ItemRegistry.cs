@@ -17,6 +17,7 @@ namespace Inignoto.Items
         private static int ticks = 0;
 
         public static Item IRON_PICKAXE;
+        public static Item GOLD_PICKAXE;
         public static Item STRUCTURE_WRENCH;
 
         public static void LoadItems()
@@ -43,7 +44,8 @@ namespace Inignoto.Items
 
             IRON_PICKAXE = RegisterItem(new PickaxeItem("Inignoto:iron_pickaxe", 0.1f, true, new Vector3(0.35f, -1.2f, 1.5f), new Vector3(0, 0, 30 * 3.14f / 180.0f), new Vector3(2.0f, 2.0f, 2.0f)));
             STRUCTURE_WRENCH = RegisterItem(new StructureWrenchItem("Inignoto:structure_wrench", 1, true, new Vector3(0.35f, -1.2f, 1.5f), new Vector3(0, 0, 30 * 3.14f / 180.0f), new Vector3(2.0f, 2.0f, 2.0f)));
-            
+            GOLD_PICKAXE = RegisterItem(new PickaxeItem("Inignoto:gold_pickaxe", 0.1f, true, new Vector3(0.35f, -1.2f, 1.5f), new Vector3(0, 0, 30 * 3.14f / 180.0f), new Vector3(2.0f, 2.0f, 2.0f)));
+
         }
 
         public static void DrawItems(GameTime time)

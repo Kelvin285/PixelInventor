@@ -101,7 +101,7 @@ namespace Inignoto.Items
                 {
                     if (!tile.Overlay)
                     {
-                        world.SetVoxel(pos, tile.GetStateForBlockPlacement(cx, cy, cz, chunk, result.Face));
+                        world.SetVoxel(pos, tile.GetStateForBlockPlacement(cx, cy, cz, chunk, result.Face, user));
                     } else
                     {
                         world.SetVoxel(pos, world.GetVoxel(pos.x, pos.y, pos.z), tile.DefaultData);

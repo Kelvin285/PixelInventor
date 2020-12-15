@@ -28,6 +28,11 @@ namespace Inignoto.World.Generator
                 chunk.SetGenerated();
                 return;
             }
+
+            StructureChunk schunk = null;
+            if(chunk.GetWorld().chunkManager.HasStructureChunk(chunk.GetX(), chunk.GetY(), chunk.GetZ()))
+                chunk.GetWorld().chunkManager.GetOrCreateStructureChunk(chunk.GetX(), chunk.GetY(), chunk.GetZ());
+
             for (int chunk_x = 0; chunk_x < Constants.CHUNK_SIZE; chunk_x++)
             {
                 for (int chunk_z = 0; chunk_z < Constants.CHUNK_SIZE; chunk_z++)
@@ -71,15 +76,22 @@ namespace Inignoto.World.Generator
                         }
                         
                         biome.TryPlaceStructure(x, y, z, chunk_x, chunk_y, chunk_z, data, overlay, chunk, noise, n);
+
+                        if (schunk != null)
+                        {
+                            chunk.SetVoxel(chunk_x, chunk_y, chunk_z, schunk.GetTile(chunk_x, chunk_y, chunk_z));
+                        }
                     }
                 }
             }
-            chunk.UpdateLights();
-            //chunk.BuildMesh();
+            if (schunk != null)
+            {
+                chunk.GetWorld().chunkManager.RemoveStructureChunk(chunk.GetX(), chunk.GetY(), chunk.GetZ());
+            }
             chunk.MarkForRebuild();
 
         }
-
+         
         public float GetHeight(float x, float z, float radius, bool infinite)
         {
             if (infinite)
@@ -160,8 +172,8 @@ namespace Inignoto.World.Generator
         }
         public SurfaceBiome GetSurfaceBiome(float x, float y)
         {
-            x += noise.GetValue(0, y * 2) * 10 * 5;
-            y += noise.GetValue(x, 0) * 10 * 5;
+            x += noise.GetWhiteNoise(0, y * 2) * 10 * 5;
+            y += noise.GetWhiteNoise(x, 0) * 10 * 5;
             List<SurfaceBiome> BIOMES = GetSurfaceCategory(x, y);
             float biome_size = 2.0f;
 

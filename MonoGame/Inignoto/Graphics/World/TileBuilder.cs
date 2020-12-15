@@ -16,10 +16,6 @@ namespace Inignoto.Graphics.World
 {
     public class TileBuilder
     {
-        private static Vec3Pool pool = new Vec3Pool();
-        private static Vec2Pool pool2 = new Vec2Pool();
-        private static Vec4Pool pool4 = new Vec4Pool();
-
         private static Vector2 AIR = new Vector2(-1, -1);
         public static readonly float offset = 0.0f;
         private static readonly Vector3[] LEFT = new Vector3[]
@@ -149,13 +145,9 @@ namespace Inignoto.Graphics.World
                         mesh.triangleVertices[i].Position += new Vector3(x + 0.65f, y + 0.5f, z + 0.5f);
                     }
 
-                    mesh.vertexBuffer = new VertexBuffer(device, typeof(
-                               VertexPositionLightTexture), mesh.triangleVertices.Length, BufferUsage.
-                               WriteOnly);
-                    if (mesh.vertexBuffer != null && mesh.triangleVertices != null)
-                        mesh.vertexBuffer.SetData(mesh.triangleVertices);
                     if (Textures.Textures.tiles.GetTexture() != null)
                     mesh.texture = Textures.Textures.tiles.GetTexture();
+                    mesh.built = false;
                 } else
                 {
                     mesh = data.model.Parts[0].mesh;
@@ -232,16 +224,16 @@ namespace Inignoto.Graphics.World
                 w /= data.num_x;
                 h /= data.num_y;
                 return new Vector2[]{
-                    pool2.Get(u, v + h),
-                    pool2.Get(u, v),
-                    pool2.Get(u + w, v),
-                    pool2.Get(u + w, v + h)
+                    new Vector2(u, v + h),
+                    new Vector2(u, v),
+                    new Vector2(u + w, v),
+                    new Vector2(u + w, v + h)
                 };
             }
 
             Vector4 MergeVec2(Vector2 a, Vector2 b)
             {
-                return pool4.Get(a.X, a.Y, b.X, b.Y);
+                return new Vector4(a.X, a.Y, b.X, b.Y);
             }
 
             Vector2[] UV1 = GetUV(data);
@@ -283,11 +275,11 @@ namespace Inignoto.Graphics.World
                 verts = BACK;
             }
 
-            Vector3 xyz = pool.Get(x, y, z);
+            Vector3 xyz = new Vector3(x, y, z);
 
             for (int i = 0; i < 4; i++)
             {
-                vertices.Add(pool.Get(verts[i].X + xyz.X, verts[i].Y + xyz.Y, verts[i].Z + xyz.Z));
+                vertices.Add(new Vector3(verts[i].X + xyz.X, verts[i].Y + xyz.Y, verts[i].Z + xyz.Z));
                 colors.Add(Color.White);
             }
 
@@ -354,16 +346,16 @@ namespace Inignoto.Graphics.World
                 w /= data.num_x;
                 h /= data.num_y;
                 return new Vector2[]{
-                    pool2.Get(u, v + h),
-                    pool2.Get(u, v),
-                    pool2.Get(u + w, v),
-                    pool2.Get(u + w, v + h)
+                    new Vector2(u, v + h),
+                    new Vector2(u, v),
+                    new Vector2(u + w, v),
+                    new Vector2(u + w, v + h)
                 };
             }
 
             Vector4 MergeVec2(Vector2 a, Vector2 b)
             {
-                return pool4.Get(a.X, a.Y, b.X, b.Y);
+                return new Vector4(a.X, a.Y, b.X, b.Y);
             }
 
             Vector2[] UV1 = GetUV(data);
@@ -405,8 +397,6 @@ namespace Inignoto.Graphics.World
             {
                 verts = VoxelFaces[x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE][(int)TileFace.BACK];
             }
-
-            Vector3 xyz = pool.Get(x, y, z);
 
             for (int i = 0; i < 4; i++)
             {
