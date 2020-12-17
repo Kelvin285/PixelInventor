@@ -375,6 +375,8 @@ namespace Inignoto
                     GameResources.shadowMap.End();
 
                 }
+
+
             Viewport port = GraphicsDevice.Viewport;
             GraphicsDevice.Viewport = new Viewport(new Rectangle(0, 0, 1920, 1080));
 
@@ -383,6 +385,15 @@ namespace Inignoto
             if (game.game_state == GameState.GAME)
             {
                 world.Render(GraphicsDevice, GameResources.effect, gameTime);
+            }
+
+            if (Hud.openGui is MainMenu)
+            {
+                MainMenu menu = (MainMenu)Hud.openGui;
+                if (menu.menu_state == MainMenu.MenuState.MODEL_CREATOR)
+                {
+                    menu.Render3D(gameTime);
+                }
             }
 
 
@@ -412,6 +423,13 @@ namespace Inignoto
 
             base.Draw(gameTime);
 
+        }
+
+        public void ResetThreads()
+        {
+            Console.WriteLine("Resetting threads!");
+
+            world.chunkManager.RefreshChunks();
         }
     }
 }

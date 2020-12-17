@@ -55,6 +55,7 @@ namespace Inignoto.Tiles
         public static Tile AMBER_ORE;
         public static Tile GOLD_ORE;
         public static Tile GLOW_BERRY;
+        public static Tile DEAD_BUSH;
 
 
         private static bool TEXTURES_LOADED = false;
@@ -109,6 +110,7 @@ namespace Inignoto.Tiles
             AMBER_ORE = new Tile("Inignoto:amber_ore", null, true, 7).SetOverlay();
             GOLD_ORE = new Tile("Inignoto:gold_ore", null, true, 7).SetOverlay();
             GLOW_BERRY = new Tile("Inignoto:glow_berry", null, true, 1).SetTransparent().SetBlocksMovement(false).SetLight(0xf, 0xc, 0x0);
+            DEAD_BUSH = new Tile("Inignoto:dead_bush", null, true, 1).SetTransparent().SetBlocksMovement(false);
         }
 
         public static void TryLoadTileTextures()

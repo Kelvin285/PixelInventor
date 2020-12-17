@@ -37,6 +37,7 @@
 "Inignoto:tiles.amber_ore" = "Amber Ore"
 "Inignoto:tiles.gold_pickaxe" = "Gold Pickaxe"
 "Inignoto:tiles.glow_berry" = "Glow Berry"
+"Inignoto:tiles.dead_bush" = "Dead Bush"
 
 "Inignoto:input.jump" = "Jump"
 "Inignoto:input.sneak" = "Sneak"

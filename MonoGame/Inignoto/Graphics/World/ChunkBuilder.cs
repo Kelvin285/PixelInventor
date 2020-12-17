@@ -18,9 +18,12 @@ namespace Inignoto.Graphics.World
     {
         public static Dictionary<TileData, Mesh.Mesh> meshes = new Dictionary<TileData, Mesh.Mesh>();
 
-        public static Mesh.Mesh BuildMeshForChunk(GraphicsDevice device, Chunk chunk)
+        public static Mesh.Mesh BuildMeshForChunk(GraphicsDevice device, Chunk c)
         {
-            if (chunk == null) return null;
+            if (c == null) return null;
+            Chunk chunk = null;
+            
+                chunk = c;
             int invisible = 0;
             List<VertexPositionLightTexture> vpct = new List<VertexPositionLightTexture>();
 
@@ -60,10 +63,9 @@ namespace Inignoto.Graphics.World
             List<Vector3> pos3 = new List<Vector3>();
             List<int> normals3 = new List<int>();
             int index3 = 0;
-
-            lock (chunk)
-            lock (chunk.solidVoxels)
-            foreach (Vector3 vec in chunk.solidVoxels)
+            try
+            {
+                foreach (Vector3 vec in chunk.buildVoxels)
                     {
                 int x = (int)vec.X;
                 int y = (int)vec.Y;
@@ -145,21 +147,25 @@ namespace Inignoto.Graphics.World
                             if (data.model != null)
                             {
                                 Mesh.Mesh mesh = TileBuilder.BuildTile(0, 0, 0, data, TileRegistry.AIR.DefaultData, device, false);
-                                        
                                 if (mesh != null)
                                 {
-                                    for (int i = 0; i < mesh.triangleVertices.Length; i++)
-                                    {
-                                        indices.Add(index++);
-                                        vertices.Add(mesh.triangleVertices[i].Position + new Vector3(x, y, z));
-                                        pos.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
-                                        light.Add(chunk.GetLight(x, y, z));
-                                        sunlight.Add(chunk.GetSunlight(x, y, z));
-                                        colors.Add(mesh.triangleVertices[i].Color);
-                                        textures.Add(new Vector4(mesh.triangleVertices[i].TextureCoordinate, -1.0f, -1.0f));
-                                        normals.Add(0);
-                                    }
+                                    
+                                        for (int i = 0; i < mesh.triangleVertices.Length; i++)
+                                        {
+                                            indices.Add(index++);
+                                            vertices.Add(mesh.triangleVertices[i].Position + new Vector3(x, y, z));
+                                            pos.Add(new Vector3(x + 0.5f, y + 0.5f, z + 0.5f));
+                                            light.Add(chunk.GetLight(x, y, z));
+                                            sunlight.Add(chunk.GetSunlight(x, y, z));
+                                            colors.Add(mesh.triangleVertices[i].Color);
+                                            textures.Add(new Vector4(mesh.triangleVertices[i].TextureCoordinate, -1.0f, -1.0f));
+                                            normals.Add(0);
+                                        }
+                                    
+                                        
+
                                 }
+                                
                                 
                                 continue;
                             }
@@ -307,7 +313,13 @@ namespace Inignoto.Graphics.World
                     else invisible++;
                 }
             }
-
+            }
+            catch (InvalidOperationException e)
+            {
+                chunk.MarkForRebuild();
+                Inignoto.game.ResetThreads();
+                return null;
+            }
             int[] GetLights(int ind, bool smooth_lights, List<int> light, List<int> sunlight, List<Vector3> vertices, List<Vector3> pos)
             {
                 int[] LIGHTS = { light[ind], sunlight[ind] };
@@ -433,7 +445,9 @@ namespace Inignoto.Graphics.World
             }
             Mesh.Mesh m = new Mesh.Mesh(device, vpct.ToArray());
             m.SetIndexBuffer(device, indices.ToArray());
+
             return m;
+
         }
 
         public static void UpdateLights(Chunk chunk, Mesh.Mesh mesh)
@@ -554,3 +568,4 @@ namespace Inignoto.Graphics.World
         }
     }
 }
+

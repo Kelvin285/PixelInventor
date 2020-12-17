@@ -41,7 +41,9 @@ namespace Inignoto.World.Generator
                     int x = chunk_x + chunk.GetX() * Constants.CHUNK_SIZE;
                     int z = chunk_z + chunk.GetZ() * Constants.CHUNK_SIZE;
 
-                    float height = GetHeight(x, z, chunk.GetWorld().radius, chunk.GetWorld().properties.infinite);
+                    float[] heights = GetHeight(x, z, chunk.GetWorld().radius, chunk.GetWorld().properties.infinite);
+                    float height = heights[0];
+                    float river_height = heights[1];
                     SurfaceBiome biome = GetSurfaceBiome(x, z);
 
                     int voxel_height = (int)height;
@@ -53,7 +55,7 @@ namespace Inignoto.World.Generator
                         int y = chunk_y + chunk.GetY() * Constants.CHUNK_SIZE;
 
                         TileData data = biome.GetVoxelAt(x, y, z, voxel_height);
-                        TileData overlay = biome.GetOverlayAt(x, y, z, voxel_height);
+                        TileData overlay = biome.GetVoxelOverlay(x, y, z, voxel_height, river_height);
                         
                         if (chunk.GetVoxel(chunk_x, chunk_y, chunk_z) == TileRegistry.AIR.DefaultData)
                         {
@@ -67,16 +69,18 @@ namespace Inignoto.World.Generator
                                 chunk.SetLight(chunk_x, chunk_y, chunk_z, tile.light_red, tile.light_green, tile.light_blue, tile.allows_sunlight ? -1 : 0);
                             }
 
-                            if (y <= 0)
-                            {
-                                chunk.SetVoxel(chunk_x, chunk_y, chunk_z, TileRegistry.WATER.DefaultData);
-                            }
                             chunk.SetVoxel(chunk_x, chunk_y, chunk_z, data);
                             chunk.SetOverlayVoxel(chunk_x, chunk_y, chunk_z, overlay);
                         }
                         
                         biome.TryPlaceStructure(x, y, z, chunk_x, chunk_y, chunk_z, data, overlay, chunk, noise, n);
 
+                        if (y <= 5 && y > height)
+                        {
+                            if (TileRegistry.GetTile(chunk.GetVoxel(chunk_x, chunk_y, chunk_z).tile_id).IsReplaceable())
+                                chunk.SetVoxel(chunk_x, chunk_y, chunk_z, TileRegistry.WATER.DefaultData);
+                            chunk.SetOverlayVoxel(chunk_x, chunk_y - 1, chunk_z, TileRegistry.AIR.DefaultData);
+                        }
                         if (schunk != null)
                         {
                             chunk.SetVoxel(chunk_x, chunk_y, chunk_z, schunk.GetTile(chunk_x, chunk_y, chunk_z));
@@ -89,10 +93,9 @@ namespace Inignoto.World.Generator
                 chunk.GetWorld().chunkManager.RemoveStructureChunk(chunk.GetX(), chunk.GetY(), chunk.GetZ());
             }
             chunk.MarkForRebuild();
-
         }
          
-        public float GetHeight(float x, float z, float radius, bool infinite)
+        public float[] GetHeight(float x, float z, float radius, bool infinite)
         {
             if (infinite)
             {
@@ -136,14 +139,15 @@ namespace Inignoto.World.Generator
                 }
             }
 
-            return -100;
+            return new float[] { -100, -100 };
         }
 
-        public float GetPolarHeight(float X, float Z, bool infinite = false)
+        public float[] GetPolarHeight(float X, float Z, bool infinite = false)
         {
             if (!infinite)
             Z *= 2.0f;
             float height = 0;
+            float riverheight = 0;
             float i = 0;
 
             int count = 5;
@@ -152,12 +156,19 @@ namespace Inignoto.World.Generator
                 for (int z = -count; z < count + 1; z++)
                 {
                     SurfaceBiome biome = GetSurfaceBiome(x + X, z + Z);
-                    height += biome.GetHeightAt(x + X, z + Z);
+
+                    float biomeheight = biome.GetBiomeHeight(x + X, z + Z);
+
+                    height += biomeheight;
+                    riverheight += biome.GetRiverHeight(x + X, z + Z);
+
                     i++;
                 }
             }
 
-            return height / i;
+            height /= i;
+            riverheight /= i;
+            return new float[] { height, riverheight };
         }
 
         public List<SurfaceBiome> GetSurfaceCategory(float x, float y)

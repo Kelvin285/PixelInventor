@@ -12,7 +12,7 @@ namespace Inignoto.World.Biomes.Surface.Grasslands
 {
     public class DarkFlatsBiome : SurfaceBiome
     {
-        public DarkFlatsBiome() : base(TileRegistry.DIRT.DefaultData, TileRegistry.PURPLE_GRASS.DefaultData, TileRegistry.SMOOTH_STONE.DefaultData)
+        public DarkFlatsBiome() : base(TileRegistry.DIRT.DefaultData, TileRegistry.PURPLE_GRASS.DefaultData, TileRegistry.SMOOTH_STONE.DefaultData, TileRegistry.SAND.DefaultData)
         {
             
         }

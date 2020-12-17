@@ -12,7 +12,7 @@ namespace Inignoto.World.Biomes.Surface.Grasslands
 {
     public class SnowHillsBiome : SurfaceBiome
     {
-        public SnowHillsBiome() : base(TileRegistry.SNOW.DefaultData, TileRegistry.AIR.DefaultData, TileRegistry.ICE.DefaultData)
+        public SnowHillsBiome() : base(TileRegistry.SNOW.DefaultData, TileRegistry.AIR.DefaultData, TileRegistry.ICE.DefaultData, TileRegistry.DIRT.DefaultData)
         {
             
         }

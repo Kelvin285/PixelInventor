@@ -37,7 +37,7 @@ namespace Inignoto.Entities
 
         public bool Jumping { get; protected set; }
 
-        public int TicksExisted { get; protected set; }
+        public int TicksExisted;
 
         public float FallStart;
 

@@ -16,6 +16,7 @@ namespace Inignoto.World.Chunks
 {
     public class Chunk : IComparable<Chunk>
     {
+        public static Vector3[] vectors = new Vector3[Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE];
         public struct Voxel
         {
             public TileData voxel { get => GetVoxel(); set => SetVoxel(value); }
@@ -82,7 +83,7 @@ namespace Inignoto.World.Chunks
 
         public readonly Voxel[] voxels;
 
-        public List<Vector3> solidVoxels = new List<Vector3>();
+        public List<Vector3> buildVoxels = new List<Vector3>();
 
         public readonly Vector3 cpos;
         private World world;
@@ -90,6 +91,8 @@ namespace Inignoto.World.Chunks
 
         private bool rebuilding;
         private bool generated;
+
+        public bool mesh_fixed = false;
 
         public Mesh[] mesh = new Mesh[2];
 
@@ -113,7 +116,7 @@ namespace Inignoto.World.Chunks
         public List<int> greenBfsQueue;
         public List<int> blueBfsQueue;
 
-
+        private static bool vec = false;
         public Chunk(int x, int y, int z, World world)
         {
             this.world = world;
@@ -121,6 +124,22 @@ namespace Inignoto.World.Chunks
             for (int i = 0; i < voxels.Length; i++)
             {
                 voxels[i] = new Voxel(TileRegistry.AIR.DefaultData);
+            }
+
+            if (!vec)
+            {
+                vec = true;
+                for (int xx = 0; xx < Constants.CHUNK_SIZE; xx++)
+                {
+                    for (int yy = 0; yy < Constants.CHUNK_SIZE; yy++)
+                    {
+                        for (int zz = 0; zz < Constants.CHUNK_SIZE; zz++)
+                        {
+                            Vector3 v = new Vector3(xx, yy, zz);
+                            vectors[GetIndexFor(xx, yy, zz)] = v;
+                        }
+                    }
+                }
             }
 
             chunkManager = world.GetChunkManager();
@@ -237,6 +256,42 @@ namespace Inignoto.World.Chunks
 
             FinishRebuilding();
             
+        }
+
+
+        public bool ReadyToFix()
+        {
+            if (mesh_fixed == false)
+            {
+                Chunk[] c = new Chunk[6];
+                if ((c[0] = GetAdjacentChunk(-1, 0, 0)) != null)
+                {
+                    if ((c[1] = GetAdjacentChunk(1, 0, 0)) != null)
+                    {
+                        if ((c[2] = GetAdjacentChunk(0, -1, 0)) != null)
+                        {
+                            if ((c[3] = GetAdjacentChunk(0, 1, 0)) != null)
+                            {
+                                if ((c[4] = GetAdjacentChunk(0, 0, -1)) != null)
+                                {
+                                    if ((c[5] = GetAdjacentChunk(0, 0, 1)) != null)
+                                    {
+                                        for (int i = 0; i < 6; i++)
+                                        {
+                                            if (c[i].NeedsToGenerate() == true)
+                                            {
+                                                return false;
+                                            }
+                                        }
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
         }
 
         public bool Disposed = false;
@@ -443,6 +498,39 @@ namespace Inignoto.World.Chunks
             return RGB;
         }
 
+        public bool IsVisible(int x, int y, int z)
+        {
+            Tile tile = GetTile(x, y, z);
+            if (GetVoxel(x, y, z).model != null)
+            {
+                return true;
+            }
+            if (GetTile(x - 1, y, z).IsOpaque())
+            {
+                if (GetTile(x + 1, y, z).IsOpaque())
+                {
+                    if (GetTile(x, y - 1, z).IsOpaque())
+                    {
+                        if (GetTile(x, y + 1, z).IsOpaque())
+                        {
+                            if (GetTile(x, y, z - 1).IsOpaque())
+                            {
+                                if (GetTile(x, y, z + 1).IsOpaque())
+                                {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        public Tile GetTile(int x, int y, int z)
+        {
+            return TileRegistry.GetTile(GetVoxel(x, y, z).tile_id);
+        }
         public void SetLight(int x, int y, int z, int r, int g, int b, int sun, bool update = true)
         {
             if (NeedsToGenerate()) update = false;
@@ -1468,6 +1556,17 @@ namespace Inignoto.World.Chunks
 
                 voxels[GetIndexFor(x, y, z)].voxel = voxel;
 
+                if (IsVisible(x, y, z))
+                {
+                    buildVoxels.Add(vectors[GetIndexFor(x, y, z)]);
+                } else
+                {
+                    if (buildVoxels.Contains(vectors[GetIndexFor(x, y, z)]))
+                    {
+                        buildVoxels.Remove(vectors[GetIndexFor(x, y, z)]);
+                    }
+                }
+
                 if (last != null)
                     last.UpdateLightWhenRemoved(this, x, y, z);
                 
@@ -1477,11 +1576,9 @@ namespace Inignoto.World.Chunks
                 if (voxel == TileRegistry.AIR.DefaultData)
                 {
                     SetOverlayVoxel(x, y, z, TileRegistry.AIR.DefaultData);
-                    if (last != voxel) solidVoxels.Remove(new Vector3(x, y, z));
                 } else
                 {
                     NotEmpty = true;
-                    if (last != voxel) solidVoxels.Add(new Vector3(x, y, z));
                 }
                 if (!NeedsToGenerate())
                     modified = true;
@@ -1573,8 +1670,25 @@ namespace Inignoto.World.Chunks
         }
 
         bool extendedRebuild = false;
+        bool justFinishedBuilding = false;
         public void MarkForRebuild(bool queue = false, bool extend = true)
         {
+            if (justFinishedBuilding)
+            {
+                for (int x = 0; x < Constants.CHUNK_SIZE; x++)
+                {
+                    for (int y = 0; y < Constants.CHUNK_SIZE; y++)
+                    {
+                        for (int z = 0; z < Constants.CHUNK_SIZE; z++)
+                        {
+                            if (IsVisible(x, y, z))
+                            {
+                                buildVoxels.Add(vectors[GetIndexFor(x, y, z)]);
+                            }
+                        }
+                    }
+                }
+            }
             extendedRebuild = extend;
             rebuilding = true;
         }
@@ -1598,6 +1712,7 @@ namespace Inignoto.World.Chunks
         public void SetGenerated(bool gen = true)
         {
             generated = gen;
+            justFinishedBuilding = true;
         }
         public int CompareTo(Chunk obj)
         {

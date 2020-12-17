@@ -15,6 +15,9 @@ using Inignoto.World;
 using Inignoto.Common;
 using static Inignoto.Entities.Player.PlayerEntity;
 using Inignoto.Entities.Client.Player;
+using Inignoto.Graphics.World;
+using Inignoto.Tiles;
+using Inignoto.Graphics.Models;
 
 namespace Inignoto.Graphics.Gui
 {
@@ -34,9 +37,9 @@ namespace Inignoto.Graphics.Gui
         private bool mouse_pressed = false;
         private bool mouse_released = false;
 
-        private enum MenuState
+        public enum MenuState
         {
-            TITLE, SETTINGS, SINGLEPLAYER, MULTIPLAYER
+            TITLE, SETTINGS, SINGLEPLAYER, MULTIPLAYER, MODEL_CREATOR
         }
 
         private enum SettingsState {
@@ -47,7 +50,7 @@ namespace Inignoto.Graphics.Gui
             SELECT, CREATE
         }
 
-        private MenuState menu_state = MenuState.TITLE;
+        public MenuState menu_state = MenuState.TITLE;
         private SettingsState settings_state = SettingsState.SELECT;
         private SingleplayerState singleplayer_state = SingleplayerState.SELECT;
 
@@ -117,6 +120,390 @@ namespace Inignoto.Graphics.Gui
             {
                 RenderSingleplayer(device, spriteBatch, width, height, gameTime, clicked);
             }
+            else if (menu_state == MenuState.MODEL_CREATOR)
+            {
+                RenderModelCreator(device, spriteBatch, width, height, gameTime, clicked);
+            }
+        }
+
+        private Mesh.Mesh mesh;
+        private Point lastMousePos = new Point(0, 0);
+        private int WIDTH;
+        private int HEIGHT;
+        private bool grab_scroll = false;
+        public void Render3D(GameTime gameTime)
+        {
+            double delta = gameTime.ElapsedGameTime.TotalMilliseconds / 60.0;
+            float movement_speed = 0.25f;
+
+            if (mesh == null)
+            {
+                mesh = TileBuilder.BuildTile(0, 0, 0, TileRegistry.DIRT.DefaultData, TileRegistry.GRASS.DefaultData, Inignoto.game.GraphicsDevice);
+
+                model = new GameModel();
+                Part part = new Part(model);
+                part.ChangeTexture(Textures.Textures.white_square);
+                part.size = new Vector3(32, 32, 32);
+                part.SetPosition(new Vector3(0, 0, 0));
+                part.SetScale(new Vector3(1, 1, 1));
+                part.BuildPart();
+                model.Parts.Add(part);
+
+                Inignoto.game.camera.position = new Vector3(0, 0, 10);
+                Inignoto.game.camera.rotation = new Vector3(0, 0, 0);
+            }
+            mesh.Draw(GameResources.effect, Inignoto.game.GraphicsDevice);
+            if (model != null)
+            {
+                model.Render(Inignoto.game.GraphicsDevice, GameResources.effect, gameTime, true);
+            }
+            
+
+            if (Settings.JUMP.IsPressed())
+            {
+                Inignoto.game.camera.position += Inignoto.game.camera.UpMotionVector * (float)delta * movement_speed;
+            }
+            if (Settings.SNEAK.IsPressed())
+            {
+                Inignoto.game.camera.position -= Inignoto.game.camera.UpMotionVector * (float)delta * movement_speed;
+            }
+            if (Settings.LEFT.IsPressed())
+            {
+                Inignoto.game.camera.position -= Inignoto.game.camera.RightMotionVector * (float)delta * movement_speed;
+            }
+            if (Settings.RIGHT.IsPressed())
+            {
+                Inignoto.game.camera.position += Inignoto.game.camera.RightMotionVector * (float)delta * movement_speed;
+            }
+            if (Settings.FORWARD.IsPressed())
+            {
+                Inignoto.game.camera.position += Inignoto.game.camera.ForwardMotionVector * (float)delta * movement_speed;
+            }
+            if (Settings.BACKWARD.IsPressed())
+            {
+                Inignoto.game.camera.position -= Inignoto.game.camera.ForwardMotionVector * (float)delta * movement_speed;
+            }
+            if (Settings.USE.IsPressed())
+            {
+                Point motion = Inignoto.game.mousePos - lastMousePos;
+
+                Inignoto.game.camera.rotation -= new Vector3((float)motion.Y * (HEIGHT / 1920f), (float)motion.X * (WIDTH / 1080f), 0) * (float)delta * Settings.MOUSE_SENSITIVITY;
+            }
+            if (Inignoto.game.camera.rotation.X > 90) Inignoto.game.camera.rotation.X = 90;
+            if (Inignoto.game.camera.rotation.X < -90) Inignoto.game.camera.rotation.X = -90;
+            lastMousePos = new Point(Inignoto.game.mousePos.X, Inignoto.game.mousePos.Y);
+        }
+
+        private int file_menu = -1;
+        private bool save_dialog = false;
+        private bool load_dialog = false;
+        private bool save_model = false;
+        private bool save_texture = false;
+        private bool save_animation = false;
+        private bool load_model = false;
+        private bool load_texture = false;
+        private bool load_animation = false;
+
+        private GameModel model;
+
+        private int scroll = 0;
+        private int last_scrollwheel = 0;
+        private string currentDirectory = FileUtils.GetResourcePath(new ResourcePath("Inignoto", "", "assets"));
+        private string selected_file = "";
+        private KeyReader reader = new KeyReader(200);
+        public void RenderModelCreator(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime gameTime, bool clicked)
+        {
+            WIDTH = width;
+            HEIGHT = height;
+            bool DrawButton(int x, int y, int w, int h, string str, float font_size = 1.0f, bool left_align = false)
+            {
+
+                int mouse_x = (int)(Inignoto.game.mousePos.X * (1920.0 / width));
+                int mouse_y = (int)(Inignoto.game.mousePos.Y * (1080.0 / height));
+
+                int X = x + 1920 / 2 - w - 40;
+                int Y = 1080 / 2 - 50 + y;
+                int W = w * 2;
+                int H = h;
+
+                Color color = Color.White;
+                Color color2 = Color.LightSlateGray;
+
+                bool flag = false;
+
+                if (mouse_x >= X && mouse_y >= Y && mouse_x <= X + W && mouse_y <= Y + H)
+                {
+                    flag = true;
+                    color = Color.Gray;
+                    color2 = Color.LightGray;
+                }
+
+                Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(x + 1920 / 2 - w - 40, 1080 / 2 - 50 + y, w * 2, h), color2);
+                int strwidth = (int)((FontManager.mandrill_regular.width + FontManager.mandrill_regular.spacing) * str.Length * font_size);
+                if (!left_align)
+                {
+                    DrawString(spriteBatch, width, height, x + 1920 / 2 - w - 40 + (w - strwidth) / 2 + w / 2, 1080 / 2 - 50 + y, font_size, FontManager.mandrill_regular, str, color);
+                }
+                else
+                {
+                    DrawString(spriteBatch, width, height, x + 1920 / 2 - w - 40, 1080 / 2 - 50 + y, font_size, FontManager.mandrill_regular, str, color);
+                }
+                return flag;
+            }
+
+            //Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(0, 0, 1920, 1080), Color.Black);
+            
+            Draw(spriteBatch, width, height, GameResources.gameImage, new Rectangle(0, 0, 1920, 1080), Color.White);
+
+            Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(0, 0, 1920, 70), Color.DarkSlateGray);
+
+
+            if (save_dialog || load_dialog)
+            {
+                Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(0, 0, 1920, 1080), Color.Gray);
+
+                Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(0, 0, 1920, 75), Color.DarkSlateGray);
+
+                Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(0, 75, 1920, 75 / 2), Color.Black);
+
+                reader.text = selected_file;
+                reader.finished = false;
+                reader.Update(gameTime);
+                selected_file = reader.text;
+
+                DrawString(spriteBatch, width, height, 5, 80, 0.5f, FontManager.mandrill_bold, selected_file + ((gameTime.TotalGameTime.Milliseconds % 1000 <= 500) ? "|" : ""), Color.Gray);
+
+                if (DrawButton(900, -1080 / 2 + 75 + 75 / 2 + 14, 100, 75 / 2, save_dialog ? "Save" : "Load", 0.5f))
+                {
+                    if (clicked)
+                    {
+                        if (load_model)
+                        {
+                            string fstring = currentDirectory + Path.DirectorySeparatorChar + selected_file;
+                            if (selected_file.Length > 0)
+                            {
+                                if (File.Exists(fstring))
+                                {
+                                    model = GameModel.LoadModel(fstring, Textures.Textures.white_square);
+
+                                    model.editMode = GameModel.EditMode.ANIMATION;
+                                    model.translation = new Vector3(0);
+                                    model.Play(0);
+                                }
+                            }
+                        }
+                        save_dialog = false;
+                        save_model = false;
+                        save_texture = false;
+                        save_animation = false;
+                        load_model = false;
+                        load_texture = false;
+                        load_animation = false;
+                        load_dialog = false;
+                    }
+                    
+                }
+
+                if (DrawButton(925, -475, 75 / 2, 75 / 2, "X", 0.5f))
+                {
+                    if (clicked)
+                    {
+                        save_dialog = false;
+                        save_model = false;
+                        save_texture = false;
+                        save_animation = false;
+                        load_model = false;
+                        load_texture = false;
+                        load_animation = false;
+                        load_dialog = false;
+                    }
+                }
+                string[] directory = Directory.GetDirectories(currentDirectory);
+                string[] file = Directory.GetFiles(currentDirectory);
+
+                string[] both = new string[directory.Length + file.Length];
+                for (int i = 0; i < directory.Length; i++)
+                {
+                    both[i] = directory[i];
+                }
+                for (int i = 0; i < file.Length; i++)
+                {
+                    both[i + directory.Length] = file[i];
+                }
+
+                if (DrawButton(-1920 / 2 + 5, -1080 / 2 + 80 * 2 + 5, 1920 - 25, 25, "", 0.5f, false))
+                {
+                    DrawString(spriteBatch, width, height, 5, 75 + 75 / 2, 0.5f, FontManager.mandrill_bold, "...", Color.DarkSlateGray);
+                    if (clicked)
+                    {
+                        currentDirectory = Directory.GetParent(currentDirectory).FullName;
+                    }
+                } else
+                {
+                    DrawString(spriteBatch, width, height, 5, 75 + 75 / 2, 0.5f, FontManager.mandrill_bold, "...", Color.White);
+                }
+                
+
+                for (int i = 0; i < both.Length; i++)
+                {
+                    string[] str = both[i].Split(Path.DirectorySeparatorChar);
+                    if (i >= scroll)
+                    {
+                        string before = "File: ";
+                        if (Directory.Exists(both[i]))
+                        {
+                            before = "Directory: ";
+                        }
+                        int Y = 75 + 75 / 2 + i * 25 - scroll * 25 + 25;
+                        if (Directory.Exists(both[i]))
+                        {
+                            if (DrawButton(-1920 / 2 + 5, -1080 / 2 + Y - (75 + 75 / 2) + (80 * 2) + 5, 1920 - 25, 25, "", 0.5f, false))
+                            {
+                                DrawString(spriteBatch, width, height, 5, Y, 0.5f, FontManager.mandrill_bold, before + str[str.Length - 1], Color.DarkSlateGray);
+                                if (clicked)
+                                {
+                                    currentDirectory = both[i];
+                                }
+                            }
+                            else
+                            {
+                                DrawString(spriteBatch, width, height, 5, Y, 0.5f, FontManager.mandrill_bold, before + str[str.Length - 1], Color.White);
+                            }
+                        } else
+                        {
+                            if (DrawButton(-1920 / 2 + 5, -1080 / 2 + Y - (75 + 75 / 2) + (80 * 2) + 5, 1920 - 25, 25, "", 0.5f, false))
+                            {
+                                DrawString(spriteBatch, width, height, 5, Y, 0.5f, FontManager.mandrill_bold, before + str[str.Length - 1], Color.DarkSlateGray);
+                                if (clicked)
+                                {
+                                    selected_file = str[str.Length - 1];
+                                }
+                            }
+                            else
+                            {
+                                DrawString(spriteBatch, width, height, 5, Y, 0.5f, FontManager.mandrill_bold, before + str[str.Length - 1], Color.White);
+                            }
+                        }
+                    }
+                }
+
+                if (Mouse.GetState().ScrollWheelValue != last_scrollwheel)
+                {
+                    int scroll = (Mouse.GetState().ScrollWheelValue - last_scrollwheel) / 120;
+                    this.scroll -= scroll;
+                    
+                    last_scrollwheel = Mouse.GetState().ScrollWheelValue;
+
+                    if (this.scroll < 0) this.scroll = 0;
+                    if (this.scroll > both.Length - 1) this.scroll = both.Length - 1;
+                }
+
+                if (this.scroll > both.Length) this.scroll = both.Length;
+
+                DrawString(spriteBatch, width, height, 5, 5, 1.0f, FontManager.mandrill_bold, save_dialog ? "Save File" : "Load File", Color.Black);
+
+                Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(1920 - 50, 75 + 75 / 2, 50, 1080), Color.Black);
+
+                Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(1920 - 50, 75 + 75 / 2, 50, 1080 - (75 + 75 / 2)), Color.Black);
+                if (DrawButton(1920 / 2 - 5 + 25 / 2 + 10, -1080 / 2 + (80 * 2) + scroll * ((1080 - (75 + 75 / 2)) / both.Length) + 5, 25, (1080 - (75 + 75 / 2)) / both.Length, ""))
+                {
+                    if (Settings.ATTACK.IsPressed())
+                    {
+                        grab_scroll = true;
+                    }
+                }
+                if (grab_scroll)
+                {
+                    scroll = ((int)(Inignoto.game.mousePos.Y * (1080f / height)) - (80 / 2)) / ((1080 - (75 + 75 / 2)) / both.Length) - 1;
+                    if (!Settings.ATTACK.IsPressed()) grab_scroll = false;
+                }
+
+                if (this.scroll < 0) this.scroll = 0;
+                if (this.scroll > both.Length - 1) this.scroll = both.Length - 1;
+
+                return;
+            }
+
+            bool hovered_menu = false;
+            if (DrawButton(925, -475, 100 / 2, 75 / 2, "back", 0.5f))
+            {
+                if (clicked)
+                {
+                    menu_state = MenuState.TITLE;
+                }
+            }
+
+            if (DrawButton(-850, -475, 100 / 2, 75 / 2, "save", 0.5f))
+            {
+                if (clicked)
+                {
+                    if (file_menu == 0) file_menu = -1;
+                    else
+                        file_menu = 0;
+                }
+                hovered_menu = true;
+            }
+
+            if (DrawButton(-725, -475, 100 / 2, 75 / 2, "load", 0.5f))
+            {
+                if (clicked)
+                {
+                    if (file_menu == 1) file_menu = -1;
+                    else
+                        file_menu = 1;
+                }
+                hovered_menu = true;
+            }
+
+            if (file_menu == 0)
+            {
+                Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(5, 75, 125, 300), Color.LightGray);
+
+                if (DrawButton(-850, -400, 100 / 2, 75 / 2, "model", 0.5f))
+                {
+                    if (clicked)
+                    {
+                        currentDirectory = FileUtils.GetResourcePath(new ResourcePath("Inignoto", "", "assets"));
+                        scroll = 0;
+                        save_dialog = true;
+                        save_model = true;
+                        selected_file = "";
+                    }
+                    hovered_menu = true;
+                }
+
+                if (hovered_menu)
+                    clicked = false;
+            }
+            else if (file_menu == 1)
+            {
+                Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(130, 75, 125, 300), Color.LightGray);
+
+                if (DrawButton(-725, -400, 100 / 2, 75 / 2, "model", 0.5f))
+                {
+                    if (clicked)
+                    {
+                        currentDirectory = FileUtils.GetResourcePath(new ResourcePath("Inignoto", "", "assets"));
+                        scroll = 0;
+                        load_dialog = true;
+                        load_model = true;
+                        selected_file = "";
+                    }
+                    hovered_menu = true;
+                }
+
+                if (hovered_menu)
+                    clicked = false;
+            }
+
+            if (!hovered_menu)
+            {
+                if (clicked)
+                {
+                    file_menu = -1;
+                }
+            }
+
         }
 
         private bool delete_world = false;
@@ -208,13 +595,14 @@ namespace Inignoto.Graphics.Gui
                                 //Inignoto.game.player = new Entities.Client.Player.ClientPlayerEntity(Inignoto.game.world, new Vector3f(Inignoto.game.world.radius * 2, 10, Inignoto.game.world.radius));
                                 Inignoto.game.world.entities.Add(Inignoto.game.player);
                                 Inignoto.game.player.position = new Vector3(Inignoto.game.world.radius * 2, 10, Inignoto.game.world.radius);
-                                Inignoto.game.player.position.Y = Inignoto.game.world.properties.generator.GetHeight(Inignoto.game.player.position.X, Inignoto.game.player.position.Z, Inignoto.game.world.radius, Inignoto.game.world.properties.infinite) + 1;
+                                Inignoto.game.player.position.Y = Inignoto.game.world.properties.generator.GetHeight(Inignoto.game.player.position.X, Inignoto.game.player.position.Z, Inignoto.game.world.radius, Inignoto.game.world.properties.infinite)[0] + 1;
                                 Inignoto.game.game_state = Inignoto.GameState.GAME;
                                 Inignoto.game.player.OnGround = true;
                                 Inignoto.game.player.FallStart = Inignoto.game.player.position.Y;
                                 Inignoto.game.player.gamemode = worlds[i].default_gamemode;
                                 Inignoto.game.player.health = 100.0f;
                                 Inignoto.game.player.Load();
+                                Inignoto.game.player.TicksExisted = 0;
                                 return;
                             }
                             
@@ -937,7 +1325,16 @@ namespace Inignoto.Graphics.Gui
                 }
             }
 
-            if (DrawButton(300, "quit"))
+            if (DrawButton(300, "model creator"))
+            {
+                if (clicked)
+                {
+                    menu_state = MenuState.MODEL_CREATOR;
+                    mesh = null;
+                }
+            }
+
+            if (DrawButton(400, "quit"))
             {
                 if (clicked)
                 {

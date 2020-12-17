@@ -305,15 +305,15 @@ namespace Inignoto.Graphics.Models
             return frames;
             
         }
-
         public static GameModel LoadModel(ResourcePath path, Texture2D texture)
         {
-            GameModel model = new GameModel();
+            string p = FileUtils.GetResourcePath(path);
+            return LoadModel(p, texture);
+        }
 
-            Console.WriteLine("Object = " + path);
-            Console.WriteLine("Id = " + path.modid);
-            Console.WriteLine("Path = " + path.path);
-            Console.WriteLine("Root = " + path.root);
+        public static GameModel LoadModel(string path, Texture2D texture)
+        {
+            GameModel model = new GameModel();
 
             string str = FileUtils.LoadFileAsString(path);
             List<Part> parts = new List<Part>();

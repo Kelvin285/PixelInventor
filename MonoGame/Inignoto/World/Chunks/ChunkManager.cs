@@ -100,14 +100,16 @@ namespace Inignoto.World.Chunks
 
             for (int i = 0; i < ar.Length; i++)
             {
+                if (current_x != last_x || current_y != last_y || current_z != last_z) break;
                 lock (ar)
                 if (ar[i].NeedsToGenerate())
                 {
                     Chunk chunk = ar[i];
 
-                    chunk.SetGenerated();
-
-                    chunk.BuildMesh();
+                    if (chunk != null)
+                        {
+                            chunk.SetGenerated();
+                        }
                 }
 
                 BuildChunk(ar, i);
@@ -280,7 +282,12 @@ namespace Inignoto.World.Chunks
                 if (chunk != null)
                 {
                     
-                    if (Vector3.Distance(chunk.cpos, current_xyz) <= Constants.CHUNK_LIGHT_DISTANCE / 2)
+                    
+                    if (chunk.ReadyToFix())
+                    {
+                        chunk.BuildMesh();
+                        chunk.mesh_fixed = true;
+                    } else
                     {
                         if (chunk.NeedsToRebuild() && chunk.NotEmpty || chunk.LightRebuild)
                         {
@@ -357,8 +364,15 @@ namespace Inignoto.World.Chunks
             return false;
         }
 
+        int i = 0;
         public void Render(GraphicsDevice device, GameEffect effect)
         {
+            i++;
+            if (i > 100)
+            {
+                i = 0;
+                RefreshChunks();
+            }
             waterRender.Clear();
             transparentRender.Clear();
 
@@ -418,5 +432,22 @@ namespace Inignoto.World.Chunks
             }
         }
 
+        public void RefreshChunks()
+        {
+            lock (chunks)
+            {
+                foreach (Chunk chunk in chunks.Values)
+                {
+                    chunk.sunlightBfsQueue.Clear();
+                    chunk.sunlightRemovalBfsQueue.Clear();
+                    chunk.redBfsQueue.Clear();
+                    chunk.greenBfsQueue.Clear();
+                    chunk.blueBfsQueue.Clear();
+                    chunk.redRemovalBfsQueue.Clear();
+                    chunk.greenRemovalBfsQueue.Clear();
+                    chunk.blueRemovalBfsQueue.Clear();
+                }
+            }
+        }
     }
 }

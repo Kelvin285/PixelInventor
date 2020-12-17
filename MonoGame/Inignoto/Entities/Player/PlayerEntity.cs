@@ -39,7 +39,7 @@ namespace Inignoto.Entities.Player
         public PlayerEntity(World.World world, Vector3 position, long UID) : base(world, position)
         {
             gamemode = world.properties.default_gamemode;
-            position.Y = world.properties.generator.GetHeight(position.X, position.Z, world.radius, world.properties.infinite) + 1;
+            position.Y = world.properties.generator.GetHeight(position.X, position.Z, world.radius, world.properties.infinite)[0] + 1;
             ReachDistance = 4.0f;
             SpawnPosition = new Vector3(position.X, position.Y, position.Z);
 

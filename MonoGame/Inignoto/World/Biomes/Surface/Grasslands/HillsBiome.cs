@@ -12,7 +12,7 @@ namespace Inignoto.World.Biomes.Surface.Grasslands
 {
     public class HillsBiome : SurfaceBiome
     {
-        public HillsBiome() : base(TileRegistry.DIRT.DefaultData, TileRegistry.GRASS.DefaultData, TileRegistry.SMOOTH_STONE.DefaultData)
+        public HillsBiome() : base(TileRegistry.DIRT.DefaultData, TileRegistry.GRASS.DefaultData, TileRegistry.SMOOTH_STONE.DefaultData, TileRegistry.SAND.DefaultData)
         {
             
         }

@@ -28,6 +28,17 @@ namespace Inignoto.Utilities
             return new FileStream(GetResourcePath(resource_path), mode);
         }
 
+        public static string LoadFileAsString(string path)
+        {
+            if (!File.Exists(path))
+            {
+                return "";
+            }
+
+            string str = File.ReadAllText(path);
+            return str;
+        }
+
         public static string LoadFileAsString(ResourcePath resource_path)
         {
             if (!File.Exists(GetResourcePath(resource_path)))

@@ -16,7 +16,7 @@ namespace Inignoto.World.Biomes
         public static List<SurfaceBiome> SNOW = new List<SurfaceBiome>();
 
         public static ForestFlatsBiome FOREST_FLATS;
-        public static DarkForestFlatsBiome DARK_FOREST_FLATS;
+        public static DarkFlatsBiome DARK_FOREST_FLATS;
 
         public static HillsBiome HILLS;
         public static DesertPlainsBiome DESERT_PLAINS;
@@ -27,7 +27,7 @@ namespace Inignoto.World.Biomes
         public static void RegisterBiomes()
         {
             RegisterSurfaceBiome(FOREST_FLATS = new ForestFlatsBiome());
-            RegisterSurfaceBiome(DARK_FOREST_FLATS = new DarkForestFlatsBiome());
+            RegisterSurfaceBiome(DARK_FOREST_FLATS = new DarkFlatsBiome());
             RegisterSurfaceBiome(HILLS = new HillsBiome());
 
             RegisterSurfaceBiome(DESERT_PLAINS = new DesertPlainsBiome());

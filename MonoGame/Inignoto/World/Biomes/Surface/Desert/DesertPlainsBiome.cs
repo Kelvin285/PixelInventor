@@ -12,7 +12,7 @@ namespace Inignoto.World.Biomes.Surface.Grasslands
 {
     public class DesertPlainsBiome : SurfaceBiome
     {
-        public DesertPlainsBiome() : base(TileRegistry.SAND.DefaultData, TileRegistry.AIR.DefaultData, TileRegistry.STONE.DefaultData)
+        public DesertPlainsBiome() : base(TileRegistry.SAND.DefaultData, TileRegistry.AIR.DefaultData, TileRegistry.STONE.DefaultData, TileRegistry.STONE.DefaultData)
         {
             
         }

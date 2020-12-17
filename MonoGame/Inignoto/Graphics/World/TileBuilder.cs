@@ -117,39 +117,49 @@ namespace Inignoto.Graphics.World
             if (data.model != null)
             {
                 Mesh.Mesh mesh = null;
-                if (!data.model.Combined)
+                lock (data)
                 {
-                    data.model.Combine();
-                    mesh = data.model.Parts[0].mesh;
-                    for (int i = 0; i < mesh.triangleVertices.Length; i++)
+                    lock (data.model)
                     {
-                        Vector2 texCoord = mesh.triangleVertices[i].TextureCoordinate;
+                        lock (data.model.Parts)
+                        {
+                            if (!data.model.Combined)
+                            {
+                                data.model.Combine();
+                                mesh = data.model.Parts[0].mesh;
+                                for (int i = 0; i < mesh.triangleVertices.Length; i++)
+                                {
+                                    Vector2 texCoord = mesh.triangleVertices[i].TextureCoordinate;
 
-                        Rectangle location = Textures.Textures.tiles.GetLocation(data.texture);
+                                    Rectangle location = Textures.Textures.tiles.GetLocation(data.texture);
 
 
-                        texCoord.X = (texCoord.X * location.Width + location.X) / Textures.Textures.tiles.GetWidth();
-                        texCoord.Y = (texCoord.Y * location.Height + location.Y) / Textures.Textures.tiles.GetHeight();
+                                    texCoord.X = (texCoord.X * location.Width + location.X) / Textures.Textures.tiles.GetWidth();
+                                    texCoord.Y = (texCoord.Y * location.Height + location.Y) / Textures.Textures.tiles.GetHeight();
 
-                        Quaternion quat = Quaternion.CreateFromYawPitchRoll(MathF.PI * data.model.rotation.Y / 180.0f,
-                            MathF.PI * data.model.rotation.X / 180.0f,
-                            MathF.PI * data.model.rotation.Z / 180.0f);
+                                    Quaternion quat = Quaternion.CreateFromYawPitchRoll(MathF.PI * data.model.rotation.Y / 180.0f,
+                                        MathF.PI * data.model.rotation.X / 180.0f,
+                                        MathF.PI * data.model.rotation.Z / 180.0f);
 
-                        Matrix matrix = Matrix.CreateTranslation(mesh.triangleVertices[i].Position + data.model.origin) * Matrix.CreateFromQuaternion(quat);
+                                    Matrix matrix = Matrix.CreateTranslation(mesh.triangleVertices[i].Position + data.model.origin) * Matrix.CreateFromQuaternion(quat);
 
-                        mesh.triangleVertices[i].Position = matrix.Translation;
-                        mesh.triangleVertices[i].TextureCoordinate = texCoord;
-                        mesh.triangleVertices[i].Position *= 1.0f / 32.0f;
-                        mesh.triangleVertices[i].Position += data.model.translation;
-                        mesh.triangleVertices[i].Position += new Vector3(x + 0.5f, y + 0.5f, z + 0.5f);
+                                    mesh.triangleVertices[i].Position = matrix.Translation;
+                                    mesh.triangleVertices[i].TextureCoordinate = texCoord;
+                                    mesh.triangleVertices[i].Position *= 1.0f / 32.0f;
+                                    mesh.triangleVertices[i].Position += data.model.translation;
+                                    mesh.triangleVertices[i].Position += new Vector3(x + 0.5f, y + 0.5f, z + 0.5f);
+                                }
+
+                                if (Textures.Textures.tiles.GetTexture() != null)
+                                    mesh.texture = Textures.Textures.tiles.GetTexture();
+                                mesh.built = false;
+                            }
+                            else
+                            {
+                                mesh = data.model.Parts[0].mesh;
+                            }
+                        }
                     }
-
-                    if (Textures.Textures.tiles.GetTexture() != null)
-                    mesh.texture = Textures.Textures.tiles.GetTexture();
-                    mesh.built = false;
-                } else
-                {
-                    mesh = data.model.Parts[0].mesh;
                 }
                  
                 if (mesh != null)
