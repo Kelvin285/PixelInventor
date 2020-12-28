@@ -6,7 +6,7 @@ namespace Inignoto.GameSettings
 {
     public class Settings
     {
-        public static int HORIZONTAL_VIEW = 8;
+        public static int HORIZONTAL_VIEW = 6;
         public static int VERTICAL_VIEW = 4;
         public static float FIELD_OF_VIEW = 90;
         public static float MOUSE_SENSITIVITY = 0.05f;
@@ -42,7 +42,7 @@ namespace Inignoto.GameSettings
         public static InputSetting PERSPECTIVE_SWITCH = new InputSetting(Keys.F5, false);
         public static InputSetting FULLSCREEN_KEY = new InputSetting(Keys.F11, false);
         public static InputSetting CHAT = new InputSetting(Keys.Enter, false);
-
+        public static InputSetting RELOAD_ASSETS = new InputSetting(Keys.F1, false);
 
 
         public static InputSetting[] HOTBAR_KEYS = new InputSetting[10];
@@ -195,6 +195,10 @@ namespace Inignoto.GameSettings
                     {
                         CHAT.Read(b);
                     }
+                    if (a.Equals("RELOAD_TEXTURES_KEY"))
+                    {
+                        RELOAD_ASSETS.Read(b);
+                    }
                     for (int i = 0; i < 10; i++)
                     {
                         if (a.Equals("HOTBAR_KEY"+i))
@@ -247,7 +251,7 @@ namespace Inignoto.GameSettings
             str += GetSaveString("PERSPECTIVE_SWITCH", PERSPECTIVE_SWITCH.Write());
             str += GetSaveString("FULLSCREEN_KEY", FULLSCREEN_KEY.Write());
             str += GetSaveString("CHAT_KEY", CHAT.Write());
-
+            str += GetSaveString("RELOAD_TEXTURES_KEY", RELOAD_ASSETS.Write());
             for (int i = 0; i < 10; i++)
             {
                 str += GetSaveString("HOTBAR_KEY" + i, HOTBAR_KEYS[i].Write());

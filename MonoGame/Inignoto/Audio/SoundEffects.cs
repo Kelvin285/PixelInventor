@@ -8,7 +8,7 @@ namespace Inignoto.Audio
 
     public class SoundEffects
     {
-        private static readonly List<SoundEffect> soundEffects = new List<SoundEffect>();
+        private static readonly Dictionary<string, SoundEffect> soundEffects = new Dictionary<string, SoundEffect>();
 
         public static SoundEffect player_hit;
         public static SoundEffect player_heartbeat;
@@ -23,8 +23,10 @@ namespace Inignoto.Audio
         public static SoundEffect inventory_open;
         public static SoundEffect inventory_close;
 
+        public static SoundEffect ui_click;
         public static void LoadSoundEffects()
         {
+            soundEffects.Clear();
             player_hit = LoadSoundEffect(new ResourcePath("Inignoto", "sounds/player/hit.wav", "assets"));
             player_heartbeat = LoadSoundEffect(new ResourcePath("Inignoto", "sounds/player/heartbeat.wav", "assets"));
             player_death_sound = LoadSoundEffect(new ResourcePath("Inignoto", "sounds/player/noise.wav", "assets"));
@@ -34,6 +36,8 @@ namespace Inignoto.Audio
 
             inventory_open = LoadSoundEffect(new ResourcePath("Inignoto", "sounds/inventory/open.wav", "assets"));
             inventory_close = LoadSoundEffect(new ResourcePath("Inignoto", "sounds/inventory/close.wav", "assets"));
+
+            ui_click = LoadSoundEffect(new ResourcePath("Inignoto", "sounds/ui/click.wav", "assets"));
 
             for (int i = 0; i < step_grass.Length; i++)
             {
@@ -55,13 +59,19 @@ namespace Inignoto.Audio
             FileStream stream = FileUtils.GetStreamForPath(path, FileMode.Open);
             SoundEffect sound = SoundEffect.FromStream(stream);
             stream.Close();
-            soundEffects.Add(sound);
+
+            if (!soundEffects.TryAdd(FileUtils.GetResourcePath(path), sound))
+            {
+                soundEffects[FileUtils.GetResourcePath(path)].Dispose();
+                soundEffects[FileUtils.GetResourcePath(path)] = sound;
+            }
+
             return sound;
         }
 
         public static void Dispose()
         {
-            foreach (SoundEffect effect in soundEffects)
+            foreach (SoundEffect effect in soundEffects.Values)
             {
                 effect.Dispose();
             }

@@ -11,6 +11,7 @@ namespace Inignoto.Tiles
     public class TileRegistry
     {
         public static Dictionary<string, Tile> REGISTRY = new Dictionary<string, Tile>();
+        public static Dictionary<int, Tile> ID_REGISTRY = new Dictionary<int, Tile>();
 
         public static Tile AIR;
         public static Tile DIRT;
@@ -51,26 +52,30 @@ namespace Inignoto.Tiles
         public static Tile FLOURESCENT_LAMP;
         public static Tile CONEWOOD_LOG;
         public static Tile ALCYONEUM;
-        public static Tile WEEPING_REED;
+        public static Tile MOON_STEM;
         public static Tile AMBER_ORE;
         public static Tile GOLD_ORE;
         public static Tile GLOW_BERRY;
         public static Tile DEAD_BUSH;
+        public static Tile MOON_LEAF;
+        public static Tile CRACKED_STONE;
 
 
         private static bool TEXTURES_LOADED = false;
 
         public static Tile GetTile(int ID)
         {
-            foreach (Tile tile in REGISTRY.Values)
+            if (ID_REGISTRY.TryGetValue(ID, out Tile tile))
             {
-                if (tile.ID == ID) return tile;
+                return tile;
             }
             return AIR;
         }
-
         public static void Loadtiles()
         {
+            REGISTRY.Clear();
+            ID_REGISTRY.Clear();
+            Tile.CURRENT_ID = 1;
             AIR = new Tile("Inignoto:air", null, false).SetRayTraceType(Tile.TileRayTraceType.GAS).SetTransparent().SetVisible(false).SetBlocksMovement(false).SetReplaceable(true).SetCanDrop(false);
             DIRT = new Tile("Inignoto:dirt", SoundEffects.step_soil, true, 3).SetFull();
             STONE = new Tile("Inignoto:stone", null, true, 7).SetFull();
@@ -80,7 +85,7 @@ namespace Inignoto.Tiles
             LOG = new Tile("Inignoto:log", null, true, 5).SetFull();
             GRASS = new Tile("Inignoto:grass", SoundEffects.step_grass, true, 4).SetFull().SetOverlay().SetCanDrop(false);
             PURPLE_GRASS = new Tile("Inignoto:purple_grass", SoundEffects.step_grass, true, 4).SetFull().SetOverlay();
-            WATER = new Tile("Inignoto:water", null, false).SetBlocksMovement(false).SetTransparent().SetRayTraceType(Tile.TileRayTraceType.FLUID).SetReplaceable(true);
+            WATER = new Tile("Inignoto:water", null, false).SetBlocksMovement(false).SetRayTraceType(Tile.TileRayTraceType.FLUID).SetTransparent().SetReplaceable(true);
             GLOWING_CRYSTAL = new Tile("Inignoto:glowing_crystal", null, true, 4).SetFull().SetLight(10, 14, 15);
             MALECHITE = new Tile("Inignoto:malechite", null, true, 4).SetFull().SetLight(0, 8, 0);
             GLASS = new Tile("Inignoto:glass", null, true, 2).SetFull().SetTransparent();
@@ -106,11 +111,13 @@ namespace Inignoto.Tiles
             IRON_PLATING_LARGE = new Tile("Inignoto:iron_plating_large", null, true, 10).SetFull();
             STORAGE_CONTAINER = new StorageContainerTile("Inignoto:storage_container", null, true, 10).SetFull();
             ALCYONEUM = new PlantTile("Inignoto:alcyoneum", new Tile[] { DIRT });
-            WEEPING_REED = new Tile("Inignoto:weeping_reed", null, true, 1).SetTransparent().SetBlocksMovement(false);
+            MOON_STEM = new Tile("Inignoto:moon_stem", null, true, 2).SetTransparent().SetBlocksMovement(false);
             AMBER_ORE = new Tile("Inignoto:amber_ore", null, true, 7).SetOverlay();
             GOLD_ORE = new Tile("Inignoto:gold_ore", null, true, 7).SetOverlay();
             GLOW_BERRY = new Tile("Inignoto:glow_berry", null, true, 1).SetTransparent().SetBlocksMovement(false).SetLight(0xf, 0xc, 0x0);
             DEAD_BUSH = new Tile("Inignoto:dead_bush", null, true, 1).SetTransparent().SetBlocksMovement(false);
+            MOON_LEAF = new Tile("Inignoto:moon_leaf", null, true, 2).SetTransparent().SetBlocksMovement(false);
+            CRACKED_STONE = new Tile("Inignoto:cracked_stone", null, true, 7);
         }
 
         public static void TryLoadTileTextures()

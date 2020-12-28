@@ -25,7 +25,6 @@ namespace Inignoto.World.Generator
             if (chunk.Load())
             {
                 chunk.MarkForRebuild();
-                chunk.SetGenerated();
                 return;
             }
 

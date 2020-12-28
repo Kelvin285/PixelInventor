@@ -5,11 +5,11 @@ namespace Inignoto.Tiles.Data
 {
     public class TileDataHolder
     {
-        public static List<TileData> REGISTRY = new List<TileData>();
+        public static List<TileData> REGISTRY = new List<TileData>(); // A list of all the tile states (used for save data)
         public static TileData NO_DATA;
 
 
-        public List<TileData> data;
+        public List<TileData> data; // A list of all the states within the current block
 
         private static int INDEX;
         public static void Initialize()

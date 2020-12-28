@@ -29,8 +29,7 @@ namespace Inignoto.Graphics.Textures
 
         public static Dictionary<TileData, Texture2D> TILE_ITEMS = new Dictionary<TileData, Texture2D>();
 
-        private static List<Texture> textures = new List<Texture>();
-
+        private static Dictionary<string, Texture> textures = new Dictionary<string, Texture>();
         public static void LoadTextures()
         {
             tiles = new TextureAtlas(new ResourcePath("Inignoto", "textures/tiles", "assets"));
@@ -63,13 +62,17 @@ namespace Inignoto.Graphics.Textures
             FileStream stream = FileUtils.GetStreamForPath(path, FileMode.Open);
             Texture2D texture = Texture2D.FromStream(Inignoto.game.GraphicsDevice, stream);
             stream.Close();
-            textures.Add(texture);
+            if (!textures.TryAdd(FileUtils.GetResourcePath(path), texture))
+            {
+                textures[FileUtils.GetResourcePath(path)].Dispose();
+                textures[FileUtils.GetResourcePath(path)] = texture;
+            }
             return texture;
         }
 
         public static void Dispose()
         {
-            foreach (Texture tex in textures)
+            foreach (Texture tex in textures.Values)
             {
                 tex.Dispose();
             }

@@ -11,12 +11,23 @@ using Inignoto.Graphics.Gui;
 using System.Transactions;
 using System.IO;
 using static Inignoto.World.World;
+using System.Threading.Tasks;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Inignoto.World.Chunks
 {
     public class Chunk : IComparable<Chunk>
     {
-        public static Vector3[] vectors = new Vector3[Constants.CHUNK_SIZE * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE];
+
+        public List<short> sunlightBfsQueue;
+        public List<short> sunlightRemovalBfsQueue;
+        public List<short> redRemovalBfsQueue;
+        public List<short> greenRemovalBfsQueue;
+        public List<short> blueRemovalBfsQueue;
+        public List<short> redBfsQueue;
+        public List<short> greenBfsQueue;
+        public List<short> blueBfsQueue;
+
         public struct Voxel
         {
             public TileData voxel { get => GetVoxel(); set => SetVoxel(value); }
@@ -24,11 +35,11 @@ namespace Inignoto.World.Chunks
 
             private int true_voxel;
             private int true_overlay;
-            private uint true_light;
+            private short true_light;
 
             public uint light { get => GetLight(); set => SetLight(value); }
             public byte sunlight { get => GetSunlight(); set => SetSunlight(value); }
-            public int mining_time;
+            public byte mining_time;
             public Voxel(TileData voxel)
             {
                 true_voxel = voxel.index;
@@ -39,7 +50,7 @@ namespace Inignoto.World.Chunks
 
             public uint GetLight()
             {
-                return true_light >> 4;
+                return (uint)true_light >> 4;
             }
 
             public byte GetSunlight()
@@ -50,13 +61,12 @@ namespace Inignoto.World.Chunks
             public void SetLight(uint light)
             {
                 uint sunlight = GetSunlight();
-                true_light = (light << 4) | sunlight;
+                true_light = (short)((light << 4) | sunlight);
             }
 
             public void SetSunlight(byte sunlight)
             {
-                true_light = true_light & 0xfff0;
-                true_light |= sunlight;
+                true_light = (short)((true_light & 0xfff0) | sunlight);
             }
 
             public TileData GetVoxel()
@@ -81,9 +91,8 @@ namespace Inignoto.World.Chunks
             
         }
 
-        public readonly Voxel[] voxels;
 
-        public List<Vector3> buildVoxels = new List<Vector3>();
+        public Voxel[] voxels;
 
         public readonly Vector3 cpos;
         private World world;
@@ -94,29 +103,24 @@ namespace Inignoto.World.Chunks
 
         public bool mesh_fixed = false;
 
-        public Mesh[] mesh = new Mesh[2];
+        public Mesh lastMesh;
+        public Mesh lastWaterMesh;
+        public Mesh lastTransparencyMesh;
+        public Mesh lastCustomMesh;
 
-        public Mesh[] waterMesh = new Mesh[2];
+        public Mesh mesh;
 
-        public Mesh[] transparencyMesh = new Mesh[2];
+        public Mesh waterMesh;
 
-        public int meshIndex = 0;
-        
+        public Mesh transparencyMesh;
+
+        public Mesh customMesh;
+
         public bool modified = false;
         public bool LightRebuild { get; private set; }
 
         public bool NotEmpty;
 
-        public List<int> sunlightBfsQueue;
-        public List<int> sunlightRemovalBfsQueue;
-        public List<int> redRemovalBfsQueue;
-        public List<int> greenRemovalBfsQueue;
-        public List<int> blueRemovalBfsQueue;
-        public List<int> redBfsQueue;
-        public List<int> greenBfsQueue;
-        public List<int> blueBfsQueue;
-
-        private static bool vec = false;
         public Chunk(int x, int y, int z, World world)
         {
             this.world = world;
@@ -126,33 +130,17 @@ namespace Inignoto.World.Chunks
                 voxels[i] = new Voxel(TileRegistry.AIR.DefaultData);
             }
 
-            if (!vec)
-            {
-                vec = true;
-                for (int xx = 0; xx < Constants.CHUNK_SIZE; xx++)
-                {
-                    for (int yy = 0; yy < Constants.CHUNK_SIZE; yy++)
-                    {
-                        for (int zz = 0; zz < Constants.CHUNK_SIZE; zz++)
-                        {
-                            Vector3 v = new Vector3(xx, yy, zz);
-                            vectors[GetIndexFor(xx, yy, zz)] = v;
-                        }
-                    }
-                }
-            }
-
             chunkManager = world.GetChunkManager();
 
 
-            sunlightBfsQueue = new List<int>(voxels.Length);
-            sunlightRemovalBfsQueue = new List<int>(voxels.Length);
-            redRemovalBfsQueue = new List<int>(voxels.Length);
-            greenRemovalBfsQueue = new List<int>(voxels.Length);
-            blueRemovalBfsQueue = new List<int>(voxels.Length);
-            redBfsQueue = new List<int>(voxels.Length);
-            greenBfsQueue = new List<int>(voxels.Length);
-            blueBfsQueue = new List<int>(voxels.Length);
+            sunlightBfsQueue = new List<short>(voxels.Length);
+            sunlightRemovalBfsQueue = new List<short>(voxels.Length);
+            redRemovalBfsQueue = new List<short>(voxels.Length);
+            greenRemovalBfsQueue = new List<short>(voxels.Length);
+            blueRemovalBfsQueue = new List<short>(voxels.Length);
+            redBfsQueue = new List<short>(voxels.Length);
+            greenBfsQueue = new List<short>(voxels.Length);
+            blueBfsQueue = new List<short>(voxels.Length);
             cpos = new Vector3(x, y, z);
         }
 
@@ -170,18 +158,88 @@ namespace Inignoto.World.Chunks
                 File.Delete(FileUtils.GetResourcePath(file));
             }
 
-            List<string> str = new List<string>();
-            for(int i = 0; i < voxels.Length; i++)
+            FileStream s = File.Open(FileUtils.GetResourcePath(file), FileMode.OpenOrCreate);
+            BinaryWriter writer = new BinaryWriter(s);
+            writer.Write((short)2);
+
+
+            SortedSet<int> idSetVox = new SortedSet<int>();
+            SortedSet<int> idSetOv = new SortedSet<int>();
+
+            for (int i = 0; i < voxels.Length; i++)
             {
-                str.Add(voxels[i].voxel.index + "_" + voxels[i].overlay.index+"_"+voxels[i].light+"_"+voxels[i].sunlight);
+                idSetVox.Add(voxels[i].voxel.index);
+                idSetOv.Add(voxels[i].overlay.index);
+            }
+            Dictionary<int, int> idMapVox = new Dictionary<int, int>();
+            Dictionary<int, int> idMapOv = new Dictionary<int, int>();
+            {
+                int i = 0;
+                foreach (int id in idSetVox)
+                {
+                    idMapVox.Add(id, i++);
+                }
+                i = 0;
+                foreach (int id in idSetOv)
+                {
+                    idMapOv.Add(id, i++);
+                }
+            }
+            int maxValues = System.Math.Max(idSetVox.Count, idSetOv.Count);
+            int entrySize = maxValues <= 16 ? 0 : maxValues <= 256 ? 1 : maxValues <= 65536 ? 2 : 4;
+            writer.Write((byte)entrySize);
+            for (int i = 0; i < voxels.Length; i++)
+            {
+                int vox_index = idMapVox[voxels[i].voxel.index];
+                int ov_index = idMapOv[voxels[i].overlay.index];
+
+                if (entrySize == 0)
+                {
+                    writer.Write((byte)(vox_index | ov_index << 4));
+                }
+                else if (entrySize == 1)
+                {
+                    writer.Write((byte)vox_index);
+                    writer.Write((byte)ov_index);
+                }
+                else if (entrySize == 2)
+                {
+                    writer.Write((short)vox_index);
+                    writer.Write((short)ov_index);
+                }
+                else
+                {
+                    writer.Write(vox_index);
+                    writer.Write(ov_index);
+                }
+
+                if (i % 2 == 0)
+                {
+                    writer.Write((byte)(voxels[i].sunlight << 4 | voxels[i + 1].sunlight));
+                }
+            }
+            writer.Write((short)idMapVox.Count);
+            foreach (int key in idMapVox.Keys)
+            {
+                writer.Write(key);
+            }
+            writer.Write((short)idMapOv.Count);
+            foreach (int key in idMapOv.Keys)
+            {
+                writer.Write(key);
             }
 
-            File.WriteAllLinesAsync(FileUtils.GetResourcePath(file), str);
+
+
         }
+
 
         public bool Load()
         {
             modified = false;
+
+            int save_version = 1; // 1 is the original (old) save file
+
             ResourcePath directory = new ResourcePath("Chunks", "", "Worlds/" + world.name);
             ResourcePath file = new ResourcePath("Chunks", "Chunk_" + GetX() + "_" + GetY() + "_" + GetZ() + ".chunk", "Worlds/" + world.name);
             if (!Directory.Exists(FileUtils.GetResourcePath(directory)))
@@ -192,69 +250,181 @@ namespace Inignoto.World.Chunks
             {
                 return false;
             }
-            string[] data = File.ReadAllLinesAsync(FileUtils.GetResourcePath(file)).Result;
-            for (int i = 0; i < voxels.Length; i++)
+
+            FileStream st = File.Open(FileUtils.GetResourcePath(file), FileMode.Open);
+            BinaryReader reader = new BinaryReader(st);
+            if (reader.ReadInt16() == 2)
             {
-                voxels[i].light = 0;
-                voxels[i].sunlight = 15;
+                save_version = 2;
             }
-            int index = 0;
-            foreach (string s in data)
+
+            int index = 0; // The variable used to iterate through the voxel grid
+
+            if (save_version == 2)
             {
-
-                string[] voxel = s.Split("_");
-                int tile = int.Parse(voxel[0]);
-                int overlay = int.Parse(voxel[1]);
-
-                int x = index % Constants.CHUNK_SIZE;
-                int y = ((index - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
-                int z = (index - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
-
-                SetVoxel(x, y, z, TileDataHolder.REGISTRY[tile]);
-                SetOverlayVoxel(x, y, z, TileDataHolder.REGISTRY[overlay]);
-                if (voxel.Length > 2)
+                int[] voxIndex = new int[voxels.Length];
+                int[] ovIndex = new int[voxels.Length];
+                byte entrySize = reader.ReadByte();
+                for (int i = 0; i < voxels.Length; i++)
                 {
-                    if (uint.TryParse(voxel[2], out uint r1))
-                        voxels[index].light = uint.Parse(voxel[2]);
-                    if (uint.TryParse(voxel[2], out uint r2))
-                        voxels[index].sunlight = byte.Parse(voxel[3]);
-                }
-                
+                    if (entrySize == 0)
+                    {
+                        byte r = reader.ReadByte();
+                        voxIndex[i] = (int)(r & 0b1111);
+                        ovIndex[i] = (int)(r >> 4);
+                    } else if (entrySize == 1)
+                    {
+                        voxIndex[i] = reader.ReadByte();
+                        ovIndex[i] = reader.ReadByte();
+                    } else if (entrySize == 2)
+                    {
+                        voxIndex[i] = reader.ReadInt16();
+                        ovIndex[i] = reader.ReadInt16();
+                    } else
+                    {
+                        voxIndex[i] = reader.ReadInt32();
+                        ovIndex[i] = reader.ReadInt32();
+                    }
 
-                index++;
+                    if (i % 2 == 0)
+                    {
+                        byte r = reader.ReadByte();
+                        voxels[i].sunlight = (byte)(r >> 4);
+                        voxels[i + 1].sunlight = (byte)(r & 0b1111);
+                    }
+                }
+
+                int idMapVoxCount = reader.ReadInt16();
+                List<int> vox_ids = new();
+                List<int> ov_ids = new();
+
+                for (int i = 0; i < idMapVoxCount; i++)
+                {
+                    int value = reader.ReadInt32();
+                    vox_ids.Add(value);
+                }
+
+                int idMapOvCount = reader.ReadInt16();
+
+                for (int i = 0; i < idMapOvCount; i++)
+                {
+                    int value = reader.ReadInt32();
+                    ov_ids.Add(value);
+                }
+
+                for (int x = 0; x < Constants.CHUNK_SIZE; x++)
+                {
+                    for (int y = 0; y < Constants.CHUNK_SIZE; y++)
+                    {
+                        for (int z = 0; z < Constants.CHUNK_SIZE; z++)
+                        {
+                            int i = GetIndexFor(x, y, z);
+                            int voxel = vox_ids[voxIndex[i]];
+                            int overlay = ov_ids[ovIndex[i]];
+                            SetVoxel(x, y, z, TileDataHolder.REGISTRY[voxel]);
+                            SetOverlayVoxel(x, y, z, TileDataHolder.REGISTRY[overlay]);
+                            voxels[i].mining_time = 0;
+                        }
+                    }
+                }
             }
+
+            if (save_version == 1)
+            {
+                for (int i = 0; i < voxels.Length; i++)
+                {
+                    voxels[i].light = 0;
+                    voxels[i].sunlight = 15;
+                    voxels[i].mining_time = 0;
+                }
+                //This method will load in data from old chunk save files (plaintext)
+
+                string[] DATA = File.ReadAllLinesAsync(FileUtils.GetResourcePath(file)).Result;
+
+                foreach (string s in DATA)
+                {
+
+                    string[] voxel = s.Split("_");
+                    int tile = int.Parse(voxel[0]);
+                    int overlay = int.Parse(voxel[1]);
+
+                    int x = index % Constants.CHUNK_SIZE;
+                    int y = ((index - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
+                    int z = (index - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
+
+                    SetVoxel(x, y, z, TileDataHolder.REGISTRY[tile]);
+                    SetOverlayVoxel(x, y, z, TileDataHolder.REGISTRY[overlay]);
+                    if (voxel.Length > 2)
+                    {
+                        if (uint.TryParse(voxel[2], out uint r1))
+                            voxels[index].light = uint.Parse(voxel[2]);
+                        if (uint.TryParse(voxel[2], out uint r2))
+                            voxels[index].sunlight = byte.Parse(voxel[3]);
+                    }
+
+
+                    index++;
+                }
+            }
+
             return true;
         }
 
-        public void BuildMesh()
+        public void BuildMesh(bool lights = true)
         {
-            UpdateLights(LightRebuild);
-
-            if (NotEmpty == false) return;
-
-            if (mesh[meshIndex] != null)
+            lock (this)
             {
-                mesh[meshIndex].Dispose();
+                UpdateLights();
+
+                if (NotEmpty == false) return;
+
+                if (lastMesh != null)
+                {
+                    lastMesh.Dispose();
+                }
+
+                if (mesh != null)
+                {
+                    lastMesh = mesh;
+                }
+
+                if (lastWaterMesh != null)
+                {
+                    lastWaterMesh.Dispose();
+                }
+
+                if (waterMesh != null)
+                {
+                    lastWaterMesh = waterMesh;
+                }
+
+                if (lastTransparencyMesh != null)
+                {
+                    lastTransparencyMesh.Dispose();
+                }
+
+                if (transparencyMesh != null)
+                {
+                    lastTransparencyMesh = transparencyMesh;
+                }
+
+                if (lastCustomMesh != null)
+                {
+                    lastCustomMesh.Dispose();
+                }
+
+                if (customMesh != null)
+                {
+                    lastCustomMesh = customMesh;
+                }
+
+                mesh = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, this);
+                if (mesh != null)
+                    mesh.SetPosition(new Vector3(GetX() * Constants.CHUNK_SIZE, GetY() * Constants.CHUNK_SIZE, GetZ() * Constants.CHUNK_SIZE));
+
+                FinishRebuilding();
             }
-
-            if (waterMesh[meshIndex] != null)
-            {
-                waterMesh[meshIndex].Dispose();
-            }
-
-            if (transparencyMesh[meshIndex] != null)
-            {
-                transparencyMesh[meshIndex].Dispose();
-            }
-
-            lock (mesh) mesh[meshIndex] = ChunkBuilder.BuildMeshForChunk(Inignoto.game.GraphicsDevice, this);
-            if (mesh[meshIndex] != null)
-                mesh[meshIndex].SetPosition(new Vector3(GetX() * Constants.CHUNK_SIZE, GetY() * Constants.CHUNK_SIZE, GetZ() * Constants.CHUNK_SIZE));
-
-            if (meshIndex == 1) meshIndex = 0;
-            else meshIndex = 1;
-
-            FinishRebuilding();
+            
             
         }
 
@@ -299,57 +469,55 @@ namespace Inignoto.World.Chunks
         public void Dispose()
         {
             Disposed = true;
-            //lock(redBfsQueue)
-            {
-                //lock(greenBfsQueue)
-                {
-                    //lock(blueBfsQueue)
-                    {
-                        //lock(sunlightBfsQueue)
-                        {
-                            //lock(redRemovalBfsQueue)
-                            {
-                                //lock(greenRemovalBfsQueue)
-                                {
-                                    //lock(blueRemovalBfsQueue)
-                                    {
-                                        //lock(sunlightRemovalBfsQueue)
-                                        {
-                                            sunlightBfsQueue.Clear();
-                                            sunlightRemovalBfsQueue.Clear();
-                                            redBfsQueue.Clear();
-                                            redRemovalBfsQueue.Clear();
-                                            greenBfsQueue.Clear();
-                                            greenRemovalBfsQueue.Clear();
-                                            blueBfsQueue.Clear();
-                                            blueRemovalBfsQueue.Clear();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            for (int i = 0; i < 2; i++)
-            {
-                if (mesh[i] != null)
-                {
-                    mesh[i].Dispose();
-                }
-
-                if (transparencyMesh[i] != null)
-                {
-                    transparencyMesh[i].Dispose();
-                }
-
-                if (waterMesh[i] != null)
-                {
-                    waterMesh[i].Dispose();
-                }
-            }
             
-            
+            sunlightBfsQueue.Clear();
+            sunlightRemovalBfsQueue.Clear();
+            redBfsQueue.Clear();
+            redRemovalBfsQueue.Clear();
+            greenBfsQueue.Clear();
+            greenRemovalBfsQueue.Clear();
+            blueBfsQueue.Clear();
+            blueRemovalBfsQueue.Clear();
+
+            if (lastMesh != null)
+            {
+                lastMesh.Dispose();
+            }
+
+            if (lastWaterMesh != null)
+            {
+                lastWaterMesh.Dispose();
+            }
+
+            if (lastTransparencyMesh != null)
+            {
+                lastTransparencyMesh.Dispose();
+            }
+
+            if (lastCustomMesh != null)
+            {
+                lastCustomMesh.Dispose();
+            }
+
+            if (mesh != null)
+            {
+                mesh.Dispose();
+            }
+
+            if (transparencyMesh != null)
+            {
+                transparencyMesh.Dispose();
+            }
+
+            if (waterMesh != null)
+            {
+                waterMesh.Dispose();
+            }
+
+            if (customMesh != null)
+            {
+                customMesh.Dispose();
+            }
 
             Save();
         }
@@ -410,47 +578,36 @@ namespace Inignoto.World.Chunks
             Tile tile = TileRegistry.GetTile(data.tile_id);
             if (IsInsideChunk(x, y, z))
             {
-                lock (sunlightRemovalBfsQueue)
-                {
-                    lock (blueRemovalBfsQueue)
-                    {
-                        lock (greenRemovalBfsQueue)
-                        {
-                            lock (redRemovalBfsQueue)
-                            {
-                                if (tile.light_red > 0) {
-                                    SetRedLight(x, y, z, tile.light_red);
-                                    }
-                                else
-                                if (red)
-                                    if (!redRemovalBfsQueue.Contains(GetIndexFor(x, y, z)))
-                                        redRemovalBfsQueue.Add(GetIndexFor(x, y, z));
-
-                                if (tile.light_green > 0)
-                                {
-                                    SetGreenLight(x, y, z, tile.light_green);
-                                }
-                                else
-                                if (green)
-                                    if (!greenRemovalBfsQueue.Contains(GetIndexFor(x, y, z)))
-                                        greenRemovalBfsQueue.Add(GetIndexFor(x, y, z));
-
-                                if (tile.light_blue > 0)
-                                {
-                                    SetBlueLight(x, y, z, tile.light_blue);
-                                }
-                                else
-                                if (blue)
-                                    if (!blueRemovalBfsQueue.Contains(GetIndexFor(x, y, z)))
-                                        blueRemovalBfsQueue.Add(GetIndexFor(x, y, z));
-
-                                if (sun)
-                                    if (!sunlightRemovalBfsQueue.Contains(GetIndexFor(x, y, z)))
-                                        sunlightRemovalBfsQueue.Add(GetIndexFor(x, y, z));
-                            }
-                        }
+                if (tile.light_red > 0) {
+                    SetRedLight(x, y, z, tile.light_red);
                     }
+                else
+                if (red)
+                    if (!redRemovalBfsQueue.Contains(GetIndexFor(x, y, z)))
+                        redRemovalBfsQueue.Add(GetIndexFor(x, y, z));
+
+                if (tile.light_green > 0)
+                {
+                    SetGreenLight(x, y, z, tile.light_green);
                 }
+                else
+                if (green)
+                    if (!greenRemovalBfsQueue.Contains(GetIndexFor(x, y, z)))
+                        greenRemovalBfsQueue.Add(GetIndexFor(x, y, z));
+
+                if (tile.light_blue > 0)
+                {
+                    SetBlueLight(x, y, z, tile.light_blue);
+                }
+                else
+                if (blue)
+                    if (!blueRemovalBfsQueue.Contains(GetIndexFor(x, y, z)))
+                        blueRemovalBfsQueue.Add(GetIndexFor(x, y, z));
+
+                if (sun)
+                    if (!sunlightRemovalBfsQueue.Contains(GetIndexFor(x, y, z)))
+                        sunlightRemovalBfsQueue.Add(GetIndexFor(x, y, z));
+                
 
                 return;
             }
@@ -556,7 +713,6 @@ namespace Inignoto.World.Chunks
                     voxels[GetIndexFor(x, y, z)].light &= 0b111111110000;
                     voxels[GetIndexFor(x, y, z)].light |= (uint)R;
                     if (update)
-                        lock (redBfsQueue)
                         {
                             if (!redBfsQueue.Contains(GetIndexFor(x, y, z)))
                             redBfsQueue.Add(GetIndexFor(x, y, z));
@@ -567,7 +723,7 @@ namespace Inignoto.World.Chunks
                     voxels[GetIndexFor(x, y, z)].light &= 0b111100001111;
                     voxels[GetIndexFor(x, y, z)].light |= (uint)G;
                     if (update)
-                        lock (greenBfsQueue) {
+                        {
                             if (!greenBfsQueue.Contains(GetIndexFor(x, y, z)))
                                 greenBfsQueue.Add(GetIndexFor(x, y, z));
                         }
@@ -578,7 +734,6 @@ namespace Inignoto.World.Chunks
                     voxels[GetIndexFor(x, y, z)].light &= 0b000011111111;
                     voxels[GetIndexFor(x, y, z)].light |= (uint)B;
                     if (update)
-                        lock (blueBfsQueue)
                         {
                             if (!blueBfsQueue.Contains(GetIndexFor(x, y, z)))
                                 blueBfsQueue.Add(GetIndexFor(x, y, z));
@@ -590,8 +745,7 @@ namespace Inignoto.World.Chunks
                     voxels[GetIndexFor(x, y, z)].sunlight = (byte)SUN;
 
                     if (update)
-                        //lock(sunlightBfsQueue) 
-                    {
+                        {
 
                             if (!sunlightBfsQueue.Contains(GetIndexFor(x, y, z)))
                                 sunlightBfsQueue.Add(GetIndexFor(x, y, z));
@@ -798,698 +952,6 @@ namespace Inignoto.World.Chunks
             LightRebuild = true;
         }
 
-        public void UpdateLights(bool canRerender = true)
-        {
-            LightRebuild = false;
-            bool rerender = false;
-            bool cu = false, cd = false, cl = false, cr = false, cb = false, cf = false;
-            
-            lock(sunlightRemovalBfsQueue)
-            while (sunlightRemovalBfsQueue.Count > 0)
-            {
-                rerender = true;
-                int node = sunlightRemovalBfsQueue[0];
-                sunlightRemovalBfsQueue.RemoveAt(0);
-
-                int x = node % Constants.CHUNK_SIZE;
-                int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
-                int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
-                int lightLevel = GetSunlight(x, y, z);
-                SetLight(x, y, z, -1, -1, -1, 0, false);
-
-                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (x - 1 < 0) cl = true;
-                        else cr = true;
-                    }
-                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (y - 1 < 0) cd = true;
-                        else
-                            cu = true;
-                    }
-                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (z - 1 < 0) cb = true;
-                        else cf = true;
-                    }
-
-                        int neighborLevel = GetSunlight(x - 1, y, z);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x - 1, y, z, false, false, false, true);
-                } else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x - 1, y, z);
-                    if (!sunlightBfsQueue.Contains(index))
-                        sunlightBfsQueue.Add(index);
-                }
-                neighborLevel = GetSunlight(x + 1, y, z);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x + 1, y, z, false, false, false, true);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x + 1, y, z);
-                            if (!sunlightBfsQueue.Contains(index))
-                                sunlightBfsQueue.Add(index);
-                }
-                neighborLevel = GetSunlight(x, y + 1, z);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x, y + 1, z, false, false, false, true);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x, y + 1, z);
-                            if (!sunlightBfsQueue.Contains(index))
-                                sunlightBfsQueue.Add(index);
-                }
-                neighborLevel = GetSunlight(x, y - 1, z);
-                if (neighborLevel != 0 && (neighborLevel < lightLevel || lightLevel == 15))
-                {
-                    RemoveLight(x, y - 1, z, false, false, false, true);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x, y - 1, z);
-                            if (!sunlightBfsQueue.Contains(index))
-                                sunlightBfsQueue.Add(index);
-                }
-                neighborLevel = GetSunlight(x, y, z + 1);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x, y, z + 1, false, false, false, true);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x, y, z + 1);
-                            if (!sunlightBfsQueue.Contains(index))
-                                sunlightBfsQueue.Add(index);
-                }
-                neighborLevel = GetSunlight(x, y, z - 1);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x, y, z - 1, false, false, false, true);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x, y, z - 1);
-                            if (!sunlightBfsQueue.Contains(index))
-                                sunlightBfsQueue.Add(index);
-                }
-            }
-            lock(redRemovalBfsQueue)
-            while (redRemovalBfsQueue.Count > 0)
-            {
-                rerender = true;
-                int node = redRemovalBfsQueue[0];
-                redRemovalBfsQueue.RemoveAt(0);
-
-                int x = node % Constants.CHUNK_SIZE;
-                int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
-                int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
-                int lightLevel = GetRedLight(x, y, z);
-                SetLight(x, y, z, 0, -1, -1, -1, false);
-
-                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (x - 1 < 0) cl = true;
-                        else cr = true;
-                    }
-                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (y - 1 < 0) cd = true;
-                        else
-                            cu = true;
-                    }
-                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (z - 1 < 0) cb = true;
-                        else cf = true;
-                    }
-
-                        int neighborLevel = GetRedLight(x - 1, y, z);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x - 1, y, z, true, false, false, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x - 1, y, z);
-                            if (!redBfsQueue.Contains(index))
-                                redBfsQueue.Add(index);
-                }
-                neighborLevel = GetRedLight(x + 1, y, z);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x + 1, y, z, true, false, false, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x + 1, y, z);
-                            if (!redBfsQueue.Contains(index))
-                                redBfsQueue.Add(index);
-                }
-                neighborLevel = GetRedLight(x, y + 1, z);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x, y + 1, z, true, false, false, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x, y + 1, z);
-                            if (!redBfsQueue.Contains(index))
-                                redBfsQueue.Add(index);
-                }
-                neighborLevel = GetRedLight(x, y - 1, z);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x, y - 1, z, true, false, false, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x, y - 1, z);
-                            if (!redBfsQueue.Contains(index))
-                                redBfsQueue.Add(index);
-                }
-                neighborLevel = GetRedLight(x, y, z + 1);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x, y, z + 1, true, false, false, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x, y, z + 1);
-                            if (!redBfsQueue.Contains(index))
-                                redBfsQueue.Add(index);
-                }
-                neighborLevel = GetRedLight(x, y, z - 1);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x, y, z - 1, true, false, false, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x, y, z - 1);
-                            if (!redBfsQueue.Contains(index))
-                                redBfsQueue.Add(index);
-                }
-            }
-            lock(greenRemovalBfsQueue)
-            while (greenRemovalBfsQueue.Count > 0)
-            {
-                rerender = true;
-                int node = greenRemovalBfsQueue[0];
-                greenRemovalBfsQueue.RemoveAt(0);
-
-                int x = node % Constants.CHUNK_SIZE;
-                int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
-                int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
-                int lightLevel = GetGreenLight(x, y, z);
-                SetLight(x, y, z, -1, 0, -1, -1, false);
-
-                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (x - 1 < 0) cl = true;
-                        else cr = true;
-                    }
-                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (y - 1 < 0) cd = true;
-                        else
-                            cu = true;
-                    }
-                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (z - 1 < 0) cb = true;
-                        else cf = true;
-                    }
-
-                        int neighborLevel = GetGreenLight(x - 1, y, z);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x - 1, y, z, false, true, false, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x - 1, y, z);
-                            if (!greenBfsQueue.Contains(index))
-                                greenBfsQueue.Add(index);
-                }
-                neighborLevel = GetGreenLight(x + 1, y, z);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x + 1, y, z, false, true, false, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x + 1, y, z);
-                            if (!greenBfsQueue.Contains(index))
-                                greenBfsQueue.Add(index);
-                }
-                neighborLevel = GetGreenLight(x, y + 1, z);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x, y + 1, z, false, true, false, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x, y + 1, z);
-                            if (!greenBfsQueue.Contains(index))
-                                greenBfsQueue.Add(index);
-                }
-                neighborLevel = GetGreenLight(x, y - 1, z);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x, y - 1, z, false, true, false, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x, y - 1, z);
-                            if (!greenBfsQueue.Contains(index))
-                                greenBfsQueue.Add(index);
-                }
-                neighborLevel = GetGreenLight(x, y, z + 1);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x, y, z + 1, false, true, false, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x, y, z + 1);
-                            if (!greenBfsQueue.Contains(index))
-                                greenBfsQueue.Add(index);
-                }
-                neighborLevel = GetGreenLight(x, y, z - 1);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x, y, z - 1, false, true, false, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x, y, z - 1);
-                            if (!greenBfsQueue.Contains(index))
-                                greenBfsQueue.Add(index);
-                }
-            }
-            lock(blueRemovalBfsQueue)
-            while (blueRemovalBfsQueue.Count > 0)
-            {
-                rerender = true;
-                int node = blueRemovalBfsQueue[0];
-                blueRemovalBfsQueue.RemoveAt(0);
-
-                int x = node % Constants.CHUNK_SIZE;
-                int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
-                int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
-                int lightLevel = GetBlueLight(x, y, z);
-                SetLight(x, y, z, -1, -1, 0, -1, false);
-
-                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (x - 1 < 0) cl = true;
-                        else cr = true;
-                    }
-                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (y - 1 < 0) cd = true;
-                        else
-                            cu = true;
-                    }
-                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (z - 1 < 0) cb = true;
-                        else cf = true;
-                    }
-
-                    int neighborLevel = GetBlueLight(x - 1, y, z);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x - 1, y, z, false, false, true, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x - 1, y, z);
-                            if (!blueBfsQueue.Contains(index))
-                                blueBfsQueue.Add(index);
-                }
-                neighborLevel = GetBlueLight(x + 1, y, z);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x + 1, y, z, false, false, true, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x + 1, y, z);
-                            if (!blueBfsQueue.Contains(index))
-                                blueBfsQueue.Add(index);
-                }
-                neighborLevel = GetBlueLight(x, y + 1, z);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x, y + 1, z, false, false, true, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x, y + 1, z);
-                            if (!blueBfsQueue.Contains(index))
-                                blueBfsQueue.Add(index);
-                }
-                neighborLevel = GetBlueLight(x, y - 1, z);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x, y - 1, z, false, false, true, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x, y - 1, z);
-                            if (!blueBfsQueue.Contains(index))
-                                blueBfsQueue.Add(index);
-                }
-                neighborLevel = GetBlueLight(x, y, z + 1);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x, y, z + 1, false, false, true, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x, y, z + 1);
-                            if (!blueBfsQueue.Contains(index))
-                                blueBfsQueue.Add(index);
-                }
-                neighborLevel = GetBlueLight(x, y, z - 1);
-                if (neighborLevel != 0 && neighborLevel < lightLevel)
-                {
-                    RemoveLight(x, y, z - 1, false, false, true, false);
-                }
-                else if (neighborLevel >= lightLevel)
-                {
-                    int index = GetIndexFor(x, y, z - 1);
-                            if (!blueBfsQueue.Contains(index))
-                                blueBfsQueue.Add(index);
-                }
-            }
-
-
-            //////////ADD LIGHTS
-            lock (sunlightBfsQueue)
-                while (sunlightBfsQueue.Count > 0)
-                {
-                    rerender = true;
-                    int node = sunlightBfsQueue[0];
-                    sunlightBfsQueue.RemoveAt(0);
-
-                    // x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE
-
-                    int x = node % Constants.CHUNK_SIZE;
-                    int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
-                    int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
-
-                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (x - 1 < 0) cl = true;
-                        else cr = true;
-                    }
-                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (y - 1 < 0) cd = true;
-                        else
-                            cu = true;
-                    }
-                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (z - 1 < 0) cb = true;
-                        else cf = true;
-                    }
-
-                    int lightLevel = GetSunlight(x, y, z);
-
-                    if (!TileRegistry.GetTile(GetVoxel(x - 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetSunlight(x - 1, y, z) + 2 <= lightLevel)
-                    {
-                        SetLight(x - 1, y, z, -1, -1, -1, lightLevel - 1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x + 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetSunlight(x + 1, y, z) + 2 <= lightLevel)
-                    {
-                        SetLight(x + 1, y, z, -1, -1, -1, lightLevel - 1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x, y, z - 1).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetSunlight(x, y, z - 1) + 2 <= lightLevel)
-                    {
-                        SetLight(x, y, z - 1, -1, -1, -1, lightLevel - 1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x, y, z + 1).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetSunlight(x, y, z + 1) + 2 <= lightLevel)
-                    {
-                        SetLight(x, y, z + 1, -1, -1, -1, lightLevel - 1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x, y - 1, z).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetSunlight(x, y - 1, z) + 2 <= lightLevel)
-                    {
-                        SetLight(x, y - 1, z, -1, -1, -1, lightLevel == 15 ? lightLevel : lightLevel - 1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x, y + 1, z).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetSunlight(x, y + 1, z) + 2 <= lightLevel)
-                    {
-                        SetLight(x, y + 1, z, -1, -1, -1, lightLevel - 1);
-                    }
-                }
-            lock (redBfsQueue)
-                while (redBfsQueue.Count > 0)
-                {
-                    rerender = true;
-                    int node = redBfsQueue[0];
-                    redBfsQueue.RemoveAt(0);
-
-                    // x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE
-
-                    int x = node % Constants.CHUNK_SIZE;
-                    int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
-                    int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
-
-                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (x - 1 < 0) cl = true;
-                        else cr = true;
-                    }
-                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (y - 1 < 0) cd = true;
-                        else
-                            cu = true;
-                    }
-                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (z - 1 < 0) cb = true;
-                        else cf = true;
-                    }
-
-                    int lightLevel = GetRedLight(x, y, z);
-
-                    if (!TileRegistry.GetTile(GetVoxel(x - 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetRedLight(x - 1, y, z) + 2 <= lightLevel)
-                    {
-                        SetLight(x - 1, y, z, lightLevel - 1, -1, -1, -1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x + 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetRedLight(x + 1, y, z) + 2 <= lightLevel)
-                    {
-                        SetLight(x + 1, y, z, lightLevel - 1, -1, -1, -1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x, y, z - 1).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetRedLight(x, y, z - 1) + 2 <= lightLevel)
-                    {
-                        SetLight(x, y, z - 1, lightLevel - 1, -1, -1, -1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x, y, z + 1).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetRedLight(x, y, z + 1) + 2 <= lightLevel)
-                    {
-                        SetLight(x, y, z + 1, lightLevel - 1, -1, -1, -1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x, y - 1, z).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetRedLight(x, y - 1, z) + 2 <= lightLevel)
-                    {
-                        SetLight(x, y - 1, z, lightLevel - 1, -1, -1, -1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x, y + 1, z).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetRedLight(x, y + 1, z) + 2 <= lightLevel)
-                    {
-                        SetLight(x, y + 1, z, lightLevel - 1, -1, -1, -1);
-                    }
-                }
-            lock (greenBfsQueue)
-                while (greenBfsQueue.Count > 0)
-                {
-                    rerender = true;
-                    int node = greenBfsQueue[0];
-                    greenBfsQueue.RemoveAt(0);
-
-                    // x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE
-
-                    int x = node % Constants.CHUNK_SIZE;
-                    int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
-                    int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
-
-                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (x - 1 < 0) cl = true;
-                        else cr = true;
-                    }
-                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (y - 1 < 0) cd = true;
-                        else
-                            cu = true;
-                    }
-                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (z - 1 < 0) cb = true;
-                        else cf = true;
-                    }
-
-                    int lightLevel = GetGreenLight(x, y, z);
-
-                    if (!TileRegistry.GetTile(GetVoxel(x - 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetGreenLight(x - 1, y, z) + 2 <= lightLevel)
-                    {
-                        SetLight(x - 1, y, z, -1, lightLevel - 1, -1, -1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x + 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetGreenLight(x + 1, y, z) + 2 <= lightLevel)
-                    {
-                        SetLight(x + 1, y, z, -1, lightLevel - 1, -1, -1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x, y, z - 1).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetGreenLight(x, y, z - 1) + 2 <= lightLevel)
-                    {
-                        SetLight(x, y, z - 1, -1, lightLevel - 1, -1, -1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x, y, z + 1).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetGreenLight(x, y, z + 1) + 2 <= lightLevel)
-                    {
-                        SetLight(x, y, z + 1, -1, lightLevel - 1, -1, -1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x, y - 1, z).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetGreenLight(x, y - 1, z) + 2 <= lightLevel)
-                    {
-                        SetLight(x, y - 1, z, -1, lightLevel - 1, -1, -1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x, y + 1, z).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetGreenLight(x, y + 1, z) + 2 <= lightLevel)
-                    {
-                        SetLight(x, y + 1, z, -1, lightLevel - 1, -1, -1);
-                    }
-                }
-            lock (blueBfsQueue)
-                while (blueBfsQueue.Count > 0)
-                {
-                    rerender = true;
-                    int node = blueBfsQueue[0];
-                    blueBfsQueue.RemoveAt(0);
-
-                    // x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE
-
-                    int x = node % Constants.CHUNK_SIZE;
-                    int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
-                    int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
-
-                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (x - 1 < 0) cl = true;
-                        else cr = true;
-                    }
-                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (y - 1 < 0) cd = true;
-                        else
-                            cu = true;
-                    }
-                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
-                    {
-                        if (z - 1 < 0) cb = true;
-                        else cf = true;
-                    }
-
-                    int lightLevel = GetBlueLight(x, y, z);
-
-                    if (!TileRegistry.GetTile(GetVoxel(x - 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetBlueLight(x - 1, y, z) + 2 <= lightLevel)
-                    {
-                        SetLight(x - 1, y, z, -1, -1, lightLevel - 1, -1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x + 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetBlueLight(x + 1, y, z) + 2 <= lightLevel)
-                    {
-                        SetLight(x + 1, y, z, -1, -1, lightLevel - 1, -1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x, y, z - 1).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetBlueLight(x, y, z - 1) + 2 <= lightLevel)
-                    {
-                        SetLight(x, y, z - 1, -1, -1, lightLevel - 1, -1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x, y, z + 1).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetBlueLight(x, y, z + 1) + 2 <= lightLevel)
-                    {
-                        SetLight(x, y, z + 1, -1, -1, lightLevel - 1, -1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x, y - 1, z).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetBlueLight(x, y - 1, z) + 2 <= lightLevel)
-                    {
-                        SetLight(x, y - 1, z, -1, -1, lightLevel - 1, -1);
-                    }
-                    if (!TileRegistry.GetTile(GetVoxel(x, y + 1, z).tile_id).IsOpaqueAndNotGlowing() &&
-                        GetBlueLight(x, y + 1, z) + 2 <= lightLevel)
-                    {
-                        SetLight(x, y + 1, z, -1, -1, lightLevel - 1, -1);
-                    }
-                }
-
-            if (rerender)
-            {
-                MarkForRebuild();
-
-                if (cu)
-                {
-                    Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY() + 1, GetZ());
-                    if (chunk != null)
-                        chunk.MarkForLightBuild();
-                }
-                if (cd)
-                {
-                    Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY() - 1, GetZ());
-                    if (chunk != null)
-                        chunk.MarkForLightBuild();
-                }
-                if (cl)
-                {
-                    Chunk chunk = world.chunkManager.TryGetChunk(GetX() - 1, GetY(), GetZ());
-                    if (chunk != null)
-                        chunk.MarkForLightBuild();
-                }
-                if (cr)
-                {
-                    Chunk chunk = world.chunkManager.TryGetChunk(GetX() + 1, GetY(), GetZ());
-                    if (chunk != null)
-                        chunk.MarkForLightBuild();
-                }
-                if (cf)
-                {
-                    Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY(), GetZ() + 1);
-                    if (chunk != null)
-                        chunk.MarkForLightBuild();
-                }
-                if (cb)
-                {
-                    Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY(), GetZ() - 1);
-                    if (chunk != null)
-                       chunk.MarkForLightBuild();
-                }
-            }
-        }
-
         public TileData GetOverlayVoxel(int x, int y, int z)
         {
             if (IsInsideChunk(x, y, z))
@@ -1556,17 +1018,6 @@ namespace Inignoto.World.Chunks
 
                 voxels[GetIndexFor(x, y, z)].voxel = voxel;
 
-                if (IsVisible(x, y, z))
-                {
-                    buildVoxels.Add(vectors[GetIndexFor(x, y, z)]);
-                } else
-                {
-                    if (buildVoxels.Contains(vectors[GetIndexFor(x, y, z)]))
-                    {
-                        buildVoxels.Remove(vectors[GetIndexFor(x, y, z)]);
-                    }
-                }
-
                 if (last != null)
                     last.UpdateLightWhenRemoved(this, x, y, z);
                 
@@ -1606,9 +1057,9 @@ namespace Inignoto.World.Chunks
             return false;
         }
 
-        public int GetIndexFor(int x, int y, int z)
+        public short GetIndexFor(int x, int y, int z)
         {
-            return x + y * Constants.CHUNK_SIZE + z * (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
+            return (short)(x + y * Constants.CHUNK_SIZE + z * (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE));
         }
 
         public bool IsInsideChunk(int x, int y, int z)
@@ -1669,27 +1120,8 @@ namespace Inignoto.World.Chunks
             return (int)cpos.Z;
         }
 
-        bool extendedRebuild = false;
-        bool justFinishedBuilding = false;
-        public void MarkForRebuild(bool queue = false, bool extend = true)
+        public void MarkForRebuild(bool queue = false)
         {
-            if (justFinishedBuilding)
-            {
-                for (int x = 0; x < Constants.CHUNK_SIZE; x++)
-                {
-                    for (int y = 0; y < Constants.CHUNK_SIZE; y++)
-                    {
-                        for (int z = 0; z < Constants.CHUNK_SIZE; z++)
-                        {
-                            if (IsVisible(x, y, z))
-                            {
-                                buildVoxels.Add(vectors[GetIndexFor(x, y, z)]);
-                            }
-                        }
-                    }
-                }
-            }
-            extendedRebuild = extend;
             rebuilding = true;
         }
 
@@ -1712,7 +1144,6 @@ namespace Inignoto.World.Chunks
         public void SetGenerated(bool gen = true)
         {
             generated = gen;
-            justFinishedBuilding = true;
         }
         public int CompareTo(Chunk obj)
         {
@@ -1731,5 +1162,696 @@ namespace Inignoto.World.Chunks
             }
             return 1;
         }
+
+
+        public void UpdateLights(bool canRerender = true)
+        {
+            try
+            {
+
+                LightRebuild = false;
+                bool rerender = false;
+                bool cu = false, cd = false, cl = false, cr = false, cb = false, cf = false;
+
+                for (int i = 0; i < voxels.Length && sunlightRemovalBfsQueue.Count > 0; i++)
+                {
+                    rerender = true;
+                    int node = sunlightRemovalBfsQueue[0];
+                    sunlightRemovalBfsQueue.RemoveAt(0);
+
+                    int x = node % Constants.CHUNK_SIZE;
+                    int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
+                    int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
+                    int lightLevel = GetSunlight(x, y, z);
+                    SetLight(x, y, z, -1, -1, -1, 0, false);
+
+                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (x - 1 < 0) cl = true;
+                        else cr = true;
+                    }
+                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (y - 1 < 0) cd = true;
+                        else
+                            cu = true;
+                    }
+                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (z - 1 < 0) cb = true;
+                        else cf = true;
+                    }
+
+                    int neighborLevel = GetSunlight(x - 1, y, z);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x - 1, y, z, false, false, false, true);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x - 1, y, z);
+                        if (!sunlightBfsQueue.Contains(index))
+                            sunlightBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetSunlight(x + 1, y, z);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x + 1, y, z, false, false, false, true);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x + 1, y, z);
+                        if (!sunlightBfsQueue.Contains(index))
+                            sunlightBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetSunlight(x, y + 1, z);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x, y + 1, z, false, false, false, true);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x, y + 1, z);
+                        if (!sunlightBfsQueue.Contains(index))
+                            sunlightBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetSunlight(x, y - 1, z);
+                    if (neighborLevel != 0 && (neighborLevel < lightLevel || lightLevel == 15))
+                    {
+                        RemoveLight(x, y - 1, z, false, false, false, true);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x, y - 1, z);
+                        if (!sunlightBfsQueue.Contains(index))
+                            sunlightBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetSunlight(x, y, z + 1);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x, y, z + 1, false, false, false, true);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x, y, z + 1);
+                        if (!sunlightBfsQueue.Contains(index))
+                            sunlightBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetSunlight(x, y, z - 1);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x, y, z - 1, false, false, false, true);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x, y, z - 1);
+                        if (!sunlightBfsQueue.Contains(index))
+                            sunlightBfsQueue.Add(index);
+                    }
+                }
+                for (int i = 0; i < voxels.Length && redRemovalBfsQueue.Count > 0; i++)
+                {
+                    rerender = true;
+                    int node = redRemovalBfsQueue[0];
+                    redRemovalBfsQueue.RemoveAt(0);
+
+                    int x = node % Constants.CHUNK_SIZE;
+                    int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
+                    int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
+                    int lightLevel = GetRedLight(x, y, z);
+                    SetLight(x, y, z, 0, -1, -1, -1, false);
+
+                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (x - 1 < 0) cl = true;
+                        else cr = true;
+                    }
+                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (y - 1 < 0) cd = true;
+                        else
+                            cu = true;
+                    }
+                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (z - 1 < 0) cb = true;
+                        else cf = true;
+                    }
+
+                    int neighborLevel = GetRedLight(x - 1, y, z);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x - 1, y, z, true, false, false, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x - 1, y, z);
+                        if (!redBfsQueue.Contains(index))
+                            redBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetRedLight(x + 1, y, z);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x + 1, y, z, true, false, false, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x + 1, y, z);
+                        if (!redBfsQueue.Contains(index))
+                            redBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetRedLight(x, y + 1, z);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x, y + 1, z, true, false, false, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x, y + 1, z);
+                        if (!redBfsQueue.Contains(index))
+                            redBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetRedLight(x, y - 1, z);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x, y - 1, z, true, false, false, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x, y - 1, z);
+                        if (!redBfsQueue.Contains(index))
+                            redBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetRedLight(x, y, z + 1);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x, y, z + 1, true, false, false, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x, y, z + 1);
+                        if (!redBfsQueue.Contains(index))
+                            redBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetRedLight(x, y, z - 1);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x, y, z - 1, true, false, false, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x, y, z - 1);
+                        if (!redBfsQueue.Contains(index))
+                            redBfsQueue.Add(index);
+                    }
+                }
+                for (int i = 0; i < voxels.Length && greenRemovalBfsQueue.Count > 0; i++)
+                {
+                    rerender = true;
+                    int node = greenRemovalBfsQueue[0];
+                    greenRemovalBfsQueue.RemoveAt(0);
+
+                    int x = node % Constants.CHUNK_SIZE;
+                    int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
+                    int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
+                    int lightLevel = GetGreenLight(x, y, z);
+                    SetLight(x, y, z, -1, 0, -1, -1, false);
+
+                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (x - 1 < 0) cl = true;
+                        else cr = true;
+                    }
+                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (y - 1 < 0) cd = true;
+                        else
+                            cu = true;
+                    }
+                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (z - 1 < 0) cb = true;
+                        else cf = true;
+                    }
+
+                    int neighborLevel = GetGreenLight(x - 1, y, z);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x - 1, y, z, false, true, false, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x - 1, y, z);
+                        if (!greenBfsQueue.Contains(index))
+                            greenBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetGreenLight(x + 1, y, z);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x + 1, y, z, false, true, false, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x + 1, y, z);
+                        if (!greenBfsQueue.Contains(index))
+                            greenBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetGreenLight(x, y + 1, z);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x, y + 1, z, false, true, false, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x, y + 1, z);
+                        if (!greenBfsQueue.Contains(index))
+                            greenBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetGreenLight(x, y - 1, z);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x, y - 1, z, false, true, false, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x, y - 1, z);
+                        if (!greenBfsQueue.Contains(index))
+                            greenBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetGreenLight(x, y, z + 1);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x, y, z + 1, false, true, false, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x, y, z + 1);
+                        if (!greenBfsQueue.Contains(index))
+                            greenBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetGreenLight(x, y, z - 1);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x, y, z - 1, false, true, false, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x, y, z - 1);
+                        if (!greenBfsQueue.Contains(index))
+                            greenBfsQueue.Add(index);
+                    }
+                }
+                for (int i = 0; i < voxels.Length && blueRemovalBfsQueue.Count > 0; i++)
+                {
+                    rerender = true;
+                    int node = blueRemovalBfsQueue[0];
+                    blueRemovalBfsQueue.RemoveAt(0);
+
+                    int x = node % Constants.CHUNK_SIZE;
+                    int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
+                    int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
+                    int lightLevel = GetBlueLight(x, y, z);
+                    SetLight(x, y, z, -1, -1, 0, -1, false);
+
+                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (x - 1 < 0) cl = true;
+                        else cr = true;
+                    }
+                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (y - 1 < 0) cd = true;
+                        else
+                            cu = true;
+                    }
+                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (z - 1 < 0) cb = true;
+                        else cf = true;
+                    }
+
+                    int neighborLevel = GetBlueLight(x - 1, y, z);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x - 1, y, z, false, false, true, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x - 1, y, z);
+                        if (!blueBfsQueue.Contains(index))
+                            blueBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetBlueLight(x + 1, y, z);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x + 1, y, z, false, false, true, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x + 1, y, z);
+                        if (!blueBfsQueue.Contains(index))
+                            blueBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetBlueLight(x, y + 1, z);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x, y + 1, z, false, false, true, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x, y + 1, z);
+                        if (!blueBfsQueue.Contains(index))
+                            blueBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetBlueLight(x, y - 1, z);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x, y - 1, z, false, false, true, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x, y - 1, z);
+                        if (!blueBfsQueue.Contains(index))
+                            blueBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetBlueLight(x, y, z + 1);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x, y, z + 1, false, false, true, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x, y, z + 1);
+                        if (!blueBfsQueue.Contains(index))
+                            blueBfsQueue.Add(index);
+                    }
+                    neighborLevel = GetBlueLight(x, y, z - 1);
+                    if (neighborLevel != 0 && neighborLevel < lightLevel)
+                    {
+                        RemoveLight(x, y, z - 1, false, false, true, false);
+                    }
+                    else if (neighborLevel >= lightLevel)
+                    {
+                        short index = GetIndexFor(x, y, z - 1);
+                        if (!blueBfsQueue.Contains(index))
+                            blueBfsQueue.Add(index);
+                    }
+                }
+
+
+                //////////ADD LIGHTS
+                for (int i = 0; i < voxels.Length && sunlightBfsQueue.Count > 0; i++)
+                {
+                    rerender = true;
+                    int node = sunlightBfsQueue[0];
+                    sunlightBfsQueue.RemoveAt(0);
+
+                    // x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE
+
+                    int x = node % Constants.CHUNK_SIZE;
+                    int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
+                    int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
+
+                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (x - 1 < 0) cl = true;
+                        else cr = true;
+                    }
+                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (y - 1 < 0) cd = true;
+                        else
+                            cu = true;
+                    }
+                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (z - 1 < 0) cb = true;
+                        else cf = true;
+                    }
+
+                    int lightLevel = GetSunlight(x, y, z);
+
+                    if (!TileRegistry.GetTile(GetVoxel(x - 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetSunlight(x - 1, y, z) + 2 <= lightLevel)
+                    {
+                        SetLight(x - 1, y, z, -1, -1, -1, lightLevel - 1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x + 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetSunlight(x + 1, y, z) + 2 <= lightLevel)
+                    {
+                        SetLight(x + 1, y, z, -1, -1, -1, lightLevel - 1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x, y, z - 1).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetSunlight(x, y, z - 1) + 2 <= lightLevel)
+                    {
+                        SetLight(x, y, z - 1, -1, -1, -1, lightLevel - 1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x, y, z + 1).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetSunlight(x, y, z + 1) + 2 <= lightLevel)
+                    {
+                        SetLight(x, y, z + 1, -1, -1, -1, lightLevel - 1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x, y - 1, z).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetSunlight(x, y - 1, z) + 2 <= lightLevel)
+                    {
+                        SetLight(x, y - 1, z, -1, -1, -1, lightLevel == 15 ? lightLevel : lightLevel - 1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x, y + 1, z).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetSunlight(x, y + 1, z) + 2 <= lightLevel)
+                    {
+                        SetLight(x, y + 1, z, -1, -1, -1, lightLevel - 1);
+                    }
+                }
+                for (int i = 0; i < voxels.Length && redBfsQueue.Count > 0; i++)
+                {
+                    rerender = true;
+                    int node = redBfsQueue[0];
+                    redBfsQueue.RemoveAt(0);
+
+                    // x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE
+
+                    int x = node % Constants.CHUNK_SIZE;
+                    int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
+                    int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
+
+                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (x - 1 < 0) cl = true;
+                        else cr = true;
+                    }
+                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (y - 1 < 0) cd = true;
+                        else
+                            cu = true;
+                    }
+                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (z - 1 < 0) cb = true;
+                        else cf = true;
+                    }
+
+                    int lightLevel = GetRedLight(x, y, z);
+
+                    if (!TileRegistry.GetTile(GetVoxel(x - 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetRedLight(x - 1, y, z) + 2 <= lightLevel)
+                    {
+                        SetLight(x - 1, y, z, lightLevel - 1, -1, -1, -1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x + 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetRedLight(x + 1, y, z) + 2 <= lightLevel)
+                    {
+                        SetLight(x + 1, y, z, lightLevel - 1, -1, -1, -1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x, y, z - 1).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetRedLight(x, y, z - 1) + 2 <= lightLevel)
+                    {
+                        SetLight(x, y, z - 1, lightLevel - 1, -1, -1, -1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x, y, z + 1).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetRedLight(x, y, z + 1) + 2 <= lightLevel)
+                    {
+                        SetLight(x, y, z + 1, lightLevel - 1, -1, -1, -1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x, y - 1, z).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetRedLight(x, y - 1, z) + 2 <= lightLevel)
+                    {
+                        SetLight(x, y - 1, z, lightLevel - 1, -1, -1, -1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x, y + 1, z).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetRedLight(x, y + 1, z) + 2 <= lightLevel)
+                    {
+                        SetLight(x, y + 1, z, lightLevel - 1, -1, -1, -1);
+                    }
+                }
+                for (int i = 0; i < voxels.Length && greenBfsQueue.Count > 0; i++)
+                {
+                    rerender = true;
+                    int node = greenBfsQueue[0];
+                    greenBfsQueue.RemoveAt(0);
+
+                    // x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE
+
+                    int x = node % Constants.CHUNK_SIZE;
+                    int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
+                    int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
+
+                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (x - 1 < 0) cl = true;
+                        else cr = true;
+                    }
+                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (y - 1 < 0) cd = true;
+                        else
+                            cu = true;
+                    }
+                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (z - 1 < 0) cb = true;
+                        else cf = true;
+                    }
+
+                    int lightLevel = GetGreenLight(x, y, z);
+
+                    if (!TileRegistry.GetTile(GetVoxel(x - 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetGreenLight(x - 1, y, z) + 2 <= lightLevel)
+                    {
+                        SetLight(x - 1, y, z, -1, lightLevel - 1, -1, -1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x + 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetGreenLight(x + 1, y, z) + 2 <= lightLevel)
+                    {
+                        SetLight(x + 1, y, z, -1, lightLevel - 1, -1, -1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x, y, z - 1).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetGreenLight(x, y, z - 1) + 2 <= lightLevel)
+                    {
+                        SetLight(x, y, z - 1, -1, lightLevel - 1, -1, -1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x, y, z + 1).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetGreenLight(x, y, z + 1) + 2 <= lightLevel)
+                    {
+                        SetLight(x, y, z + 1, -1, lightLevel - 1, -1, -1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x, y - 1, z).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetGreenLight(x, y - 1, z) + 2 <= lightLevel)
+                    {
+                        SetLight(x, y - 1, z, -1, lightLevel - 1, -1, -1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x, y + 1, z).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetGreenLight(x, y + 1, z) + 2 <= lightLevel)
+                    {
+                        SetLight(x, y + 1, z, -1, lightLevel - 1, -1, -1);
+                    }
+                }
+                for (int i = 0; i < voxels.Length && blueBfsQueue.Count > 0; i++)
+                {
+                    rerender = true;
+                    int node = blueBfsQueue[0];
+                    blueBfsQueue.RemoveAt(0);
+
+                    // x + y * Constants.CHUNK_SIZE + z * Constants.CHUNK_SIZE * Constants.CHUNK_SIZE
+
+                    int x = node % Constants.CHUNK_SIZE;
+                    int y = ((node - x) / Constants.CHUNK_SIZE) % Constants.CHUNK_SIZE;
+                    int z = (node - x - (y * Constants.CHUNK_SIZE)) / (Constants.CHUNK_SIZE * Constants.CHUNK_SIZE);
+
+                    if (x - 1 < 0 || x + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (x - 1 < 0) cl = true;
+                        else cr = true;
+                    }
+                    if (y - 1 < 0 || y + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (y - 1 < 0) cd = true;
+                        else
+                            cu = true;
+                    }
+                    if (z - 1 < 0 || z + 1 > Constants.CHUNK_SIZE - 1)
+                    {
+                        if (z - 1 < 0) cb = true;
+                        else cf = true;
+                    }
+
+                    int lightLevel = GetBlueLight(x, y, z);
+
+                    if (!TileRegistry.GetTile(GetVoxel(x - 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetBlueLight(x - 1, y, z) + 2 <= lightLevel)
+                    {
+                        SetLight(x - 1, y, z, -1, -1, lightLevel - 1, -1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x + 1, y, z).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetBlueLight(x + 1, y, z) + 2 <= lightLevel)
+                    {
+                        SetLight(x + 1, y, z, -1, -1, lightLevel - 1, -1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x, y, z - 1).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetBlueLight(x, y, z - 1) + 2 <= lightLevel)
+                    {
+                        SetLight(x, y, z - 1, -1, -1, lightLevel - 1, -1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x, y, z + 1).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetBlueLight(x, y, z + 1) + 2 <= lightLevel)
+                    {
+                        SetLight(x, y, z + 1, -1, -1, lightLevel - 1, -1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x, y - 1, z).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetBlueLight(x, y - 1, z) + 2 <= lightLevel)
+                    {
+                        SetLight(x, y - 1, z, -1, -1, lightLevel - 1, -1);
+                    }
+                    if (!TileRegistry.GetTile(GetVoxel(x, y + 1, z).tile_id).IsOpaqueAndNotGlowing() &&
+                        GetBlueLight(x, y + 1, z) + 2 <= lightLevel)
+                    {
+                        SetLight(x, y + 1, z, -1, -1, lightLevel - 1, -1);
+                    }
+                }
+
+                if (rerender)
+                {
+                    MarkForRebuild();
+                    if (cu)
+                    {
+                        Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY() + 1, GetZ());
+                        if (chunk != null)
+                            chunk.MarkForLightBuild();
+                    }
+                    if (cd)
+                    {
+                        Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY() - 1, GetZ());
+                        if (chunk != null)
+                            chunk.MarkForLightBuild();
+                    }
+                    if (cl)
+                    {
+                        Chunk chunk = world.chunkManager.TryGetChunk(GetX() - 1, GetY(), GetZ());
+                        if (chunk != null)
+                            chunk.MarkForLightBuild();
+                    }
+                    if (cr)
+                    {
+                        Chunk chunk = world.chunkManager.TryGetChunk(GetX() + 1, GetY(), GetZ());
+                        if (chunk != null)
+                            chunk.MarkForLightBuild();
+                    }
+                    if (cf)
+                    {
+                        Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY(), GetZ() + 1);
+                        if (chunk != null)
+                            chunk.MarkForLightBuild();
+                    }
+                    if (cb)
+                    {
+                        Chunk chunk = world.chunkManager.TryGetChunk(GetX(), GetY(), GetZ() - 1);
+                        if (chunk != null)
+                            chunk.MarkForLightBuild();
+                    }
+                }
+            } catch (InvalidOperationException e) {
+            }
+        }
+
     }
 }

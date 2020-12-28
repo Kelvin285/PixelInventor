@@ -21,6 +21,8 @@ using Inignoto.Audio;
 using Inignoto.Items;
 using System.Runtime.CompilerServices;
 using System.Runtime;
+using System.Threading.Tasks;
+
 namespace Inignoto
 {
     
@@ -76,7 +78,7 @@ namespace Inignoto
         public Inignoto()
         {
             graphics = new GraphicsDeviceManager(this);
-            graphics.GraphicsProfile = GraphicsProfile.Reach;
+            graphics.GraphicsProfile = GraphicsProfile.HiDef;
             graphics.PreferMultiSampling = false;
             TargetElapsedTime = TimeSpan.FromSeconds(1.0f / 60.0f);
             
@@ -134,17 +136,19 @@ namespace Inignoto
             world_generation_thread.Priority = ThreadPriority.AboveNormal;
             world_generation_thread.Start();
 
-            ThreadStart world_tick_start = new ThreadStart(TickWorld);
-            world_tick_thread = new Thread(world_tick_start);
-            world_tick_thread.IsBackground = true;
-            world_generation_thread.Priority = ThreadPriority.BelowNormal;
-            world_tick_thread.Start();
-
             ThreadStart rebuild_chunk_start = new ThreadStart(RebuildChunks);
             rebuild_chunk_thread = new Thread(rebuild_chunk_start);
             rebuild_chunk_thread.IsBackground = true;
+            world_generation_thread.Priority = ThreadPriority.Highest;
+            //rebuild_chunk_thread.Start();
+
+            ThreadStart world_tick_start = new ThreadStart(TickWorld);
+            world_tick_thread = new Thread(world_tick_start);
+            world_tick_thread.IsBackground = true;
             world_generation_thread.Priority = ThreadPriority.Normal;
-            rebuild_chunk_thread.Start();
+            world_tick_thread.Start();
+
+            
         }
         public GameTime gametime = new GameTime();
         public static void RebuildChunks()
@@ -153,17 +157,32 @@ namespace Inignoto
             {
                 if (game.game_state == GameState.GAME)
                 {
-                    game.world.chunkManager.RebuildChunks();
                 }
             }
         }
         public static void TickWorld()
         {
-            while (game.running)
+            while (game != null && game.running)
             {
                 if (game.game_state == GameState.GAME)
                 {
-                    game.world.TickChunks();
+                    Action b = () =>
+                    {
+                        if (game.world != null)
+                            game.world.chunkManager.RebuildChunks();
+                    };
+                    Action c = () =>
+                    {
+                        if (game.world != null)
+                            game.world.UpdateChunkGeneration();
+                    };
+                    try
+                    {
+                        Parallel.Invoke(b, c);
+                    } catch (System.AggregateException e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
                 }
             }
         }
@@ -172,7 +191,10 @@ namespace Inignoto
             while (game.running)
             {
                 if (game.game_state == GameState.GAME)
-                game.world.UpdateChunkGeneration();
+                    if (game.world != null)
+                    {
+                        game.world.TickChunks();
+                    }
             }
         }
 
@@ -290,6 +312,15 @@ namespace Inignoto
         {
             
             InputSetting.Update();
+
+            if (Settings.RELOAD_ASSETS.IsJustPressed())
+            {
+                lock (Textures.TILE_ITEMS)
+                {
+                    GameResources.ReloadResources();
+                }
+                
+            }
 
             int width = ClientBounds.Right - ClientBounds.Left;
             int height = ClientBounds.Bottom - ClientBounds.Top;
@@ -423,13 +454,6 @@ namespace Inignoto
 
             base.Draw(gameTime);
 
-        }
-
-        public void ResetThreads()
-        {
-            Console.WriteLine("Resetting threads!");
-
-            world.chunkManager.RefreshChunks();
         }
     }
 }

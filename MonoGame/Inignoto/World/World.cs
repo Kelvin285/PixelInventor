@@ -196,12 +196,12 @@ namespace Inignoto.World
                 {
                     entities[i].Update(time);
                 }
-                if (entities[i].TicksExisted > 1 || entities[i] is PlayerEntity && ((PlayerEntity)entities[i]).gamemode == Gamemode.FREECAM)
+                if (entities[i].TicksExisted > 5 || entities[i] is PlayerEntity && ((PlayerEntity)entities[i]).gamemode == Gamemode.FREECAM)
                 {
                     entities[i].Update(time);
                     continue;
                 }
-                if (chunk != null)
+                if (chunk != null && !chunk.NeedsToGenerate())
                 {
                     entities[i].Update(time);
                 } else
@@ -244,6 +244,9 @@ namespace Inignoto.World
             effect.CameraPos = Inignoto.game.camera.position;
             effect.WorldRender = true;
 
+            
+            chunkManager.RenderOpaque(device, effect);
+
             for (int i = 0; i < entities.Count; i++)
             {
                 Entity entity = entities[i];
@@ -255,12 +258,7 @@ namespace Inignoto.World
                 }
             }
 
-            //device.RasterizerState = GameResources.CULL_CLOCKWISE_RASTERIZER_STATE;
-
-            chunkManager.Render(device, effect);
-
-            //device.RasterizerState = GameResources.DEFAULT_RASTERIZER_STATE;
-
+            chunkManager.RenderTransparent(device, effect);
 
             //DRAW TILE SELECTION
             if (!GameResources.drawing_shadows)
@@ -385,7 +383,7 @@ namespace Inignoto.World
             {
                 int index = chunk.GetIndexFor(x, y, z);
                 if (chunk.voxels[index].mining_time < 0) chunk.voxels[index].mining_time = 0;
-                chunk.voxels[index].mining_time += strength;
+                chunk.voxels[index].mining_time += (byte)strength;
                 
                 int hits = TileRegistry.GetTile(chunk.voxels[index].voxel.tile_id).hits;
                 if (chunk.voxels[index].overlay.tile_id != TileRegistry.AIR.DefaultData.tile_id)
@@ -443,35 +441,35 @@ namespace Inignoto.World
                     if (x % Constants.CHUNK_SIZE == 0)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx - 1, cy, cz);
-                        if (chunk2 != null) chunk2.MarkForRebuild(false, false);
+                        if (chunk2 != null) chunk2.MarkForRebuild(false);
                     }
                     if (x % Constants.CHUNK_SIZE == Constants.CHUNK_SIZE - 1)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx + 1, cy, cz);
-                        if (chunk2 != null) chunk2.MarkForRebuild(false, false);
+                        if (chunk2 != null) chunk2.MarkForRebuild(false);
                     }
 
                     if (y % Constants.CHUNK_SIZE == 0)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx, cy - 1, cz);
-                        if (chunk2 != null) chunk2.MarkForRebuild(false, false);
+                        if (chunk2 != null) chunk2.MarkForRebuild(false);
                     }
                     if (y % Constants.CHUNK_SIZE == Constants.CHUNK_SIZE - 1)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx, cy + 1, cz);
-                        if (chunk2 != null) chunk2.MarkForRebuild(false, false);
+                        if (chunk2 != null) chunk2.MarkForRebuild(false);
                     }
 
                     if (z % Constants.CHUNK_SIZE == 0)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx, cy, cz - 1);
-                        if (chunk2 != null) chunk2.MarkForRebuild(false, false);
+                        if (chunk2 != null) chunk2.MarkForRebuild(false);
                     }
                     if (z % Constants.CHUNK_SIZE == Constants.CHUNK_SIZE - 1)
                     {
                         Chunk chunk2 = chunkManager.TryGetChunk(cx, cy, cz + 1);
                         
-                        if (chunk2 != null) chunk2.MarkForRebuild(false, false);
+                        if (chunk2 != null) chunk2.MarkForRebuild(false);
                     }
                 }
                 

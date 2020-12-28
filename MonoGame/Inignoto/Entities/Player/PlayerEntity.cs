@@ -34,7 +34,7 @@ namespace Inignoto.Entities.Player
 
         public long UID = 0;
 
-        public PhysicalInventory Inventory { get; protected set; }
+        public PhysicalInventory Inventory;
 
         public PlayerEntity(World.World world, Vector3 position, long UID) : base(world, position)
         {

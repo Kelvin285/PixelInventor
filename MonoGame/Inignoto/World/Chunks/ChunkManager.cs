@@ -17,6 +17,7 @@ using System.Linq;
 using Microsoft.VisualBasic.CompilerServices;
 using Inignoto.Math;
 using Inignoto.Tiles;
+using System.Collections.Concurrent;
 
 namespace Inignoto.World.Chunks
 {
@@ -24,11 +25,12 @@ namespace Inignoto.World.Chunks
     {
         private readonly ChunkRenderer chunkRenderer;
 
-        private readonly Dictionary<long, Chunk> chunks;
-        private readonly Dictionary<long, StructureChunk> structureChunks;
+        private volatile Dictionary<long, Chunk> chunks;
+        private volatile Dictionary<long, StructureChunk> structureChunks;
 
-        public List<WeakReference<Chunk>> waterRender;
-        public List<WeakReference<Chunk>> transparentRender;
+        public List<Chunk> waterRender;
+        public List<Chunk> transparentRender;
+        public List<Chunk> customRenderer;
 
         public int current_x { get; private set; }
         public int current_y { get; private set; }
@@ -50,8 +52,10 @@ namespace Inignoto.World.Chunks
             chunkRenderer = new ChunkRenderer();
             //chunksToRerender = new List<Chunk>();
             current_xyz = new Vector3(0, 0, 0);
-            waterRender = new List<WeakReference<Chunk>>();
-            transparentRender = new List<WeakReference<Chunk>>();
+            waterRender = new List<Chunk>();
+            transparentRender = new List<Chunk>();
+            customRenderer = new List<Chunk>();
+
         }
 
 
@@ -98,38 +102,98 @@ namespace Inignoto.World.Chunks
             }
             Array.Sort(ar);
 
+            ConcurrentQueue<Chunk> queue = new ConcurrentQueue<Chunk>();
+
             for (int i = 0; i < ar.Length; i++)
             {
                 if (current_x != last_x || current_y != last_y || current_z != last_z) break;
                 lock (ar)
-                if (ar[i].NeedsToGenerate())
                 {
-                    Chunk chunk = ar[i];
 
-                    if (chunk != null)
+                    if (ar[i].NeedsToGenerate())
+                    {
+                        Chunk chunk = ar[i];
+
+                        if (chunk != null)
                         {
                             chunk.SetGenerated();
                         }
+                    }
                 }
 
-                BuildChunk(ar, i);
+
+                if (CanBuildChunk(ar, i))
+                {
+                    queue.Enqueue(ar[i]);
+                }
             }
+
+            Action action = () =>
+            {
+                while (queue.TryDequeue(out Chunk chunk))
+                {
+                    chunk.BuildMesh();
+                }
+            };
+
+            Parallel.Invoke(action, action, action, action);
 
         }
 
-        private void BuildChunk(Chunk[] ar, int i)
+        public void LightChunks()
+        {
+            Chunk[] ar = null;
+            lock (chunks)
+            {
+                ar = chunks.Values.ToArray();
+            }
+            Array.Sort(ar);
+
+            ConcurrentQueue<Chunk> queue = new ConcurrentQueue<Chunk>();
+
+            for (int i = 0; i < ar.Length; i++)
+            {
+                if (current_x != last_x || current_y != last_y || current_z != last_z) break;
+
+                if (ar[i].LightRebuild || ar[i].NeedsToRebuild())
+                {
+                    queue.Enqueue(ar[i]);
+                }
+            }
+
+            Action action = () =>
+            {
+                while (queue.TryDequeue(out Chunk chunk))
+                {
+                    chunk.UpdateLights();
+                }
+            };
+
+            Parallel.Invoke(action, action, action, action);
+
+        }
+
+        private bool CanBuildChunk(Chunk[] ar, int i)
         {
             Chunk chunk = ar[i];
 
-            if (chunk.LightRebuild)
+            if (!IsChunkWithinFrustum(chunk))
             {
-                chunk.UpdateLights();
+                return false;
             }
 
-            if (chunk.NeedsToRebuild() && chunk.NotEmpty)
+            if (chunk.ReadyToFix())
             {
-                chunk.BuildMesh();
+                chunk.mesh_fixed = true;
+                return true;
             }
+
+            if (chunk.NeedsToRebuild() && chunk.NotEmpty || chunk.LightRebuild)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         public void RemoveStructureChunk(int x, int y, int z)
@@ -213,12 +277,16 @@ namespace Inignoto.World.Chunks
 
         public void BeginUpdate(Vector3 camera)
         {
+
+            Update();
+
+
             if (last_x != current_x || last_y != current_y || last_z != current_z || !start)
             {
                 last_x = current_x;
                 last_y = current_y;
                 last_z = current_z;
-                Update();
+
                 StructureGeneration();
 
                 start = true;
@@ -237,17 +305,20 @@ namespace Inignoto.World.Chunks
             return index;
         }
 
-        public void TryAddChunk(int x, int y, int z)
+        public Chunk TryAddChunk(int x, int y, int z, bool building = false)
         {
             long index = GetIndexFor(x, y, z);
             if (!chunks.ContainsKey(index))
             {
                 Chunk chunk = new Chunk(x, y, z, world);
 
-                world.properties.generator.GenerateChunk(chunk);
+                if (building)
+                    world.properties.generator.GenerateChunk(chunk);
 
                 lock (chunks) chunks.Add(index, chunk);
+                return chunk;
             }
+            return null;
         }
 
 
@@ -269,8 +340,6 @@ namespace Inignoto.World.Chunks
 
         public void UpdateChunks()
         {
-
-
             Chunk[] ar = null;
 
             lock (chunks)
@@ -282,17 +351,25 @@ namespace Inignoto.World.Chunks
                 if (chunk != null)
                 {
                     
-                    
-                    if (chunk.ReadyToFix())
+                    if (Vector3.Distance(chunk.cpos, current_xyz) <= Constants.CHUNK_LIGHT_DISTANCE / 2)
                     {
-                        chunk.BuildMesh();
-                        chunk.mesh_fixed = true;
-                    } else
-                    {
-                        if (chunk.NeedsToRebuild() && chunk.NotEmpty || chunk.LightRebuild)
+                        if (IsChunkWithinFrustum(chunk))
                         {
-                            chunk.BuildMesh();
+                            if (chunk.ReadyToFix())
+                            {
+                                chunk.BuildMesh();
+                                chunk.mesh_fixed = true;
+                            }
+                            else
+                            {
+                                if (chunk.NeedsToRebuild() && chunk.NotEmpty || chunk.LightRebuild && Vector3.Distance(chunk.cpos, current_xyz) <= Constants.ACTIVE_CHUNK_DISTANCE)
+                                {
+                                    chunk.BuildMesh();
+                                }
+                            }
                         }
+                        
+                        
                     }
 
                     if (Vector3.Distance(chunk.cpos, current_xyz) <= Constants.ACTIVE_CHUNK_DISTANCE)
@@ -318,6 +395,8 @@ namespace Inignoto.World.Chunks
 
             int rad = (int)((world.radius * 4.0f) / Constants.CHUNK_SIZE);
 
+            ConcurrentQueue<Chunk> queue = new ConcurrentQueue<Chunk>();
+
             for (int y = -V_VIEW; y < V_VIEW; y++)
             {
                 for (int z = -H_VIEW; z < H_VIEW; z++)
@@ -333,12 +412,26 @@ namespace Inignoto.World.Chunks
                         if (W >= rad) W -= rad;
                         if (TryGetChunk(W, Y, Z) == null)
                         {
-                            TryAddChunk(W, Y, Z);
+                            Chunk chunk = TryAddChunk(W, Y, Z);
+                            if (chunk != null)
+                            {
+                                queue.Enqueue(chunk);
+                            }
                         }
                     }
                 }
 
             }
+
+            Action action = () =>
+            {
+                while (queue.TryDequeue(out Chunk chunk))
+                {
+                    world.properties.generator.GenerateChunk(chunk);
+                }
+            };
+
+            Parallel.Invoke(action, action, action, action);
 
 
         }
@@ -364,17 +457,30 @@ namespace Inignoto.World.Chunks
             return false;
         }
 
-        int i = 0;
-        public void Render(GraphicsDevice device, GameEffect effect)
+        public void RenderTransparent(GraphicsDevice device, GameEffect effect)
         {
-            i++;
-            if (i > 100)
+            device.RasterizerState = GameResources.CULL_CLOCKWISE_RASTERIZER_STATE;
+
+            for (int i = 0; i < transparentRender.Count; i++)
             {
-                i = 0;
-                RefreshChunks();
+                chunkRenderer.RenderChunk(device, effect, transparentRender[i], false, true);
             }
+
+            GameResources.effect.Water = true;
+            for (int i = 0; i < waterRender.Count; i++)
+            {
+                chunkRenderer.RenderChunk(device, effect, waterRender[i], true);
+            }
+            GameResources.effect.Water = false;
+
+            device.RasterizerState = GameResources.DEFAULT_RASTERIZER_STATE;
+        }
+
+        public void RenderOpaque(GraphicsDevice device, GameEffect effect)
+        {
             waterRender.Clear();
             transparentRender.Clear();
+            customRenderer.Clear();
 
             Chunk[] ar = null;
             lock (chunks)
@@ -393,32 +499,27 @@ namespace Inignoto.World.Chunks
 
                 chunkRenderer.RenderChunk(device, effect, chunk);
 
-                if (chunk.waterMesh != null)
+                if (chunk.waterMesh != null || chunk.lastWaterMesh != null)
                 {
-                    waterRender.Add(new WeakReference<Chunk>(chunk));
+                    waterRender.Add(chunk);
                 }
 
-                if (chunk.transparencyMesh != null)
+                if (chunk.transparencyMesh != null || chunk.lastTransparencyMesh != null)
                 {
-                    transparentRender.Add(new WeakReference<Chunk>(chunk));
+                    transparentRender.Add(chunk);
+                }
+
+                if (chunk.customMesh != null || chunk.lastCustomMesh != null)
+                {
+                    customRenderer.Add(chunk);
                 }
             }
-
-            for (int i = 0; i < waterRender.Count || i < transparentRender.Count; i++)
+            
+            for (int i = 0; i < customRenderer.Count; i++)
             {
-                if (i < waterRender.Count)
-                {
-                    GameResources.effect.Water = true;
-                    waterRender[i].TryGetTarget(out Chunk chunk);
-                    chunkRenderer.RenderChunk(device, effect, chunk, true);
-                    GameResources.effect.Water = false;
-                }
-                if (i < transparentRender.Count)
-                {
-                    transparentRender[i].TryGetTarget(out Chunk chunk);
-                    chunkRenderer.RenderChunk(device, effect, chunk, false, true);
-                }
+                chunkRenderer.RenderChunk(device, effect, customRenderer[i], false, false, true);
             }
+
         }
 
         internal void Dispose()

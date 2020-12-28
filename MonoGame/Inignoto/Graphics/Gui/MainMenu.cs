@@ -18,6 +18,8 @@ using Inignoto.Entities.Client.Player;
 using Inignoto.Graphics.World;
 using Inignoto.Tiles;
 using Inignoto.Graphics.Models;
+using Inignoto.Graphics.Models.New;
+using Inignoto.Audio;
 
 namespace Inignoto.Graphics.Gui
 {
@@ -136,18 +138,13 @@ namespace Inignoto.Graphics.Gui
             double delta = gameTime.ElapsedGameTime.TotalMilliseconds / 60.0;
             float movement_speed = 0.25f;
 
+
             if (mesh == null)
             {
-                mesh = TileBuilder.BuildTile(0, 0, 0, TileRegistry.DIRT.DefaultData, TileRegistry.GRASS.DefaultData, Inignoto.game.GraphicsDevice);
+                mesh = TileBuilder.BuildTile(-0.5f, -0.5f, -0.5f, TileRegistry.DIRT.DefaultData, TileRegistry.GRASS.DefaultData, Inignoto.game.GraphicsDevice);
 
-                model = new GameModel();
-                Part part = new Part(model);
-                part.ChangeTexture(Textures.Textures.white_square);
-                part.size = new Vector3(32, 32, 32);
-                part.SetPosition(new Vector3(0, 0, 0));
-                part.SetScale(new Vector3(1, 1, 1));
-                part.BuildPart();
-                model.Parts.Add(part);
+                model = new NewGameModel();
+                model.AddChild(new ModelCube());
 
                 Inignoto.game.camera.position = new Vector3(0, 0, 10);
                 Inignoto.game.camera.rotation = new Vector3(0, 0, 0);
@@ -155,7 +152,11 @@ namespace Inignoto.Graphics.Gui
             mesh.Draw(GameResources.effect, Inignoto.game.GraphicsDevice);
             if (model != null)
             {
-                model.Render(Inignoto.game.GraphicsDevice, GameResources.effect, gameTime, true);
+                Matrix mat = Matrix.CreateTranslation(mouse_dir);
+                //Quaternion rot = Quaternion.CreateFromYawPitchRoll(Inignoto.game.camera.rotation.Y, Inignoto.game.camera.rotation.X, Inignoto.game.camera.rotation.Z);
+                //mat *= Matrix.CreateFromQuaternion(rot);
+                model.translation = Inignoto.game.camera.position + mat.Translation * 4;
+                model.Render(Inignoto.game.GraphicsDevice, GameResources.effect);
             }
             
 
@@ -187,7 +188,7 @@ namespace Inignoto.Graphics.Gui
             {
                 Point motion = Inignoto.game.mousePos - lastMousePos;
 
-                Inignoto.game.camera.rotation -= new Vector3((float)motion.Y * (HEIGHT / 1920f), (float)motion.X * (WIDTH / 1080f), 0) * (float)delta * Settings.MOUSE_SENSITIVITY;
+                Inignoto.game.camera.rotation -= new Vector3((float)motion.Y * (1920f / HEIGHT) * 4, (float)motion.X * (1080f / WIDTH) * 8, 0) * (float)delta * Settings.MOUSE_SENSITIVITY;
             }
             if (Inignoto.game.camera.rotation.X > 90) Inignoto.game.camera.rotation.X = 90;
             if (Inignoto.game.camera.rotation.X < -90) Inignoto.game.camera.rotation.X = -90;
@@ -204,17 +205,32 @@ namespace Inignoto.Graphics.Gui
         private bool load_texture = false;
         private bool load_animation = false;
 
-        private GameModel model;
+        private NewGameModel model;
 
         private int scroll = 0;
         private int last_scrollwheel = 0;
         private string currentDirectory = FileUtils.GetResourcePath(new ResourcePath("Inignoto", "", "assets"));
         private string selected_file = "";
         private KeyReader reader = new KeyReader(200);
+
+        private Vector3 mouse_dir = Vector3.Zero;
+
         public void RenderModelCreator(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime gameTime, bool clicked)
         {
             WIDTH = width;
             HEIGHT = height;
+
+            double angle_x = (Settings.FIELD_OF_VIEW / 2) * (lastMousePos.X - (width / 2)) / (width / 2);
+            double angle_y = (Settings.FIELD_OF_VIEW / 2) * (lastMousePos.Y - (height / 2)) / (height / 2) * (1080.0f / 1920.0f);
+
+            angle_x *= MathF.PI / 180.0f;
+            angle_y *= MathF.PI / 180.0f;
+
+            Matrix mouse_matrix = Matrix.CreateTranslation(0, 0, 1);
+            Quaternion rotate = Quaternion.CreateFromYawPitchRoll((float)angle_y, (float)angle_x, 0);
+            mouse_matrix *= Matrix.CreateFromQuaternion(rotate);
+            mouse_dir = mouse_matrix.Translation;
+
             bool DrawButton(int x, int y, int w, int h, string str, float font_size = 1.0f, bool left_align = false)
             {
 
@@ -247,6 +263,10 @@ namespace Inignoto.Graphics.Gui
                 else
                 {
                     DrawString(spriteBatch, width, height, x + 1920 / 2 - w - 40, 1080 / 2 - 50 + y, font_size, FontManager.mandrill_regular, str, color);
+                }
+                if (flag && clicked)
+                {
+                    SoundEffects.ui_click.Play(Settings.GUI_VOLUME / 100.0f, 1.0f, 0.0f);
                 }
                 return flag;
             }
@@ -284,11 +304,7 @@ namespace Inignoto.Graphics.Gui
                             {
                                 if (File.Exists(fstring))
                                 {
-                                    model = GameModel.LoadModel(fstring, Textures.Textures.white_square);
-
-                                    model.editMode = GameModel.EditMode.ANIMATION;
-                                    model.translation = new Vector3(0);
-                                    model.Play(0);
+                                    model = new NewGameModel();
                                 }
                             }
                         }
@@ -554,6 +570,10 @@ namespace Inignoto.Graphics.Gui
                 {
                     DrawString(spriteBatch, width, height, x + 1920 / 2 - w - 40, 1080 / 2 - 50 + y, font_size, FontManager.mandrill_regular, str, color);
                 }
+                if (flag && clicked)
+                {
+                    SoundEffects.ui_click.Play(Settings.GUI_VOLUME / 100.0f, 1.0f, 0.0f);
+                }
                 return flag;
             }
 
@@ -596,13 +616,14 @@ namespace Inignoto.Graphics.Gui
                                 Inignoto.game.world.entities.Add(Inignoto.game.player);
                                 Inignoto.game.player.position = new Vector3(Inignoto.game.world.radius * 2, 10, Inignoto.game.world.radius);
                                 Inignoto.game.player.position.Y = Inignoto.game.world.properties.generator.GetHeight(Inignoto.game.player.position.X, Inignoto.game.player.position.Z, Inignoto.game.world.radius, Inignoto.game.world.properties.infinite)[0] + 1;
-                                Inignoto.game.game_state = Inignoto.GameState.GAME;
                                 Inignoto.game.player.OnGround = true;
                                 Inignoto.game.player.FallStart = Inignoto.game.player.position.Y;
                                 Inignoto.game.player.gamemode = worlds[i].default_gamemode;
                                 Inignoto.game.player.health = 100.0f;
                                 Inignoto.game.player.Load();
                                 Inignoto.game.player.TicksExisted = 0;
+                                Inignoto.game.game_state = Inignoto.GameState.GAME;
+                                
                                 return;
                             }
                             
@@ -927,7 +948,10 @@ namespace Inignoto.Graphics.Gui
                 Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(x + 1920 / 2 - w - 40, 1080 / 2 - 50 + y, w * 2, 75), color2);
                 int strwidth = (int)((FontManager.mandrill_regular.width + FontManager.mandrill_regular.spacing) * str.Length * font_size);
                 DrawString(spriteBatch, width, height, x + 1920 / 2 - w - 40 + (w - strwidth) / 2 + w / 2, 1080 / 2 - 50 + y, font_size, FontManager.mandrill_regular, str, color);
-
+                if (flag && clicked)
+                {
+                    SoundEffects.ui_click.Play(Settings.GUI_VOLUME / 100.0f, 1.0f, 0.0f);
+                }
                 return flag;
             }
             if (settings_state == SettingsState.SELECT)
@@ -973,6 +997,8 @@ namespace Inignoto.Graphics.Gui
                         {
                             Inignoto.game.world.Dispose();
                             Inignoto.game.game_state = Inignoto.GameState.MENU;
+                            Inignoto.game.player.Save();
+                            Inignoto.game.player.Inventory = new Inventory.PhysicalInventory(Inignoto.game.player);
                             menu_state = MenuState.TITLE;
                             inGame = false;
                         }
@@ -1286,7 +1312,10 @@ namespace Inignoto.Graphics.Gui
                 Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(1920 / 2 - w - 40, 1080 / 2 - 50 + y, w * 2, 75), color2);
                 int strwidth = (int)(FontManager.mandrill_regular.width + FontManager.mandrill_regular.spacing) * str.Length;
                 DrawString(spriteBatch, width, height, 1920 / 2 - w - 40 + (w - strwidth) / 2 + w / 2, 1080 / 2 - 50 + y, 1.0f, FontManager.mandrill_regular, str, color);
-
+                if (flag && clicked)
+                {
+                    SoundEffects.ui_click.Play(Settings.GUI_VOLUME / 100.0f, 1.0f, 0.0f);
+                }
                 return flag;
             }
             

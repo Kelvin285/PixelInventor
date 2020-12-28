@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 
 namespace Inignoto.Utilities
 {
     public class DataUtils
     {
-        public static Dictionary<string, string> GetDataList(string file_contents)
+        public static Dictionary<string, string> GetDataList(string[] lines)
         {
             Dictionary<string, string> data = new Dictionary<string, string>();
-            string[] lines = file_contents.Split('\n');
             foreach (string line in lines)
             {
                 char[] ch = line.ToCharArray();

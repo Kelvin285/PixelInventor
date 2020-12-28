@@ -11,7 +11,7 @@ namespace Inignoto.Items
 {
     public class ItemRegistry
     {
-        public static Dictionary<string, Item> REGISTRY = new Dictionary<string, Item>();
+        public static Dictionary<string, Item> REGISTRY = new Dictionary<string, Item>(); // Registers items based on 
         public static List<Item> ITEM_LIST = new List<Item>();
 
         private static int ticks = 0;
@@ -22,6 +22,7 @@ namespace Inignoto.Items
 
         public static void LoadItems()
         {
+            REGISTRY.Clear();
             foreach (Tile tile in TileRegistry.REGISTRY.Values)
             {
                 Item item = new TileItem(tile);

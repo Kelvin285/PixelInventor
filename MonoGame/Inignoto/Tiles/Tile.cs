@@ -13,7 +13,7 @@ namespace Inignoto.Tiles
 {
     public class Tile
     {
-        public enum TileRayTraceType
+        public enum TileRayTraceType // Used for raytraced collisions (see World.cs)
         {
             BLOCK, FLUID, GAS
         };
@@ -23,34 +23,34 @@ namespace Inignoto.Tiles
             TOP, BOTTOM, LEFT, RIGHT, FRONT, BACK
         };
 
-        public readonly string name;
+        public readonly string name; // The untranslated name for the block
 
-        private static int CURRENT_ID = 0;
+        public static int CURRENT_ID = 0; // Block IDs (used for save data)
         public readonly int ID;
 
-        public readonly TileDataHolder stateHolder;
+        public readonly TileDataHolder stateHolder; // Used to hold the different tile states
 
         public readonly SoundEffect[] step_sound;
 
-        public readonly int hits = 1;
-        public readonly bool solid = true;
+        public readonly int hits = 1; // How many hits it takes to break the blocks
+        public bool solid = true; // Whether or not entities can fall/walk through the block
 
         public bool tinted { get; private set; }
 
         private TileRayTraceType rayTraceType = TileRayTraceType.BLOCK;
-        private bool blocksMovement = true;
-        private bool visible = true;
-        private bool replaceable = false;
-        public bool FullSpace { get; protected set; }
+        private bool visible = true; // Is the block visible? (Can it be rendered?)
+        private bool replaceable = false; // Can this block be replaced when building?
+        public bool FullSpace { get; protected set; } // Does the block take up a full space?  (Is it a full cube?)
 
-        private string item_model = string.Empty;
+        private string item_model = string.Empty; // This is set if the block has a custom item model
 
-        private bool Opaque = true;
+        private bool Opaque = true; // Is this block rendered as opaque or transparent?  (true = opaque, false = transparent)
 
-        private bool DropsAsItem = true;
+        private bool DropsAsItem = true; // Can the block be dropped as an item?
 
-        public bool Overlay { get; private set; }
+        public bool Overlay { get; private set; } // Is the block used as an overlay texture?
 
+        // These next few values represent block light emission
         public int light_red { get; private set; }
         public int light_green { get; private set; }
         public int light_blue { get; private set; }
@@ -62,20 +62,23 @@ namespace Inignoto.Tiles
         public bool allows_blue_light { get; private set; }
         public bool allows_sunlight { get; private set; }
 
-        public int RedTint { get; private set; }
-        public int GreenTint { get; private set; }
-        public int BlueTint { get; private set; }
-        public int SunTint { get; private set; }
+        // This is used for tinted blocks (which light values are blocked and which ones are allowed?)
+        public int RedTint { get; private set; } // Blocks red light
+        public int GreenTint { get; private set; } // Blocks green light
+        public int BlueTint { get; private set; } // Blocks blue light
+        public int SunTint { get; private set; } // Blocks sunlight
 
         public Tile(string name, SoundEffect[] sound, bool solid = true, int hits = 1)
         {
-            SetLight(0, 0, 0);
+            SetLight(0, 0, 0); // Light is set to 0 by default
             step_sound = sound;
             this.name = name;
-            TileRegistry.REGISTRY.Add(this.name, this);
 
 
             ID = CURRENT_ID++;
+            TileRegistry.REGISTRY.Add(this.name, this);
+            TileRegistry.ID_REGISTRY.Add(ID, this);
+
             stateHolder = new TileDataHolder(this);
             this.solid = solid;
             this.hits = hits;
@@ -195,9 +198,9 @@ namespace Inignoto.Tiles
             return GetRayTraceType() == rayTraceType;
         }
 
-        public bool IsOpaqueOrNotBlock()
+        public bool IsNotFullBlockOrTransparentAndDoesNotEqual(Tile initial)
         {
-            return (Opaque && FullSpace) || rayTraceType != TileRayTraceType.BLOCK;
+            return !FullSpace || rayTraceType != TileRayTraceType.BLOCK || (!Opaque && this != initial);
         }
 
         public bool IsRaytraceTypeOrSolid(TileRayTraceType rayTraceType)
@@ -227,12 +230,12 @@ namespace Inignoto.Tiles
 
         public bool BlocksMovement()
         {
-            return blocksMovement;
+            return solid;
         }
 
         public Tile SetBlocksMovement(bool blocksMovement)
         {
-            this.blocksMovement = blocksMovement;
+            this.solid = blocksMovement;
             return this;
         }
 

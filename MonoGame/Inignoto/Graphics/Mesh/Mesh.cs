@@ -33,7 +33,6 @@ namespace Inignoto.Graphics.Mesh
 
         public Mesh(GraphicsDevice device, VertexPositionLightTexture[] triangleVertices, bool lines = false, Texture2D texture = null)
         {
-            //Console.WriteLine("Meshes: " + (meshes++));
             if (device == null)
             {
                 return;

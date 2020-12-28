@@ -11,11 +11,11 @@ namespace Inignoto.Tiles.Data
 {
     public class TileData
     {
-        public readonly int tile_id;
-        public readonly int state;
-        public readonly ResourcePath location;
-        public readonly int index;
-        public readonly int num_x = 1, num_y = 1;
+        public readonly int tile_id; // Used to get the tile/block from the tile data
+        public readonly int state; // The current state of the block
+        public readonly ResourcePath location; // The resource path denoting the folder the tile data is held in
+        public readonly int index; // The current index of the tile data (see TileDataHolder.REGISTRY)
+        public readonly int num_x = 1, num_y = 1; // Used if the block has a texture larger than 32x32 (example: a 64x64 texture has 2 32x32 textures on the x-axis and 2 on the y-axis)
 
         public string texture = "";
         public string side_texture = "";
@@ -37,7 +37,7 @@ namespace Inignoto.Tiles.Data
             this.location = location;
             this.index = index;
             Dictionary<string, string> data = FileUtils.LoadFileAsDataList(location);
-            foreach (string a in data.Keys)
+            foreach (string a in data.Keys) // Turning a text file into the tile data object
             {
                 if (data.TryGetValue(a, out string b))
                 {
@@ -143,7 +143,7 @@ namespace Inignoto.Tiles.Data
             }
         }
 
-        public string GetTexture(TileFace face)
+        public string GetTexture(TileFace face) // What texture should be used for the current tile face?
         {
             switch (face)
             {
@@ -201,26 +201,23 @@ namespace Inignoto.Tiles.Data
         {
             Tile tile = TileRegistry.GetTile(tile_id);
 
-            if (tile == TileRegistry.AIR) return;
+            if (tile == TileRegistry.AIR) return; // Light doesn't need to be updated when air is placed/removed
 
-            if (!chunk.NeedsToGenerate())
+            if (tile.glowing) // If the glowing flag in the tile is true set the light values
             {
-                if (tile.glowing)
+                chunk.SetLight(x, y, z, tile.light_red, tile.light_green, tile.light_blue, -1);
+            }
+            else
+            {
+                if (tile.tinted) // If the tinted flag in the tile is true remove light values that need to be blocked
                 {
-                    chunk.SetLight(x, y, z, tile.light_red, tile.light_green, tile.light_blue, -1);
+                    chunk.RemoveLight(x, y, z, tile.RedTint == 0, tile.GreenTint == 0, tile.BlueTint == 0, false);
                 }
                 else
                 {
-                    if (tile.tinted)
+                    if (tile.IsOpaque()) // If the tile is opaque remove all light
                     {
-                        chunk.RemoveLight(x, y, z, tile.RedTint == 0, tile.GreenTint == 0, tile.BlueTint == 0, false);
-                    }
-                    else
-                    {
-                        if (tile.IsOpaque())
-                        {
-                            chunk.RemoveLight(x, y, z, true, true, true, true);
-                        }
+                        chunk.RemoveLight(x, y, z, true, true, true, true);
                     }
                 }
             }
@@ -231,19 +228,15 @@ namespace Inignoto.Tiles.Data
         {
             Tile tile = TileRegistry.GetTile(tile_id);
 
-            if (tile == TileRegistry.AIR) return;
+            if (tile == TileRegistry.AIR) return; // Light doesn't need to be updated when air is placed/removed
 
-            if (!chunk.NeedsToGenerate())
+            if (tile.glowing) // If the tile is glowing remove the light source
             {
-                if (tile.glowing)
-                {
-                    chunk.RemoveLight(x, y, z, true, true, true, true);
-                } else
-                {
-                    if (tile.IsOpaque() || tile.tinted)
-                    chunk.PropogateLights(x, y, z, true, true, true, true);
-                }
-                
+                chunk.RemoveLight(x, y, z, true, true, true, true);
+            } else
+            {
+                if (tile.IsOpaque() || tile.tinted) // If the tile is opaque or tinted propogate the lights
+                chunk.PropogateLights(x, y, z, true, true, true, true);
             }
         }
 

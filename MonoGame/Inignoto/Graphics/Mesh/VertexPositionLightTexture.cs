@@ -27,9 +27,6 @@ namespace Inignoto.Graphics.Mesh
             }
         }
 
-        private static Dictionary<LightSunPair, Color> lights = new Dictionary<LightSunPair, Color>();
-        private static Dictionary<Vector4, Vector2[]> textures = new Dictionary<Vector4, Vector2[]>();
-
         public VertexPositionLightTexture(Vector3 position, Color hue, Vector4 textureCoordinate, int normal, int light = 0, int sunlight = 15)
         {
             Position = position;

@@ -58,7 +58,7 @@ namespace Inignoto.World.Biomes.Surface.Grasslands
                         {
                             if (chunk.GetVoxel(chunk_x, chunk_y + i, chunk_z) == TileRegistry.AIR.DefaultData)
                             {
-                                chunk.SetVoxel(chunk_x, chunk_y + i, chunk_z, TileRegistry.WEEPING_REED.DefaultData);
+                                chunk.SetVoxel(chunk_x, chunk_y + i, chunk_z, TileRegistry.MOON_STEM.DefaultData);
                                 hit = i + 1;
                             } else
                             {
@@ -69,6 +69,8 @@ namespace Inignoto.World.Biomes.Surface.Grasslands
                         if (hit > 1)
                         {
                             chunk.SetVoxel(chunk_x, chunk_y + hit - 1, chunk_z, TileRegistry.GLOW_BERRY.DefaultData);
+                            chunk.SetVoxel(chunk_x, chunk_y + hit - 2, chunk_z, TileRegistry.MOON_LEAF.DefaultData);
+
                         }
                     }
                 }

@@ -39,6 +39,17 @@ namespace Inignoto.Utilities
             return str;
         }
 
+        public static string[] LoadFileAsStringArray(ResourcePath resource_path)
+        {
+            if (!File.Exists(GetResourcePath(resource_path)))
+            {
+                return new string[] { };
+            }
+
+            string[] str = File.ReadAllLines(GetResourcePath(resource_path));
+            return str;
+        }
+
         public static string LoadFileAsString(ResourcePath resource_path)
         {
             if (!File.Exists(GetResourcePath(resource_path)))
@@ -51,10 +62,8 @@ namespace Inignoto.Utilities
         }
 
         public static Dictionary<string, string> LoadFileAsDataList(ResourcePath resource_path)
-        {
-            string file_contents = LoadFileAsString(resource_path);
-            
-            return DataUtils.GetDataList(file_contents);
+        {            
+            return DataUtils.GetDataList(LoadFileAsStringArray(resource_path));
         }
 
         public static string[] GetAllDirectories(ResourcePath resource_path)

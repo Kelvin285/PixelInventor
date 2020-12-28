@@ -232,7 +232,7 @@ namespace Inignoto.Graphics.Gui
             }
             current_scroll = (Mouse.GetState().ScrollWheelValue / 8) / 15;
 
-            int scroll = current_scroll - last_scroll;
+            int scroll = last_scroll - current_scroll;
 
             if (Inignoto.game.player.Inventory.selected + scroll > 9)
             {

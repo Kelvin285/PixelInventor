@@ -25,8 +25,8 @@ namespace Inignoto.World.Biomes
         public float GetRiverHeight(float x, float z)
         {
 
-            float expand = 2;
-            float rivers = MathF.Abs(ChunkGenerator.noise.GetSimplex((x / 2.0f) / expand, (z / 2.0f) / expand)) * expand;
+            float expand = 4;
+            float rivers = MathF.Abs(ChunkGenerator.noise.GetSimplex(x / (expand * expand), z / (expand * expand))) * expand;
             return rivers;
         }
 

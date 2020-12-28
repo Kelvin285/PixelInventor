@@ -32,6 +32,16 @@ namespace Inignoto.Utilities
         public static RasterizerState CULL_CLOCKWISE_RASTERIZER_STATE;
         public static RasterizerState DEFAULT_RASTERIZER_STATE;
 
+        public static void ReloadResources()
+        {
+            lock (Inignoto.game.world)
+            {
+                Textures.LoadTextures();
+                SoundEffects.LoadSoundEffects();
+            }
+            
+        }
+
         public static void LoadResources()
         {
             Settings.LoadSettings();

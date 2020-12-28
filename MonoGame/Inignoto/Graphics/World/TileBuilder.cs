@@ -142,7 +142,7 @@ namespace Inignoto.Graphics.World
                                         MathF.PI * data.model.rotation.Z / 180.0f);
 
                                     Matrix matrix = Matrix.CreateTranslation(mesh.triangleVertices[i].Position + data.model.origin) * Matrix.CreateFromQuaternion(quat);
-
+                                    
                                     mesh.triangleVertices[i].Position = matrix.Translation;
                                     mesh.triangleVertices[i].TextureCoordinate = texCoord;
                                     mesh.triangleVertices[i].Position *= 1.0f / 32.0f;
