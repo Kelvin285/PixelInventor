@@ -56,9 +56,9 @@ namespace Inignoto.Graphics.Models.New
 
         public Mesh.Mesh mesh;
 
-        public ModelCube() : base()
+        public ModelCube(Vector3 translation) : base()
         {
-            translation = new Vector3(0, 1, 0);
+            this.translation = translation;
             List<VertexPositionLightTexture> triangleVertices = new List<VertexPositionLightTexture>();
             List<int> indices = new List<int>();
             int I = 0;
@@ -121,15 +121,28 @@ namespace Inignoto.Graphics.Models.New
 
             return new Vector4(uv[face].X, uv[face].Y, -1, -1);
         }
-        public override void Render(GraphicsDevice device, GameEffect effect, Matrix lastMatrix)
+        public override void Render(GraphicsDevice device, GameEffect effect, Matrix lastMatrix, Quaternion lastRotation)
         {
-            base.Render(device, effect, lastMatrix);
+            Vector3 newTranslation = (Matrix.CreateTranslation(translation) * Matrix.CreateFromQuaternion(lastRotation)).Translation;
+            base.Render(device, effect, lastMatrix * Matrix.CreateTranslation(newTranslation), lastRotation * rotation);
 
-            
-            if (mesh.GetPosition() != translation) mesh.SetPosition(translation + lastMatrix.Translation);
-            if (mesh.rotation != rotation) mesh.SetRotation(rotation);
-            if (mesh.scale != scale) mesh.SetScale(scale);
+            mesh.SetPosition(newTranslation + lastMatrix.Translation);
+
+            mesh.SetRotation(lastRotation * rotation);
+
+            renderTranslation = newTranslation + lastMatrix.Translation;
+            renderRotation = lastRotation * rotation;
+
+            mesh.SetScale(scale);
+
+            if (selected)
+            {
+                effect.ObjectColor = new Vector4(1, 0.8f, 0.8f, 1);
+            }
+
             mesh.Draw(effect, device);
+
+            effect.ObjectColor = new Vector4(1, 1, 1, 1);
         }
     }
 }

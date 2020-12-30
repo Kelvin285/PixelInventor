@@ -20,6 +20,7 @@ using Inignoto.Tiles;
 using Inignoto.Graphics.Models;
 using Inignoto.Graphics.Models.New;
 using Inignoto.Audio;
+using static Inignoto.Math.Raytracing;
 
 namespace Inignoto.Graphics.Gui
 {
@@ -133,6 +134,8 @@ namespace Inignoto.Graphics.Gui
         private int WIDTH;
         private int HEIGHT;
         private bool grab_scroll = false;
+        private ModelObject selected = null;
+        private ModelObject hovered = null;
         public void Render3D(GameTime gameTime)
         {
             double delta = gameTime.ElapsedGameTime.TotalMilliseconds / 60.0;
@@ -144,7 +147,8 @@ namespace Inignoto.Graphics.Gui
                 mesh = TileBuilder.BuildTile(-0.5f, -0.5f, -0.5f, TileRegistry.DIRT.DefaultData, TileRegistry.GRASS.DefaultData, Inignoto.game.GraphicsDevice);
 
                 model = new NewGameModel();
-                model.AddChild(new ModelCube());
+                model.translation.Y = 1;
+                model.AddChild(new ModelCube(new Vector3(0, 0, 0)));
 
                 Inignoto.game.camera.position = new Vector3(0, 0, 10);
                 Inignoto.game.camera.rotation = new Vector3(0, 0, 0);
@@ -152,10 +156,18 @@ namespace Inignoto.Graphics.Gui
             mesh.Draw(GameResources.effect, Inignoto.game.GraphicsDevice);
             if (model != null)
             {
-                Matrix mat = Matrix.CreateTranslation(mouse_dir);
-                //Quaternion rot = Quaternion.CreateFromYawPitchRoll(Inignoto.game.camera.rotation.Y, Inignoto.game.camera.rotation.X, Inignoto.game.camera.rotation.Z);
-                //mat *= Matrix.CreateFromQuaternion(rot);
-                model.translation = Inignoto.game.camera.position + mat.Translation * 4;
+                Matrix rotation = Matrix.CreateFromQuaternion(Quaternion.CreateFromYawPitchRoll(Inignoto.game.camera.rotation.Y * (MathF.PI / 180.0f), Inignoto.game.camera.rotation.X * (MathF.PI / 180.0f), Inignoto.game.camera.rotation.Z * (MathF.PI / 180.0f)));
+                Matrix translation = Matrix.CreateTranslation(mouse_dir);
+                Matrix mat = translation * rotation;
+                Vector3 mdir = mat.Translation;
+                mdir.Normalize();
+
+                hovered = model.TestForIntersection(Inignoto.game.camera.position, mdir);
+                model.editing = true;
+                if (selected != null)
+                {
+                    selected.selected = true;
+                }
                 model.Render(Inignoto.game.GraphicsDevice, GameResources.effect);
             }
             
@@ -220,16 +232,12 @@ namespace Inignoto.Graphics.Gui
             WIDTH = width;
             HEIGHT = height;
 
-            double angle_x = (Settings.FIELD_OF_VIEW / 2) * (lastMousePos.X - (width / 2)) / (width / 2);
-            double angle_y = (Settings.FIELD_OF_VIEW / 2) * (lastMousePos.Y - (height / 2)) / (height / 2) * (1080.0f / 1920.0f);
+            if (clicked)
+            {
+                selected = hovered;
+            }
 
-            angle_x *= MathF.PI / 180.0f;
-            angle_y *= MathF.PI / 180.0f;
-
-            Matrix mouse_matrix = Matrix.CreateTranslation(0, 0, 1);
-            Quaternion rotate = Quaternion.CreateFromYawPitchRoll((float)angle_y, (float)angle_x, 0);
-            mouse_matrix *= Matrix.CreateFromQuaternion(rotate);
-            mouse_dir = mouse_matrix.Translation;
+            mouse_dir = new Vector3((lastMousePos.X / (float)width - 0.5f) * (1920.0f / 1080.0f) * 2.0f, -(lastMousePos.Y / (float)height - 0.5f) * 2.0f, -1);
 
             bool DrawButton(int x, int y, int w, int h, string str, float font_size = 1.0f, bool left_align = false)
             {
