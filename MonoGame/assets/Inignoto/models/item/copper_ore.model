@@ -1,0 +1,47 @@
+Part 0
+Part
+Position -0.079322815 3.0912628 0.0
+Rotation 0.0055128164 -0.17036188 0.031869862 0.98485065
+Size 5 4 6
+Scale 1.0 1.0 1.0
+Angles -1.3200098E-5 -19.628088 3.7069025
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 0 13
+Part 1
+Part
+Position -1.9766048 1.1343737 2.6523185
+Rotation 0.040325873 0.20575026 -0.08794734 0.97380805
+Size 3 3 3
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 -11.257858
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 0 6
+Part 2
+Part
+Position 2.110831 1.366972 -0.07837218
+Rotation 0.013910953 0.20375657 0.03976207 0.97811264
+Size 4 4 4
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 3.7068634
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 0 24
+Part 3
+Part
+Position -1.0635147 1.2720366 -3.172207
+Rotation 0.013910953 0.20375657 0.03976207 0.97811264
+Size 3 3 3
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 -7.5579834
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 17 24
+Parent 1 0
+Parent 2 0
+Parent 3 0

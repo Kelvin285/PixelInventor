@@ -1,0 +1,33 @@
+Part 0
+Part
+Position 0.0 8.0 0.0
+Rotation 0.38268346 0.0 0.0 0.9238795
+Size 38 38 38
+Scale 0.0 0.0 0.0
+Angles 45.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 0 0
+Part 1
+Part
+Position 0.0 8.0 0.0
+Rotation 0.0 0.0 0.38268346 0.9238795
+Size 38 38 38
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 45.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 0 0
+Part 2
+Part
+Position 0.0 8.0 0.0
+Rotation 0.38268346 0.0 0.0 0.9238795
+Size 38 38 38
+Scale 1.0 1.0 1.0
+Angles 45.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 0 0

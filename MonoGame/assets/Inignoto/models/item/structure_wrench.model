@@ -1,0 +1,71 @@
+Part 0
+Wrench4
+Position 1.9356384 27.497185 0.0
+Rotation 0.0 0.0 0.13519396 0.99081564
+Size 2 4 2
+Scale 1.0 1.0 0.5
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 15 1
+Part 1
+Bottom
+Position 0.0 6.1325836 0.0
+Rotation 0.0 0.0 -0.37518284 0.9269475
+Size 4 4 2
+Scale 1.0 1.0 1.1
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 7 33
+Part 2
+Handle
+Position 0.0 16.0 0.0
+Rotation 0.0 0.0 0.0 1.0
+Size 2 16 2
+Scale 1.0 1.0 1.0
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 -4.0 0.0
+UV 9 14
+Part 3
+Wrench1
+Position 1.3770447 25.0 0.0
+Rotation 0.0 0.0 -0.35350272 0.93543386
+Size 2 4 2
+Scale 1.0 1.0 0.9
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 15 8
+Part 4
+Wrench2
+Position -1.4221115 25.0 0.0
+Rotation 0.0 0.0 0.3675053 0.9300192
+Size 2 4 2
+Scale 1.0 1.0 0.9
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 3 8
+Part 5
+Wrench3
+Position -2.1196594 27.497185 0.0
+Rotation 0.0 0.0 -0.13111857 0.9913667
+Size 2 4 2
+Scale 1.0 1.0 0.5
+Angles 0.0 0.0 0.0
+Locked true
+Visible true
+Origin 0.0 0.0 0.0
+UV 3 1
+Parent 0 2
+Parent 1 2
+Parent 3 2
+Parent 4 2
+Parent 5 2
