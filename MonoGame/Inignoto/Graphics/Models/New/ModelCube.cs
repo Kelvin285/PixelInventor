@@ -44,7 +44,7 @@ namespace Inignoto.Graphics.Models.New
             new Vector3(0.5f, -0.5f, -0.5f)
         };
 
-        Vector4[] uv =
+        public Vector4[] uv =
         {
             new Vector4(0, 0, 1, 1),
             new Vector4(0, 0, 1, 1),
@@ -92,6 +92,7 @@ namespace Inignoto.Graphics.Models.New
                     Vector4 coords = GetUvCoords(i, face);
 
                     mesh.triangleVertices[face * 4 + i].TextureCoordinate = new Vector2(coords.X, coords.Y);
+                    mesh.built = false;
                 }
             }
         }
@@ -101,30 +102,90 @@ namespace Inignoto.Graphics.Models.New
             mesh.texture = texture;
         }
 
+        public float GetTexWidth()
+        {
+            float uvw = 1.0f;
+            if (mesh != null)
+            {
+                if (mesh.texture == null) mesh.texture = Textures.Textures.white_square;
+                uvw = mesh.texture.Width;
+            }
+            return uvw;
+         }
+
+        public float GetTexHeight()
+        {
+            float uvh = 1.0f;
+            if (mesh != null)
+            {
+                if (mesh.texture == null) mesh.texture = Textures.Textures.white_square;
+                uvh = mesh.texture.Height;
+            }
+            return uvh;
+        }
+
         public Vector4 GetUvCoords(int index, int face)
         {
+            float uvw = 1.0f;
+            float uvh = 1.0f;
+            if (mesh != null)
+            {
+                if (mesh.texture == null) mesh.texture = Textures.Textures.white_square;
+                uvw = mesh.texture.Width;
+                uvh = mesh.texture.Height;
+            }
+            //front, back, left, right, top, bottom
+            float x = uv[face].X;
+            float y = uv[face].Y;
+
+            float w = uv[face].Z;
+            float h = uv[face].W;
+
+            x *= 1.0f / uvw;
+            y *= 1.0f / uvh;
+            w *= 1.0f / uvw;
+            h *= 1.0f / uvh;
+            x *= 32;
+            y *= 32;
+
+            if (face == 0 || face == 1)
+            {
+                w *= 32 * scale.X;
+                h *= 32 * scale.Y;
+            }
+            else if (face == 2 || face == 3)
+            {
+                w *= 32 * scale.Z;
+                h *= 32 * scale.Y;
+            }
+            else if (face == 4 || face == 5)
+            {
+                w *= 32 * scale.X;
+                h *= 32 * scale.Z;
+            }
+
             switch (index)
             {
                 case 1:
                     {
-                        return new Vector4(uv[face].X, uv[face].W, -1, -1);
+                        return new Vector4(x, y + h, -1, -1);
                     }
                 case 2:
                     {
-                        return new Vector4(uv[face].Z, uv[face].W, -1, -1);
+                        return new Vector4(x + w, y + h, -1, -1);
                     }
                 case 3:
                     {
-                        return new Vector4(uv[face].Z, uv[face].Y, -1, -1);
+                        return new Vector4(x + w, y, -1, -1);
                     }
             }
 
-            return new Vector4(uv[face].X, uv[face].Y, -1, -1);
+            return new Vector4(x, y, -1, -1);
         }
-        public override void Render(GraphicsDevice device, GameEffect effect, Matrix lastMatrix, Quaternion lastRotation)
+        public override void Render(GraphicsDevice device, GameEffect effect, Matrix lastMatrix, Quaternion lastRotation, ModelObject select)
         {
             Vector3 newTranslation = (Matrix.CreateTranslation(translation) * Matrix.CreateFromQuaternion(lastRotation)).Translation;
-            base.Render(device, effect, lastMatrix * Matrix.CreateTranslation(newTranslation), lastRotation * rotation);
+            base.Render(device, effect, lastMatrix * Matrix.CreateTranslation(newTranslation), lastRotation * rotation, select);
 
             mesh.SetPosition(newTranslation + lastMatrix.Translation);
 

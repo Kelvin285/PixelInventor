@@ -130,12 +130,13 @@ namespace Inignoto.Graphics.Gui
         }
 
         private Mesh.Mesh mesh;
-        private Point lastMousePos = new Point(0, 0);
+        public Point lastMousePos = new Point(0, 0);
         private int WIDTH;
         private int HEIGHT;
         private bool grab_scroll = false;
-        private ModelObject selected = null;
+        public ModelObject selected = null;
         private ModelObject hovered = null;
+        public Vector3 mdir = new Vector3(0, 0, 0);
         public void Render3D(GameTime gameTime)
         {
             double delta = gameTime.ElapsedGameTime.TotalMilliseconds / 60.0;
@@ -159,7 +160,7 @@ namespace Inignoto.Graphics.Gui
                 Matrix rotation = Matrix.CreateFromQuaternion(Quaternion.CreateFromYawPitchRoll(Inignoto.game.camera.rotation.Y * (MathF.PI / 180.0f), Inignoto.game.camera.rotation.X * (MathF.PI / 180.0f), Inignoto.game.camera.rotation.Z * (MathF.PI / 180.0f)));
                 Matrix translation = Matrix.CreateTranslation(mouse_dir);
                 Matrix mat = translation * rotation;
-                Vector3 mdir = mat.Translation;
+                mdir = mat.Translation;
                 mdir.Normalize();
 
                 hovered = model.TestForIntersection(Inignoto.game.camera.position, mdir);
@@ -168,7 +169,7 @@ namespace Inignoto.Graphics.Gui
                 {
                     selected.selected = true;
                 }
-                model.Render(Inignoto.game.GraphicsDevice, GameResources.effect);
+                model.Render(Inignoto.game.GraphicsDevice, GameResources.effect, selected);
             }
             
 
@@ -202,8 +203,8 @@ namespace Inignoto.Graphics.Gui
 
                 Inignoto.game.camera.rotation -= new Vector3((float)motion.Y * (1920f / HEIGHT) * 4, (float)motion.X * (1080f / WIDTH) * 8, 0) * (float)delta * Settings.MOUSE_SENSITIVITY;
             }
-            if (Inignoto.game.camera.rotation.X > 90) Inignoto.game.camera.rotation.X = 90;
-            if (Inignoto.game.camera.rotation.X < -90) Inignoto.game.camera.rotation.X = -90;
+            if (Inignoto.game.camera.rotation.X > 89.9) Inignoto.game.camera.rotation.X = 89.9f;
+            if (Inignoto.game.camera.rotation.X < -89.9f) Inignoto.game.camera.rotation.X = -89.9f;
             lastMousePos = new Point(Inignoto.game.mousePos.X, Inignoto.game.mousePos.Y);
         }
 
@@ -226,13 +227,18 @@ namespace Inignoto.Graphics.Gui
         private KeyReader reader = new KeyReader(200);
 
         private Vector3 mouse_dir = Vector3.Zero;
+        private Vector2 clicked_pos = Vector2.Zero;
+        int click_uv = -1;
+        private Vector4 old_uv = Vector4.Zero;
+        private bool can_deselect = true;
+
 
         public void RenderModelCreator(GraphicsDevice device, SpriteBatch spriteBatch, int width, int height, GameTime gameTime, bool clicked)
         {
             WIDTH = width;
             HEIGHT = height;
 
-            if (clicked)
+            if (clicked && can_deselect)
             {
                 selected = hovered;
             }
@@ -478,6 +484,168 @@ namespace Inignoto.Graphics.Gui
                 }
                 hovered_menu = true;
             }
+
+            Draw(spriteBatch, width, height, Textures.Textures.translate_button, new Rectangle(25, 100, 64, 64), Color.White);
+            if (lastMousePos.X * (1920.0f / width) > 25 && lastMousePos.Y * (1080.0f / height) > 100 && lastMousePos.X * (1920.0f / width) < 25 + 64 && lastMousePos.Y * (1080.0f / height) < 164)
+            {
+                Draw(spriteBatch, width, height, Textures.Textures.translate_button, new Rectangle(25, 100, 64, 64), Color.Gray);
+                if (clicked)
+                {
+                    ModelObject.edit_mode = ModelObject.ModelEditMode.TRANSLATION;
+                }
+            }
+
+            Draw(spriteBatch, width, height, Textures.Textures.rotate_button, new Rectangle(25 + 64, 100, 64, 64), Color.White);
+            if (lastMousePos.X * (1920.0f / width) > 25 + 64 && lastMousePos.Y * (1080.0f / height) > 100 && lastMousePos.X * (1920.0f / width) < 25 + 64 * 2 && lastMousePos.Y * (1080.0f / height) < 164)
+            {
+                Draw(spriteBatch, width, height, Textures.Textures.rotate_button, new Rectangle(25 + 64, 100, 64, 64), Color.Gray);
+                if (clicked)
+                {
+                    ModelObject.edit_mode = ModelObject.ModelEditMode.ROTATION;
+                }
+            }
+
+            if (ModelObject.grid_lock_translation)
+            {
+                Draw(spriteBatch, width, height, Textures.Textures.lock_button, new Rectangle(25 + 64 * 2, 100, 64, 64), Color.Yellow);
+            } else
+            {
+                Draw(spriteBatch, width, height, Textures.Textures.lock_button, new Rectangle(25 + 64 * 2, 100, 64, 64), Color.White);
+            }
+            if (lastMousePos.X * (1920.0f / width) > 25 + 64 * 2 && lastMousePos.Y * (1080.0f / height) > 100 && lastMousePos.X * (1920.0f / width) < 25 + 64 * 3 && lastMousePos.Y * (1080.0f / height) < 164)
+            {
+                Draw(spriteBatch, width, height, Textures.Textures.lock_button, new Rectangle(25 + 64 * 2, 100, 64, 64), Color.Gray);
+                if (clicked)
+                {
+                    ModelObject.grid_lock_translation = !ModelObject.grid_lock_translation;
+                }
+            }
+
+            int uv_w = 300;
+            int uv_h = 300;
+            can_deselect = true;
+            if (selected != null)
+            {
+                Texture2D texture = null;
+
+                bool plane = false;
+                if (selected is ModelCube)
+                {
+                    texture = ((ModelCube)selected).mesh.texture;
+                }
+
+                if (selected is ModelPlane)
+                {
+                    texture = ((ModelPlane)selected).mesh.texture;
+                    plane = true;
+                }
+
+                if (texture != null)
+                {
+                    int X = 1920 - uv_w - 10;
+                    int Y = 100;
+
+                    Vector4 uv = Vector4.Zero;
+                    if (plane)
+                    {
+                       uv = ((ModelPlane)selected).uv;
+                    }
+
+                    
+                    if (!Settings.ATTACK.IsPressed())
+                    {
+                        click_uv = -1;
+                    }
+                    if (plane)
+                    {
+                        ModelPlane p = (ModelPlane)selected;
+
+                        Draw(spriteBatch, width, height, texture, new Rectangle(1920 - (int)p.GetTexWidth() - 10, Y, (int)p.GetTexWidth(), (int)p.GetTexHeight()), Color.White);
+                        X = 1920 - (int)p.GetTexWidth() - 10;
+                        float mouse_x = lastMousePos.X * (1920.0f / width) - X;
+                        float mouse_y = lastMousePos.Y * (1080.0f / height) - Y;
+                        int uvx = (int)(p.uv.X * 32) - 32;
+                        int uvy = (int)(p.uv.Y * 32);
+                        int uvw = (int)(p.uv.Z * 32);
+                        int uvh = (int)(p.uv.W * 32);
+
+                        if (click_uv == 0)
+                        {
+                            float newuvx = old_uv.X - (clicked_pos.X - mouse_x) * (1.0f / 32.0f);
+                            float newuvy = old_uv.Y - (clicked_pos.Y - mouse_y) * (1.0f / 32.0f);
+                            p.ChangeUV(new Vector4(newuvx, newuvy, p.uv.Z, p.uv.W));
+                        }
+
+                        if (mouse_x > uvx && mouse_y > uvy && mouse_x < uvx + uvw && mouse_y < uvy + uvh)
+                        {
+                            can_deselect = false;
+                            if (Settings.ATTACK.IsPressed())
+                            {
+                                if (click_uv == -1)
+                                {
+                                    click_uv = 0;
+                                    clicked_pos = new Vector2(mouse_x, mouse_y);
+                                    old_uv = p.uv;
+                                }
+                            }
+
+                        }
+
+                        Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(X + (int)(p.uv.X * 32), Y + (int)(p.uv.Y * 32), (int)(p.uv.Z * 32), (int)(p.uv.W * 32)), new Color(1.0f, 0, 0, 0.2f));
+                    } else
+                    {
+                        ModelCube p = (ModelCube)selected;
+                        Draw(spriteBatch, width, height, texture, new Rectangle(1920 - (int)p.GetTexWidth() - 10, Y, (int)p.GetTexWidth(), (int)p.GetTexHeight()), Color.White);
+                        X = 1920 - (int)p.GetTexWidth() - 10;
+                        float mouse_x = lastMousePos.X * (1920.0f / width) - X;
+                        float mouse_y = lastMousePos.Y * (1080.0f / height) - Y;
+                        Vector3[] colors = {
+                            new Vector3(1, 0, 0),
+                            new Vector3(0, 1, 0),
+                            new Vector3(0, 0, 1),
+                            new Vector3(1, 0, 1),
+                            new Vector3(1, 1, 0),
+                            new Vector3(1, 1, 1)
+                        };
+
+
+                        for (int i = 0; i < 6; i++)
+                        {
+                            int uvx = (int)(p.uv[i].X * 32);
+                            int uvy = (int)(p.uv[i].Y * 32);
+                            int uvw = (int)(p.uv[i].Z * 32);
+                            int uvh = (int)(p.uv[i].W * 32);
+
+                            if (click_uv == i)
+                            {
+                                float newuvx = old_uv.X - (clicked_pos.X - mouse_x) * (1.0f / 32.0f);
+                                float newuvy = old_uv.Y - (clicked_pos.Y - mouse_y) * (1.0f / 32.0f);
+                                p.ChangeUV(new Vector4(newuvx, newuvy, p.uv[i].Z, p.uv[i].W), i);
+                            }
+
+                            if (mouse_x > uvx && mouse_y > uvy && mouse_x < uvx + uvw && mouse_y < uvy + uvh)
+                            {
+                                can_deselect = false;
+
+                                if (Settings.ATTACK.IsPressed())
+                                {                                    
+                                    if (click_uv == -1)
+                                    {
+                                        click_uv = i;
+                                        clicked_pos = new Vector2(mouse_x, mouse_y);
+                                        old_uv = p.uv[i];
+                                    }
+                                }
+                            }
+
+                            Draw(spriteBatch, width, height, Textures.Textures.white_square, new Rectangle(X + uvx, Y + uvy, uvw, uvh), new Color(colors[i].X, colors[i].Y, colors[i].Z, 0.2f));
+                        }
+                    }
+
+                }
+            }
+
+
 
             if (file_menu == 0)
             {

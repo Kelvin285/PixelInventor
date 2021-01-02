@@ -27,6 +27,19 @@ namespace Inignoto.Graphics.Textures
         public static Texture2D title_moon;
         public static Texture2D moon_clip;
 
+        public static Texture2D position_handle_x;
+        public static Texture2D position_handle_y;
+        public static Texture2D position_handle_z;
+
+        public static Texture2D rotation_handle_x;
+        public static Texture2D rotation_handle_y;
+        public static Texture2D rotation_handle_z;
+
+        public static Texture2D translate_button;
+        public static Texture2D rotate_button;
+        public static Texture2D lock_button;
+
+
         public static Dictionary<TileData, Texture2D> TILE_ITEMS = new Dictionary<TileData, Texture2D>();
 
         private static Dictionary<string, Texture> textures = new Dictionary<string, Texture>();
@@ -43,6 +56,18 @@ namespace Inignoto.Graphics.Textures
             font_mandrill_bold = LoadTexture(new ResourcePath("Inignoto", "fonts/mandrill/mandrill_bold_48.png", "assets"));
             item_browser = LoadTexture(new ResourcePath("Inignoto", "textures/gui/item_browser.png", "assets"));
 
+            position_handle_x = LoadTexture(new ResourcePath("Inignoto", "textures/modelmaker/position_handle_x.png", "assets"));
+            position_handle_y = LoadTexture(new ResourcePath("Inignoto", "textures/modelmaker/position_handle_y.png", "assets"));
+            position_handle_z = LoadTexture(new ResourcePath("Inignoto", "textures/modelmaker/position_handle_z.png", "assets"));
+
+            rotation_handle_x = LoadTexture(new ResourcePath("Inignoto", "textures/modelmaker/rotation_handle_x.png", "assets"));
+            rotation_handle_y = LoadTexture(new ResourcePath("Inignoto", "textures/modelmaker/rotation_handle_y.png", "assets"));
+            rotation_handle_z = LoadTexture(new ResourcePath("Inignoto", "textures/modelmaker/rotation_handle_z.png", "assets"));
+
+            translate_button = LoadTexture(new ResourcePath("Inignoto", "textures/modelmaker/translate.png", "assets"));
+            rotate_button = LoadTexture(new ResourcePath("Inignoto", "textures/modelmaker/rotate.png", "assets"));
+            lock_button = LoadTexture(new ResourcePath("Inignoto", "textures/modelmaker/lock.png", "assets"));
+
             title_animation = new Texture2D[4];
             for (int i = 0; i < 4; i++)
             {
@@ -57,11 +82,17 @@ namespace Inignoto.Graphics.Textures
             FontManager.LoadFonts();
         }
 
-        public static Texture2D LoadTexture(ResourcePath path)
+        public static Texture2D GetTexture(ResourcePath path)
         {
             FileStream stream = FileUtils.GetStreamForPath(path, FileMode.Open);
             Texture2D texture = Texture2D.FromStream(Inignoto.game.GraphicsDevice, stream);
             stream.Close();
+            return texture;
+        }
+
+        public static Texture2D LoadTexture(ResourcePath path)
+        {
+            Texture2D texture = GetTexture(path);
             if (!textures.TryAdd(FileUtils.GetResourcePath(path), texture))
             {
                 textures[FileUtils.GetResourcePath(path)].Dispose();

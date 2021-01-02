@@ -21,7 +21,7 @@ namespace Inignoto.Graphics.Models.New
 
         public Mesh.Mesh mesh;
 
-        private Vector4 uv = new Vector4(0, 0, 1, 1);
+        public Vector4 uv = new Vector4(0, 0, 1, 1);
 
         public ModelPlane(Vector3 translation) : base()
         {
@@ -57,24 +57,71 @@ namespace Inignoto.Graphics.Models.New
             mesh.texture = texture;
         }
 
+        public float GetTexWidth()
+        {
+            float uvw = 1.0f;
+            if (mesh != null)
+            {
+                if (mesh.texture == null) mesh.texture = Textures.Textures.white_square;
+                uvw = mesh.texture.Width;
+            }
+            return uvw;
+        }
+
+        public float GetTexHeight()
+        {
+            float uvh = 1.0f;
+            if (mesh != null)
+            {
+                if (mesh.texture == null) mesh.texture = Textures.Textures.white_square;
+                uvh = mesh.texture.Height;
+            }
+            return uvh;
+        }
+
         public Vector4 GetUvCoords(int index)
         {
+            float uvw = 32.0f;
+            float uvh = 32.0f;
+            if (mesh != null)
+            {
+                if (mesh.texture == null) mesh.texture = Textures.Textures.white_square;
+                uvw = mesh.texture.Width;
+                uvh = mesh.texture.Height;
+            }
+            //front, back, left, right, top, bottom
+            float x = uv.X;
+            float y = uv.Y;
+
+            float w = uv.Z;
+            float h = uv.W;
+
+            x *= 1.0f / uvw;
+            y *= 1.0f / uvh;
+            w *= 1.0f / uvw;
+            h *= 1.0f / uvh;
+            x *= 32;
+            y *= 32;
+
+            w *= 32 * scale.X;
+            h *= 32 * scale.Y;
+
             switch (index) {
                 case 1:
                     {
-                        return new Vector4(uv.X, uv.W, -1, -1);
+                        return new Vector4(x, y + h, -1, -1);
                     }
                 case 2:
                     {
-                        return new Vector4(uv.Z, uv.W, -1, -1);
+                        return new Vector4(x + w, y + h, -1, -1);
                     }
                 case 3:
                     {
-                        return new Vector4(uv.Z, uv.Y, -1, -1);
+                        return new Vector4(x + w, y, -1, -1);
                     }
             }
             
-            return new Vector4(uv.X, uv.Y, -1, -1);
+            return new Vector4(x, y, -1, -1);
         }
 
         public override RayIntersection GetIntersection(Vector3 position, Vector3 direction)
@@ -82,9 +129,35 @@ namespace Inignoto.Graphics.Models.New
 
             RayBox box = new RayBox();
             box.Min = renderTranslation - scale / 2.0f;
-            box.Max = box.Min + scale / 2.0f;
+            box.Max = box.Min + scale;
             box.Min.Z = renderTranslation.Z - 0.01f;
             box.Max.Z = renderTranslation.Z + 0.01f;
+
+            box.Min -= renderTranslation;
+            box.Max -= renderTranslation;
+            box.Min = Raytracing.RotateDir(box.Min, renderRotation);
+            box.Max = Raytracing.RotateDir(box.Max, renderRotation);
+            if (box.Min.X > box.Max.X)
+            {
+                float X = box.Min.X;
+                box.Min.X = box.Max.X;
+                box.Max.X = X;
+            }
+            if (box.Min.Y > box.Max.Y)
+            {
+                float Y = box.Min.Y;
+                box.Min.Y = box.Max.Y;
+                box.Max.Y = Y;
+            }
+            if (box.Min.Z > box.Max.Z)
+            {
+                float Z = box.Min.Z;
+                box.Min.Z = box.Max.Z;
+                box.Max.Z = Z;
+            }
+            box.Min += renderTranslation;
+            box.Max += renderTranslation;
+
             RayIntersection intersection = Raytracing.IntersectBox(Inignoto.game.camera.position, direction, box, renderRotation);
 
             if (!Raytracing.DoesCollisionOccur(Inignoto.game.camera.position, direction, box, Quaternion.Identity))
@@ -95,10 +168,10 @@ namespace Inignoto.Graphics.Models.New
             return intersection;
         }
 
-        public override void Render(GraphicsDevice device, GameEffect effect, Matrix lastMatrix, Quaternion lastRotation)
+        public override void Render(GraphicsDevice device, GameEffect effect, Matrix lastMatrix, Quaternion lastRotation, ModelObject select)
         {
             Vector3 newTranslation = (Matrix.CreateTranslation(translation) * Matrix.CreateFromQuaternion(lastRotation)).Translation;
-            base.Render(device, effect, lastMatrix * Matrix.CreateTranslation(newTranslation), lastRotation * rotation);
+            base.Render(device, effect, lastMatrix * Matrix.CreateTranslation(newTranslation), lastRotation * rotation, select);
 
             mesh.SetPosition(newTranslation + lastMatrix.Translation);
             
