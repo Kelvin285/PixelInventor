@@ -1,12 +1,12 @@
 <h1><b>PixelInventor</b></h1>
 <div/>
   <h2>Project Description</h2>
-A Voxel game I created for fun while I was in High-School and while I was in my Freshman year of College.
-The name of the game was originally PixelInventor, but I later changed it to Inignoto.
+A Voxel game I created for fun while I was in High-School and while I was in my Freshman year of College.<div/>
+The name of the game was originally PixelInventor, but I later changed it to Inignoto.<div/>
   
-To run and/or build the game you will need .Net Core 3.1
-The C# Solution file for Visual Studio is located under "PixelInventor/MonoGame/Inignoto.sln"
-The game's executable file is located under "PixelInventor/MonoGame/Inignoto/bin/Release/netcoreapp3.1/Inignoto.exe"
+To run and/or build the game you will need .Net Core 3.1<div/>
+The C# Solution file for Visual Studio is located under "PixelInventor/MonoGame/Inignoto.sln"<div/>
+The game's executable file is located under "PixelInventor/MonoGame/Inignoto/bin/Release/netcoreapp3.1/Inignoto.exe"<div/>
 
 <h2>Controls</h2>
 W = walk forwards<div/>
