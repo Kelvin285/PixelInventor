@@ -24,3 +24,16 @@ Inventory = Escape<div/>
 Switch Perspective = F5<div/>
 Chat = Enter<div/>
 Reload Assets = F1<div/>
+
+<h2>Extras</h2>
+You can also drag the moon around on the title screen by clicking and dragging the mouse.  Releasing the mouse button throws the moon and it bounces around on the screen!<div/>
+There is a work-in-progress model editor but it was never finished.  You can access it from the title screen with the "Model Creator" button<div/>
+
+Note: do not turn on Shadows.  The rendering system is unoptimized and shadows will slow down the performance.<div/>
+  
+![image](https://github.com/Kelvin285/PixelInventor/assets/47490946/65611c47-545a-40b0-812b-1136c47a1237)
+<div/>
+![image](https://github.com/Kelvin285/PixelInventor/assets/47490946/3b5fc36c-ff7b-4cb5-81f3-3d99f503c9e3)
+<div/>
+![image](https://github.com/Kelvin285/PixelInventor/assets/47490946/61b79a6d-9c3a-45bb-99b1-9e6c2653ffa4)
+
